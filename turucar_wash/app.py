@@ -24,6 +24,7 @@ WASH_DB_PATH = os.path.join("/data", "wash.db")
 BAND_MATCHING_PATH = os.path.join("/data", "차량소속별_밴드매칭.xlsx")
 UPLOAD_DIR = os.path.join("/data", "uploads")
 
+
 def load_band_mapping():
     if not os.path.exists(BAND_MATCHING_PATH):
         return {}
@@ -38,7 +39,6 @@ def load_band_mapping():
     clean_df["밴드링크"] = clean_df["밴드링크"].astype(str).str.strip()
     clean_df = clean_df[(clean_df["차량소속"] != "") & (clean_df["밴드링크"] != "") & (clean_df["밴드링크"].str.lower() != "nan")]
     return dict(zip(clean_df["차량소속"], clean_df["밴드링크"]))
-
 
 
 # =========================================================
@@ -57,9 +57,11 @@ def get_wash_db():
 
 
 # =========================================================
-# 계정 스키마 보정
+# DB 초기화 (테이블 생성 + 마스터 계정 생성)
 # =========================================================
 def init_db():
+    os.makedirs("/data", exist_ok=True)
+
     conn = get_user_db()
     cur = conn.cursor()
     cur.execute("""
@@ -87,59 +89,7 @@ def init_db():
             name TEXT UNIQUE NOT NULL
         )
     """)
-    conn.commit()
-    conn.close()
-
-    conn = get_wash_db()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS wash_list (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            차량번호 TEXT, 차종명 TEXT, 차량소속 TEXT,
-            스팟 TEXT, 주소 TEXT, 지역시도 TEXT, 지역구군 TEXT,
-            세차일 TEXT, 업체 TEXT, 밴드링크 TEXT, 작업자 TEXT, 완료 INTEGER DEFAULT 0
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS wash_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            차량번호 TEXT, 차종명 TEXT, 차량소속 TEXT,
-            스팟 TEXT, 주소 TEXT, 지역시도 TEXT, 지역구군 TEXT,
-            업체 TEXT, 세차완료일 TEXT, 주행거리 TEXT,
-            훼손 TEXT, 경고등 TEXT, 특이사항 TEXT, 작업자 TEXT, 원본ID INTEGER
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-def init_db():
-    conn = get_user_db()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS accounts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            role TEXT NOT NULL DEFAULT 'staff',
-            vendor TEXT,
-            parent_id INTEGER
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS account_region (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL,
-            city TEXT,
-            district TEXT,
-            created_by TEXT
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS vendors (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE NOT NULL
-        )
-    """)
+    # 마스터 계정 없으면 자동 생성
     existing = cur.execute("SELECT 1 FROM accounts WHERE username='jeongyeon.kim'").fetchone()
     if not existing:
         cur.execute(
@@ -173,7 +123,10 @@ def init_db():
 
 init_db()
 
-init_db()
+
+# =========================================================
+# 계정 스키마 보정
+# =========================================================
 def ensure_user_schema():
     conn = get_user_db()
     cur = conn.cursor()
@@ -186,11 +139,8 @@ def ensure_user_schema():
     if "created_by" not in region_cols:
         cur.execute("ALTER TABLE account_region ADD COLUMN created_by TEXT")
 
-    # 기존 역할 정리
     cur.execute("UPDATE accounts SET role='master' WHERE username='jeongyeon.kim'")
     cur.execute("UPDATE accounts SET role='admin' WHERE username!='jeongyeon.kim' AND role='vendor'")
-
-    # 기존 admin 계정은 최상위로 유지
     cur.execute("UPDATE accounts SET parent_id=NULL WHERE role IN ('master', 'admin')")
 
     conn.commit()
@@ -360,6 +310,48 @@ def dashboard():
         done_count=done_count,
         vendor_counts=vendor_counts
     )
+
+
+# =========================================================
+# 업체 관리 (마스터 전용)
+# =========================================================
+@app.route("/vendor_manage", methods=["GET", "POST"])
+@login_required
+def vendor_manage():
+    if not current_user.is_master:
+        flash("❌ 접근 권한이 없습니다.")
+        return redirect(url_for("dashboard"))
+
+    conn = get_user_db()
+    cur = conn.cursor()
+
+    if request.method == "POST":
+        action = request.form.get("action")
+
+        if action == "create_vendor":
+            name = request.form.get("name", "").strip()
+            if not name:
+                flash("❌ 업체명을 입력하세요.")
+                return redirect(url_for("vendor_manage"))
+            try:
+                cur.execute("INSERT INTO vendors (name) VALUES (?)", (name,))
+                conn.commit()
+                flash("✔ 업체가 등록되었습니다.")
+            except sqlite3.IntegrityError:
+                flash("❌ 이미 존재하는 업체명입니다.")
+            return redirect(url_for("vendor_manage"))
+
+        if action == "delete_vendor":
+            vendor_id = request.form.get("vendor_id", "").strip()
+            cur.execute("DELETE FROM vendors WHERE id=?", (vendor_id,))
+            conn.commit()
+            flash("✔ 업체가 삭제되었습니다.")
+            return redirect(url_for("vendor_manage"))
+
+    vendors = cur.execute("SELECT * FROM vendors ORDER BY name").fetchall()
+    conn.close()
+
+    return render_template("vendor_manage.html", vendors=vendors)
 
 
 # =========================================================
@@ -960,4 +952,4 @@ def wash_status_excel():
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
 
-app = app  # Vercel이 이 이름을 찾아서 실행해요
+app = app

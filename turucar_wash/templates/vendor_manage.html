@@ -1,26 +1,65 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>업체 관리</h2>
 
-<form method="POST">
-    <input type="text" name="vendor_name" placeholder="업체명 입력">
-    <button>등록</button>
-</form>
+<style>
+.card-box { background:#fff; border:1px solid #ececec; border-radius:16px; padding:22px; box-shadow:0 2px 10px rgba(0,0,0,0.04); margin-bottom:20px; }
+.form-row { display:flex; gap:12px; align-items:center; }
+.form-row input { height:40px; padding:0 12px; border:1px solid #d9d9d9; border-radius:8px; flex:1; font-size:15px; }
+.btn-main { height:42px; padding:0 24px; border:none; border-radius:8px; background:#ff7f32; color:#fff; font-weight:700; cursor:pointer; font-size:15px; }
+.btn-del { height:34px; border:none; border-radius:8px; background:#fff1f0; color:#d4380d; font-weight:700; cursor:pointer; padding:0 14px; }
+.table-wrap { overflow-x:auto; margin-top:16px; }
+table { width:100%; border-collapse:collapse; }
+th, td { border-bottom:1px solid #eee; padding:10px 12px; text-align:left; font-size:14px; vertical-align:middle; }
+th { background:#fafafa; font-weight:700; }
+tr:hover { background:#fafafa; }
+.inline-form { display:inline; }
+</style>
 
-<table>
-    <thead>
-        <tr>
-            <th>업체명</th>
-        </tr>
-    </thead>
+<div style="margin-bottom:20px;">
+    <h2 style="margin:0 0 8px 0;">업체 관리</h2>
+    <div style="color:#666; font-size:14px;">업체를 등록하면 계정 생성 시 업체 선택에 나타납니다.</div>
+</div>
 
-    <tbody>
-        {% for v in vendors %}
-        <tr>
-            <td>{{ v.name }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="card-box">
+    <h3 style="margin-top:0;">업체 등록</h3>
+    <form method="POST">
+        <input type="hidden" name="action" value="create_vendor">
+        <div class="form-row">
+            <input type="text" name="name" placeholder="업체명 입력" required>
+            <button type="submit" class="btn-main">등록</button>
+        </div>
+    </form>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>순번</th>
+                    <th>업체명</th>
+                    <th>관리</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in vendors %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ v.name }}</td>
+                    <td>
+                        <form method="POST" class="inline-form" onsubmit="return confirm('정말 이 업체를 삭제할까요?');">
+                            <input type="hidden" name="action" value="delete_vendor">
+                            <input type="hidden" name="vendor_id" value="{{ v.id }}">
+                            <button type="submit" class="btn-del">삭제</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="text-align:center; color:#888; padding:20px;">등록된 업체가 없습니다.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 
 {% endblock %}

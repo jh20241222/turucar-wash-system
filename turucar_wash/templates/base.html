@@ -22,6 +22,7 @@
         {% endif %}
 
         {% if current_user.is_master %}
+        <a href="{{ url_for('vendor_manage') }}" class="menu {% if '/vendor_manage' in request.path %}active{% endif %}">업체 관리</a>
         <a href="{{ url_for('upload_wash_list') }}" class="menu {% if '/upload_wash_list' in request.path %}active{% endif %}">세차 대상 업로드</a>
         {% endif %}
 

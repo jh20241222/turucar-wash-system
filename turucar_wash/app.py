@@ -19,8 +19,8 @@ app.secret_key = "turu_secret_key"
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-USER_DB_PATH = os.path.join("/tmp", "db.sqlite3")
-WASH_DB_PATH = os.path.join("/tmp", "wash.db")
+USER_DB_PATH = os.path.join("/data", "db.sqlite3")
+WASH_DB_PATH = os.path.join("/data", "wash.db")
 BAND_MATCHING_PATH = os.path.join(BASE_DIR, "차량소속별_밴드매칭.xlsx")
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 

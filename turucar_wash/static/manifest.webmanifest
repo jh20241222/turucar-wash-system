@@ -1,0 +1,32 @@
+{
+  "name": "TURU CAR Wash System",
+  "short_name": "TURU Wash",
+  "description": "TURU CAR 세차 대상 관리 및 완료 현황 앱",
+  "lang": "ko-KR",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f5f6fa",
+  "theme_color": "#ff6900",
+  "icons": [
+    {
+      "src": "/static/img/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/img/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/img/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

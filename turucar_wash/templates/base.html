@@ -51,6 +51,9 @@
             <a href="{{ url_for('wash_status') }}" class="side-link {% if request.endpoint == 'wash_status' %}active{% endif %}">
                 <span>✓</span><b>완료 현황</b>
             </a>
+            <a href="{{ url_for('profile') }}" class="side-link {% if request.endpoint == 'profile' %}active{% endif %}">
+                <span>◉</span><b>내정보</b>
+            </a>
 
             {% if current_user.is_admin %}
             <a href="{{ url_for('account_manage') }}" class="side-link {% if request.endpoint == 'account_manage' %}active{% endif %}">
@@ -79,14 +82,6 @@
     </aside>
 
     <main class="app-main">
-        {% if current_user.is_admin or current_user.is_master %}
-        <nav class="mobile-admin-rail" aria-label="관리 메뉴">
-            {% if current_user.is_admin %}<a href="{{ url_for('account_manage') }}" class="{% if request.endpoint == 'account_manage' %}active{% endif %}">계정/지역</a>{% endif %}
-            {% if current_user.is_master %}<a href="{{ url_for('vendor_manage') }}" class="{% if request.endpoint == 'vendor_manage' %}active{% endif %}">업체</a>{% endif %}
-            {% if current_user.is_master %}<a href="{{ url_for('upload_wash_list') }}" class="{% if request.endpoint == 'upload_wash_list' %}active{% endif %}">업로드</a>{% endif %}
-        </nav>
-        {% endif %}
-
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 <div class="flash-stack">
@@ -109,11 +104,9 @@
         <a href="{{ url_for('wash_status') }}" class="tab-item {% if request.endpoint == 'wash_status' %}active{% endif %}">
             <span>✓</span><b>완료</b>
         </a>
-        {% if current_user.is_admin %}
-        <a href="{{ url_for('account_manage') }}" class="tab-item {% if request.endpoint in ['account_manage','vendor_manage','upload_wash_list'] %}active{% endif %}">
-            <span>●</span><b>관리</b>
+        <a href="{{ url_for('profile') }}" class="tab-item {% if request.endpoint in ['profile','account_manage','vendor_manage','upload_wash_list'] %}active{% endif %}">
+            <span>◉</span><b>내정보</b>
         </a>
-        {% endif %}
     </nav>
 
     <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>

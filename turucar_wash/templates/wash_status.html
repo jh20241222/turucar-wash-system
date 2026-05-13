@@ -147,7 +147,7 @@
         {% endfor %}
     </select>
 
-    {% if current_user.role == 'admin' %}
+    {% if current_user.is_master %}
     <select id="vendor" class="filter-item">
         <option value="">전체 업체</option>
         {% for v in vendor_list %}
@@ -218,33 +218,25 @@
 
 
 <script>
-function applyFilter() {
-    const s = document.getElementById("search_input").value;
-    const r1 = document.getElementById("region1").value;
-    const r2 = document.getElementById("region2").value;
-    const org = document.getElementById("car_org").value;
-    const sp = document.getElementById("spot").value;
-    const vendor = document.getElementById("vendor") ? document.getElementById("vendor").value : "";
-    const start = document.getElementById("start").value;
-    const end = document.getElementById("end").value;
-
-    window.location.href =
-        `/wash_status?s=${s}&r1=${r1}&r2=${r2}&org=${org}&spot=${sp}&vendor=${vendor}&start=${start}&end=${end}`;
+function buildStatusParams() {
+    return new URLSearchParams({
+        s: document.getElementById("search_input").value,
+        r1: document.getElementById("region1").value,
+        r2: document.getElementById("region2").value,
+        org: document.getElementById("car_org").value,
+        spot: document.getElementById("spot").value,
+        vendor: document.getElementById("vendor") ? document.getElementById("vendor").value : "",
+        start: document.getElementById("start").value,
+        end: document.getElementById("end").value
+    });
 }
 
+function applyFilter() {
+    window.location.href = `/wash_status?${buildStatusParams().toString()}`;
+}
 
 function downloadExcel() {
-    const s = document.getElementById("search_input").value;
-    const r1 = document.getElementById("region1").value;
-    const r2 = document.getElementById("region2").value;
-    const org = document.getElementById("car_org").value;
-    const sp = document.getElementById("spot").value;
-    const vendor = document.getElementById("vendor") ? document.getElementById("vendor").value : "";
-    const start = document.getElementById("start").value;
-    const end = document.getElementById("end").value;
-
-    window.location.href =
-        `/wash_status_excel?s=${s}&r1=${r1}&r2=${r2}&org=${org}&spot=${sp}&vendor=${vendor}&start=${start}&end=${end}`;
+    window.location.href = `/wash_status_excel?${buildStatusParams().toString()}`;
 }
 </script>
 

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#ff6900">
+    <title>TURU Wash | 오프라인</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="offline-page">
+    <main class="offline-card">
+        <img src="{{ url_for('static', filename='img/turu_logo.png') }}" alt="TURU CAR" class="offline-logo">
+        <h1>인터넷 연결이 필요합니다</h1>
+        <p>세차 리스트, 완료 처리, 엑셀 다운로드는 서버 연결 후 다시 사용할 수 있습니다.</p>
+        <button type="button" onclick="window.location.reload()">다시 시도</button>
+    </main>
+</body>
+</html>

@@ -3,63 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#ff6900">
+    <meta name="theme-color" content="#101c2f">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="TURU Wash">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>TURU CAR | Wash System</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>TURU Wash</title>
     <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/icons/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='img/icons/icon-192.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
-<div class="mobile-topbar">
-    <img src="{{ url_for('static', filename='img/turu_logo.png') }}" alt="TURU CAR">
-    <button type="button" class="install-app-btn pwa-install" hidden>앱 설치</button>
-</div>
-<div class="layout">
-    <div class="sidebar">
-        <div class="logo">
-            <img src="{{ url_for('static', filename='img/turu_logo.png') }}" style="width:120px;">
+<body class="app-shell endpoint-{{ request.endpoint or 'page' }}">
+    <header class="app-topbar">
+        <div class="topbar-left">
+            {% if request.endpoint != 'dashboard' %}
+            <button type="button" class="icon-btn back-btn" onclick="history.length > 1 ? history.back() : location.href='{{ url_for('dashboard') }}'" aria-label="뒤로가기">‹</button>
+            {% endif %}
+            <a href="{{ url_for('dashboard') }}" class="brand-mini" aria-label="대시보드로 이동">
+                <span class="brand-mark">TW</span>
+                <span class="brand-text">
+                    <strong>TURU Wash</strong>
+                    <small>세차 오더 관리</small>
+                </span>
+            </a>
         </div>
+        <div class="topbar-actions">
+            <button type="button" class="install-chip pwa-install" hidden>앱 설치</button>
+            <span class="user-chip">{{ current_user.username }}</span>
+            <a href="{{ url_for('logout') }}" class="logout-chip">나가기</a>
+        </div>
+    </header>
 
-        <a href="{{ url_for('dashboard') }}" class="menu {% if '/dashboard' in request.path %}active{% endif %}">대시보드</a>
-        <a href="{{ url_for('wash_list') }}" class="menu {% if '/wash_list' in request.path %}active{% endif %}">세차 대상 리스트</a>
-        <a href="{{ url_for('wash_status') }}" class="menu {% if '/wash_status' in request.path %}active{% endif %}">세차 현황</a>
+    <aside class="desktop-sidebar">
+        <a href="{{ url_for('dashboard') }}" class="sidebar-brand">
+            <span class="brand-mark large">TW</span>
+            <span>
+                <strong>TURU Wash</strong>
+                <small>Railway 연동 앱</small>
+            </span>
+        </a>
 
-        {% if current_user.is_admin %}
-        <a href="{{ url_for('account_manage') }}" class="menu {% if '/account_manage' in request.path %}active{% endif %}">계정 / 지역 관리</a>
+        <nav class="side-nav">
+            <a href="{{ url_for('dashboard') }}" class="side-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                <span>⌂</span><b>홈</b>
+            </a>
+            <a href="{{ url_for('wash_list') }}" class="side-link {% if request.endpoint in ['wash_list','car_detail'] %}active{% endif %}">
+                <span>▣</span><b>세차 오더</b>
+            </a>
+            <a href="{{ url_for('wash_status') }}" class="side-link {% if request.endpoint == 'wash_status' %}active{% endif %}">
+                <span>✓</span><b>완료 현황</b>
+            </a>
+
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('account_manage') }}" class="side-link {% if request.endpoint == 'account_manage' %}active{% endif %}">
+                <span>👤</span><b>계정/지역</b>
+            </a>
+            {% endif %}
+
+            {% if current_user.is_master %}
+            <a href="{{ url_for('vendor_manage') }}" class="side-link {% if request.endpoint == 'vendor_manage' %}active{% endif %}">
+                <span>🏢</span><b>업체 관리</b>
+            </a>
+            <a href="{{ url_for('upload_wash_list') }}" class="side-link {% if request.endpoint == 'upload_wash_list' %}active{% endif %}">
+                <span>⬆</span><b>오더 업로드</b>
+            </a>
+            {% endif %}
+        </nav>
+
+        <div class="sidebar-profile">
+            <div>
+                <small>로그인 계정</small>
+                <strong>{{ current_user.username }}</strong>
+                <em>{{ current_user.role }}</em>
+            </div>
+            <a href="{{ url_for('logout') }}">로그아웃</a>
+        </div>
+    </aside>
+
+    <main class="app-main">
+        {% if current_user.is_admin or current_user.is_master %}
+        <nav class="mobile-admin-rail" aria-label="관리 메뉴">
+            {% if current_user.is_admin %}<a href="{{ url_for('account_manage') }}">계정</a>{% endif %}
+            {% if current_user.is_master %}<a href="{{ url_for('vendor_manage') }}">업체</a>{% endif %}
+            {% if current_user.is_master %}<a href="{{ url_for('upload_wash_list') }}">업로드</a>{% endif %}
+        </nav>
         {% endif %}
 
-        {% if current_user.is_master %}
-        <a href="{{ url_for('vendor_manage') }}" class="menu {% if '/vendor_manage' in request.path %}active{% endif %}">업체 관리</a>
-        <a href="{{ url_for('upload_wash_list') }}" class="menu {% if '/upload_wash_list' in request.path %}active{% endif %}">세차 대상 업로드</a>
-        {% endif %}
-
-        <a href="{{ url_for('logout') }}" class="menu">로그아웃</a>
-
-        <div class="sidebar-footer">
-            <button type="button" class="install-app-btn pwa-install" hidden>앱 설치</button>
-        </div>
-    </div>
-
-    <div class="content">
         {% with messages = get_flashed_messages() %}
             {% if messages %}
-                <div style="margin-bottom:16px; display:flex; flex-direction:column; gap:8px;">
+                <div class="flash-stack">
                     {% for message in messages %}
-                    <div style="background:#fff4ec; color:#8a4b14; padding:12px 14px; border-radius:10px; border:1px solid #ffd7bb; font-weight:600;">
-                        {{ message }}
-                    </div>
+                    <div class="flash-card">{{ message }}</div>
                     {% endfor %}
                 </div>
             {% endif %}
         {% endwith %}
         {% block content %}{% endblock %}
-    </div>
-</div>
-<script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+    </main>
+
+    <nav class="mobile-tabbar" aria-label="주요 메뉴">
+        <a href="{{ url_for('dashboard') }}" class="tab-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+            <span>⌂</span><b>홈</b>
+        </a>
+        <a href="{{ url_for('wash_list') }}" class="tab-item {% if request.endpoint in ['wash_list','car_detail'] %}active{% endif %}">
+            <span>▣</span><b>오더</b>
+        </a>
+        <a href="{{ url_for('wash_status') }}" class="tab-item {% if request.endpoint == 'wash_status' %}active{% endif %}">
+            <span>✓</span><b>완료</b>
+        </a>
+        {% if current_user.is_admin %}
+        <a href="{{ url_for('account_manage') }}" class="tab-item {% if request.endpoint == 'account_manage' %}active{% endif %}">
+            <span>👤</span><b>관리</b>
+        </a>
+        {% endif %}
+    </nav>
+
+    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
 </body>
 </html>

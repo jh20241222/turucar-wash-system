@@ -1,14 +1,17 @@
 {
-  "name": "TURU CAR Wash System",
+  "id": "/",
+  "name": "TURU Wash - 세차 오더 앱",
   "short_name": "TURU Wash",
-  "description": "TURU CAR 세차 대상 관리 및 완료 현황 앱",
+  "description": "TURU CAR 세차 오더 확인, 밴드 이동, 완료 기록을 위한 현장용 앱",
   "lang": "ko-KR",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait-primary",
-  "background_color": "#f5f6fa",
-  "theme_color": "#ff6900",
+  "background_color": "#07111f",
+  "theme_color": "#101c2f",
+  "categories": ["productivity", "business"],
   "icons": [
     {
       "src": "/static/img/icons/icon-192.png",

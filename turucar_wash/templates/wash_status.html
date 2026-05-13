@@ -1,221 +1,160 @@
 {% extends "base.html" %}
 {% block content %}
-
-<!-- 🔥 TURU 스타일 카드형 헤더 (중앙정렬 + 반응형) -->
-<div style="
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    margin-bottom: 20px;
-">
-    <div style="
-        background: #f5f6fa;
-        padding: 20px 30px;
-        border-radius: 16px;
-        text-align: center;
-        box-shadow: 0px 2px 6px rgba(0,0,0,0.06);
-        min-width: 260px;
-        max-width: 90%;
-    ">
-        <div style="
-            font-size: 22px;
-            font-weight: 800;
-            margin-bottom: 8px;
-            color:#222;
-        ">
-            세차 현황
-        </div>
-
-        <div style="
-            font-size: 18px;
-            font-weight: 700;
-            color:#555;
-        ">
-            완료된 세차 내역 조회
-        </div>
+<section class="status-hero app-card elevated">
+    <div>
+        <p class="eyebrow">COMPLETED LOG</p>
+        <h1>세차 완료 현황</h1>
+        <p class="hero-copy">완료된 세차 이력을 검색하고 엑셀로 내려받을 수 있습니다.</p>
     </div>
-</div>
+    <div class="hero-count done">
+        <span>{{ rows|length }}</span>
+        <small>조회</small>
+    </div>
+</section>
 
+<section class="filter-card app-card">
+    <div class="filter-head">
+        <div>
+            <strong>완료 이력 검색</strong>
+            <small>차량, 지역, 기간으로 조회</small>
+        </div>
+        <span>{{ rows|length }}건</span>
+    </div>
 
-<style>
-    .filter-row {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 15px;
-        flex-wrap: wrap;
-    }
+    <div class="filter-grid status-filter-grid">
+        <input type="text" id="search_input" class="app-input" placeholder="차량번호, 스팟 검색" value="{{ search_input }}">
 
-    .filter-item {
-        height: 38px;
-        padding: 5px 10px;
-        border-radius: 6px;
-        border: 1px solid #ccc;
-        background: white;
-    }
-
-    .filter-row button {
-        height: 38px;
-        padding: 0 18px;
-        background: #ff7f32;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-    }
-
-    .excel-btn {
-        background: #1f5fff !important;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 10px;
-        font-size: 14px;
-    }
-
-    table th, table td {
-        text-align: center;
-        padding: 10px 6px;
-        border-bottom: 1px solid #ddd;
-    }
-
-    table thead tr {
-        background: #f7f7f7;
-        font-weight: bold;
-    }
-
-    /* 🔥 모바일 대응 (필터 세로 / 버튼 터치확대) */
-    @media (max-width: 600px) {
-
-        .filter-row {
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .filter-item,
-        .filter-row button {
-            width: 100%;
-        }
-
-        a, button {
-            padding: 12px !important;
-            font-size: 15px !important;
-        }
-    }
-</style>
-
-
-
-
-<!-- 🔥 필터 UI -->
-<div class="filter-row">
-
-    <input
-        type="text"
-        id="search_input"
-        class="filter-item"
-        placeholder="차량번호, 스팟 검색"
-        value="{{ search_input }}"
-    >
-
-    <select id="region1" class="filter-item">
-        <option value="">전체 시/도</option>
-        {% for r in region1 %}
+        <select id="region1" class="app-input">
+            <option value="">전체 시/도</option>
+            {% for r in region1 %}
             <option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>
-        {% endfor %}
-    </select>
+            {% endfor %}
+        </select>
 
-    <select id="region2" class="filter-item">
-        <option value="">전체 구/군</option>
-        {% for r in region2 %}
+        <select id="region2" class="app-input">
+            <option value="">전체 구/군</option>
+            {% for r in region2 %}
             <option value="{{ r }}" {% if selected_r2 == r %}selected{% endif %}>{{ r }}</option>
-        {% endfor %}
-    </select>
+            {% endfor %}
+        </select>
 
-    <select id="car_org" class="filter-item">
-        <option value="">전체 차량소속</option>
-        {% for o in car_org_list %}
+        <select id="car_org" class="app-input">
+            <option value="">전체 차량소속</option>
+            {% for o in car_org_list %}
             <option value="{{ o }}" {% if selected_org == o %}selected{% endif %}>{{ o }}</option>
-        {% endfor %}
-    </select>
+            {% endfor %}
+        </select>
 
-    <select id="spot" class="filter-item">
-        <option value="">전체 스팟</option>
-        {% for s in spot_list %}
+        <select id="spot" class="app-input">
+            <option value="">전체 스팟</option>
+            {% for s in spot_list %}
             <option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>
-        {% endfor %}
-    </select>
+            {% endfor %}
+        </select>
 
-    {% if current_user.is_master %}
-    <select id="vendor" class="filter-item">
-        <option value="">전체 업체</option>
-        {% for v in vendor_list %}
+        {% if current_user.is_master %}
+        <select id="vendor" class="app-input">
+            <option value="">전체 업체</option>
+            {% for v in vendor_list %}
             <option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>
-        {% endfor %}
-    </select>
-    {% endif %}
+            {% endfor %}
+        </select>
+        {% endif %}
 
-    <!-- 날짜 필터 -->
-    <input type="date" id="start" class="filter-item" value="{{ start }}">
-    <input type="date" id="end" class="filter-item" value="{{ end }}">
+        <input type="date" id="start" class="app-input" value="{{ start }}">
+        <input type="date" id="end" class="app-input" value="{{ end }}">
+        <button type="button" onclick="applyFilter()" class="primary-btn">검색</button>
+        <button type="button" class="blue-btn" onclick="downloadExcel()">엑셀</button>
+    </div>
+</section>
 
-    <button onclick="applyFilter()">검색</button>
-    <button class="excel-btn" onclick="downloadExcel()">엑셀 다운로드</button>
-</div>
+<section class="mobile-history-list">
+    {% for r in rows %}
+    <article class="history-card app-card">
+        <div class="history-head">
+            <span class="status-pill done">완료</span>
+            <strong>{{ r['세차완료일'] }}</strong>
+        </div>
+        <div class="car-number small">{{ r['차량번호'] }}</div>
+        <p>{{ r['차종명'] }} · {{ r['차량소속'] }}</p>
+        <div class="spot-box compact">
+            <strong>{{ r['스팟'] }}</strong>
+            <span>{{ r['주소'] }}</span>
+        </div>
+        <div class="history-meta-grid">
+            <div><small>주행거리</small><b>{{ r['주행거리'] or '-' }}</b></div>
+            <div><small>작업자</small><b>{{ r['작업자'] or '-' }}</b></div>
+            <div><small>업체</small><b>{{ r['업체'] or '-' }}</b></div>
+            <div><small>지역</small><b>{{ r['지역시도'] }} {{ r['지역구군'] }}</b></div>
+        </div>
+        {% if r['훼손'] or r['경고등'] or r['특이사항'] %}
+        <div class="note-box">
+            {% if r['훼손'] %}<span>훼손: {{ r['훼손'] }}</span>{% endif %}
+            {% if r['경고등'] %}<span>경고등: {{ r['경고등'] }}</span>{% endif %}
+            {% if r['특이사항'] %}<span>특이사항: {{ r['특이사항'] }}</span>{% endif %}
+        </div>
+        {% endif %}
+    </article>
+    {% else %}
+    <div class="empty-state app-card">
+        <strong>조회된 완료 이력이 없습니다.</strong>
+        <span>검색 조건을 바꿔 다시 조회해 주세요.</span>
+    </div>
+    {% endfor %}
+</section>
 
-
-
-
-<!-- 🔥 테이블 (가로 스크롤 대응) -->
-<div style="overflow-x:auto;">
-<table>
-    <thead>
-        <tr>
-            <th>순번</th>
-            <th>차량번호</th>
-            <th>차종명</th>
-            <th>차량소속</th>
-            <th>스팟</th>
-            <th>주소</th>
-            <th>시/도</th>
-            <th>구/군</th>
-            <th>업체</th>
-            <th>세차완료일</th>
-            <th>주행거리</th>
-            <th>훼손</th>
-            <th>경고등</th>
-            <th>특이사항</th>
-            <th>작업자</th>
-        </tr>
-    </thead>
-
-    <tbody>
-        {% for r in rows %}
-        <tr>
-            <td>{{ r["id"] }}</td>
-            <td>{{ r["차량번호"] }}</td>
-            <td>{{ r["차종명"] }}</td>
-            <td>{{ r["차량소속"] }}</td>
-            <td>{{ r["스팟"] }}</td>
-            <td style="text-align:left; padding-left:6px;">{{ r["주소"] }}</td>
-            <td>{{ r["지역시도"] }}</td>
-            <td>{{ r["지역구군"] }}</td>
-            <td>{{ r["업체"] }}</td>
-            <td>{{ r["세차완료일"] }}</td>
-            <td>{{ r["주행거리"] }}</td>
-            <td>{{ r["훼손"] }}</td>
-            <td>{{ r["경고등"] }}</td>
-            <td>{{ r["특이사항"] }}</td>
-            <td>{{ r["작업자"] }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-</div>
-
-
-
+<section class="table-panel desktop-table app-card">
+    <div class="table-title-row">
+        <strong>완료된 세차 내역</strong>
+        <span>{{ rows|length }}건</span>
+    </div>
+    <div class="table-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>순번</th>
+                    <th>차량번호</th>
+                    <th>차종명</th>
+                    <th>차량소속</th>
+                    <th>스팟</th>
+                    <th>주소</th>
+                    <th>시/도</th>
+                    <th>구/군</th>
+                    <th>업체</th>
+                    <th>세차완료일</th>
+                    <th>주행거리</th>
+                    <th>훼손</th>
+                    <th>경고등</th>
+                    <th>특이사항</th>
+                    <th>작업자</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in rows %}
+                <tr>
+                    <td>{{ r['id'] }}</td>
+                    <td>{{ r['차량번호'] }}</td>
+                    <td>{{ r['차종명'] }}</td>
+                    <td>{{ r['차량소속'] }}</td>
+                    <td>{{ r['스팟'] }}</td>
+                    <td>{{ r['주소'] }}</td>
+                    <td>{{ r['지역시도'] }}</td>
+                    <td>{{ r['지역구군'] }}</td>
+                    <td>{{ r['업체'] }}</td>
+                    <td>{{ r['세차완료일'] }}</td>
+                    <td>{{ r['주행거리'] }}</td>
+                    <td>{{ r['훼손'] }}</td>
+                    <td>{{ r['경고등'] }}</td>
+                    <td>{{ r['특이사항'] }}</td>
+                    <td>{{ r['작업자'] }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="15" class="empty-cell">표시할 데이터가 없습니다.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
 
 <script>
 function buildStatusParams() {
@@ -239,5 +178,4 @@ function downloadExcel() {
     window.location.href = `/wash_status_excel?${buildStatusParams().toString()}`;
 }
 </script>
-
 {% endblock %}

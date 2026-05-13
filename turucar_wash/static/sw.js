@@ -1,4 +1,4 @@
-const CACHE_NAME = 'turu-wash-pwa-v1';
+const CACHE_NAME = 'turu-wash-native-like-v2';
 const APP_SHELL = [
   '/offline',
   '/static/css/style.css',
@@ -28,28 +28,24 @@ self.addEventListener('fetch', (event) => {
   const request = event.request;
   const url = new URL(request.url);
 
-  if (request.method !== 'GET' || url.origin !== self.location.origin) {
-    return;
-  }
+  if (request.method !== 'GET' || url.origin !== self.location.origin) return;
 
   if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request).catch(() => caches.match('/offline'))
-    );
+    event.respondWith(fetch(request).catch(() => caches.match('/offline')));
     return;
   }
 
   if (url.pathname.startsWith('/static/')) {
     event.respondWith(
       caches.match(request).then((cached) => {
-        const networkFetch = fetch(request).then((response) => {
+        const fresh = fetch(request).then((response) => {
           if (response && response.ok) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           }
           return response;
         }).catch(() => cached);
-        return cached || networkFetch;
+        return cached || fresh;
       })
     );
   }

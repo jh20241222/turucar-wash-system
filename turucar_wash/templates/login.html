@@ -1,47 +1,32 @@
 {% extends "base_login.html" %}
 {% block content %}
-
-<div style="
-    width:380px; background:white; padding:40px;
-    border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.08);
-">
-
-    <div style="text-align:center; margin-bottom:30px;">
-        <img src="{{ url_for('static', filename='img/turu_logo.png') }}" style="width:180px;">
-    </div>
-
-    <form method="POST">
-
-        <label>아이디</label>
-        <input type="text" name="username" value="{{ saved_id }}" 
-               style="width:100%; padding:12px; margin-top:5px;
-                      border-radius:8px; border:1px solid #ccc;"><br><br>
-
-        <label>비밀번호</label>
-        <input type="password" name="password"
-               style="width:100%; padding:12px; margin-top:5px;
-                      border-radius:8px; border:1px solid #ccc;"><br><br>
-
-        <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-            <label><input type="checkbox" name="id_save"
-                   {% if saved_id %}checked{% endif %}> 아이디 저장</label>
-
-            <label><input type="checkbox" name="auto_login"
-                   {% if session.get('auto_login') %}checked{% endif %}> 자동 로그인</label>
+<main class="login-screen">
+    <section class="phone-frame login-card">
+        <div class="login-hero">
+            <div class="brand-mark login-mark">TW</div>
+            <p class="eyebrow">TURU CAR WASH</p>
+            <h1>세차 오더를<br>앱처럼 빠르게</h1>
+            <p>Railway 서버와 연결된 현장용 세차 관리 앱입니다.</p>
         </div>
 
-        <button style="
-            width:100%; padding:12px; background:#FF6900;
-            border:none; color:white; border-radius:8px; cursor:pointer;
-            font-size:16px; font-weight:bold;">
-            로그인
-        </button>
+        <form method="POST" class="login-form">
+            <label class="field-label" for="username">아이디</label>
+            <input id="username" class="app-input" type="text" name="username" value="{{ saved_id or '' }}" autocomplete="username" placeholder="아이디 입력">
 
-        {% for msg in get_flashed_messages() %}
-            <p style="color:red; margin-top:10px; text-align:center;">{{ msg }}</p>
-        {% endfor %}
-    </form>
+            <label class="field-label" for="password">비밀번호</label>
+            <input id="password" class="app-input" type="password" name="password" autocomplete="current-password" placeholder="비밀번호 입력">
 
-</div>
+            <div class="login-options">
+                <label><input type="checkbox" name="id_save" {% if saved_id %}checked{% endif %}> 아이디 저장</label>
+                <label><input type="checkbox" name="auto_login" {% if session.get('auto_login') %}checked{% endif %}> 자동 로그인</label>
+            </div>
 
+            <button class="primary-btn full" type="submit">로그인</button>
+
+            {% for msg in get_flashed_messages() %}
+                <p class="form-error">{{ msg }}</p>
+            {% endfor %}
+        </form>
+    </section>
+</main>
 {% endblock %}

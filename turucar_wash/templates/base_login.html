@@ -3,25 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#ff6900">
+    <meta name="theme-color" content="#101c2f">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="TURU Wash">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>TURU CAR | Login</title>
-
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>TURU Wash | Login</title>
     <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/icons/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='img/icons/icon-192.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-
 <body class="login-page">
-
     {% block content %}{% endblock %}
-
-    <button type="button" class="install-app-btn pwa-install login-install-btn" hidden>앱 설치</button>
-
-<script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+    <button type="button" class="install-chip pwa-install login-install-btn" hidden>앱 설치</button>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
 </body>
 </html>

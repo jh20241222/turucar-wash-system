@@ -21,9 +21,8 @@ app.secret_key = "turu_secret_key"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 USER_DB_PATH = os.path.join("/data", "db.sqlite3")
 WASH_DB_PATH = os.path.join("/data", "wash.db")
-BAND_MATCHING_PATH = os.path.join(BASE_DIR, "차량소속별_밴드매칭.xlsx")
-UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
-
+BAND_MATCHING_PATH = os.path.join("/data", "차량소속별_밴드매칭.xlsx")
+UPLOAD_DIR = os.path.join("/data", "uploads")
 
 def load_band_mapping():
     if not os.path.exists(BAND_MATCHING_PATH):

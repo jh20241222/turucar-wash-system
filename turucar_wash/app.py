@@ -113,6 +113,67 @@ def init_db():
     conn.commit()
     conn.close()
 
+def init_db():
+    conn = get_user_db()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS accounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'staff',
+            vendor TEXT,
+            parent_id INTEGER
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS account_region (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            city TEXT,
+            district TEXT,
+            created_by TEXT
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS vendors (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL
+        )
+    """)
+    existing = cur.execute("SELECT 1 FROM accounts WHERE username='jeongyeon.kim'").fetchone()
+    if not existing:
+        cur.execute(
+            "INSERT INTO accounts (username, password, role) VALUES (?, ?, ?)",
+            ("jeongyeon.kim", generate_password_hash("1111"), "master")
+        )
+    conn.commit()
+    conn.close()
+
+    conn = get_wash_db()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS wash_list (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            차량번호 TEXT, 차종명 TEXT, 차량소속 TEXT,
+            스팟 TEXT, 주소 TEXT, 지역시도 TEXT, 지역구군 TEXT,
+            세차일 TEXT, 업체 TEXT, 밴드링크 TEXT, 작업자 TEXT, 완료 INTEGER DEFAULT 0
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS wash_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            차량번호 TEXT, 차종명 TEXT, 차량소속 TEXT,
+            스팟 TEXT, 주소 TEXT, 지역시도 TEXT, 지역구군 TEXT,
+            업체 TEXT, 세차완료일 TEXT, 주행거리 TEXT,
+            훼손 TEXT, 경고등 TEXT, 특이사항 TEXT, 작업자 TEXT, 원본ID INTEGER
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+init_db()
+
 init_db()
 def ensure_user_schema():
     conn = get_user_db()

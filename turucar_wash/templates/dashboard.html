@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 style="margin-top:0;">Dashboard</h2>
+
+<div style="display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:16px; margin-bottom:20px;">
+    <div style="background:#fff; border-radius:16px; padding:20px; border:1px solid #ececec;">
+        <div style="font-size:14px; color:#666;">대상 차량</div>
+        <div style="font-size:30px; font-weight:800; margin-top:8px;">{{ total_count }}</div>
+    </div>
+    <div style="background:#fff; border-radius:16px; padding:20px; border:1px solid #ececec;">
+        <div style="font-size:14px; color:#666;">완료 이력</div>
+        <div style="font-size:30px; font-weight:800; margin-top:8px;">{{ done_count }}</div>
+    </div>
+    <div style="background:#fff; border-radius:16px; padding:20px; border:1px solid #ececec;">
+        <div style="font-size:14px; color:#666;">내 권한</div>
+        <div style="font-size:24px; font-weight:800; margin-top:8px;">{{ current_user.role }}</div>
+    </div>
+</div>
+
+<div style="background:#fff; border-radius:16px; padding:20px; border:1px solid #ececec;">
+    <h3 style="margin-top:0;">업체별 건수</h3>
+    <ul style="margin:0; padding-left:20px; line-height:1.9;">
+        {% for item in vendor_counts %}
+        <li>{{ item['업체'] }} : {{ item['c'] }}건</li>
+        {% else %}
+        <li>표시할 데이터가 없습니다.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

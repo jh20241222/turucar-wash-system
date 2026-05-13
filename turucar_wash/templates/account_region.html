@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>계정별 담당 지역</h2>
+
+<form method="POST">
+    <select name="username">
+        {% for a in accounts %}
+            <option value="{{ a.username }}">{{ a.username }}</option>
+        {% endfor %}
+    </select>
+
+    <input type="text" name="city" placeholder="시/도">
+    <input type="text" name="district" placeholder="구/군">
+
+    <button>등록</button>
+</form>
+
+<table>
+    <thead>
+        <tr>
+            <th>계정</th>
+            <th>시/도</th>
+            <th>구/군</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for r in region_list %}
+        <tr>
+            <td>{{ r.username }}</td>
+            <td>{{ r.city }}</td>
+            <td>{{ r.district }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TURU CAR | Wash System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='img/turu_logo.png') }}" style="width:120px;">
+        </div>
+
+        <a href="{{ url_for('dashboard') }}" class="menu {% if '/dashboard' in request.path %}active{% endif %}">대시보드</a>
+        <a href="{{ url_for('wash_list') }}" class="menu {% if '/wash_list' in request.path %}active{% endif %}">세차 대상 리스트</a>
+        <a href="{{ url_for('wash_status') }}" class="menu {% if '/wash_status' in request.path %}active{% endif %}">세차 현황</a>
+
+        {% if current_user.is_admin %}
+        <a href="{{ url_for('account_manage') }}" class="menu {% if '/account_manage' in request.path %}active{% endif %}">계정 / 지역 관리</a>
+        {% endif %}
+
+        {% if current_user.is_master %}
+        <a href="{{ url_for('upload_wash_list') }}" class="menu {% if '/upload_wash_list' in request.path %}active{% endif %}">세차 대상 업로드</a>
+        {% endif %}
+
+        <a href="{{ url_for('logout') }}" class="menu">로그아웃</a>
+    </div>
+
+    <div class="content">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div style="margin-bottom:16px; display:flex; flex-direction:column; gap:8px;">
+                    {% for message in messages %}
+                    <div style="background:#fff4ec; color:#8a4b14; padding:12px 14px; border-radius:10px; border:1px solid #ffd7bb; font-weight:600;">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </div>
+</div>
+</body>
+</html>

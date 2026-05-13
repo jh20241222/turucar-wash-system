@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- 🔥 TURU 스타일 카드형 헤더 (중앙정렬 + 반응형) -->
+<div style="
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+">
+    <div style="
+        background: #f5f6fa;
+        padding: 20px 30px;
+        border-radius: 16px;
+        text-align: center;
+        box-shadow: 0px 2px 6px rgba(0,0,0,0.06);
+        min-width: 260px;
+        max-width: 90%;
+    ">
+        <div style="
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color:#222;
+        ">
+            세차 현황
+        </div>
+
+        <div style="
+            font-size: 18px;
+            font-weight: 700;
+            color:#555;
+        ">
+            완료된 세차 내역 조회
+        </div>
+    </div>
+</div>
+
+
+<style>
+    .filter-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .filter-item {
+        height: 38px;
+        padding: 5px 10px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        background: white;
+    }
+
+    .filter-row button {
+        height: 38px;
+        padding: 0 18px;
+        background: #ff7f32;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    .excel-btn {
+        background: #1f5fff !important;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 14px;
+    }
+
+    table th, table td {
+        text-align: center;
+        padding: 10px 6px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    table thead tr {
+        background: #f7f7f7;
+        font-weight: bold;
+    }
+
+    /* 🔥 모바일 대응 (필터 세로 / 버튼 터치확대) */
+    @media (max-width: 600px) {
+
+        .filter-row {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-item,
+        .filter-row button {
+            width: 100%;
+        }
+
+        a, button {
+            padding: 12px !important;
+            font-size: 15px !important;
+        }
+    }
+</style>
+
+
+
+
+<!-- 🔥 필터 UI -->
+<div class="filter-row">
+
+    <input
+        type="text"
+        id="search_input"
+        class="filter-item"
+        placeholder="차량번호, 스팟 검색"
+        value="{{ search_input }}"
+    >
+
+    <select id="region1" class="filter-item">
+        <option value="">전체 시/도</option>
+        {% for r in region1 %}
+            <option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>
+        {% endfor %}
+    </select>
+
+    <select id="region2" class="filter-item">
+        <option value="">전체 구/군</option>
+        {% for r in region2 %}
+            <option value="{{ r }}" {% if selected_r2 == r %}selected{% endif %}>{{ r }}</option>
+        {% endfor %}
+    </select>
+
+    <select id="car_org" class="filter-item">
+        <option value="">전체 차량소속</option>
+        {% for o in car_org_list %}
+            <option value="{{ o }}" {% if selected_org == o %}selected{% endif %}>{{ o }}</option>
+        {% endfor %}
+    </select>
+
+    <select id="spot" class="filter-item">
+        <option value="">전체 스팟</option>
+        {% for s in spot_list %}
+            <option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+    </select>
+
+    {% if current_user.role == 'admin' %}
+    <select id="vendor" class="filter-item">
+        <option value="">전체 업체</option>
+        {% for v in vendor_list %}
+            <option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>
+        {% endfor %}
+    </select>
+    {% endif %}
+
+    <!-- 날짜 필터 -->
+    <input type="date" id="start" class="filter-item" value="{{ start }}">
+    <input type="date" id="end" class="filter-item" value="{{ end }}">
+
+    <button onclick="applyFilter()">검색</button>
+    <button class="excel-btn" onclick="downloadExcel()">엑셀 다운로드</button>
+</div>
+
+
+
+
+<!-- 🔥 테이블 (가로 스크롤 대응) -->
+<div style="overflow-x:auto;">
+<table>
+    <thead>
+        <tr>
+            <th>순번</th>
+            <th>차량번호</th>
+            <th>차종명</th>
+            <th>차량소속</th>
+            <th>스팟</th>
+            <th>주소</th>
+            <th>시/도</th>
+            <th>구/군</th>
+            <th>업체</th>
+            <th>세차완료일</th>
+            <th>주행거리</th>
+            <th>훼손</th>
+            <th>경고등</th>
+            <th>특이사항</th>
+            <th>작업자</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for r in rows %}
+        <tr>
+            <td>{{ r["id"] }}</td>
+            <td>{{ r["차량번호"] }}</td>
+            <td>{{ r["차종명"] }}</td>
+            <td>{{ r["차량소속"] }}</td>
+            <td>{{ r["스팟"] }}</td>
+            <td style="text-align:left; padding-left:6px;">{{ r["주소"] }}</td>
+            <td>{{ r["지역시도"] }}</td>
+            <td>{{ r["지역구군"] }}</td>
+            <td>{{ r["업체"] }}</td>
+            <td>{{ r["세차완료일"] }}</td>
+            <td>{{ r["주행거리"] }}</td>
+            <td>{{ r["훼손"] }}</td>
+            <td>{{ r["경고등"] }}</td>
+            <td>{{ r["특이사항"] }}</td>
+            <td>{{ r["작업자"] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+
+
+
+<script>
+function applyFilter() {
+    const s = document.getElementById("search_input").value;
+    const r1 = document.getElementById("region1").value;
+    const r2 = document.getElementById("region2").value;
+    const org = document.getElementById("car_org").value;
+    const sp = document.getElementById("spot").value;
+    const vendor = document.getElementById("vendor") ? document.getElementById("vendor").value : "";
+    const start = document.getElementById("start").value;
+    const end = document.getElementById("end").value;
+
+    window.location.href =
+        `/wash_status?s=${s}&r1=${r1}&r2=${r2}&org=${org}&spot=${sp}&vendor=${vendor}&start=${start}&end=${end}`;
+}
+
+
+function downloadExcel() {
+    const s = document.getElementById("search_input").value;
+    const r1 = document.getElementById("region1").value;
+    const r2 = document.getElementById("region2").value;
+    const org = document.getElementById("car_org").value;
+    const sp = document.getElementById("spot").value;
+    const vendor = document.getElementById("vendor") ? document.getElementById("vendor").value : "";
+    const start = document.getElementById("start").value;
+    const end = document.getElementById("end").value;
+
+    window.location.href =
+        `/wash_status_excel?s=${s}&r1=${r1}&r2=${r2}&org=${org}&spot=${sp}&vendor=${vendor}&start=${start}&end=${end}`;
+}
+</script>
+
+{% endblock %}

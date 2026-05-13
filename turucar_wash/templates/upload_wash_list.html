@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 style="margin-bottom:20px;">세차 대상 업로드</h2>
+
+<form method="POST" enctype="multipart/form-data"
+      style="padding:20px; background:#fff; width:420px; border-radius:10px;">
+
+    <!-- 🔥 세차일자 직접 선택 -->
+    <label style="font-weight:600;">세차일자 선택</label>
+    <input type="date" name="wash_date" required
+           style="padding:10px; border:1px solid #ccc; width:100%; border-radius:6px; margin-bottom:20px;">
+
+    <!-- 🔥 엑셀 파일 업로드 -->
+    <label style="font-weight:600;">엑셀 파일 선택 (.xlsx)</label>
+    <input type="file" name="file" accept=".xlsx" required
+           style="padding:10px; border:1px solid #ccc; width:100%; border-radius:6px;"><br><br>
+
+    <button style="padding:10px 16px; background:#FF6900; color:#fff; border:none; border-radius:6px; cursor:pointer; width:100%;">
+        업로드
+    </button>
+
+    {% for msg in get_flashed_messages() %}
+        <p style="color:red; margin-top:15px;">{{ msg }}</p>
+    {% endfor %}
+</form>
+
+{% endblock %}

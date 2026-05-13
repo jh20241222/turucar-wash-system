@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    .car-link {
+        color: #ff7f32;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .car-link:hover {
+        text-decoration: underline;
+    }
+
+    /* 모바일 대응 */
+    @media (max-width: 600px) {
+        .filter-row {
+            flex-direction: column;
+            gap: 8px;
+        }
+        .filter-item, .filter-row button {
+            width: 100%;
+        }
+    }
+</style>
+
+<!-- 날짜 네비 + 제목 -->
+<div style="width: 100%; display:flex; justify-content:center; margin-bottom: 20px;">
+    <div style="
+        background: #f5f6fa;
+        padding: 20px 40px;
+        border-radius: 16px;
+        text-align: center;
+        box-shadow: 0px 2px 6px rgba(0,0,0,0.06);
+    ">
+        <div style="font-size: 22px; font-weight: 800; margin-bottom: 5px;">
+            세차 대상 리스트
+        </div>
+
+        <div style="display:flex; gap:25px; align-items:center; justify-content:center; font-size:18px; font-weight:700;">
+            <button onclick="moveDate(-1)" style="background:none; border:none; font-size:24px; cursor:pointer;">◀</button>
+
+            <span id="date-display">{{ selected_date }}</span>
+
+            <button onclick="moveDate(1)" style="background:none; border:none; font-size:24px; cursor:pointer;">▶</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function moveDate(days) {
+    const current = new Date("{{ selected_date }}");
+    current.setDate(current.getDate() + days);
+
+    const yyyy = current.getFullYear();
+    const mm = String(current.getMonth()+1).padStart(2,'0');
+    const dd = String(current.getDate()).padStart(2,'0');
+
+    window.location.href = `/wash_list?date=${yyyy}-${mm}-${dd}`;
+}
+</script>
+
+
+<!-- 검색 필터 -->
+<div class="filter-row" style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+
+    <input id="search_input" class="filter-item" style="height:38px; padding:5px 10px;"
+           placeholder="차량번호, 스팟 검색" value="{{ search_input }}">
+
+    <select id="region1" class="filter-item">
+        <option value="">전체 시/도</option>
+        {% for r in region1 %}
+        <option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>
+        {% endfor %}
+    </select>
+
+    <select id="region2" class="filter-item">
+        <option value="">전체 구/군</option>
+        {% for r in region2 %}
+        <option value="{{ r }}" {% if selected_r2 == r %}selected{% endif %}>{{ r }}</option>
+        {% endfor %}
+    </select>
+
+    <select id="org" class="filter-item">
+        <option value="">전체 차량소속</option>
+        {% for o in car_org_list %}
+        <option value="{{ o }}" {% if selected_org == o %}selected{% endif %}>{{ o }}</option>
+        {% endfor %}
+    </select>
+
+    <select id="spot" class="filter-item">
+        <option value="">전체 스팟</option>
+        {% for s in spot_list %}
+        <option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+    </select>
+
+    {% if current_user.role == 'admin' %}
+    <select id="vendor" class="filter-item">
+        <option value="">전체 업체</option>
+        {% for v in vendor_list %}
+        <option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>
+        {% endfor %}
+    </select>
+    {% endif %}
+
+    <button onclick="applyFilter()" style="background:#ff7f32; border:none; padding:0 20px; color:white; font-weight:bold; border-radius:6px;">
+        검색
+    </button>
+
+</div>
+
+<script>
+function applyFilter() {
+    const s = document.getElementById("search_input").value;
+    const r1 = document.getElementById("region1").value;
+    const r2 = document.getElementById("region2").value;
+    const org = document.getElementById("org").value;
+    const sp = document.getElementById("spot").value;
+    const vendor = document.getElementById("vendor") ? document.getElementById("vendor").value : "";
+
+    window.location.href =
+        `/wash_list?date={{ selected_date }}&s=${s}&r1=${r1}&r2=${r2}&org=${org}&spot=${sp}&vendor=${vendor}`;
+}
+</script>
+
+<!-- 테이블 -->
+<div style="overflow-x:auto;">
+<table style="width:100%; border-collapse:collapse;">
+    <thead>
+        <tr style="background:#f7f7f7; font-weight:bold;">
+            <th>순번</th>
+            <th>차량번호</th>
+            <th>차종명</th>
+            <th>차량소속</th>
+            <th>스팟</th>
+            <th>주소</th>
+            <th>시/도</th>
+            <th>구/군</th>
+            <th>업체</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for r in rows %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td><a href="/car_detail/{{ r['id'] }}" class="car-link">{{ r['차량번호'] }}</a></td>
+            <td>{{ r['차종명'] }}</td>
+            <td>{{ r['차량소속'] }}</td>
+            <td>{{ r['스팟'] }}</td>
+            <td>{{ r['주소'] }}</td>
+            <td>{{ r['지역시도'] }}</td>
+            <td>{{ r['지역구군'] }}</td>
+            <td>{{ r['업체'] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+{% endblock %}

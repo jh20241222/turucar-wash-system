@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>업체 관리</h2>
+
+<form method="POST">
+    <input type="text" name="vendor_name" placeholder="업체명 입력">
+    <button>등록</button>
+</form>
+
+<table>
+    <thead>
+        <tr>
+            <th>업체명</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for v in vendors %}
+        <tr>
+            <td>{{ v.name }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

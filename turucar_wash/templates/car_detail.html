@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- 🔥 TURU 스타일 카드형 헤더 -->
+<div style="
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+">
+    <div style="
+        background: #f5f6fa;
+        padding: 20px 30px;
+        border-radius: 16px;
+        text-align: center;
+        box-shadow: 0px 2px 6px rgba(0,0,0,0.07);
+        min-width: 260px;
+        max-width: 90%;
+    ">
+        <div style="font-size: 22px; font-weight: 800; margin-bottom: 8px; color:#222;">
+            세차 상세 입력
+        </div>
+        <div style="font-size: 16px; font-weight: 600; color:#555;">
+            {{ car["차량번호"] }} ({{ car["차종명"] }})
+        </div>
+    </div>
+</div>
+
+
+<style>
+    .form-box {
+        width: 100%;
+        max-width: 700px;
+        background: #fff;
+        padding: 20px 25px;
+        border-radius: 16px;
+        margin: 0 auto;
+        box-shadow: 0px 3px 8px rgba(0,0,0,0.06);
+    }
+
+    .field-title {
+        font-weight: 700;
+        font-size: 15px;
+        margin-bottom: 6px;
+        color: #333;
+    }
+
+    .input-field {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        margin-bottom: 14px;
+        font-size: 15px;
+    }
+
+    .btn-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    .btn-orange {
+        background: #ff7f32;
+        color: #fff;
+        border: none;
+        padding: 12px;
+        font-size: 16px;
+        border-radius: 10px;
+        cursor: pointer;
+        flex: 1;
+    }
+
+    .btn-blue {
+        background: #1f5fff;
+        color: #fff;
+        border: none;
+        padding: 12px;
+        font-size: 16px;
+        border-radius: 10px;
+        cursor: pointer;
+        flex: 1;
+    }
+
+    .btn-gray {
+        background: #e5e6ea;
+        color: #333;
+        border: none;
+        padding: 12px;
+        font-size: 16px;
+        border-radius: 10px;
+        cursor: pointer;
+        flex: 1;
+    }
+
+    @media (max-width: 600px) {
+        .btn-row button { width: 100%; }
+        .input-field { padding: 16px; font-size: 16px; }
+    }
+</style>
+
+
+<div class="form-box">
+
+    <div class="field-title">차량번호</div>
+    <input class="input-field" type="text" value="{{ car['차량번호'] }}" readonly>
+
+    <div class="field-title">차량소속</div>
+    <input class="input-field" type="text" value="{{ car['차량소속'] }}" readonly>
+
+    <div class="field-title">차종명</div>
+    <input class="input-field" type="text" value="{{ car['차종명'] }}" readonly>
+
+    <div class="field-title">스팟명</div>
+    <input class="input-field" type="text" value="{{ car['스팟'] }}" readonly>
+
+
+    <!-- 세차 입력 -->
+    <form action="/wash_complete/{{ car['id'] }}" method="POST">
+
+        <div class="field-title">주행거리</div>
+        <input class="input-field" name="distance" placeholder="예: 12530km">
+
+        <div class="field-title">차량 훼손 부위</div>
+        <textarea class="input-field" name="damage"></textarea>
+
+        <div class="field-title">경고등</div>
+        <textarea class="input-field" name="warning"></textarea>
+
+        <div class="field-title">기타 특이사항</div>
+        <textarea class="input-field" name="etc"></textarea>
+
+        <div class="btn-row">
+            <button type="button" class="btn-gray" onclick="copyInfo()">복사</button>
+            <button type="button" class="btn-blue" onclick="openBand()">밴드 이동</button>
+            <button type="submit" class="btn-orange">세차 완료</button>
+        </div>
+
+    </form>
+</div>
+
+
+<!-- 🔥 정상 스크립트 시작 (중복 제거됨) -->
+<script>
+function copyInfo() {
+    const distance = document.querySelector("input[name='distance']").value || "없음";
+    const damage = document.querySelector("textarea[name='damage']").value || "없음";
+    const warning = document.querySelector("textarea[name='warning']").value || "없음";
+    const etc = document.querySelector("textarea[name='etc']").value || "없음";
+
+    // 🔥 오늘 날짜 MM/DD 자동 생성
+    const today = new Date();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayMD = `${mm}/${dd}`;
+
+    const text =
+        "세차일자: " + todayMD + "\n" +
+        "차량번호: {{ car['차량번호'] }}\n" +
+        "차량소속: {{ car['차량소속'] }}\n" +
+        "차량명: {{ car['차종명'] }}\n" +
+        "스팟명: {{ car['스팟'] }}\n" +
+        `주행거리 (Km): ${distance}\n` +
+        `차량 훼손 부위: ${damage}\n` +
+        `차량 경고등: ${warning}\n` +
+        `기타 특이사항: ${etc}`;
+
+    navigator.clipboard.writeText(text);
+    alert("복사되었습니다!");
+}
+
+
+async function openBand() {
+    try {
+        const response = await fetch("{{ url_for('band_link', id=car['id']) }}");
+        const data = await response.json();
+
+        if (!response.ok || !data.ok || !data.band_link) {
+            alert(data.message || "등록된 밴드 링크가 없습니다.");
+            return;
+        }
+
+        window.open(data.band_link, "_blank");
+    } catch (error) {
+        alert("밴드 링크를 불러오는 중 오류가 발생했습니다.");
+    }
+}
+
+</script>
+
+{% endblock %}

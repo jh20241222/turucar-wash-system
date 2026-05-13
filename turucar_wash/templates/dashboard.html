@@ -1,78 +1,46 @@
 {% extends "base.html" %}
+{% block document_title %}Turu Wash · 홈{% endblock %}
 {% block content %}
-<section class="home-hero app-card elevated">
+<section class="home-hero app-card elevated brand-line-card">
     <div>
-        <p class="eyebrow">TODAY WASH ORDER</p>
-        <h1>오늘 작업할<br>세차 오더</h1>
-        <p class="hero-copy">차량 확인부터 밴드 이동, 완료 기록까지 한 화면에서 처리합니다.</p>
+        <p class="eyebrow">Turu Wash</p>
+        <h1>오늘의 세차관리</h1>
+        <p class="hero-copy">{{ current_user.username }} 계정으로 접속 중입니다. 오더 확인, 완료 처리, 업체별 물량까지 앱처럼 빠르게 확인하세요.</p>
     </div>
     <div class="hero-count">
         <span>{{ total_count }}</span>
-        <small>대기</small>
+        <small>대상</small>
     </div>
 </section>
 
 <section class="stats-grid">
-    <article class="stat-card">
-        <small>대상 차량</small>
-        <strong>{{ total_count }}</strong>
-        <span>현재 배정된 오더</span>
-    </article>
-    <article class="stat-card blue">
-        <small>완료 이력</small>
-        <strong>{{ done_count }}</strong>
-        <span>처리 완료 건수</span>
-    </article>
-    <article class="stat-card dark">
-        <small>내 권한</small>
-        <strong class="role-text">{{ current_user.role }}</strong>
-        <span>{{ current_user.vendor or '전체 권한' }}</span>
-    </article>
+    <article class="stat-card orange"><small>대상 차량</small><strong>{{ total_count }}</strong><span>현재 세차 대상</span></article>
+    <article class="stat-card"><small>완료 이력</small><strong>{{ done_count }}</strong><span>누적 완료 기록</span></article>
+    <article class="stat-card dark"><small>내 권한</small><strong class="role-text">{{ current_user.role }}</strong><span>{% if current_user.vendor %}{{ current_user.vendor }}{% else %}전체 관리{% endif %}</span></article>
 </section>
 
 <section class="quick-actions">
-    <a href="{{ url_for('wash_list') }}" class="quick-card primary">
-        <span class="quick-icon">▣</span>
-        <strong>세차 시작</strong>
-        <small>오늘 오더 보기</small>
-    </a>
-    <a href="{{ url_for('wash_status') }}" class="quick-card">
-        <span class="quick-icon">✓</span>
-        <strong>완료 현황</strong>
-        <small>작업 기록 조회</small>
-    </a>
+    <a class="quick-card primary" href="{{ url_for('wash_list') }}"><span class="quick-icon">▣</span><strong>세차 오더</strong><small>대상 차량 확인</small></a>
+    <a class="quick-card" href="{{ url_for('wash_status') }}"><span class="quick-icon">✓</span><strong>완료 현황</strong><small>작업 기록 조회</small></a>
     {% if current_user.is_master %}
-    <a href="{{ url_for('upload_wash_list') }}" class="quick-card">
-        <span class="quick-icon">⬆</span>
-        <strong>오더 업로드</strong>
-        <small>엑셀 등록</small>
-    </a>
+    <a class="quick-card" href="{{ url_for('upload_wash_list') }}"><span class="quick-icon">↑</span><strong>대상 업로드</strong><small>엑셀 등록</small></a>
+    {% else %}
+    <a class="quick-card" href="{{ url_for('account_manage') if current_user.is_admin else url_for('wash_list') }}"><span class="quick-icon">●</span><strong>{% if current_user.is_admin %}계정/지역{% else %}내 오더{% endif %}</strong><small>관리 바로가기</small></a>
     {% endif %}
 </section>
 
-<section class="app-section">
-    <div class="section-title-row">
-        <div>
-            <p class="eyebrow">VENDOR STATUS</p>
-            <h2>업체별 오더</h2>
-        </div>
+<section class="app-section app-card vendor-list">
+    <div class="section-title-row" style="padding:16px 16px 4px;">
+        <h2>업체별 물량</h2>
+        <span class="soft-badge">대기 기준</span>
     </div>
-
-    <div class="vendor-list app-card">
-        {% for item in vendor_counts %}
-        <div class="vendor-row">
-            <div>
-                <strong>{{ item['업체'] or '업체 미지정' }}</strong>
-                <small>배정 차량</small>
-            </div>
-            <span>{{ item['c'] }}건</span>
-        </div>
-        {% else %}
-        <div class="empty-state compact">
-            <strong>표시할 데이터가 없습니다.</strong>
-            <span>오더를 업로드하면 업체별 건수가 표시됩니다.</span>
-        </div>
-        {% endfor %}
+    {% for item in vendor_counts %}
+    <div class="vendor-row">
+        <div><strong>{{ item['업체'] or '미지정 업체' }}</strong><small>대기 중인 세차 대상</small></div>
+        <span>{{ item['c'] }}건</span>
     </div>
+    {% else %}
+    <div class="empty-state compact"><strong>표시할 데이터가 없습니다.</strong><span>세차 대상 엑셀을 업로드하면 집계됩니다.</span></div>
+    {% endfor %}
 </section>
 {% endblock %}

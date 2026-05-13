@@ -1,139 +1,42 @@
 {% extends "base.html" %}
+{% block document_title %}Turu Wash · {{ car['차량번호'] }}{% endblock %}
 {% block content %}
-<section class="detail-hero app-card elevated">
-    <div>
-        <p class="eyebrow">START WORK</p>
-        <h1>업무 수행 시작</h1>
-        <p class="hero-copy">차량 정보 확인 후 세차 기록을 입력하세요.</p>
-    </div>
+<section class="detail-hero app-card elevated brand-line-card">
+    <div><p class="eyebrow">Start Work</p><h1>업무 수행 시작</h1><p class="hero-copy">차량 정보 확인 후 세차 기록을 입력하세요.</p></div>
     <div class="plate-display">{{ car['차량번호'] }}</div>
 </section>
 
 <section class="detail-grid">
     <article class="vehicle-card app-card">
-        <div class="vehicle-topline">
-            <span class="status-pill waiting">세차 대기</span>
-            <span>{{ car['업체'] or '-' }}</span>
-        </div>
+        <div class="vehicle-topline"><span class="status-pill waiting">세차 대기</span><span>{{ car['업체'] or '-' }}</span></div>
         <h2>{{ car['차량번호'] }}</h2>
-        <p>{{ car['차종명'] }} · {{ car['차량소속'] }}</p>
-
+        <p>{{ car['차종명'] or '-' }} · {{ car['차량소속'] or '-' }}</p>
         <div class="info-list">
-            <div>
-                <small>스팟</small>
-                <strong>{{ car['스팟'] }}</strong>
-            </div>
-            <div>
-                <small>주소</small>
-                <strong>{{ car['주소'] }}</strong>
-            </div>
-            <div>
-                <small>지역</small>
-                <strong>{{ car['지역시도'] }} {{ car['지역구군'] }}</strong>
-            </div>
+            <div><small>스팟</small><strong>{{ car['스팟'] or '-' }}</strong></div>
+            <div><small>주소</small><strong>{{ car['주소'] or '-' }}</strong></div>
+            <div><small>지역</small><strong>{{ car['지역시도'] or '-' }} {{ car['지역구군'] or '' }}</strong></div>
+            <div><small>세차일</small><strong>{{ car['세차일'] or '-' }}</strong></div>
         </div>
     </article>
 
-    <form id="wash-form" action="{{ url_for('wash_complete', id=car['id']) }}" method="POST" class="work-form app-card">
-        <div class="step-title">
-            <span>STEP 01</span>
-            <strong>세차 기록 입력</strong>
-        </div>
-
+    <form id="wash-form" class="work-form app-card" action="{{ url_for('wash_complete', id=car['id']) }}" method="POST">
+        <div class="step-title"><span>01</span><strong>세차 기록 입력</strong></div>
         <label class="field-label" for="distance">주행거리</label>
         <input id="distance" class="app-input" name="distance" inputmode="numeric" placeholder="예: 12530km">
-
         <label class="field-label" for="damage">차량 훼손 부위</label>
-        <textarea id="damage" class="app-input" name="damage" rows="3" placeholder="훼손 부위가 없으면 비워두세요"></textarea>
-
+        <textarea id="damage" class="app-input" name="damage" placeholder="없으면 비워두거나 '없음' 입력"></textarea>
         <label class="field-label" for="warning">경고등</label>
-        <textarea id="warning" class="app-input" name="warning" rows="3" placeholder="경고등 특이사항 입력"></textarea>
-
+        <textarea id="warning" class="app-input" name="warning" placeholder="경고등 내용 입력"></textarea>
         <label class="field-label" for="etc">기타 특이사항</label>
-        <textarea id="etc" class="app-input" name="etc" rows="3" placeholder="현장 특이사항 입력"></textarea>
-
-        <div class="step-title second">
-            <span>STEP 02</span>
-            <strong>공유 후 완료 처리</strong>
-        </div>
-
-        <div class="action-grid sticky-actions">
-            <button type="button" class="secondary-btn" onclick="copyInfo()">내용 복사</button>
-            <button type="button" class="blue-btn" onclick="openBand()">밴드 이동</button>
-            <button type="submit" class="primary-btn">세차 완료</button>
-        </div>
+        <textarea id="etc" class="app-input" name="etc" placeholder="추가로 공유할 내용 입력"></textarea>
+        <div class="sticky-actions"><div class="action-grid"><button type="button" class="secondary-btn" onclick="copyInfo()">복사</button><button type="button" class="blue-btn" onclick="openBand()">밴드</button><button type="submit" class="primary-btn">완료 처리</button></div></div>
     </form>
 </section>
 
 <script>
-function copyInfo() {
-    const distance = document.querySelector("input[name='distance']").value || "없음";
-    const damage = document.querySelector("textarea[name='damage']").value || "없음";
-    const warning = document.querySelector("textarea[name='warning']").value || "없음";
-    const etc = document.querySelector("textarea[name='etc']").value || "없음";
-
-    const today = new Date();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const todayMD = `${mm}/${dd}`;
-
-    const text =
-        "세차일자: " + todayMD + "\n" +
-        "차량번호: {{ car['차량번호'] }}\n" +
-        "차량소속: {{ car['차량소속'] }}\n" +
-        "차량명: {{ car['차종명'] }}\n" +
-        "스팟명: {{ car['스팟'] }}\n" +
-        `주행거리 (Km): ${distance}\n` +
-        `차량 훼손 부위: ${damage}\n` +
-        `차량 경고등: ${warning}\n` +
-        `기타 특이사항: ${etc}`;
-
-    if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(() => {
-            showToast("복사되었습니다.");
-        }).catch(() => fallbackCopy(text));
-    } else {
-        fallbackCopy(text);
-    }
-}
-
-function fallbackCopy(text) {
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.style.position = "fixed";
-    textarea.style.left = "-9999px";
-    document.body.appendChild(textarea);
-    textarea.focus();
-    textarea.select();
-    document.execCommand("copy");
-    document.body.removeChild(textarea);
-    showToast("복사되었습니다.");
-}
-
-function showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'app-toast';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    requestAnimationFrame(() => toast.classList.add('show'));
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 220);
-    }, 1600);
-}
-
-async function openBand() {
-    try {
-        const response = await fetch("{{ url_for('band_link', id=car['id']) }}");
-        const data = await response.json();
-        if (!response.ok || !data.ok || !data.band_link) {
-            alert(data.message || "등록된 밴드 링크가 없습니다.");
-            return;
-        }
-        window.open(data.band_link, "_blank");
-    } catch (error) {
-        alert("밴드 링크를 불러오는 중 오류가 발생했습니다.");
-    }
-}
+const carInfo={number:{{ car['차량번호'] | tojson }},model:{{ car['차종명'] | tojson }},org:{{ car['차량소속'] | tojson }},spot:{{ car['스팟'] | tojson }},address:{{ car['주소'] | tojson }},region1:{{ car['지역시도'] | tojson }},region2:{{ car['지역구군'] | tojson }}};
+async function copyToClipboard(text){if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);return;}const textarea=document.createElement("textarea");textarea.value=text;textarea.style.position="fixed";textarea.style.left="-9999px";document.body.appendChild(textarea);textarea.focus();textarea.select();document.execCommand("copy");document.body.removeChild(textarea);}
+async function copyInfo(){const distance=document.getElementById("distance").value||"없음";const damage=document.getElementById("damage").value||"없음";const warning=document.getElementById("warning").value||"없음";const etc=document.getElementById("etc").value||"없음";const text=[`[세차 완료 공유]`,`차량번호: ${carInfo.number||"-"}`,`차종명: ${carInfo.model||"-"}`,`차량소속: ${carInfo.org||"-"}`,`스팟: ${carInfo.spot||"-"}`,`주소: ${carInfo.address||"-"}`,`지역: ${(carInfo.region1||"-")} ${(carInfo.region2||"")}`,`주행거리: ${distance}`,`훼손: ${damage}`,`경고등: ${warning}`,`특이사항: ${etc}`].join("\n");await copyToClipboard(text).catch(()=>null);alert("복사되었습니다.");}
+async function openBand(){try{const response=await fetch("{{ url_for('band_link', id=car['id']) }}");const data=await response.json();if(!response.ok||!data.ok||!data.band_link){alert(data.message||"등록된 밴드 링크가 없습니다.");return;}window.open(data.band_link,"_blank","noopener");}catch(error){alert("밴드 링크를 불러오는 중 오류가 발생했습니다.");}}
 </script>
 {% endblock %}

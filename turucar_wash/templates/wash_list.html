@@ -1,168 +1,45 @@
 {% extends "base.html" %}
+{% block document_title %}Turu Wash · 세차 오더{% endblock %}
 {% block content %}
-<section class="order-hero app-card elevated">
+<section class="order-hero app-card elevated brand-line-card">
     <div>
-        <p class="eyebrow">WASH ORDER</p>
+        <p class="eyebrow">Wash Order</p>
         <h1>세차 오더</h1>
         <p class="hero-copy">배정된 차량을 선택하고 세차 기록을 시작하세요.</p>
     </div>
     <div class="date-controller">
         <button type="button" onclick="moveDate(-1)" aria-label="이전 날짜">‹</button>
-        <div>
-            <small>작업일</small>
-            <strong id="date-display">{{ selected_date }}</strong>
-        </div>
+        <div><small>작업일</small><strong id="date-display">{{ selected_date }}</strong></div>
         <button type="button" onclick="moveDate(1)" aria-label="다음 날짜">›</button>
     </div>
 </section>
 
 <section class="filter-card app-card">
-    <div class="filter-head">
-        <div>
-            <strong>오더 검색</strong>
-            <small>차량번호, 지역, 업체로 필터링</small>
-        </div>
-        <span>{{ rows|length }}건</span>
-    </div>
-
+    <div class="filter-head"><div><strong>오더 검색</strong><small>차량번호, 스팟, 지역, 업체 기준으로 좁혀보세요.</small></div><span>{{ rows|length }}대</span></div>
     <div class="filter-grid">
-        <input id="search_input" class="app-input" placeholder="차량번호, 스팟 검색" value="{{ search_input }}">
-
-        <select id="region1" class="app-input">
-            <option value="">전체 시/도</option>
-            {% for r in region1 %}
-            <option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>
-            {% endfor %}
-        </select>
-
-        <select id="region2" class="app-input">
-            <option value="">전체 구/군</option>
-            {% for r in region2 %}
-            <option value="{{ r }}" {% if selected_r2 == r %}selected{% endif %}>{{ r }}</option>
-            {% endfor %}
-        </select>
-
-        <select id="org" class="app-input">
-            <option value="">전체 차량소속</option>
-            {% for o in car_org_list %}
-            <option value="{{ o }}" {% if selected_org == o %}selected{% endif %}>{{ o }}</option>
-            {% endfor %}
-        </select>
-
-        <select id="spot" class="app-input">
-            <option value="">전체 스팟</option>
-            {% for s in spot_list %}
-            <option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>
-            {% endfor %}
-        </select>
-
-        {% if current_user.is_master %}
-        <select id="vendor" class="app-input">
-            <option value="">전체 업체</option>
-            {% for v in vendor_list %}
-            <option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>
-            {% endfor %}
-        </select>
-        {% endif %}
-
+        <input id="search_input" class="app-input" placeholder="차량번호 또는 스팟 검색" value="{{ search_input }}">
+        <select id="region1" class="app-input"><option value="">전체 시/도</option>{% for r in region1 %}<option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
+        <select id="region2" class="app-input"><option value="">전체 구/군</option>{% for r in region2 %}<option value="{{ r }}" {% if selected_r2 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
+        <select id="org" class="app-input"><option value="">전체 차량소속</option>{% for o in car_org_list %}<option value="{{ o }}" {% if selected_org == o %}selected{% endif %}>{{ o }}</option>{% endfor %}</select>
+        <select id="spot" class="app-input"><option value="">전체 스팟</option>{% for s in spot_list %}<option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+        {% if current_user.is_master %}<select id="vendor" class="app-input"><option value="">전체 업체</option>{% for v in vendor_list %}<option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>{% endif %}
         <button type="button" onclick="applyFilter()" class="primary-btn">검색</button>
     </div>
 </section>
 
-<section class="mobile-order-list">
-    {% for r in rows %}
-    <a href="{{ url_for('car_detail', id=r['id']) }}" class="order-card-link">
-        <article class="order-card">
-            <div class="order-card-head">
-                <span class="status-pill waiting">대기</span>
-                <span class="order-vendor">{{ r['업체'] or '-' }}</span>
-            </div>
-            <div class="car-number">{{ r['차량번호'] }}</div>
-            <div class="car-subline">{{ r['차종명'] }} · {{ r['차량소속'] }}</div>
-            <div class="spot-box">
-                <strong>{{ r['스팟'] }}</strong>
-                <span>{{ r['주소'] }}</span>
-            </div>
-            <div class="order-tags">
-                <span>{{ r['지역시도'] }}</span>
-                <span>{{ r['지역구군'] }}</span>
-            </div>
-            <div class="card-action-row">
-                <b>업무 수행 시작</b>
-                <span>›</span>
-            </div>
-        </article>
-    </a>
-    {% else %}
-    <div class="empty-state app-card">
-        <strong>해당 날짜의 오더가 없습니다.</strong>
-        <span>날짜를 바꾸거나 필터를 초기화해 주세요.</span>
-    </div>
-    {% endfor %}
+<section class="desktop-table table-panel app-card">
+    <div class="table-title-row"><h2>대상 차량</h2><span>{{ rows|length }}대</span></div>
+    <div class="table-scroll"><table><thead><tr><th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th><th>지역</th><th>업체</th><th>세차일</th></tr></thead><tbody>
+        {% for r in rows %}<tr><td><a class="car-link" href="{{ url_for('car_detail', id=r['id']) }}">{{ r['차량번호'] }}</a></td><td>{{ r['차종명'] or '-' }}</td><td>{{ r['차량소속'] or '-' }}</td><td>{{ r['스팟'] or '-' }}</td><td>{{ r['지역시도'] or '-' }} {{ r['지역구군'] or '' }}</td><td>{{ r['업체'] or '-' }}</td><td>{{ r['세차일'] or selected_date }}</td></tr>{% else %}<tr><td colspan="7" class="empty-cell">해당 날짜에 세차 대상이 없습니다.</td></tr>{% endfor %}
+    </tbody></table></div>
 </section>
 
-<section class="table-panel desktop-table app-card">
-    <div class="table-title-row">
-        <strong>세차 대상 리스트</strong>
-        <span>{{ rows|length }}건</span>
-    </div>
-    <div class="table-scroll">
-        <table>
-            <thead>
-                <tr>
-                    <th>순번</th>
-                    <th>차량번호</th>
-                    <th>차종명</th>
-                    <th>차량소속</th>
-                    <th>스팟</th>
-                    <th>주소</th>
-                    <th>시/도</th>
-                    <th>구/군</th>
-                    <th>업체</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in rows %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td><a href="{{ url_for('car_detail', id=r['id']) }}" class="car-link">{{ r['차량번호'] }}</a></td>
-                    <td>{{ r['차종명'] }}</td>
-                    <td>{{ r['차량소속'] }}</td>
-                    <td>{{ r['스팟'] }}</td>
-                    <td>{{ r['주소'] }}</td>
-                    <td>{{ r['지역시도'] }}</td>
-                    <td>{{ r['지역구군'] }}</td>
-                    <td>{{ r['업체'] }}</td>
-                </tr>
-                {% else %}
-                <tr><td colspan="9" class="empty-cell">표시할 데이터가 없습니다.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<section class="mobile-order-list">
+    {% for r in rows %}<a href="{{ url_for('car_detail', id=r['id']) }}" class="order-card-link"><article class="order-card"><div class="order-card-head"><span class="status-pill waiting">대기</span><span class="order-vendor">{{ r['업체'] or '-' }}</span></div><div class="car-number">{{ r['차량번호'] }}</div><p class="car-subline">{{ r['차종명'] or '-' }} · {{ r['차량소속'] or '-' }}</p><div class="spot-box"><strong>{{ r['스팟'] or '-' }}</strong><span>{{ r['주소'] or '-' }}</span></div><div class="order-tags"><span>{{ r['지역시도'] or '-' }} {{ r['지역구군'] or '' }}</span><span>{{ r['세차일'] or selected_date }}</span></div><div class="card-action-row"><b>상세 입력으로 이동</b><span>›</span></div></article></a>{% else %}<div class="empty-state"><strong>세차 대상이 없습니다.</strong><span>날짜를 바꾸거나 필터를 초기화해보세요.</span></div>{% endfor %}
 </section>
 
 <script>
-function moveDate(days) {
-    const current = new Date("{{ selected_date }}");
-    current.setDate(current.getDate() + days);
-    const yyyy = current.getFullYear();
-    const mm = String(current.getMonth() + 1).padStart(2, '0');
-    const dd = String(current.getDate()).padStart(2, '0');
-    window.location.href = `/wash_list?date=${yyyy}-${mm}-${dd}`;
-}
-
-function applyFilter() {
-    const params = new URLSearchParams({
-        date: "{{ selected_date }}",
-        s: document.getElementById("search_input").value,
-        r1: document.getElementById("region1").value,
-        r2: document.getElementById("region2").value,
-        org: document.getElementById("org").value,
-        spot: document.getElementById("spot").value,
-        vendor: document.getElementById("vendor") ? document.getElementById("vendor").value : ""
-    });
-    window.location.href = `/wash_list?${params.toString()}`;
-}
+function moveDate(days){const current=new Date("{{ selected_date }}");current.setDate(current.getDate()+days);const yyyy=current.getFullYear();const mm=String(current.getMonth()+1).padStart(2,'0');const dd=String(current.getDate()).padStart(2,'0');window.location.href=`/wash_list?date=${yyyy}-${mm}-${dd}`;}
+function applyFilter(){const params=new URLSearchParams({date:"{{ selected_date }}",s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:""});window.location.href=`/wash_list?${params.toString()}`;}
 </script>
 {% endblock %}

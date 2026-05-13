@@ -1,181 +1,31 @@
 {% extends "base.html" %}
+{% block document_title %}Turu Wash · 완료 현황{% endblock %}
 {% block content %}
-<section class="status-hero app-card elevated">
-    <div>
-        <p class="eyebrow">COMPLETED LOG</p>
-        <h1>세차 완료 현황</h1>
-        <p class="hero-copy">완료된 세차 이력을 검색하고 엑셀로 내려받을 수 있습니다.</p>
-    </div>
-    <div class="hero-count done">
-        <span>{{ rows|length }}</span>
-        <small>조회</small>
-    </div>
+<section class="status-hero app-card elevated brand-line-card">
+    <div><p class="eyebrow">Completed Log</p><h1>세차 완료 현황</h1><p class="hero-copy">완료된 세차 이력을 검색하고 엑셀로 내려받을 수 있습니다.</p></div>
+    <div class="hero-count done"><span>{{ rows|length }}</span><small>조회</small></div>
 </section>
 
 <section class="filter-card app-card">
-    <div class="filter-head">
-        <div>
-            <strong>완료 이력 검색</strong>
-            <small>차량, 지역, 기간으로 조회</small>
-        </div>
-        <span>{{ rows|length }}건</span>
-    </div>
-
+    <div class="filter-head"><div><strong>완료 이력 검색</strong><small>차량, 지역, 기간으로 조회</small></div><span>{{ rows|length }}건</span></div>
     <div class="filter-grid status-filter-grid">
-        <input type="text" id="search_input" class="app-input" placeholder="차량번호, 스팟 검색" value="{{ search_input }}">
-
-        <select id="region1" class="app-input">
-            <option value="">전체 시/도</option>
-            {% for r in region1 %}
-            <option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>
-            {% endfor %}
-        </select>
-
-        <select id="region2" class="app-input">
-            <option value="">전체 구/군</option>
-            {% for r in region2 %}
-            <option value="{{ r }}" {% if selected_r2 == r %}selected{% endif %}>{{ r }}</option>
-            {% endfor %}
-        </select>
-
-        <select id="car_org" class="app-input">
-            <option value="">전체 차량소속</option>
-            {% for o in car_org_list %}
-            <option value="{{ o }}" {% if selected_org == o %}selected{% endif %}>{{ o }}</option>
-            {% endfor %}
-        </select>
-
-        <select id="spot" class="app-input">
-            <option value="">전체 스팟</option>
-            {% for s in spot_list %}
-            <option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>
-            {% endfor %}
-        </select>
-
-        {% if current_user.is_master %}
-        <select id="vendor" class="app-input">
-            <option value="">전체 업체</option>
-            {% for v in vendor_list %}
-            <option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>
-            {% endfor %}
-        </select>
-        {% endif %}
-
-        <input type="date" id="start" class="app-input" value="{{ start }}">
-        <input type="date" id="end" class="app-input" value="{{ end }}">
-        <button type="button" onclick="applyFilter()" class="primary-btn">검색</button>
-        <button type="button" class="blue-btn" onclick="downloadExcel()">엑셀</button>
+        <input type="text" id="search_input" class="app-input" placeholder="차량번호 또는 스팟 검색" value="{{ search_input }}">
+        <select id="region1" class="app-input"><option value="">전체 시/도</option>{% for r in region1 %}<option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
+        <select id="region2" class="app-input"><option value="">전체 구/군</option>{% for r in region2 %}<option value="{{ r }}" {% if selected_r2 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
+        <select id="car_org" class="app-input"><option value="">전체 차량소속</option>{% for o in car_org_list %}<option value="{{ o }}" {% if selected_org == o %}selected{% endif %}>{{ o }}</option>{% endfor %}</select>
+        <select id="spot" class="app-input"><option value="">전체 스팟</option>{% for s in spot_list %}<option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+        {% if current_user.is_master %}<select id="vendor" class="app-input"><option value="">전체 업체</option>{% for v in vendor_list %}<option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>{% endif %}
+        <input type="date" id="start" class="app-input" value="{{ start }}"><input type="date" id="end" class="app-input" value="{{ end }}"><button type="button" onclick="applyFilter()" class="primary-btn">검색</button><button type="button" onclick="downloadExcel()" class="blue-btn">엑셀</button>
     </div>
 </section>
 
-<section class="mobile-history-list">
-    {% for r in rows %}
-    <article class="history-card app-card">
-        <div class="history-head">
-            <span class="status-pill done">완료</span>
-            <strong>{{ r['세차완료일'] }}</strong>
-        </div>
-        <div class="car-number small">{{ r['차량번호'] }}</div>
-        <p>{{ r['차종명'] }} · {{ r['차량소속'] }}</p>
-        <div class="spot-box compact">
-            <strong>{{ r['스팟'] }}</strong>
-            <span>{{ r['주소'] }}</span>
-        </div>
-        <div class="history-meta-grid">
-            <div><small>주행거리</small><b>{{ r['주행거리'] or '-' }}</b></div>
-            <div><small>작업자</small><b>{{ r['작업자'] or '-' }}</b></div>
-            <div><small>업체</small><b>{{ r['업체'] or '-' }}</b></div>
-            <div><small>지역</small><b>{{ r['지역시도'] }} {{ r['지역구군'] }}</b></div>
-        </div>
-        {% if r['훼손'] or r['경고등'] or r['특이사항'] %}
-        <div class="note-box">
-            {% if r['훼손'] %}<span>훼손: {{ r['훼손'] }}</span>{% endif %}
-            {% if r['경고등'] %}<span>경고등: {{ r['경고등'] }}</span>{% endif %}
-            {% if r['특이사항'] %}<span>특이사항: {{ r['특이사항'] }}</span>{% endif %}
-        </div>
-        {% endif %}
-    </article>
-    {% else %}
-    <div class="empty-state app-card">
-        <strong>조회된 완료 이력이 없습니다.</strong>
-        <span>검색 조건을 바꿔 다시 조회해 주세요.</span>
-    </div>
-    {% endfor %}
-</section>
+<section class="desktop-table table-panel app-card"><div class="table-title-row"><h2>완료 기록</h2><span>{{ rows|length }}건</span></div><div class="table-scroll"><table><thead><tr><th>완료일</th><th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th><th>작업자</th><th>업체</th></tr></thead><tbody>{% for r in rows %}<tr><td>{{ r['세차완료일'] or '-' }}</td><td>{{ r['차량번호'] }}</td><td>{{ r['차종명'] or '-' }}</td><td>{{ r['차량소속'] or '-' }}</td><td>{{ r['스팟'] or '-' }}</td><td>{{ r['작업자'] or '-' }}</td><td>{{ r['업체'] or '-' }}</td></tr>{% else %}<tr><td colspan="7" class="empty-cell">완료 내역이 없습니다.</td></tr>{% endfor %}</tbody></table></div></section>
 
-<section class="table-panel desktop-table app-card">
-    <div class="table-title-row">
-        <strong>완료된 세차 내역</strong>
-        <span>{{ rows|length }}건</span>
-    </div>
-    <div class="table-scroll">
-        <table>
-            <thead>
-                <tr>
-                    <th>순번</th>
-                    <th>차량번호</th>
-                    <th>차종명</th>
-                    <th>차량소속</th>
-                    <th>스팟</th>
-                    <th>주소</th>
-                    <th>시/도</th>
-                    <th>구/군</th>
-                    <th>업체</th>
-                    <th>세차완료일</th>
-                    <th>주행거리</th>
-                    <th>훼손</th>
-                    <th>경고등</th>
-                    <th>특이사항</th>
-                    <th>작업자</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in rows %}
-                <tr>
-                    <td>{{ r['id'] }}</td>
-                    <td>{{ r['차량번호'] }}</td>
-                    <td>{{ r['차종명'] }}</td>
-                    <td>{{ r['차량소속'] }}</td>
-                    <td>{{ r['스팟'] }}</td>
-                    <td>{{ r['주소'] }}</td>
-                    <td>{{ r['지역시도'] }}</td>
-                    <td>{{ r['지역구군'] }}</td>
-                    <td>{{ r['업체'] }}</td>
-                    <td>{{ r['세차완료일'] }}</td>
-                    <td>{{ r['주행거리'] }}</td>
-                    <td>{{ r['훼손'] }}</td>
-                    <td>{{ r['경고등'] }}</td>
-                    <td>{{ r['특이사항'] }}</td>
-                    <td>{{ r['작업자'] }}</td>
-                </tr>
-                {% else %}
-                <tr><td colspan="15" class="empty-cell">표시할 데이터가 없습니다.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</section>
+<section class="mobile-history-list">{% for r in rows %}<article class="history-card"><div class="history-head"><span class="status-pill done">완료</span><strong>{{ r['세차완료일'] or '-' }}</strong></div><div class="car-number small">{{ r['차량번호'] }}</div><p>{{ r['차종명'] or '-' }} · {{ r['차량소속'] or '-' }}</p><div class="spot-box compact"><strong>{{ r['스팟'] or '-' }}</strong><span>{{ r['주소'] or '-' }}</span></div><div class="history-meta-grid"><div><small>주행거리</small><strong>{{ r['주행거리'] or '-' }}</strong></div><div><small>작업자</small><strong>{{ r['작업자'] or '-' }}</strong></div><div><small>훼손</small><strong>{{ r['훼손'] or '-' }}</strong></div><div><small>경고등</small><strong>{{ r['경고등'] or '-' }}</strong></div></div>{% if r['특이사항'] %}<div class="note-box"><small>특이사항</small><span>{{ r['특이사항'] }}</span></div>{% endif %}</article>{% else %}<div class="empty-state"><strong>완료 내역이 없습니다.</strong><span>검색 조건을 바꿔보세요.</span></div>{% endfor %}</section>
 
 <script>
-function buildStatusParams() {
-    return new URLSearchParams({
-        s: document.getElementById("search_input").value,
-        r1: document.getElementById("region1").value,
-        r2: document.getElementById("region2").value,
-        org: document.getElementById("car_org").value,
-        spot: document.getElementById("spot").value,
-        vendor: document.getElementById("vendor") ? document.getElementById("vendor").value : "",
-        start: document.getElementById("start").value,
-        end: document.getElementById("end").value
-    });
-}
-
-function applyFilter() {
-    window.location.href = `/wash_status?${buildStatusParams().toString()}`;
-}
-
-function downloadExcel() {
-    window.location.href = `/wash_status_excel?${buildStatusParams().toString()}`;
-}
+function buildStatusParams(){return new URLSearchParams({s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("car_org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:"",start:document.getElementById("start").value,end:document.getElementById("end").value});}
+function applyFilter(){window.location.href=`/wash_status?${buildStatusParams().toString()}`;}
+function downloadExcel(){window.location.href=`/wash_status_excel?${buildStatusParams().toString()}`;}
 </script>
 {% endblock %}

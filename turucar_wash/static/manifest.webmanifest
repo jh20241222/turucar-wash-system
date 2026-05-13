@@ -1,17 +1,23 @@
 {
   "id": "/",
-  "name": "TURU Wash - 세차 오더 앱",
-  "short_name": "TURU Wash",
-  "description": "TURU CAR 세차 오더 확인, 밴드 이동, 완료 기록을 위한 현장용 앱",
+  "name": "Turu Wash - 세차 오더 앱",
+  "short_name": "Turu Wash",
+  "description": "Turu Wash 세차 오더 확인, 밴드 이동, 완료 기록을 위한 현장용 앱",
   "lang": "ko-KR",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait-primary",
-  "background_color": "#07111f",
-  "theme_color": "#101c2f",
-  "categories": ["productivity", "business"],
+  "background_color": "#212121",
+  "theme_color": "#212121",
+  "categories": [
+    "productivity",
+    "business"
+  ],
   "icons": [
     {
       "src": "/static/img/icons/icon-192.png",

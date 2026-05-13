@@ -3,10 +3,12 @@
 <main class="login-screen">
     <section class="phone-frame login-card">
         <div class="login-hero">
-            <div class="brand-mark login-mark">TW</div>
-            <p class="eyebrow">TURU CAR WASH</p>
-            <h1>세차 오더를<br>앱처럼 빠르게</h1>
-            <p>Railway 서버와 연결된 현장용 세차 관리 앱입니다.</p>
+            <div class="login-brand-lockup">
+                <img src="{{ url_for('static', filename='img/turu_wash_lockup_white.png') }}" alt="Turu Wash">
+            </div>
+            <p class="eyebrow">FIELD WASH ORDER</p>
+            <h1>세차 오더를<br>한 번에 처리</h1>
+            <p>Railway 서버와 연결된 Turu Wash 현장 관리 앱입니다.</p>
         </div>
 
         <form method="POST" class="login-form">

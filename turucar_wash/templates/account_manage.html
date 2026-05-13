@@ -1,224 +1,45 @@
 {% extends "base.html" %}
+{% block document_title %}Turu Wash · 계정/지역{% endblock %}
 {% block content %}
+<section class="page-hero app-card elevated brand-line-card">
+    <div><p class="eyebrow">Account Control</p><h1>계정/지역 관리</h1><p class="hero-copy">작업자 계정과 담당 지역을 Turu Wash 운영 화면에서 한 번에 설정합니다.</p></div>
+    <div class="hero-chip-stack"><span>{{ accounts|length }}</span><strong>계정</strong></div>
+</section>
 
-<style>
-.page-grid { display:grid; grid-template-columns: 1.1fr 0.9fr; gap:20px; }
-.card-box { background:#fff; border:1px solid #ececec; border-radius:16px; padding:22px; box-shadow:0 2px 10px rgba(0,0,0,0.04); }
-.form-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
-.form-grid input, .form-grid select { height:40px; padding:0 12px; border:1px solid #d9d9d9; border-radius:8px; }
-.btn-main { height:42px; border:none; border-radius:8px; background:#ff7f32; color:#fff; font-weight:700; cursor:pointer; }
-.btn-sub { height:34px; border:none; border-radius:8px; background:#f1f3f5; color:#333; font-weight:700; cursor:pointer; padding:0 12px; }
-.btn-del { height:34px; border:none; border-radius:8px; background:#fff1f0; color:#d4380d; font-weight:700; cursor:pointer; padding:0 12px; }
-.table-wrap { overflow-x:auto; margin-top:16px; }
-table { width:100%; border-collapse:collapse; }
-th, td { border-bottom:1px solid #eee; padding:10px 8px; text-align:left; font-size:14px; vertical-align:middle; }
-th { background:#fafafa; }
-.badge { display:inline-block; padding:4px 10px; border-radius:999px; background:#fff4ec; color:#c76423; font-size:12px; font-weight:700; }
-.inline-form { display:inline; }
-@media (max-width: 900px) {
-  .page-grid, .form-grid { grid-template-columns: 1fr; }
-}
-</style>
-
-<div style="margin-bottom:20px;">
-    <h2 style="margin:0 0 8px 0;">계정 / 지역 관리</h2>
-    <div style="color:#666; font-size:14px;">
-        {% if current_user.is_master %}
-            마스터 계정은 전체 admin/하위 계정을 관리할 수 있습니다.
-        {% else %}
-            admin 계정은 본인 업체 하위 계정을 만들고, 계정별 담당 지역을 추가/삭제할 수 있습니다.
-        {% endif %}
-    </div>
-</div>
-
-<div class="page-grid">
-    <div class="card-box">
-        <h3 style="margin-top:0;">아이디 생성</h3>
-        <form method="POST">
+<section class="manager-grid">
+    <article class="admin-card app-card">
+        <div class="admin-card-head"><div><p class="eyebrow">01 Create Account</p><h2>아이디 생성</h2></div><span class="badge">신규</span></div>
+        <form method="POST" class="stack-form">
             <input type="hidden" name="action" value="create_account">
-            <div class="form-grid">
-                <input type="text" name="username" placeholder="아이디" required>
-                <input type="password" name="password" placeholder="비밀번호" required>
-
-                {% if current_user.is_master %}
-                <select name="role">
-                    <option value="admin">admin 계정</option>
-                    <option value="staff">하위 계정</option>
-                </select>
-                <select name="vendor" required>
-                    <option value="">업체 선택</option>
-                    {% for v in vendors %}
-                    <option value="{{ v.name }}">{{ v.name }}</option>
-                    {% endfor %}
-                </select>
-                {% else %}
-                <input type="text" value="하위 계정" readonly>
-                <input type="text" value="{{ current_user.vendor }}" readonly>
-                {% endif %}
-
-                <select name="city" id="create_city">
-                    <option value="">초기 시/도 선택(선택)</option>
-                    {% for city in city_options %}
-                    <option value="{{ city }}">{{ city }}</option>
-                    {% endfor %}
-                </select>
-                <select name="district" id="create_district">
-                    <option value="">초기 구/군 선택(선택)</option>
-                </select>
-            </div>
-            <div style="margin-top:14px;">
-                <button class="btn-main">계정 등록</button>
-            </div>
+            <div class="form-grid two"><div><label class="field-label">아이디</label><input type="text" name="username" class="app-input" placeholder="아이디" required></div><div><label class="field-label">비밀번호</label><input type="password" name="password" class="app-input" placeholder="비밀번호" required></div></div>
+            {% if current_user.is_master %}
+            <div class="form-grid two"><div><label class="field-label">권한</label><select name="role" class="app-input"><option value="admin">admin 계정</option><option value="staff">하위 계정</option></select></div><div><label class="field-label">업체</label><select name="vendor" class="app-input" required><option value="">업체 선택</option>{% for v in vendors %}<option value="{{ v.name }}">{{ v.name }}</option>{% endfor %}</select></div></div>
+            {% else %}
+            <div class="form-grid two"><div><label class="field-label">권한</label><input type="text" class="app-input" value="하위 계정" readonly></div><div><label class="field-label">업체</label><input type="text" class="app-input" value="{{ current_user.vendor }}" readonly></div></div>
+            {% endif %}
+            <div class="form-grid two"><div><label class="field-label">초기 시/도</label><select name="city" id="create_city" class="app-input"><option value="">시/도 선택(선택)</option>{% for city in city_options %}<option value="{{ city }}">{{ city }}</option>{% endfor %}</select></div><div><label class="field-label">초기 구/군</label><select name="district" id="create_district" class="app-input"><option value="">구/군 선택(선택)</option></select></div></div>
+            <button class="primary-btn tall full" type="submit">계정 등록</button>
         </form>
+    </article>
 
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>아이디</th>
-                        <th>권한</th>
-                        <th>업체</th>
-                        <th>소속 구조</th>
-                        <th>관리</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for a in accounts %}
-                    <tr>
-                        <td>{{ a.username }}</td>
-                        <td><span class="badge">{{ a.role }}</span></td>
-                        <td>{{ a.vendor or '-' }}</td>
-                        <td>
-                            {% if a.role == 'master' %}
-                                최상위
-                            {% elif a.role == 'admin' %}
-                                업체 관리자
-                            {% else %}
-                                하위 계정
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if a.role != 'master' %}
-                                {% if current_user.is_master or (a.role == 'staff' and a.parent_id == current_user.id) %}
-                                <form method="POST" class="inline-form" onsubmit="return confirm('정말 이 계정을 삭제할까요?');">
-                                    <input type="hidden" name="action" value="delete_account">
-                                    <input type="hidden" name="delete_username" value="{{ a.username }}">
-                                    <button type="submit" class="btn-del">계정 삭제</button>
-                                </form>
-                                {% else %}
-                                -
-                                {% endif %}
-                            {% else %}
-                            -
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="card-box">
-        <h3 style="margin-top:0;">지역 추가 / 삭제</h3>
-        <form method="POST">
+    <article class="admin-card app-card">
+        <div class="admin-card-head"><div><p class="eyebrow">02 Assign Region</p><h2>지역 추가</h2></div><span class="badge">권한</span></div>
+        <form method="POST" class="stack-form">
             <input type="hidden" name="action" value="assign_region">
-            <div class="form-grid">
-                <select name="region_username" required>
-                    <option value="">계정 선택</option>
-                    {% for a in creatable_accounts %}
-                    <option value="{{ a.username }}">{{ a.username }}{% if a.vendor %} ({{ a.vendor }}){% endif %}</option>
-                    {% endfor %}
-                </select>
-                <div></div>
-                <select name="region_city" id="assign_city" required>
-                    <option value="">시/도 선택</option>
-                    {% for city in city_options %}
-                    <option value="{{ city }}">{{ city }}</option>
-                    {% endfor %}
-                </select>
-                <select name="region_district" id="assign_district" required>
-                    <option value="">구/군 선택</option>
-                </select>
-            </div>
-            <div style="margin-top:14px;">
-                <button class="btn-main">지역 등록</button>
-            </div>
+            <label class="field-label">계정</label><select name="region_username" class="app-input" required><option value="">계정 선택</option>{% for a in creatable_accounts %}<option value="{{ a.username }}">{{ a.username }}{% if a.vendor %} · {{ a.vendor }}{% endif %}</option>{% endfor %}</select>
+            <div class="form-grid two"><div><label class="field-label">시/도</label><select name="region_city" id="assign_city" class="app-input" required><option value="">시/도 선택</option>{% for city in city_options %}<option value="{{ city }}">{{ city }}</option>{% endfor %}</select></div><div><label class="field-label">구/군</label><select name="region_district" id="assign_district" class="app-input" required><option value="">구/군 선택</option></select></div></div>
+            <button class="blue-btn tall full" type="submit">지역 등록</button>
         </form>
+    </article>
+</section>
 
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>계정</th>
-                        <th>권한</th>
-                        <th>업체</th>
-                        <th>시/도</th>
-                        <th>구/군</th>
-                        <th>관리</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for r in region_list %}
-                    <tr>
-                        <td>{{ r.username }}</td>
-                        <td>{{ r.role }}</td>
-                        <td>{{ r.vendor }}</td>
-                        <td>{{ r.city }}</td>
-                        <td>{{ r.district }}</td>
-                        <td>
-                            {% if current_user.is_master or (r.parent_id == current_user.id) %}
-                            <form method="POST" class="inline-form" onsubmit="return confirm('이 지역 권한을 삭제할까요?');">
-                                <input type="hidden" name="action" value="delete_region">
-                                <input type="hidden" name="region_id" value="{{ r.id }}">
-                                <button type="submit" class="btn-del">지역 삭제</button>
-                            </form>
-                            {% else %}
-                            -
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="6" style="text-align:center; color:#888;">등록된 지역이 없습니다.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+<section class="app-section table-panel app-card"><div class="table-title-row"><h2>계정 목록</h2><span>{{ accounts|length }}개</span></div><div class="table-wrap"><table><thead><tr><th>계정</th><th>권한</th><th>업체</th><th>소속 구조</th><th>관리</th></tr></thead><tbody>{% for a in accounts %}<tr><td>{{ a.username }}</td><td><span class="badge">{{ a.role }}</span></td><td>{{ a.vendor or '-' }}</td><td>{% if a.role == 'master' %}최상위{% elif a.role == 'admin' %}업체 관리자{% else %}하위 계정{% endif %}</td><td>{% if a.role != 'master' and (current_user.is_master or (a.role == 'staff' and a.parent_id == current_user.id)) %}<form method="POST" class="inline-form" onsubmit="return confirm('정말 이 계정을 삭제할까요?');"><input type="hidden" name="action" value="delete_account"><input type="hidden" name="delete_username" value="{{ a.username }}"><button type="submit" class="btn-del">삭제</button></form>{% else %}-{% endif %}</td></tr>{% else %}<tr><td colspan="5" class="empty-cell">계정이 없습니다.</td></tr>{% endfor %}</tbody></table></div></section>
+
+<section class="app-section table-panel app-card"><div class="table-title-row"><h2>지역 권한</h2><span>{{ region_list|length }}개</span></div><div class="table-wrap"><table><thead><tr><th>계정</th><th>권한</th><th>업체</th><th>시/도</th><th>구/군</th><th>관리</th></tr></thead><tbody>{% for r in region_list %}<tr><td>{{ r.username }}</td><td>{{ r.role }}</td><td>{{ r.vendor or '-' }}</td><td>{{ r.city }}</td><td>{{ r.district }}</td><td>{% if current_user.is_master or (r.parent_id == current_user.id) %}<form method="POST" class="inline-form" onsubmit="return confirm('이 지역 권한을 삭제할까요?');"><input type="hidden" name="action" value="delete_region"><input type="hidden" name="region_id" value="{{ r.id }}"><button type="submit" class="btn-del">삭제</button></form>{% else %}-{% endif %}</td></tr>{% else %}<tr><td colspan="6" class="empty-cell">등록된 지역이 없습니다.</td></tr>{% endfor %}</tbody></table></div></section>
 
 <script>
-const regionMap = {{ region_map | tojson }};
-
-function bindRegionSelect(cityId, districtId) {
-    const citySelect = document.getElementById(cityId);
-    const districtSelect = document.getElementById(districtId);
-    if (!citySelect || !districtSelect) return;
-
-    function renderDistricts() {
-        const city = citySelect.value;
-        const districts = regionMap[city] || [];
-        districtSelect.innerHTML = '';
-        const defaultOption = document.createElement('option');
-        defaultOption.value = '';
-        defaultOption.textContent = districtId === 'create_district' ? '초기 구/군 선택(선택)' : '구/군 선택';
-        districtSelect.appendChild(defaultOption);
-        districts.forEach((district) => {
-            const option = document.createElement('option');
-            option.value = district;
-            option.textContent = district;
-            districtSelect.appendChild(option);
-        });
-    }
-
-    citySelect.addEventListener('change', renderDistricts);
-    renderDistricts();
-}
-
-bindRegionSelect('create_city', 'create_district');
-bindRegionSelect('assign_city', 'assign_district');
+const regionMap={{ region_map | tojson }};
+function bindRegionSelect(cityId,districtId){const citySelect=document.getElementById(cityId);const districtSelect=document.getElementById(districtId);if(!citySelect||!districtSelect)return;function renderDistricts(){const city=citySelect.value;const districts=regionMap[city]||[];districtSelect.innerHTML="";const defaultOption=document.createElement("option");defaultOption.value="";defaultOption.textContent=districtId==="create_district"?"구/군 선택(선택)":"구/군 선택";districtSelect.appendChild(defaultOption);districts.forEach((district)=>{const option=document.createElement("option");option.value=district;option.textContent=district;districtSelect.appendChild(option);});}citySelect.addEventListener("change",renderDistricts);renderDistricts();}
+bindRegionSelect("create_city","create_district");bindRegionSelect("assign_city","assign_district");
 </script>
-
 {% endblock %}

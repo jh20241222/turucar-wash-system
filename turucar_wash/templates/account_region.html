@@ -1,38 +1,7 @@
 {% extends "base.html" %}
+{% block document_title %}Turu Wash · 계정별 담당 지역{% endblock %}
 {% block content %}
-<h2>계정별 담당 지역</h2>
-
-<form method="POST">
-    <select name="username">
-        {% for a in accounts %}
-            <option value="{{ a.username }}">{{ a.username }}</option>
-        {% endfor %}
-    </select>
-
-    <input type="text" name="city" placeholder="시/도">
-    <input type="text" name="district" placeholder="구/군">
-
-    <button>등록</button>
-</form>
-
-<table>
-    <thead>
-        <tr>
-            <th>계정</th>
-            <th>시/도</th>
-            <th>구/군</th>
-        </tr>
-    </thead>
-
-    <tbody>
-        {% for r in region_list %}
-        <tr>
-            <td>{{ r.username }}</td>
-            <td>{{ r.city }}</td>
-            <td>{{ r.district }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
+<section class="page-hero app-card elevated brand-line-card"><div><p class="eyebrow">Region Control</p><h1>계정별 담당 지역</h1><p class="hero-copy">기존 지역 관리 화면도 Turu Wash 디자인으로 통일했습니다.</p></div></section>
+<section class="admin-card app-card"><div class="admin-card-head"><div><p class="eyebrow">Assign Region</p><h2>지역 등록</h2></div></div><form method="POST" class="region-create-form"><select name="username" class="app-input">{% for a in accounts %}<option value="{{ a.username }}">{{ a.username }}</option>{% endfor %}</select><input type="text" name="city" class="app-input" placeholder="시/도"><input type="text" name="district" class="app-input" placeholder="구/군"><button class="primary-btn">등록</button></form></section>
+<section class="app-section table-panel app-card"><div class="table-title-row"><h2>담당 지역 목록</h2><span>{{ region_list|length }}개</span></div><div class="table-wrap"><table><thead><tr><th>계정</th><th>시/도</th><th>구/군</th></tr></thead><tbody>{% for r in region_list %}<tr><td>{{ r.username }}</td><td>{{ r.city }}</td><td>{{ r.district }}</td></tr>{% else %}<tr><td colspan="3" class="empty-cell">등록된 지역이 없습니다.</td></tr>{% endfor %}</tbody></table></div></section>
 {% endblock %}

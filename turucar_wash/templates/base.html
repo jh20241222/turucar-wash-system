@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#101c2f">
+    <meta name="theme-color" content="#212121">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="TURU Wash">
+    <meta name="apple-mobile-web-app-title" content="Turu Wash">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>TURU Wash</title>
+    <title>{% block document_title %}Turu Wash{% endblock %}</title>
     <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/icons/apple-touch-icon.png') }}">
-    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='img/icons/icon-192.png') }}">
+    <link rel="icon" type="image/png" sizes="64x64" href="{{ url_for('static', filename='img/icons/favicon-64.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="app-shell endpoint-{{ request.endpoint or 'page' }}">
@@ -21,9 +21,9 @@
             <button type="button" class="icon-btn back-btn" onclick="history.length > 1 ? history.back() : location.href='{{ url_for('dashboard') }}'" aria-label="뒤로가기">‹</button>
             {% endif %}
             <a href="{{ url_for('dashboard') }}" class="brand-mini" aria-label="대시보드로 이동">
-                <span class="brand-mark">TW</span>
+                <span class="brand-symbol"><img src="{{ url_for('static', filename='img/turu_symbol.png') }}" alt=""></span>
                 <span class="brand-text">
-                    <strong>TURU Wash</strong>
+                    <strong>Turu Wash</strong>
                     <small>세차 오더 관리</small>
                 </span>
             </a>
@@ -36,12 +36,9 @@
     </header>
 
     <aside class="desktop-sidebar">
-        <a href="{{ url_for('dashboard') }}" class="sidebar-brand">
-            <span class="brand-mark large">TW</span>
-            <span>
-                <strong>TURU Wash</strong>
-                <small>Railway 연동 앱</small>
-            </span>
+        <a href="{{ url_for('dashboard') }}" class="sidebar-brand" aria-label="Turu Wash 홈">
+            <img src="{{ url_for('static', filename='img/turu_wash_lockup_white.png') }}" alt="Turu Wash" class="sidebar-logo">
+            <small>현장 세차 오더 앱</small>
         </a>
 
         <nav class="side-nav">
@@ -57,16 +54,16 @@
 
             {% if current_user.is_admin %}
             <a href="{{ url_for('account_manage') }}" class="side-link {% if request.endpoint == 'account_manage' %}active{% endif %}">
-                <span>👤</span><b>계정/지역</b>
+                <span>●</span><b>계정/지역</b>
             </a>
             {% endif %}
 
             {% if current_user.is_master %}
             <a href="{{ url_for('vendor_manage') }}" class="side-link {% if request.endpoint == 'vendor_manage' %}active{% endif %}">
-                <span>🏢</span><b>업체 관리</b>
+                <span>□</span><b>업체 관리</b>
             </a>
             <a href="{{ url_for('upload_wash_list') }}" class="side-link {% if request.endpoint == 'upload_wash_list' %}active{% endif %}">
-                <span>⬆</span><b>오더 업로드</b>
+                <span>↑</span><b>오더 업로드</b>
             </a>
             {% endif %}
         </nav>
@@ -75,7 +72,7 @@
             <div>
                 <small>로그인 계정</small>
                 <strong>{{ current_user.username }}</strong>
-                <em>{{ current_user.role }}</em>
+                <em>{{ current_user.role }}{% if current_user.vendor %} · {{ current_user.vendor }}{% endif %}</em>
             </div>
             <a href="{{ url_for('logout') }}">로그아웃</a>
         </div>
@@ -84,9 +81,9 @@
     <main class="app-main">
         {% if current_user.is_admin or current_user.is_master %}
         <nav class="mobile-admin-rail" aria-label="관리 메뉴">
-            {% if current_user.is_admin %}<a href="{{ url_for('account_manage') }}">계정</a>{% endif %}
-            {% if current_user.is_master %}<a href="{{ url_for('vendor_manage') }}">업체</a>{% endif %}
-            {% if current_user.is_master %}<a href="{{ url_for('upload_wash_list') }}">업로드</a>{% endif %}
+            {% if current_user.is_admin %}<a href="{{ url_for('account_manage') }}" class="{% if request.endpoint == 'account_manage' %}active{% endif %}">계정/지역</a>{% endif %}
+            {% if current_user.is_master %}<a href="{{ url_for('vendor_manage') }}" class="{% if request.endpoint == 'vendor_manage' %}active{% endif %}">업체</a>{% endif %}
+            {% if current_user.is_master %}<a href="{{ url_for('upload_wash_list') }}" class="{% if request.endpoint == 'upload_wash_list' %}active{% endif %}">업로드</a>{% endif %}
         </nav>
         {% endif %}
 
@@ -113,8 +110,8 @@
             <span>✓</span><b>완료</b>
         </a>
         {% if current_user.is_admin %}
-        <a href="{{ url_for('account_manage') }}" class="tab-item {% if request.endpoint == 'account_manage' %}active{% endif %}">
-            <span>👤</span><b>관리</b>
+        <a href="{{ url_for('account_manage') }}" class="tab-item {% if request.endpoint in ['account_manage','vendor_manage','upload_wash_list'] %}active{% endif %}">
+            <span>●</span><b>관리</b>
         </a>
         {% endif %}
     </nav>

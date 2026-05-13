@@ -1,8 +1,11 @@
-const CACHE_NAME = 'turu-wash-native-like-v2';
+const CACHE_NAME = 'turu-wash-brand-v3';
 const APP_SHELL = [
   '/offline',
   '/static/css/style.css',
-  '/static/img/turu_logo.png',
+  '/static/img/turu_symbol.png',
+  '/static/img/turu_wash_lockup_black.png',
+  '/static/img/turu_wash_lockup_white.png',
+  '/static/img/icons/favicon-64.png',
   '/static/img/icons/icon-192.png',
   '/static/img/icons/icon-512.png',
   '/static/img/icons/maskable-512.png'

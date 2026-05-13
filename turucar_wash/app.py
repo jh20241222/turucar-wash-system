@@ -1,11 +1,12 @@
 import os
+import shutil
 import sqlite3
 from datetime import datetime
 
 import pandas as pd
 from flask import (
     Flask, flash, jsonify, redirect, render_template,
-    request, send_file, url_for
+    request, send_file, send_from_directory, url_for
 )
 from flask_login import (
     LoginManager, UserMixin, current_user,
@@ -15,14 +16,33 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = "turu_secret_key"
+app.secret_key = os.environ.get("SECRET_KEY", "change-this-secret-key")
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-USER_DB_PATH = os.path.join("/data", "db.sqlite3")
-WASH_DB_PATH = os.path.join("/data", "wash.db")
-BAND_MATCHING_PATH = os.path.join("/data", "차량소속별_밴드매칭.xlsx")
-UPLOAD_DIR = os.path.join("/data", "uploads")
+DATA_DIR = os.environ.get("DATA_DIR", os.path.join(BASE_DIR, "data"))
+USER_DB_PATH = os.path.join(DATA_DIR, "db.sqlite3")
+WASH_DB_PATH = os.path.join(DATA_DIR, "wash.db")
+BAND_MATCHING_PATH = os.path.join(DATA_DIR, "차량소속별_밴드매칭.xlsx")
+UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")
+
+
+def bootstrap_storage():
+    """Create local app storage and migrate legacy files into the data folder."""
+    os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+    legacy_files = [
+        (os.path.join(BASE_DIR, "wash.db"), WASH_DB_PATH),
+        (os.path.join(BASE_DIR, "차량소속별_밴드매칭.xlsx"), BAND_MATCHING_PATH),
+        (os.path.join(BASE_DIR, "#Ucc28#Ub7c9#Uc18c#Uc18d#Ubcc4_#Ubc34#Ub4dc#Ub9e4#Uce6d.xlsx"), BAND_MATCHING_PATH),
+    ]
+    for source, target in legacy_files:
+        if os.path.exists(source) and not os.path.exists(target):
+            shutil.copy2(source, target)
+
+
+bootstrap_storage()
 
 
 def load_band_mapping():
@@ -60,7 +80,8 @@ def get_wash_db():
 # DB 초기화 (테이블 생성 + 마스터 계정 생성)
 # =========================================================
 def init_db():
-    os.makedirs("/data", exist_ok=True)
+    os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
 
     conn = get_user_db()
     cur = conn.cursor()
@@ -241,6 +262,26 @@ def can_manage_target(target_row):
         and target_row["parent_id"] == current_user.id
         and target_row["vendor"] == current_user.vendor
     )
+
+
+# =========================================================
+# PWA 앱 설치 / 오프라인 지원
+# =========================================================
+@app.route("/offline")
+def offline():
+    return render_template("offline.html")
+
+
+@app.route("/service-worker.js")
+def service_worker():
+    response = send_from_directory(
+        os.path.join(BASE_DIR, "static"),
+        "sw.js",
+        mimetype="text/javascript"
+    )
+    response.headers["Cache-Control"] = "no-cache"
+    response.headers["Service-Worker-Allowed"] = "/"
+    return response
 
 
 # =========================================================

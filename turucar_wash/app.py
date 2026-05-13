@@ -327,6 +327,41 @@ def logout():
     return redirect(url_for("login"))
 
 
+
+
+# =========================================================
+# 내정보 / 앱 설정
+# =========================================================
+@app.route("/profile")
+@login_required
+def profile():
+    conn = get_user_db()
+    cur = conn.cursor()
+    region_rows = cur.execute(
+        """
+        SELECT city, district
+        FROM account_region
+        WHERE username=?
+        ORDER BY city, district
+        """,
+        (current_user.username,)
+    ).fetchall()
+
+    child_count = 0
+    if current_user.is_admin:
+        child_count = cur.execute(
+            "SELECT COUNT(*) AS c FROM accounts WHERE parent_id=?",
+            (current_user.id,)
+        ).fetchone()["c"]
+    conn.close()
+
+    return render_template(
+        "profile.html",
+        region_rows=region_rows,
+        child_count=child_count,
+    )
+
+
 # =========================================================
 # 대시보드
 # =========================================================

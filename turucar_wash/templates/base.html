@@ -12,6 +12,8 @@
     <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/icons/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="64x64" href="{{ url_for('static', filename='img/icons/favicon-64.png') }}">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="app-shell endpoint-{{ request.endpoint or 'page' }}">
@@ -20,11 +22,10 @@
             {% if request.endpoint != 'dashboard' %}
             <button type="button" class="icon-btn back-btn" onclick="history.length > 1 ? history.back() : location.href='{{ url_for('dashboard') }}'" aria-label="뒤로가기">‹</button>
             {% endif %}
-            <a href="{{ url_for('dashboard') }}" class="brand-mini" aria-label="대시보드로 이동">
-                <span class="brand-symbol"><img src="{{ url_for('static', filename='img/turu_symbol.png') }}" alt=""></span>
+            <a href="{{ url_for('dashboard') }}" class="brand-mini text-brand" aria-label="대시보드로 이동">
                 <span class="brand-text">
-                    <strong>Turu Wash</strong>
-                    <small>세차 오더 관리</small>
+                    <strong><span>Turu</span> <em>Wash</em></strong>
+                    <small>Field wash order app</small>
                 </span>
             </a>
         </div>
@@ -36,8 +37,8 @@
     </header>
 
     <aside class="desktop-sidebar">
-        <a href="{{ url_for('dashboard') }}" class="sidebar-brand" aria-label="Turu Wash 홈">
-            <img src="{{ url_for('static', filename='img/turu_wash_lockup_white.png') }}" alt="Turu Wash" class="sidebar-logo">
+        <a href="{{ url_for('dashboard') }}" class="sidebar-brand text-sidebar-brand" aria-label="Turu Wash 홈">
+            <span class="sidebar-wordmark"><strong>Turu <em>Wash</em></strong></span>
             <small>현장 세차 오더 앱</small>
         </a>
 

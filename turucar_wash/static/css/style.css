@@ -70,3 +70,277 @@ th, td {
 tr:hover {
     background: #fafafa;
 }
+
+/* PWA / mobile app shell */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    min-height: 100%;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    color: #222;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+    touch-action: manipulation;
+}
+
+button {
+    cursor: pointer;
+}
+
+img {
+    max-width: 100%;
+}
+
+.mobile-topbar {
+    display: none;
+}
+
+.sidebar-footer {
+    margin: 18px 20px 0;
+}
+
+.install-app-btn {
+    border: 0;
+    border-radius: 999px;
+    background: #FF6900;
+    color: #fff;
+    font-weight: 800;
+    padding: 10px 16px;
+    width: 100%;
+    box-shadow: 0 8px 18px rgba(255, 105, 0, 0.18);
+}
+
+.install-app-btn[hidden] {
+    display: none !important;
+}
+
+.login-page {
+    background: #f5f6fa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.login-page > div {
+    max-width: 380px;
+    width: 100% !important;
+}
+
+.offline-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: #f5f6fa;
+}
+
+.offline-card {
+    width: min(420px, 100%);
+    background: #fff;
+    border: 1px solid #ececec;
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.06);
+}
+
+.offline-logo {
+    width: 160px;
+    margin-bottom: 20px;
+}
+
+.offline-card h1 {
+    margin: 0 0 10px;
+    font-size: 22px;
+}
+
+.offline-card p {
+    margin: 0 0 18px;
+    color: #666;
+    line-height: 1.5;
+}
+
+.offline-card button {
+    border: 0;
+    border-radius: 12px;
+    background: #FF6900;
+    color: #fff;
+    font-weight: 800;
+    padding: 12px 18px;
+}
+
+@media (max-width: 900px) {
+    .content {
+        padding: 22px;
+    }
+}
+
+@media (max-width: 768px) {
+    body:not(.login-page):not(.offline-page) {
+        padding-top: calc(58px + env(safe-area-inset-top));
+        padding-bottom: calc(76px + env(safe-area-inset-bottom));
+    }
+
+    .layout {
+        display: block;
+    }
+
+    .mobile-topbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 60;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: calc(58px + env(safe-area-inset-top));
+        padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+        background: rgba(255,255,255,0.96);
+        border-bottom: 1px solid #e9ecef;
+        backdrop-filter: blur(10px);
+    }
+
+    .mobile-topbar img {
+        width: 118px;
+        height: auto;
+    }
+
+    .mobile-topbar .install-app-btn {
+        width: auto;
+        padding: 9px 14px;
+        font-size: 13px;
+        flex: 0 0 auto;
+    }
+
+    .sidebar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 55;
+        width: auto;
+        height: auto;
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+        background: rgba(255,255,255,0.98);
+        border-right: 0;
+        border-top: 1px solid #e9ecef;
+        box-shadow: 0 -8px 24px rgba(0,0,0,0.08);
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .sidebar .logo,
+    .sidebar-footer {
+        display: none;
+    }
+
+    .menu {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 10px 13px;
+        border-radius: 999px;
+        background: #f4f5f7;
+        color: #343a40;
+        font-size: 13px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .menu.active {
+        border-radius: 999px;
+        background: #FF6900;
+        color: #fff;
+    }
+
+    .menu:hover {
+        background: #FFE8D9;
+    }
+
+    .menu.active:hover {
+        background: #FF6900;
+    }
+
+    .content {
+        padding: 16px;
+        width: 100%;
+    }
+
+    table {
+        min-width: 760px;
+    }
+
+    th,
+    td {
+        padding: 10px 9px;
+    }
+
+    input,
+    select,
+    textarea,
+    button {
+        min-height: 44px;
+    }
+
+    .login-page {
+        padding: 16px;
+    }
+
+    .login-page > div {
+        padding: 28px 22px !important;
+    }
+}
+
+@media (max-width: 420px) {
+    .content {
+        padding: 14px;
+    }
+
+    .mobile-topbar img {
+        width: 106px;
+    }
+
+    .menu {
+        font-size: 12px;
+        padding-left: 11px;
+        padding-right: 11px;
+    }
+}
+
+.login-install-btn {
+    position: fixed;
+    left: 50%;
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    width: min(340px, calc(100% - 32px));
+    z-index: 70;
+}

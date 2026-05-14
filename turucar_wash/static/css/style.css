@@ -1311,3 +1311,53 @@ body {
         height: 76px !important;
     }
 }
+
+
+/* Notice right-side brand mark fix */
+.notice-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+.notice-brand-mark-wrap {
+    position: relative;
+    flex: 0 0 360px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    z-index: 2;
+}
+.notice-brand-mark-image {
+    display: block;
+    width: 300px;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 14px 24px rgba(255, 111, 15, .10));
+}
+.notice-hero::before,
+.notice-hero::after,
+.notice-hero .notice-content::before,
+.notice-hero .notice-content::after {
+    content: none !important;
+    display: none !important;
+}
+@media (max-width: 1100px) {
+    .notice-brand-mark-wrap {
+        flex-basis: 260px;
+        min-height: 170px;
+    }
+    .notice-brand-mark-image {
+        width: 220px;
+    }
+}
+@media (max-width: 900px) {
+    .notice-hero {
+        display: block;
+    }
+    .notice-brand-mark-wrap {
+        display: none;
+    }
+}

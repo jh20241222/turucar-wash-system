@@ -2,7 +2,7 @@
 {% block document_title %}Turu Wash · 계정/지역{% endblock %}
 {% block content %}
 <section class="page-hero app-card elevated brand-line-card">
-    <div><p class="eyebrow">Account Control</p><h1>계정/지역 관리</h1><p class="hero-copy">작업자 계정과 담당 지역을 Turu Wash 운영 화면에서 한 번에 설정합니다.</p></div>
+    <div class="hero-copy-block"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo"><h1>계정/지역</h1><p class="hero-copy">계정 생성, 권한, 담당 지역을 관리합니다.</p></div>
     <div class="hero-chip-stack"><span>{{ accounts|length }}</span><strong>계정</strong></div>
 </section>
 

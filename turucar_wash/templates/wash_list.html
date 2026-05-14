@@ -2,11 +2,7 @@
 {% block document_title %}Turu Wash · 세차 오더{% endblock %}
 {% block content %}
 <section class="order-hero app-card elevated brand-line-card">
-    <div>
-        <p class="eyebrow">Wash Order</p>
-        <h1>세차 오더</h1>
-        <p class="hero-copy">배정된 차량을 선택하고 세차 기록을 시작하세요.</p>
-    </div>
+    <div class="hero-copy-block"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo"><h1>세차 오더</h1><p class="hero-copy">배정된 차량을 선택하고 세차 기록을 시작하세요.</p></div>
     <div class="date-controller">
         <button type="button" onclick="moveDate(-1)" aria-label="이전 날짜">‹</button>
         <div><small>작업일</small><strong id="date-display">{{ selected_date }}</strong></div>

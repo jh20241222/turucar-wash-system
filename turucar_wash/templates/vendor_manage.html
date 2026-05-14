@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block document_title %}Turu Wash · 업체 관리{% endblock %}
 {% block content %}
-<section class="page-hero app-card elevated brand-line-card"><div><p class="eyebrow">Vendor Control</p><h1>업체 관리</h1><p class="hero-copy">업체명은 계정 생성과 오더 업로드의 담당업체 값에 연결됩니다.</p></div></section>
+<section class="page-hero app-card elevated brand-line-card"><div class="hero-copy-block"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo"><h1>업체 관리</h1><p class="hero-copy">업체명은 계정 생성과 오더 업로드의 담당업체 값에 연결됩니다.</p></div></section>
 <section class="admin-layout single">
     <article class="admin-card app-card"><div class="admin-card-head"><div><p class="eyebrow">Create Vendor</p><h2>업체 등록</h2></div></div><form method="POST" class="inline-create-form"><input type="hidden" name="action" value="create_vendor"><input id="vendor_name" type="text" name="name" class="app-input" placeholder="업체명 입력" required><button type="submit" class="primary-btn">등록</button></form></article>
     <aside class="guide-card app-card"><p class="eyebrow">Guide</p><h3>운영 팁</h3><ul class="check-list"><li>담당업체 값과 같은 이름으로 등록하세요.</li><li>계정 생성 시 업체 선택지로 사용됩니다.</li></ul></aside>

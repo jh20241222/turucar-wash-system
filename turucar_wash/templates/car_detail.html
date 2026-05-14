@@ -2,7 +2,7 @@
 {% block document_title %}Turu Wash · {{ car['차량번호'] }}{% endblock %}
 {% block content %}
 <section class="detail-hero app-card elevated brand-line-card">
-    <div><p class="eyebrow">Start Work</p><h1>업무 수행 시작</h1><p class="hero-copy">차량 정보 확인 후 세차 기록을 입력하세요.</p></div>
+    <div class="hero-copy-block"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo"><h1>업무 수행 시작</h1><p class="hero-copy">차량 정보 확인 후 세차 기록을 입력하세요.</p></div>
     <div class="plate-display">{{ car['차량번호'] }}</div>
 </section>
 

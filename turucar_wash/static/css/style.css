@@ -1313,51 +1313,115 @@ body {
 }
 
 
-/* Notice right-side brand mark fix */
+/* Single clean brand T shape on notice card */
 .notice-hero {
+    position: relative !important;
+    overflow: hidden !important;
+    min-height: 300px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 24px;
 }
-.notice-brand-mark-wrap {
-    position: relative;
-    flex: 0 0 360px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 220px;
-    z-index: 2;
-}
-.notice-brand-mark-image {
-    display: block;
-    width: 300px;
-    max-width: 100%;
-    height: auto;
-    object-fit: contain;
-    filter: drop-shadow(0 14px 24px rgba(255, 111, 15, .10));
-}
+
 .notice-hero::before,
 .notice-hero::after,
 .notice-hero .notice-content::before,
-.notice-hero .notice-content::after {
+.notice-hero .notice-content::after,
+.brand-line-card.notice-hero::before,
+.brand-line-card.notice-hero::after,
+.notice-hero.brand-line-card::before,
+.notice-hero.brand-line-card::after {
     content: none !important;
     display: none !important;
 }
-@media (max-width: 1100px) {
-    .notice-brand-mark-wrap {
-        flex-basis: 260px;
-        min-height: 170px;
-    }
-    .notice-brand-mark-image {
-        width: 220px;
+
+.notice-hero .notice-content {
+    position: relative;
+    z-index: 2;
+    max-width: 760px;
+}
+
+.notice-brand-mark-wrap,
+.notice-brand-mark-image {
+    display: none !important;
+}
+
+.notice-brand-shape {
+    position: absolute;
+    right: 72px;
+    top: 50%;
+    width: 520px;
+    height: 255px;
+    transform: translateY(-50%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.notice-brand-shape span {
+    position: absolute;
+    display: block;
+}
+
+.notice-brand-shape .shape-bar-main {
+    left: 0;
+    top: 34px;
+    width: 355px;
+    height: 48px;
+    border-radius: 999px;
+    background: #FBC400;
+    box-shadow: 0 16px 34px rgba(251, 196, 0, .16);
+}
+
+.notice-brand-shape .shape-stem {
+    left: 303px;
+    top: 76px;
+    width: 58px;
+    height: 178px;
+    border-radius: 30px 30px 8px 8px;
+    background: linear-gradient(180deg, #FF8A1F 0%, #FF6F0F 100%);
+    box-shadow: 0 20px 38px rgba(255, 111, 15, .17);
+}
+
+.notice-brand-shape .shape-dot {
+    left: 278px;
+    top: 54px;
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: #E4193C;
+    box-shadow: 0 18px 38px rgba(228, 25, 60, .18);
+}
+
+.notice-brand-shape .shape-bar-right {
+    left: 330px;
+    top: 77px;
+    width: 190px;
+    height: 56px;
+    border-radius: 0 0 0 0;
+    background: #FBC400;
+}
+
+@media (max-width: 1300px) {
+    .notice-brand-shape {
+        right: 36px;
+        width: 420px;
+        transform: translateY(-50%) scale(.86);
+        transform-origin: right center;
     }
 }
-@media (max-width: 900px) {
-    .notice-hero {
-        display: block;
+
+@media (max-width: 1050px) {
+    .notice-brand-shape {
+        opacity: .18;
+        right: -80px;
+        transform: translateY(-50%) scale(.76);
     }
-    .notice-brand-mark-wrap {
-        display: none;
+}
+
+@media (max-width: 900px) {
+    .notice-brand-shape {
+        display: none !important;
+    }
+    .notice-hero {
+        min-height: auto;
     }
 }

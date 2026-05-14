@@ -1748,7 +1748,46 @@ body {
 }
 
 
-/* Notice board modal + mobile title fix */
+/* Final home layout without hero card */
+.dashboard-brand-top {
+    margin: 0 0 22px;
+    padding: 6px 0 0;
+}
+.dashboard-brand-logo {
+    display: block;
+    width: 246px;
+    max-width: 70vw;
+    height: auto;
+    object-fit: contain;
+}
+.dashboard-main-actions {
+    margin-top: 4px;
+}
+.notice-board-final {
+    margin-top: 24px;
+}
+.notice-board-final .notice-list-head {
+    margin-bottom: 20px;
+}
+.notice-board-final .notice-list-head h2 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 950;
+    letter-spacing: -.06em;
+}
+.notice-editor-inline {
+    margin: 0 0 20px;
+    border: 1px solid var(--line, #D8E0EB);
+    border-radius: 20px;
+    padding: 16px;
+    background: rgba(246,247,249,.55);
+}
+.notice-editor-inline summary {
+    cursor: pointer;
+    font-weight: 950;
+    color: var(--daangn-orange, #FF6F0F);
+    margin-bottom: 14px;
+}
 .notice-board-table .notice-title-button {
     display: block;
     width: 100%;
@@ -1760,30 +1799,72 @@ body {
 }
 .notice-board-table .notice-title-button strong {
     display: block;
+    color: var(--ink, #212121);
+}
+.notice-board-table .notice-title-button small {
+    display: block;
+    margin-top: 5px;
 }
 .notice-board-table .notice-title-button:hover strong {
     color: var(--daangn-orange, #FF6F0F);
 }
-.notice-action-cell {
-    width: 150px;
-    white-space: nowrap;
+.notice-manage-head,
+.notice-kebab-cell {
+    width: 70px;
+    text-align: center !important;
 }
-.notice-action-cell form {
-    display: inline;
+.notice-kebab-wrap {
+    position: relative;
+    display: inline-flex;
 }
-.notice-mini-btn {
-    min-height: 30px;
-    padding: 0 10px;
+.notice-kebab-btn {
+    width: 34px;
+    height: 34px;
+    border: 0;
     border-radius: 999px;
-    border: 1px solid rgba(255,111,15,.28);
-    background: rgba(255,111,15,.06);
-    color: var(--daangn-orange, #FF6F0F);
-    font-size: 12px;
+    background: transparent;
+    color: #111;
+    font-size: 22px;
     font-weight: 950;
+    line-height: 1;
 }
-.notice-mini-btn.danger {
-    border-color: rgba(228,25,60,.22);
-    background: rgba(228,25,60,.06);
+.notice-kebab-btn:hover,
+.notice-kebab-wrap.open .notice-kebab-btn {
+    background: rgba(255,111,15,.08);
+    color: var(--daangn-orange, #FF6F0F);
+}
+.notice-kebab-menu {
+    position: absolute;
+    right: 0;
+    top: 38px;
+    z-index: 50;
+    display: none;
+    min-width: 120px;
+    padding: 8px;
+    border: 1px solid var(--line, #D8E0EB);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 18px 42px rgba(9,30,63,.14);
+}
+.notice-kebab-wrap.open .notice-kebab-menu {
+    display: grid;
+    gap: 4px;
+}
+.notice-kebab-menu button {
+    width: 100%;
+    min-height: 36px;
+    border: 0;
+    border-radius: 11px;
+    background: transparent;
+    text-align: left;
+    padding: 0 10px;
+    font-weight: 900;
+    color: var(--ink, #212121);
+}
+.notice-kebab-menu button:hover {
+    background: rgba(246,247,249,.95);
+}
+.notice-kebab-menu button.danger {
     color: #E4193C;
 }
 .notice-modal-backdrop {
@@ -1874,36 +1955,69 @@ body.modal-open {
 }
 
 @media (max-width: 900px) {
-    .notice-list-head p {
-        font-size: 15px;
-        line-height: 1.45;
+    .dashboard-brand-top {
+        margin-bottom: 16px;
+        padding-top: 0;
+    }
+    .dashboard-brand-logo {
+        width: 205px;
+    }
+    .dashboard-main-actions.home-final-actions.brand-action-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 10px;
+    }
+    .dashboard-main-actions .brand-action-card {
+        min-height: 168px;
+        padding: 26px 8px 24px;
+        border-radius: 22px;
+    }
+    .dashboard-main-actions .brand-action-card strong {
+        font-size: 18px;
+        margin-top: 14px;
+    }
+    .dashboard-main-actions .brand-action-card small {
+        font-size: 12px;
+        margin-top: 8px;
+    }
+    .dashboard-main-actions .action-svg-icon,
+    .dashboard-main-actions .action-svg-icon svg {
+        width: 56px !important;
+        height: 56px !important;
+    }
+    .notice-board-final {
+        padding: 24px 18px;
+        margin-top: 16px;
+    }
+    .notice-board-final .notice-list-head {
+        align-items: center;
+        flex-direction: row;
+    }
+    .notice-board-final .notice-list-head h2 {
+        font-size: 25px;
+    }
+    .notice-write-btn {
+        width: auto;
+        min-height: 38px;
+        padding: 0 13px;
+        font-size: 13px;
     }
     .notice-table tr {
-        padding: 18px 32px 18px 0;
+        padding: 17px 40px 17px 0;
     }
     .notice-table td:nth-child(2) {
         display: block;
         margin-bottom: 8px;
     }
-    .notice-table td:nth-child(2) strong,
     .notice-board-table .notice-title-button strong {
         display: block !important;
-        font-size: 17px !important;
+        font-size: 16px !important;
         line-height: 1.35;
         color: var(--ink, #212121);
         white-space: normal;
         word-break: keep-all;
     }
     .notice-board-table .notice-title-button small {
-        display: block !important;
-        margin-top: 6px;
-        color: var(--muted, #6D7B8F);
-        font-size: 13px;
-        line-height: 1.35;
-        max-width: 100%;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        display: none !important;
     }
     .notice-table td:nth-child(3),
     .notice-table td:nth-child(4) {
@@ -1915,19 +2029,17 @@ body.modal-open {
         font-size: 13px;
         white-space: nowrap;
     }
-    .notice-action-cell {
-        display: flex !important;
-        gap: 6px;
-        margin-top: 10px;
-        width: 100% !important;
+    .notice-kebab-cell {
+        display: block !important;
+        position: absolute;
+        right: 0;
+        top: 12px;
+        width: 34px !important;
+        padding: 0 !important;
     }
-    .notice-action-cell form {
-        display: inline-flex;
-    }
-    .notice-mini-btn {
-        min-height: 28px;
-        font-size: 11px;
-        padding: 0 9px;
+    .notice-kebab-menu {
+        right: 0;
+        top: 36px;
     }
     .turu-mini-modal {
         border-radius: 24px;

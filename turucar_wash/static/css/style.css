@@ -972,3 +972,31 @@ body {
     .turucar-login-logo-wrap { width: min(100%, 225px) !important; }
     .wash-manager-badge { top: -16px !important; font-size: 10px !important; }
 }
+
+
+/* Home/header cleanup patch */
+.topbar-left--minimal { min-width: 42px; }
+.topbar-left--minimal:empty { min-width: 0; }
+.daangn-sidebar-brand {
+    align-items: flex-start;
+}
+.daangn-sidebar-brand .turu-wordmark {
+    width: 126px;
+    margin-top: 0;
+    margin-bottom: 4px;
+}
+.daangn-sidebar-brand .sidebar-subtitle {
+    font-size: 18px;
+    line-height: 1.15;
+    letter-spacing: -.04em;
+    font-weight: 800;
+    color: var(--daangn-ink) !important;
+}
+.daangn-sidebar-brand small {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--daangn-muted) !important;
+}
+@media (max-width: 900px) {
+    .topbar-left--minimal { min-width: 0; }
+}

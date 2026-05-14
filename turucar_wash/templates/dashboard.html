@@ -27,8 +27,21 @@
 </section>
 
 
-<section class="quick-actions compact-dashboard-actions">
-    <a class="quick-card primary" href="{{ url_for('wash_list') }}"><span class="quick-icon">▣</span><strong>세차 오더</strong><small>대상 차량 확인</small></a>
-    <a class="quick-card" href="{{ url_for('wash_status') }}"><span class="quick-icon">✓</span><strong>완료 현황</strong><small>작업 기록 조회</small></a>
+<section class="quick-actions compact-dashboard-actions home-final-actions">
+    <a class="quick-card primary home-action-orange" href="{{ url_for('wash_list') }}">
+        <span class="quick-icon">▣</span>
+        <strong>세차 오더</strong>
+        <small>대상 차량 확인</small>
+    </a>
+    <a class="quick-card primary home-action-orange" href="https://pm.peoplecar.co.kr:8082/#">
+        <span class="quick-icon">↗</span>
+        <strong>예약/문제어</strong>
+        <small>예약/제어 관리자앱</small>
+    </a>
+    <a class="quick-card primary home-action-orange" href="{{ url_for('wash_status') }}">
+        <span class="quick-icon">✓</span>
+        <strong>완료 현황</strong>
+        <small>작업 기록 조회</small>
+    </a>
 </section>
 {% endblock %}

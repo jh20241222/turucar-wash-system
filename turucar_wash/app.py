@@ -110,6 +110,12 @@ def init_db():
             name TEXT UNIQUE NOT NULL
         )
     """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS app_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    """)
     # 마스터 계정 없으면 자동 생성
     existing = cur.execute("SELECT 1 FROM accounts WHERE username='jeongyeon.kim'").fetchone()
     if not existing:
@@ -363,6 +369,43 @@ def profile():
 
 
 # =========================================================
+# 앱 설정 / 공지사항
+# =========================================================
+def get_app_setting(key, default=""):
+    conn = get_user_db()
+    cur = conn.cursor()
+    row = cur.execute("SELECT value FROM app_settings WHERE key=?", (key,)).fetchone()
+    conn.close()
+    return row["value"] if row and row["value"] is not None else default
+
+
+def set_app_setting(key, value):
+    conn = get_user_db()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO app_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+        (key, value)
+    )
+    conn.commit()
+    conn.close()
+
+
+@app.route("/dashboard/notice", methods=["POST"])
+@login_required
+def update_dashboard_notice():
+    if not current_user.is_master:
+        flash("❌ 마스터 계정만 공지사항을 수정할 수 있습니다.")
+        return redirect(url_for("dashboard"))
+
+    notice_title = request.form.get("notice_title", "").strip() or "공지사항"
+    notice_body = request.form.get("notice_body", "").strip() or "공지사항 내용을 입력해주세요."
+    set_app_setting("dashboard_notice_title", notice_title)
+    set_app_setting("dashboard_notice_body", notice_body)
+    flash("공지사항이 저장되었습니다.")
+    return redirect(url_for("dashboard"))
+
+
+# =========================================================
 # 대시보드
 # =========================================================
 @app.route("/dashboard")
@@ -380,11 +423,19 @@ def dashboard():
     ).fetchall()
     conn.close()
 
+    notice_title = get_app_setting("dashboard_notice_title", "오늘의 세차관리")
+    notice_body = get_app_setting(
+        "dashboard_notice_body",
+        f"{current_user.username} 계정으로 접속 중입니다. 오더 확인, 완료 처리까지 앱처럼 빠르게 확인하세요."
+    )
+
     return render_template(
         "dashboard.html",
         total_count=total_count,
         done_count=done_count,
-        vendor_counts=vendor_counts
+        vendor_counts=vendor_counts,
+        notice_title=notice_title,
+        notice_body=notice_body,
     )
 
 

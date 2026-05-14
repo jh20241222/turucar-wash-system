@@ -1017,3 +1017,48 @@ body {
     .compact-dashboard-stats, .compact-dashboard-actions { grid-template-columns: 1fr; }
     .notice-save-btn { width: 100%; }
 }
+
+
+/* TuruCar logo + dashboard notice cleanup patch */
+.topbar-left--minimal { min-width: 42px; }
+.topbar-left--minimal:empty { min-width: 0; }
+.daangn-sidebar-brand .turu-wordmark {
+    width: 154px !important;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    margin: 0 0 4px 0 !important;
+}
+.daangn-sidebar-brand .sidebar-subtitle {
+    display: block;
+    font-size: 18px !important;
+    line-height: 1.12;
+    letter-spacing: -.045em;
+    font-weight: 900;
+    color: var(--daangn-ink, #212124) !important;
+}
+.daangn-sidebar-brand small {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: var(--daangn-muted, #6f7785) !important;
+}
+.notice-hero {
+    justify-content: flex-start !important;
+}
+.notice-content {
+    max-width: 860px;
+}
+.notice-turucar-logo {
+    display: block;
+    width: min(260px, 42vw);
+    height: auto;
+    object-fit: contain;
+    margin: 0 0 20px 0;
+}
+.notice-hero .hero-count {
+    display: none !important;
+}
+@media (max-width: 900px) {
+    .topbar-left--minimal { min-width: 0; }
+    .notice-turucar-logo { width: min(190px, 60vw); margin-bottom: 16px; }
+}

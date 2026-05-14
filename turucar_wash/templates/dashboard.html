@@ -3,7 +3,7 @@
 {% block content %}
 <section class="home-hero app-card elevated brand-line-card notice-hero">
     <div class="notice-content">
-        <p class="eyebrow">Turu Wash</p>
+        <img src="{{ url_for('static', filename='img/turucar_logo.png') }}" alt="TuruCar" class="notice-turucar-logo">
         <h1>{{ notice_title }}</h1>
         <p class="hero-copy">{{ notice_body }}</p>
 
@@ -23,10 +23,6 @@
             </form>
         </details>
         {% endif %}
-    </div>
-    <div class="hero-count">
-        <span>{{ total_count }}</span>
-        <small>대상</small>
     </div>
 </section>
 

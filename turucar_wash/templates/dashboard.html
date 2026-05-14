@@ -3,7 +3,7 @@
 {% block content %}
 <section class="home-hero app-card elevated brand-line-card notice-hero">
     <div class="notice-content">
-        <img src="{{ url_for('static', filename='img/turucar_logo.png') }}" alt="TuruCar" class="notice-turucar-logo">
+        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="notice-turucar-logo brand-combo-logo">
         <h1>{{ notice_title }}</h1>
         <p class="hero-copy">{{ notice_body }}</p>
 
@@ -27,19 +27,41 @@
 </section>
 
 
-<section class="quick-actions compact-dashboard-actions home-final-actions">
-    <a class="quick-card primary home-action-orange" href="{{ url_for('wash_list') }}">
-        <span class="quick-icon">▣</span>
+<section class="quick-actions compact-dashboard-actions home-final-actions brand-action-grid">
+    <a class="quick-card brand-action-card action-yellow" href="{{ url_for('wash_list') }}">
+        <span class="quick-icon action-svg-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="img">
+                <rect x="17" y="12" width="30" height="44" rx="5"></rect>
+                <path d="M25 12h14l2 7H23z"></path>
+                <line x1="24" y1="28" x2="40" y2="28"></line>
+                <line x1="24" y1="36" x2="40" y2="36"></line>
+                <line x1="24" y1="44" x2="35" y2="44"></line>
+            </svg>
+        </span>
         <strong>세차 오더</strong>
         <small>대상 차량 확인</small>
     </a>
-    <a class="quick-card primary home-action-orange" href="https://pm.peoplecar.co.kr:8082/#">
-        <span class="quick-icon">↗</span>
+    <a class="quick-card brand-action-card action-orange" href="https://pm.peoplecar.co.kr:8082/#">
+        <span class="quick-icon action-svg-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="img">
+                <path d="M18 50V23c0-5 4-9 9-9h19c3 0 5 2 5 5v31z"></path>
+                <path d="M25 40h9"></path>
+                <path d="M25 20h18v16H25z"></path>
+                <circle cx="45" cy="41" r="2"></circle>
+            </svg>
+        </span>
         <strong>예약/문제어</strong>
         <small>예약/제어 관리자앱</small>
     </a>
-    <a class="quick-card primary home-action-orange" href="{{ url_for('wash_status') }}">
-        <span class="quick-icon">✓</span>
+    <a class="quick-card brand-action-card action-red" href="{{ url_for('wash_status') }}">
+        <span class="quick-icon action-svg-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="img">
+                <path d="M18 10h22l10 10v34H18z"></path>
+                <path d="M40 10v12h10"></path>
+                <circle cx="34" cy="38" r="11"></circle>
+                <path d="M28 38l4 4 8-9"></path>
+            </svg>
+        </span>
         <strong>완료 현황</strong>
         <small>작업 기록 조회</small>
     </a>

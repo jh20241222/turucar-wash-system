@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% block document_title %}Turu Wash · 홈
+
 <section class="dashboard-notice-list app-card elevated" id="notice-list">
     <div class="notice-list-head">
         <div>
             <h2>공지사항</h2>
-            <p>최근 등록된 공지사항을 확인합니다. 한 페이지에 최대 10개까지 표시됩니다.</p>
+            <p>최근 등록된 공지사항을 확인합니다. 제목을 누르면 내용을 볼 수 있습니다.</p>
         </div>
         {% if current_user.is_master %}
         <button type="button" class="notice-write-btn" onclick="openNoticeEditor()">+ 공지사항 작성</button>
@@ -13,27 +14,56 @@
 
     {% if notice_rows %}
     <div class="notice-table-wrap">
-        <table class="notice-table">
+        <table class="notice-table notice-board-table">
             <thead>
                 <tr>
                     <th>번호</th>
                     <th>제목</th>
                     <th>작성일</th>
                     <th>작성자</th>
+                    {% if current_user.is_master %}<th>관리</th>{% endif %}
                 </tr>
             </thead>
             <tbody>
                 {% for notice in notice_rows %}
                 <tr>
                     <td>{{ notice.id }}</td>
-                    <td>
-                        <strong>{{ notice.title }}</strong>
-                        {% if notice.body %}
-                        <small>{{ notice.body }}</small>
-                        {% endif %}
+                    <td class="notice-title-cell">
+                        <button
+                            type="button"
+                            class="notice-title-button"
+                            data-title="{{ notice.title|e }}"
+                            data-body="{{ notice.body|e }}"
+                            data-created="{{ notice.created_at|e }}"
+                            data-author="{{ notice.author|e }}"
+                            onclick="openNoticeViewer(this)">
+                            <strong>{{ notice.title }}</strong>
+                            {% if notice.body %}
+                            <small>{{ notice.body }}</small>
+                            {% endif %}
+                        </button>
                     </td>
                     <td>{{ notice.created_at }}</td>
                     <td>{{ notice.author }}</td>
+                    {% if current_user.is_master %}
+                    <td class="notice-action-cell">
+                        <button
+                            type="button"
+                            class="notice-mini-btn"
+                            data-id="{{ notice.id }}"
+                            data-title="{{ notice.title|e }}"
+                            data-body="{{ notice.body|e }}"
+                            data-author="{{ notice.author|e }}"
+                            data-page="{{ notice_page }}"
+                            onclick="openNoticeEdit(this)">
+                            수정
+                        </button>
+                        <form method="post" action="{{ url_for('delete_dashboard_notice', notice_id=notice.id) }}" onsubmit="return confirm('이 공지사항을 삭제할까요?');">
+                            <input type="hidden" name="notice_page" value="{{ notice_page }}">
+                            <button type="submit" class="notice-mini-btn danger">삭제</button>
+                        </form>
+                    </td>
+                    {% endif %}
                 </tr>
                 {% endfor %}
             </tbody>
@@ -63,6 +93,44 @@
     {% endif %}
 </section>
 
+<div class="notice-modal-backdrop" id="notice-viewer-modal" hidden>
+    <section class="notice-modal turu-mini-modal" role="dialog" aria-modal="true" aria-labelledby="notice-viewer-title">
+        <button type="button" class="notice-modal-close" onclick="closeNoticeViewer()" aria-label="닫기">×</button>
+        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="notice-modal-logo">
+        <p class="eyebrow">Notice</p>
+        <h2 id="notice-viewer-title"></h2>
+        <div class="notice-modal-meta">
+            <span id="notice-viewer-created"></span>
+            <span id="notice-viewer-author"></span>
+        </div>
+        <p class="notice-modal-body" id="notice-viewer-body"></p>
+    </section>
+</div>
+
+{% if current_user.is_master %}
+<div class="notice-modal-backdrop" id="notice-edit-modal" hidden>
+    <section class="notice-modal turu-mini-modal notice-edit-modal" role="dialog" aria-modal="true" aria-labelledby="notice-edit-title">
+        <button type="button" class="notice-modal-close" onclick="closeNoticeEdit()" aria-label="닫기">×</button>
+        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="notice-modal-logo">
+        <p class="eyebrow">Edit Notice</p>
+        <h2 id="notice-edit-title">공지사항 수정</h2>
+        <form method="post" id="notice-edit-form" class="notice-form notice-edit-form">
+            <input type="hidden" name="notice_page" id="notice-edit-page" value="{{ notice_page }}">
+            <input type="hidden" name="notice_author" id="notice-edit-author" value="투루카 담당자">
+            <label>
+                <span>제목</span>
+                <input type="text" name="notice_title" id="notice-edit-title-input" class="app-input" maxlength="80">
+            </label>
+            <label>
+                <span>내용</span>
+                <textarea name="notice_body" id="notice-edit-body-input" class="app-input notice-textarea" rows="5" maxlength="500"></textarea>
+            </label>
+            <button type="submit" class="btn-primary notice-save-btn">수정 저장</button>
+        </form>
+    </section>
+</div>
+{% endif %}
+
 <script>
 function openNoticeEditor(){
     const editor = document.getElementById('notice-editor');
@@ -73,8 +141,56 @@ function openNoticeEditor(){
         if(input){ setTimeout(() => input.focus(), 350); }
     }
 }
-</script>
 
+function getNoticeData(button){
+    return {
+        title: button.dataset.title || '공지사항',
+        body: button.dataset.body || '공지사항 내용이 없습니다.',
+        created: button.dataset.created || '',
+        author: button.dataset.author || '투루카 담당자'
+    };
+}
+
+function openNoticeViewer(button){
+    const data = getNoticeData(button);
+    document.getElementById('notice-viewer-title').textContent = data.title;
+    document.getElementById('notice-viewer-body').textContent = data.body;
+    document.getElementById('notice-viewer-created').textContent = data.created;
+    document.getElementById('notice-viewer-author').textContent = data.author;
+    document.getElementById('notice-viewer-modal').hidden = false;
+    document.body.classList.add('modal-open');
+}
+
+function closeNoticeViewer(){
+    document.getElementById('notice-viewer-modal').hidden = true;
+    document.body.classList.remove('modal-open');
+}
+
+function openNoticeEdit(button){
+    const form = document.getElementById('notice-edit-form');
+    if(!form){ return; }
+    form.action = `/dashboard/notice/${button.dataset.id}/edit`;
+    document.getElementById('notice-edit-title-input').value = button.dataset.title || '';
+    document.getElementById('notice-edit-body-input').value = button.dataset.body || '';
+    document.getElementById('notice-edit-author').value = button.dataset.author || '투루카 담당자';
+    document.getElementById('notice-edit-page').value = button.dataset.page || '1';
+    document.getElementById('notice-edit-modal').hidden = false;
+    document.body.classList.add('modal-open');
+}
+
+function closeNoticeEdit(){
+    document.getElementById('notice-edit-modal').hidden = true;
+    document.body.classList.remove('modal-open');
+}
+
+document.addEventListener('keydown', function(event){
+    if(event.key === 'Escape'){
+        if(!document.getElementById('notice-viewer-modal').hidden){ closeNoticeViewer(); }
+        const editModal = document.getElementById('notice-edit-modal');
+        if(editModal && !editModal.hidden){ closeNoticeEdit(); }
+    }
+});
+</script>
 {% endblock %}
 {% block content %}
 <section class="home-hero app-card elevated brand-line-card notice-hero">

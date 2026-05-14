@@ -1105,3 +1105,209 @@ body {
         gap: 12px;
     }
 }
+
+
+/* Brand mark final dashboard design */
+.brand-combo-logo {
+    display: block;
+    object-fit: contain;
+}
+
+.daangn-sidebar-brand .brand-combo-logo {
+    width: 208px !important;
+    max-width: 100%;
+    height: auto !important;
+    margin: 0 0 14px 0 !important;
+}
+
+.notice-hero {
+    position: relative;
+    overflow: hidden;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+}
+
+.notice-hero .notice-content {
+    position: relative;
+    z-index: 2;
+    max-width: 720px;
+}
+
+.notice-hero .notice-turucar-logo.brand-combo-logo {
+    width: 280px !important;
+    height: auto !important;
+    margin-bottom: 28px;
+}
+
+.notice-hero::before {
+    content: "";
+    position: absolute;
+    right: 132px;
+    top: 86px;
+    width: 410px;
+    height: 46px;
+    border-radius: 999px;
+    background: #FBC400;
+    box-shadow: 0 18px 36px rgba(251, 196, 0, .18);
+}
+
+.notice-hero::after {
+    content: "";
+    position: absolute;
+    right: 170px;
+    top: 126px;
+    width: 54px;
+    height: 190px;
+    border-radius: 28px 28px 6px 6px;
+    background: linear-gradient(180deg, #FF8A1F 0%, #FF6F0F 100%);
+    box-shadow: 0 16px 30px rgba(255, 111, 15, .18);
+}
+
+.notice-hero .notice-content::before {
+    content: "";
+    position: absolute;
+    right: -640px;
+    top: 82px;
+    width: 96px;
+    height: 96px;
+    border-radius: 999px;
+    background: #E4193C;
+    box-shadow: 0 16px 32px rgba(228, 25, 60, .18);
+    z-index: 3;
+}
+
+.notice-hero .notice-content::after {
+    content: "";
+    position: absolute;
+    right: -790px;
+    top: 126px;
+    width: 250px;
+    height: 54px;
+    border-radius: 0 0 0 0;
+    background: #FBC400;
+    z-index: 1;
+}
+
+.home-final-actions.brand-action-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.home-final-actions .brand-action-card {
+    min-height: 300px;
+    background: #fff !important;
+    color: var(--daangn-ink, #212124) !important;
+    border: 1px solid rgba(0,0,0,.055) !important;
+    box-shadow: 0 18px 42px rgba(33,33,36,.075) !important;
+    border-radius: 28px;
+    padding: 46px 24px 32px;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.home-final-actions .brand-action-card::after {
+    content: "";
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 0;
+    height: 10px;
+    border-radius: 999px 999px 0 0;
+}
+
+.home-final-actions .brand-action-card.action-yellow::after { background: #FBC400; }
+.home-final-actions .brand-action-card.action-orange::after { background: #FF6F0F; }
+.home-final-actions .brand-action-card.action-red::after { background: #E4193C; }
+
+.home-final-actions .brand-action-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 22px 52px rgba(33,33,36,.11) !important;
+}
+
+.home-final-actions .brand-action-card strong {
+    color: #111 !important;
+    font-size: 28px;
+    letter-spacing: -.06em;
+    margin-top: 22px;
+}
+
+.home-final-actions .brand-action-card small {
+    color: var(--daangn-muted, #6d7684) !important;
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 12px;
+}
+
+.action-svg-icon {
+    display: inline-flex !important;
+    width: 96px !important;
+    height: 96px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    margin: 0 auto;
+}
+
+.action-svg-icon svg {
+    width: 96px;
+    height: 96px;
+    fill: none;
+    stroke-width: 4.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.action-yellow .action-svg-icon svg { stroke: #F3B800; }
+.action-orange .action-svg-icon svg { stroke: #FF6F0F; }
+.action-red .action-svg-icon svg { stroke: #E4193C; }
+
+.action-orange .action-svg-icon svg path:first-child {
+    fill: rgba(255,111,15,.10);
+}
+
+.action-red .action-svg-icon svg circle {
+    fill: rgba(228,25,60,.08);
+}
+
+@media (max-width: 1280px) {
+    .notice-hero::before { right: 76px; width: 310px; }
+    .notice-hero::after { right: 102px; }
+    .notice-hero .notice-content::before { right: -450px; }
+    .notice-hero .notice-content::after { right: -590px; width: 190px; }
+}
+
+@media (max-width: 900px) {
+    .daangn-sidebar-brand .brand-combo-logo {
+        width: 150px !important;
+    }
+    .notice-hero {
+        min-height: 260px;
+    }
+    .notice-hero .notice-turucar-logo.brand-combo-logo {
+        width: 210px !important;
+        margin-bottom: 20px;
+    }
+    .notice-hero::before,
+    .notice-hero::after,
+    .notice-hero .notice-content::before,
+    .notice-hero .notice-content::after {
+        display: none;
+    }
+    .home-final-actions.brand-action-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px;
+    }
+    .home-final-actions .brand-action-card {
+        min-height: 190px;
+        padding: 34px 20px 28px;
+    }
+    .action-svg-icon,
+    .action-svg-icon svg {
+        width: 76px !important;
+        height: 76px !important;
+    }
+}

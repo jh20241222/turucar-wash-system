@@ -20,17 +20,114 @@ app.secret_key = os.environ.get("SECRET_KEY", "change-this-secret-key")
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.environ.get("DATA_DIR", os.path.join(BASE_DIR, "data"))
+
+
+def _truthy(value):
+    return str(value or "").strip().lower() in ("1", "true", "yes", "y", "on")
+
+
+def _running_on_railway():
+    return any(os.environ.get(name) for name in (
+        "RAILWAY_ENVIRONMENT",
+        "RAILWAY_PROJECT_ID",
+        "RAILWAY_SERVICE_ID",
+        "RAILWAY_DEPLOYMENT_ID",
+    ))
+
+
+def _resolve_data_dir():
+    """Return the only directory where mutable operating data is allowed to live.
+
+    계정/지역, 업체, 세차 오더, 완료 현황, 업로드 파일은 모두 DATA_DIR 아래에만 저장한다.
+    Railway에서는 반드시 Volume Mount Path와 DATA_DIR을 같은 경로로 맞춰야 한다.
+    """
+    explicit = os.environ.get("DATA_DIR")
+    if explicit:
+        return explicit
+
+    railway_volume_path = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH")
+    if railway_volume_path:
+        return railway_volume_path
+
+    # 로컬 개발은 기존처럼 프로젝트 내부 data 폴더를 사용한다.
+    # Railway 운영에서는 DATA_DIR을 명시하지 않으면 아래 fail-safe가 앱 실행을 막는다.
+    return os.path.join(BASE_DIR, "data")
+
+
+DATA_DIR = os.path.abspath(_resolve_data_dir())
 USER_DB_PATH = os.path.join(DATA_DIR, "db.sqlite3")
 WASH_DB_PATH = os.path.join(DATA_DIR, "wash.db")
 BAND_MATCHING_PATH = os.path.join(DATA_DIR, "차량소속별_밴드매칭.xlsx")
 UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")
+BACKUP_DIR = os.path.join(DATA_DIR, "backups")
+STORAGE_MARKER_PATH = os.path.join(DATA_DIR, ".turu_wash_persistent_storage")
+
+# Railway에서는 기본적으로 fail-safe를 켠다. DATA_DIR/Volume 설정이 없으면 앱을 시작하지 않는다.
+PERSISTENCE_STRICT = _truthy(os.environ.get("PERSISTENCE_STRICT", "1" if _running_on_railway() else "0"))
+
+
+def _validate_persistent_storage_config():
+    """Fail closed rather than run on ephemeral storage in production.
+
+    이 검사는 데이터 유실을 막기 위한 안전장치다. Railway에서 DATA_DIR이 명시되지 않은 채
+    실행되면 재배포/슬립 후 재시작 시 SQLite 파일이 사라질 수 있으므로 앱 시작을 중단한다.
+    """
+    if not (_running_on_railway() and PERSISTENCE_STRICT):
+        return
+
+    has_explicit_data_dir = bool(os.environ.get("DATA_DIR") or os.environ.get("RAILWAY_VOLUME_MOUNT_PATH"))
+    if not has_explicit_data_dir:
+        raise RuntimeError(
+            "Persistent storage is not configured. "
+            "Create a Railway Volume and set DATA_DIR to the volume mount path, e.g. DATA_DIR=/app/data. "
+            "This app refuses to start to protect accounts, wash orders, completion history, and vendor data."
+        )
+
+
+def _write_storage_marker():
+    os.makedirs(DATA_DIR, exist_ok=True)
+    if not os.path.exists(STORAGE_MARKER_PATH):
+        with open(STORAGE_MARKER_PATH, "w", encoding="utf-8") as f:
+            f.write(f"created_at={datetime.now().isoformat(timespec='seconds')}\n")
+            f.write(f"data_dir={DATA_DIR}\n")
+
+
+def _backup_sqlite_file(path, label, keep=30):
+    """Create a lightweight timestamped backup of an existing SQLite DB in DATA_DIR/backups."""
+    if not os.path.exists(path) or os.path.getsize(path) == 0:
+        return
+
+    os.makedirs(BACKUP_DIR, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    backup_path = os.path.join(BACKUP_DIR, f"{label}-{timestamp}.sqlite3")
+    shutil.copy2(path, backup_path)
+
+    backups = sorted(
+        [os.path.join(BACKUP_DIR, name) for name in os.listdir(BACKUP_DIR) if name.startswith(f"{label}-")],
+        key=os.path.getmtime,
+        reverse=True,
+    )
+    for old_backup in backups[keep:]:
+        try:
+            os.remove(old_backup)
+        except OSError:
+            pass
+
+
+def backup_databases(reason="startup"):
+    """Backup both operating DBs. Safe to call on startup and before destructive imports."""
+    _backup_sqlite_file(USER_DB_PATH, f"user-db-{reason}")
+    _backup_sqlite_file(WASH_DB_PATH, f"wash-db-{reason}")
 
 
 def bootstrap_storage():
-    """Create local app storage and migrate legacy files into the data folder."""
+    """Create durable app storage and migrate legacy files into DATA_DIR without overwriting."""
+    _validate_persistent_storage_config()
+
     os.makedirs(DATA_DIR, exist_ok=True)
     os.makedirs(UPLOAD_DIR, exist_ok=True)
+    os.makedirs(BACKUP_DIR, exist_ok=True)
+    _write_storage_marker()
 
     legacy_files = [
         (os.path.join(BASE_DIR, "wash.db"), WASH_DB_PATH),
@@ -38,8 +135,11 @@ def bootstrap_storage():
         (os.path.join(BASE_DIR, "#Ucc28#Ub7c9#Uc18c#Uc18d#Ubcc4_#Ubc34#Ub4dc#Ub9e4#Uce6d.xlsx"), BAND_MATCHING_PATH),
     ]
     for source, target in legacy_files:
+        # Never overwrite live data. Legacy files are copied only for first boot of an empty DATA_DIR.
         if os.path.exists(source) and not os.path.exists(target):
             shutil.copy2(source, target)
+
+    backup_databases("startup")
 
 
 bootstrap_storage()
@@ -338,6 +438,51 @@ def logout():
 # =========================================================
 # 내정보 / 앱 설정
 # =========================================================
+
+@app.route("/storage-status")
+@login_required
+def storage_status():
+    if not current_user.is_master:
+        flash("❌ 마스터 계정만 저장소 상태를 확인할 수 있습니다.")
+        return redirect(url_for("dashboard"))
+
+    def safe_count(db_path, table):
+        if not os.path.exists(db_path):
+            return None
+        try:
+            conn = sqlite3.connect(db_path)
+            cur = conn.cursor()
+            value = cur.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+            conn.close()
+            return value
+        except Exception:
+            return None
+
+    payload = {
+        "data_dir": DATA_DIR,
+        "strict_mode": PERSISTENCE_STRICT,
+        "running_on_railway": _running_on_railway(),
+        "storage_marker_exists": os.path.exists(STORAGE_MARKER_PATH),
+        "user_db_path": USER_DB_PATH,
+        "wash_db_path": WASH_DB_PATH,
+        "upload_dir": UPLOAD_DIR,
+        "backup_dir": BACKUP_DIR,
+        "counts": {
+            "accounts": safe_count(USER_DB_PATH, "accounts"),
+            "account_region": safe_count(USER_DB_PATH, "account_region"),
+            "vendors": safe_count(USER_DB_PATH, "vendors"),
+            "wash_list": safe_count(WASH_DB_PATH, "wash_list"),
+            "wash_history": safe_count(WASH_DB_PATH, "wash_history"),
+        },
+        "files_exist": {
+            "db.sqlite3": os.path.exists(USER_DB_PATH),
+            "wash.db": os.path.exists(WASH_DB_PATH),
+            "uploads": os.path.isdir(UPLOAD_DIR),
+        },
+    }
+    return jsonify(payload)
+
+
 @app.route("/profile")
 @login_required
 def profile():

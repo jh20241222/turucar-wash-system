@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block document_title %}Turu Wash · 예약/제어{% endblock %}
+{% block content %}
+<section class="admin-control-hero app-card elevated page-hero">
+    <div class="hero-copy-block">
+        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo">
+        <h1>예약/제어</h1>
+        <p class="hero-copy">관리자앱을 Turu Wash 화면 안에서 확인합니다. 화면이 열리지 않으면 새 창으로 열기를 사용하세요.</p>
+    </div>
+    <div class="admin-control-actions">
+        <button type="button" class="admin-control-btn" onclick="history.length > 1 ? history.back() : location.href='{{ url_for('dashboard') }}'">← 뒤로가기</button>
+        <a class="admin-control-btn primary" href="{{ admin_app_url }}" target="_blank" rel="noopener">새 창으로 열기</a>
+    </div>
+</section>
+
+<section class="admin-control-shell app-card elevated">
+    <div class="admin-control-toolbar">
+        <strong>Peoplecar 관리자앱</strong>
+        <span>pm.peoplecar.co.kr</span>
+    </div>
+    <iframe
+        class="admin-control-frame"
+        src="{{ admin_app_url }}"
+        title="예약/제어 관리자앱"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        allow="clipboard-read; clipboard-write">
+    </iframe>
+    <div class="admin-control-fallback">
+        <h2>관리자앱 화면이 보이지 않나요?</h2>
+        <p>외부 관리자앱에서 보안 설정으로 iframe 표시를 막아둔 경우입니다. 이 경우 새 창으로 열어야 합니다.</p>
+        <a href="{{ admin_app_url }}" target="_blank" rel="noopener">관리자앱 새 창으로 열기</a>
+    </div>
+</section>
+{% endblock %}

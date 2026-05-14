@@ -591,6 +591,45 @@ def get_dashboard_notices(page=1, per_page=10):
     return rows, total, page, total_pages
 
 
+
+def get_dashboard_notice_by_id(notice_id):
+    conn = get_user_db()
+    cur = conn.cursor()
+    row = cur.execute(
+        """
+        SELECT id, title, body, author, created_at
+        FROM dashboard_notices
+        WHERE id=?
+        """,
+        (notice_id,)
+    ).fetchone()
+    conn.close()
+    return row
+
+
+def update_dashboard_notice_item(notice_id, title, body, author):
+    conn = get_user_db()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        UPDATE dashboard_notices
+        SET title=?, body=?, author=?
+        WHERE id=?
+        """,
+        (title, body, author, notice_id)
+    )
+    conn.commit()
+    conn.close()
+
+
+def delete_dashboard_notice_item(notice_id):
+    conn = get_user_db()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM dashboard_notices WHERE id=?", (notice_id,))
+    conn.commit()
+    conn.close()
+
+
 @app.route("/dashboard/notice", methods=["POST"])
 @login_required
 def update_dashboard_notice():
@@ -608,6 +647,39 @@ def update_dashboard_notice():
 
     flash("공지사항이 저장되었습니다.")
     return redirect(url_for("dashboard"))
+
+
+
+@app.route("/dashboard/notice/<int:notice_id>/edit", methods=["POST"])
+@login_required
+def edit_dashboard_notice(notice_id):
+    if not current_user.is_master:
+        flash("❌ 마스터 계정만 공지사항을 수정할 수 있습니다.")
+        return redirect(url_for("dashboard"))
+
+    notice_title = request.form.get("notice_title", "").strip() or "공지사항"
+    notice_body = request.form.get("notice_body", "").strip() or "공지사항 내용을 입력해주세요."
+    notice_author = request.form.get("notice_author", "").strip() or "투루카 담당자"
+
+    update_dashboard_notice_item(notice_id, notice_title, notice_body, notice_author)
+    flash("공지사항이 수정되었습니다.")
+    page = request.form.get("notice_page", 1)
+    return redirect(url_for("dashboard", notice_page=page) + "#notice-list")
+
+
+@app.route("/dashboard/notice/<int:notice_id>/delete", methods=["POST"])
+@login_required
+def delete_dashboard_notice(notice_id):
+    if not current_user.is_master:
+        flash("❌ 마스터 계정만 공지사항을 삭제할 수 있습니다.")
+        return redirect(url_for("dashboard"))
+
+    delete_dashboard_notice_item(notice_id)
+    flash("공지사항이 삭제되었습니다.")
+    page = request.form.get("notice_page", 1)
+    return redirect(url_for("dashboard", notice_page=page) + "#notice-list")
+
+
 
 
 # =========================================================

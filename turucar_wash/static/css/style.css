@@ -2324,3 +2324,159 @@ body.modal-open {
         border-radius: 16px;
     }
 }
+
+
+/* Order list clean unified style: match the order search card */
+@media (max-width: 900px) {
+    .endpoint-wash_list .filter-card {
+        margin-bottom: 14px !important;
+    }
+
+    .endpoint-wash_list .list-card,
+    .endpoint-wash_list .table-card,
+    .endpoint-wash_list .data-card,
+    .endpoint-wash_list .order-list-card,
+    .endpoint-wash_list .wash-list-card {
+        border-radius: 24px !important;
+        padding: 0 18px !important;
+        background: #fff !important;
+        border: 1px solid var(--line, #D8E0EB) !important;
+        box-shadow: 0 12px 30px rgba(9,30,63,.06) !important;
+        overflow: hidden !important;
+    }
+
+    .endpoint-wash_list table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        min-width: 0 !important;
+    }
+
+    .endpoint-wash_list table thead {
+        display: none !important;
+    }
+
+    .endpoint-wash_list table,
+    .endpoint-wash_list tbody,
+    .endpoint-wash_list tr,
+    .endpoint-wash_list td {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    .endpoint-wash_list tr {
+        position: relative !important;
+        padding: 18px 30px 18px 0 !important;
+        border-bottom: 1px solid var(--line, #D8E0EB) !important;
+        background: #fff !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+
+    .endpoint-wash_list tr:last-child {
+        border-bottom: 0 !important;
+    }
+
+    .endpoint-wash_list tr::after {
+        content: "›";
+        position: absolute;
+        right: 2px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--daangn-muted, #6D7B8F);
+        font-size: 24px;
+        font-weight: 800;
+    }
+
+    .endpoint-wash_list td {
+        border: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        color: var(--daangn-muted, #6D7B8F) !important;
+        font-size: 13px !important;
+        line-height: 1.45 !important;
+        font-weight: 750 !important;
+    }
+
+    .endpoint-wash_list td:first-child {
+        color: var(--ink, #212121) !important;
+        font-size: 20px !important;
+        line-height: 1.15 !important;
+        font-weight: 950 !important;
+        letter-spacing: -.06em !important;
+        margin-bottom: 6px !important;
+    }
+
+    .endpoint-wash_list td:nth-child(2) {
+        display: block !important;
+        color: var(--daangn-muted, #6D7B8F) !important;
+        font-size: 14px !important;
+        font-weight: 850 !important;
+        margin-bottom: 10px !important;
+    }
+
+    .endpoint-wash_list td:nth-child(n+3) {
+        display: inline-flex !important;
+        width: auto !important;
+        max-width: 100% !important;
+        margin-right: 6px !important;
+        margin-top: 6px !important;
+        min-height: 28px;
+        align-items: center;
+        padding: 0 10px !important;
+        border-radius: 999px;
+        background: rgba(255,111,15,.06) !important;
+        color: var(--daangn-orange, #FF6F0F) !important;
+        font-size: 12px !important;
+        font-weight: 900 !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .endpoint-wash_list td a,
+    .endpoint-wash_list td button {
+        font-size: inherit !important;
+        font-weight: inherit !important;
+    }
+
+    .endpoint-wash_list .primary-btn,
+    .endpoint-wash_list .detail-btn,
+    .endpoint-wash_list .card-action,
+    .endpoint-wash_list .go-detail,
+    .endpoint-wash_list a[href*="car_detail"] {
+        display: inline-flex !important;
+        width: auto !important;
+        min-height: 32px !important;
+        padding: 0 12px !important;
+        border-radius: 999px !important;
+        background: rgba(255,111,15,.08) !important;
+        color: var(--daangn-orange, #FF6F0F) !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        font-size: 12px !important;
+        font-weight: 950 !important;
+    }
+
+    .endpoint-wash_list .status-badge,
+    .endpoint-wash_list .badge,
+    .endpoint-wash_list .soft-badge {
+        min-height: 26px !important;
+        padding: 0 10px !important;
+        border-radius: 999px !important;
+        font-size: 12px !important;
+        font-weight: 950 !important;
+        background: rgba(255,111,15,.08) !important;
+        color: var(--daangn-orange, #FF6F0F) !important;
+    }
+
+    .endpoint-wash_list .empty-card,
+    .endpoint-wash_list .empty-state {
+        border-radius: 24px !important;
+        padding: 28px 20px !important;
+        background: #fff !important;
+        border: 1px solid var(--line, #D8E0EB) !important;
+        box-shadow: 0 12px 30px rgba(9,30,63,.06) !important;
+    }
+}

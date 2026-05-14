@@ -1062,3 +1062,14 @@ body {
     .topbar-left--minimal { min-width: 0; }
     .notice-turucar-logo { width: min(190px, 60vw); margin-bottom: 16px; }
 }
+
+
+/* Clean TuruCar logo artifact fix */
+.sidebar-logo.turu-wordmark,
+.notice-turucar-logo,
+.turucar-login-logo-wrap img {
+    display: block;
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+}

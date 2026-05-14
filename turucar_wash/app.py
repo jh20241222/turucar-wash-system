@@ -216,6 +216,16 @@ def init_db():
             value TEXT
         )
     """)
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS dashboard_notices (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            body TEXT,
+            author TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+    """)
     # 마스터 계정 없으면 자동 생성
     existing = cur.execute("SELECT 1 FROM accounts WHERE username='jeongyeon.kim'").fetchone()
     if not existing:
@@ -535,6 +545,52 @@ def set_app_setting(key, value):
     conn.close()
 
 
+
+def create_dashboard_notice(title, body, author):
+    conn = get_user_db()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        INSERT INTO dashboard_notices (title, body, author, created_at)
+        VALUES (?, ?, ?, ?)
+        """,
+        (
+            title,
+            body,
+            author,
+            datetime.now().strftime("%Y-%m-%d %H:%M")
+        )
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_dashboard_notices(page=1, per_page=10):
+    page = max(int(page or 1), 1)
+    per_page = max(int(per_page or 10), 1)
+    offset = (page - 1) * per_page
+
+    conn = get_user_db()
+    cur = conn.cursor()
+    total = cur.execute("SELECT COUNT(*) AS c FROM dashboard_notices").fetchone()["c"]
+    rows = cur.execute(
+        """
+        SELECT id, title, body, author, created_at
+        FROM dashboard_notices
+        ORDER BY id DESC
+        LIMIT ? OFFSET ?
+        """,
+        (per_page, offset)
+    ).fetchall()
+    conn.close()
+
+    total_pages = max((total + per_page - 1) // per_page, 1)
+    if page > total_pages:
+        page = total_pages
+
+    return rows, total, page, total_pages
+
+
 @app.route("/dashboard/notice", methods=["POST"])
 @login_required
 def update_dashboard_notice():
@@ -544,8 +600,12 @@ def update_dashboard_notice():
 
     notice_title = request.form.get("notice_title", "").strip() or "공지사항"
     notice_body = request.form.get("notice_body", "").strip() or "공지사항 내용을 입력해주세요."
+    notice_author = request.form.get("notice_author", "").strip() or "투루카 담당자"
+
     set_app_setting("dashboard_notice_title", notice_title)
     set_app_setting("dashboard_notice_body", notice_body)
+    create_dashboard_notice(notice_title, notice_body, notice_author)
+
     flash("공지사항이 저장되었습니다.")
     return redirect(url_for("dashboard"))
 
@@ -574,6 +634,9 @@ def dashboard():
         f"{current_user.username} 계정으로 접속 중입니다. 오더 확인, 완료 처리까지 앱처럼 빠르게 확인하세요."
     )
 
+    notice_page = request.args.get("notice_page", 1, type=int)
+    notice_rows, notice_total, notice_page, notice_total_pages = get_dashboard_notices(notice_page, 10)
+
     return render_template(
         "dashboard.html",
         total_count=total_count,
@@ -581,6 +644,10 @@ def dashboard():
         vendor_counts=vendor_counts,
         notice_title=notice_title,
         notice_body=notice_body,
+        notice_rows=notice_rows,
+        notice_total=notice_total,
+        notice_page=notice_page,
+        notice_total_pages=notice_total_pages,
     )
 
 

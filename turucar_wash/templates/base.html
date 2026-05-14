@@ -48,6 +48,10 @@
             </a>
             <a href="{{ url_for('wash_list') }}" class="side-link {% if request.endpoint in ['wash_list','car_detail'] %}active{% endif %}">
                 <span>▣</span><b>세차 오더</b>
+                <a href="https://pm.peoplecar.co.kr:8082/#" class="side-link admin-app-link">
+            <span>↗</span><b>예약/제어</b>
+            </a>
+                
             </a>
             <a href="{{ url_for('wash_status') }}" class="side-link {% if request.endpoint == 'wash_status' %}active{% endif %}">
                 <span>✓</span><b>완료 현황</b>
@@ -101,6 +105,9 @@
         </a>
         <a href="{{ url_for('wash_list') }}" class="tab-item {% if request.endpoint in ['wash_list','car_detail'] %}active{% endif %}">
             <span>▣</span><b>오더</b>
+        <a href="https://pm.peoplecar.co.kr:8082/#" class="tab-item admin-app-tab">
+        <span>↗</span><b>예약</b>
+        </a>
         </a>
         <a href="{{ url_for('wash_status') }}" class="tab-item {% if request.endpoint == 'wash_status' %}active{% endif %}">
             <span>✓</span><b>완료</b>

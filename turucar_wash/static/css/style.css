@@ -1073,3 +1073,35 @@ body {
     outline: 0 !important;
     background: transparent !important;
 }
+
+
+/* Final home quick action layout */
+.home-final-actions {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+.home-final-actions .home-action-orange {
+    background: var(--daangn-orange, #ff6f0f) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+    box-shadow: 0 14px 32px rgba(255, 111, 15, .20) !important;
+}
+.home-final-actions .home-action-orange strong,
+.home-final-actions .home-action-orange small {
+    color: #fff !important;
+}
+.home-final-actions .home-action-orange .quick-icon {
+    background: rgba(255,255,255,.18) !important;
+    color: #fff !important;
+}
+.home-final-actions .home-action-orange:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 40px rgba(255, 111, 15, .26) !important;
+}
+@media (max-width: 900px) {
+    .home-final-actions {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+    }
+}

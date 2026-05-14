@@ -1494,3 +1494,15 @@ body {
         width: 210px;
     }
 }
+
+
+/* Profile page right duplicated header cleanup */
+.profile-hero {
+    justify-content: flex-start !important;
+}
+.profile-hero .profile-hero-copy {
+    display: none !important;
+}
+.profile-hero .hero-copy-block {
+    max-width: 760px;
+}

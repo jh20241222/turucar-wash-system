@@ -919,3 +919,50 @@ body {
     .brand-text strong { font-size: 15px !important; }
     .mobile-tabbar { gap: 3px; }
 }
+
+
+/* Login refinement: centered TURU CAR logo + top-right WASH MANAGER */
+.phone-frame.login-card {
+    position: relative !important;
+}
+.login-brand-only {
+    position: relative !important;
+    min-height: 132px !important;
+    padding: 22px 0 34px !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.login-manager-label {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    margin: 0 !important;
+    color: var(--daangn-orange) !important;
+    font-size: 11px !important;
+    font-weight: 950 !important;
+    letter-spacing: .08em !important;
+    line-height: 1 !important;
+    text-align: right !important;
+}
+.turucar-center-logo {
+    width: min(270px, 82%) !important;
+    margin: 30px auto 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.turucar-center-logo img {
+    width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    filter: none !important;
+}
+.login-brand-only h1,
+.login-brand-only > p:not(.login-manager-label) {
+    display: none !important;
+}
+@media (max-width: 520px) {
+    .login-brand-only { min-height: 118px !important; padding-bottom: 28px !important; }
+    .turucar-center-logo { width: min(238px, 84%) !important; margin-top: 28px !important; }
+    .login-manager-label { font-size: 10px !important; }
+}

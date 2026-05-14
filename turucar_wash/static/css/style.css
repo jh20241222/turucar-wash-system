@@ -1313,15 +1313,16 @@ body {
 }
 
 
-/* Single clean brand T shape on notice card */
-.notice-hero {
+/* FINAL unified header + no right decoration */
+.notice-hero,
+.order-hero,
+.status-hero,
+.profile-hero,
+.detail-hero,
+.page-hero {
     position: relative !important;
     overflow: hidden !important;
-    min-height: 300px;
-    display: flex;
-    align-items: center;
 }
-
 .notice-hero::before,
 .notice-hero::after,
 .notice-hero .notice-content::before,
@@ -1329,99 +1330,167 @@ body {
 .brand-line-card.notice-hero::before,
 .brand-line-card.notice-hero::after,
 .notice-hero.brand-line-card::before,
-.notice-hero.brand-line-card::after {
+.notice-hero.brand-line-card::after,
+.notice-brand-shape,
+.notice-brand-mark-wrap,
+.notice-brand-mark-image {
     content: none !important;
     display: none !important;
 }
-
-.notice-hero .notice-content {
+.notice-hero {
+    min-height: 260px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+.notice-hero .notice-content,
+.hero-copy-block {
     position: relative;
     z-index: 2;
     max-width: 760px;
 }
-
-.notice-brand-mark-wrap,
-.notice-brand-mark-image {
-    display: none !important;
-}
-
-.notice-brand-shape {
-    position: absolute;
-    right: 72px;
-    top: 50%;
-    width: 520px;
-    height: 255px;
-    transform: translateY(-50%);
-    z-index: 1;
-    pointer-events: none;
-}
-
-.notice-brand-shape span {
-    position: absolute;
+.page-hero-logo,
+.notice-turucar-logo.brand-combo-logo {
     display: block;
+    width: 260px !important;
+    max-width: 72vw;
+    height: auto !important;
+    object-fit: contain;
+    margin: 0 0 24px 0;
 }
-
-.notice-brand-shape .shape-bar-main {
-    left: 0;
-    top: 34px;
-    width: 355px;
-    height: 48px;
-    border-radius: 999px;
-    background: #FBC400;
-    box-shadow: 0 16px 34px rgba(251, 196, 0, .16);
+.daangn-sidebar-brand .brand-combo-logo {
+    width: 208px !important;
+    max-width: 100%;
+    height: auto !important;
+    margin: 0 0 14px 0 !important;
+    object-fit: contain;
 }
-
-.notice-brand-shape .shape-stem {
-    left: 303px;
-    top: 76px;
-    width: 58px;
-    height: 178px;
-    border-radius: 30px 30px 8px 8px;
-    background: linear-gradient(180deg, #FF8A1F 0%, #FF6F0F 100%);
-    box-shadow: 0 20px 38px rgba(255, 111, 15, .17);
+.order-hero .hero-copy-block,
+.status-hero .hero-copy-block,
+.profile-hero .hero-copy-block,
+.detail-hero .hero-copy-block,
+.page-hero .hero-copy-block {
+    flex: 1 1 auto;
 }
-
-.notice-brand-shape .shape-dot {
-    left: 278px;
-    top: 54px;
-    width: 88px;
-    height: 88px;
-    border-radius: 50%;
-    background: #E4193C;
-    box-shadow: 0 18px 38px rgba(228, 25, 60, .18);
+.order-hero .page-hero-logo,
+.status-hero .page-hero-logo,
+.profile-hero .page-hero-logo,
+.detail-hero .page-hero-logo,
+.page-hero .page-hero-logo {
+    width: 230px !important;
+    margin-bottom: 18px;
 }
-
-.notice-brand-shape .shape-bar-right {
-    left: 330px;
-    top: 77px;
-    width: 190px;
-    height: 56px;
-    border-radius: 0 0 0 0;
-    background: #FBC400;
+.home-final-actions.brand-action-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
 }
-
-@media (max-width: 1300px) {
-    .notice-brand-shape {
-        right: 36px;
-        width: 420px;
-        transform: translateY(-50%) scale(.86);
-        transform-origin: right center;
-    }
+.home-final-actions .brand-action-card {
+    min-height: 300px;
+    background: #fff !important;
+    color: var(--daangn-ink, #212124) !important;
+    border: 1px solid rgba(0,0,0,.055) !important;
+    box-shadow: 0 18px 42px rgba(33,33,36,.075) !important;
+    border-radius: 28px;
+    padding: 46px 24px 32px;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform .18s ease, box-shadow .18s ease;
 }
-
-@media (max-width: 1050px) {
-    .notice-brand-shape {
-        opacity: .18;
-        right: -80px;
-        transform: translateY(-50%) scale(.76);
-    }
+.home-final-actions .brand-action-card::after {
+    content: "";
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 0;
+    height: 10px;
+    border-radius: 999px 999px 0 0;
 }
-
+.home-final-actions .brand-action-card.action-yellow::after { background: #FBC400; }
+.home-final-actions .brand-action-card.action-orange::after { background: #FF6F0F; }
+.home-final-actions .brand-action-card.action-red::after { background: #E4193C; }
+.home-final-actions .brand-action-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 22px 52px rgba(33,33,36,.11) !important;
+}
+.home-final-actions .brand-action-card strong {
+    color: #111 !important;
+    font-size: 28px;
+    letter-spacing: -.06em;
+    margin-top: 22px;
+}
+.home-final-actions .brand-action-card small {
+    color: var(--daangn-muted, #6d7684) !important;
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 12px;
+}
+.action-svg-icon {
+    display: inline-flex !important;
+    width: 96px !important;
+    height: 96px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    margin: 0 auto;
+}
+.action-svg-icon svg {
+    width: 96px;
+    height: 96px;
+    fill: none;
+    stroke-width: 4.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.action-yellow .action-svg-icon svg { stroke: #F3B800; }
+.action-orange .action-svg-icon svg { stroke: #FF6F0F; }
+.action-red .action-svg-icon svg { stroke: #E4193C; }
+.action-orange .action-svg-icon svg path:first-child { fill: rgba(255,111,15,.08); }
+.action-red .action-svg-icon svg circle { fill: rgba(228,25,60,.08); }
+.final-login-logo-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+}
+.final-login-logo-wrap .login-brand-combo-logo {
+    width: 235px;
+    height: auto;
+    object-fit: contain;
+}
+.final-login-logo-wrap strong {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -.04em;
+    color: #111;
+    margin-top: 8px;
+}
+.final-login-logo-wrap small {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--daangn-muted, #6d7684);
+}
 @media (max-width: 900px) {
-    .notice-brand-shape {
-        display: none !important;
+    .page-hero-logo,
+    .notice-turucar-logo.brand-combo-logo {
+        width: 210px !important;
+        margin-bottom: 18px;
     }
-    .notice-hero {
-        min-height: auto;
+    .home-final-actions.brand-action-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px;
+    }
+    .home-final-actions .brand-action-card {
+        min-height: 190px;
+        padding: 34px 20px 28px;
+    }
+    .action-svg-icon,
+    .action-svg-icon svg {
+        width: 76px !important;
+        height: 76px !important;
+    }
+    .final-login-logo-wrap .login-brand-combo-logo {
+        width: 210px;
     }
 }

@@ -408,6 +408,13 @@ def update_dashboard_notice():
 # =========================================================
 # 대시보드
 # =========================================================
+
+@app.route("/admin-control")
+@login_required
+def admin_control():
+    return render_template("admin_control.html", admin_app_url="https://pm.peoplecar.co.kr:8082/#")
+
+
 @app.route("/dashboard")
 @login_required
 def dashboard():

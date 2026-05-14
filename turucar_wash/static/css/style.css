@@ -974,29 +974,46 @@ body {
 }
 
 
-/* Home/header cleanup patch */
-.topbar-left--minimal { min-width: 42px; }
-.topbar-left--minimal:empty { min-width: 0; }
-.daangn-sidebar-brand {
-    align-items: flex-start;
+/* Dashboard notice editor patch */
+.notice-hero { align-items: flex-start; }
+.notice-content { min-width: 0; flex: 1; }
+.notice-editor {
+    margin-top: 18px;
+    max-width: 720px;
 }
-.daangn-sidebar-brand .turu-wordmark {
-    width: 126px;
-    margin-top: 0;
-    margin-bottom: 4px;
+.notice-editor summary {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 13px;
+    border-radius: 999px;
+    background: #fff3eb;
+    color: var(--daangn-orange, #ff6f0f);
+    font-weight: 900;
+    font-size: 13px;
+    cursor: pointer;
+    list-style: none;
 }
-.daangn-sidebar-brand .sidebar-subtitle {
-    font-size: 18px;
-    line-height: 1.15;
-    letter-spacing: -.04em;
-    font-weight: 800;
-    color: var(--daangn-ink) !important;
+.notice-editor summary::-webkit-details-marker { display: none; }
+.notice-form {
+    margin-top: 12px;
+    padding: 16px;
+    border-radius: 20px;
+    background: #fff;
+    border: 1px solid var(--daangn-line, #e9ecef);
+    display: grid;
+    gap: 12px;
+    box-shadow: 0 12px 28px rgba(33, 33, 36, .05);
 }
-.daangn-sidebar-brand small {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--daangn-muted) !important;
-}
+.notice-form label { display: grid; gap: 7px; }
+.notice-form label span { font-size: 12px; font-weight: 900; color: var(--daangn-muted, #6f7785); }
+.notice-textarea { resize: vertical; min-height: 86px; line-height: 1.5; padding-top: 12px; }
+.notice-save-btn { width: fit-content; min-width: 96px; min-height: 40px; padding: 0 18px; border-radius: 12px; }
+.compact-dashboard-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.compact-dashboard-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 900px) {
-    .topbar-left--minimal { min-width: 0; }
+    .notice-hero { gap: 18px; }
+    .notice-editor { max-width: none; }
+    .compact-dashboard-stats, .compact-dashboard-actions { grid-template-columns: 1fr; }
+    .notice-save-btn { width: 100%; }
 }

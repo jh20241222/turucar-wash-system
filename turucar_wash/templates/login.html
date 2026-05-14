@@ -2,13 +2,13 @@
 {% block content %}
 <main class="login-screen">
     <section class="phone-frame login-card">
-        <div class="login-hero">
-            <div class="login-brand-lockup type-lockup">
-                <div class="login-wordmark">Turu <em>Wash</em></div>
-                <small>FIELD WASH ORDER</small>
+        <div class="login-hero daangn-login-hero">
+            <p class="eyebrow">WASH MANAGER</p>
+            <div class="login-brand-lockup daangn-login-logo">
+                <img src="{{ url_for('static', filename='img/turu_wordmark_black.png') }}" alt="TuruCar">
             </div>
-            <h1>세차 오더를<br>한 번에 처리</h1>
-            <p>Railway 서버와 연결된 Turu Wash 현장 관리 앱입니다.</p>
+            <h1>세차 현장 관리를<br>가볍고 빠르게</h1>
+            <p>오늘 오더 확인부터 완료 처리까지 한 화면에서 관리합니다.</p>
         </div>
 
         <form method="POST" class="login-form">
@@ -23,7 +23,7 @@
                 <label><input type="checkbox" name="auto_login" {% if session.get('auto_login') %}checked{% endif %}> 자동 로그인</label>
             </div>
 
-            <button class="primary-btn full" type="submit">로그인</button>
+            <button class="primary-btn full daangn-login-btn" type="submit">로그인</button>
 
             {% for msg in get_flashed_messages() %}
                 <p class="form-error">{{ msg }}</p>

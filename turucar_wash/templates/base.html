@@ -22,10 +22,11 @@
             {% if request.endpoint != 'dashboard' %}
             <button type="button" class="icon-btn back-btn" onclick="history.length > 1 ? history.back() : location.href='{{ url_for('dashboard') }}'" aria-label="뒤로가기">‹</button>
             {% endif %}
-            <a href="{{ url_for('dashboard') }}" class="brand-mini text-brand" aria-label="대시보드로 이동">
+            <a href="{{ url_for('dashboard') }}" class="brand-mini daangn-wordmark" aria-label="대시보드로 이동">
+                <span class="brand-dot">W</span>
                 <span class="brand-text">
-                    <strong><span>Turu</span> <em>Wash</em></strong>
-                    <small>Field wash order app</small>
+                    <strong>Wash Manager</strong>
+                    <small>TuruCar 세차관리</small>
                 </span>
             </a>
         </div>
@@ -37,8 +38,9 @@
     </header>
 
     <aside class="desktop-sidebar">
-        <a href="{{ url_for('dashboard') }}" class="sidebar-brand text-sidebar-brand" aria-label="Turu Wash 홈">
-            <span class="sidebar-wordmark"><strong>Turu <em>Wash</em></strong></span>
+        <a href="{{ url_for('dashboard') }}" class="sidebar-brand daangn-sidebar-brand" aria-label="Turu Wash 홈">
+            <strong>Wash Manager</strong>
+            <img src="{{ url_for('static', filename='img/turu_wordmark_black.png') }}" alt="TuruCar" class="sidebar-logo turu-wordmark">
             <small>현장 세차 오더 앱</small>
         </a>
 
@@ -48,10 +50,9 @@
             </a>
             <a href="{{ url_for('wash_list') }}" class="side-link {% if request.endpoint in ['wash_list','car_detail'] %}active{% endif %}">
                 <span>▣</span><b>세차 오더</b>
-                <a href="https://pm.peoplecar.co.kr:8082/#" class="side-link admin-app-link">
-            <span>↗</span><b>예약/제어</b>
             </a>
-                
+            <a href="https://pm.peoplecar.co.kr:8082/#" class="side-link admin-app-link">
+                <span>↗</span><b>예약/제어</b>
             </a>
             <a href="{{ url_for('wash_status') }}" class="side-link {% if request.endpoint == 'wash_status' %}active{% endif %}">
                 <span>✓</span><b>완료 현황</b>
@@ -103,11 +104,11 @@
         <a href="{{ url_for('dashboard') }}" class="tab-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
             <span>⌂</span><b>홈</b>
         </a>
+        <a href="https://pm.peoplecar.co.kr:8082/#" class="tab-item admin-app-tab">
+            <span>↗</span><b>예약</b>
+        </a>
         <a href="{{ url_for('wash_list') }}" class="tab-item {% if request.endpoint in ['wash_list','car_detail'] %}active{% endif %}">
             <span>▣</span><b>오더</b>
-        <a href="https://pm.peoplecar.co.kr:8082/#" class="tab-item admin-app-tab">
-        <span>↗</span><b>예약</b>
-        </a>
         </a>
         <a href="{{ url_for('wash_status') }}" class="tab-item {% if request.endpoint == 'wash_status' %}active{% endif %}">
             <span>✓</span><b>완료</b>

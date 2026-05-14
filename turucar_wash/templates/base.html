@@ -18,17 +18,10 @@
 </head>
 <body class="app-shell endpoint-{{ request.endpoint or 'page' }}">
     <header class="app-topbar">
-        <div class="topbar-left">
+        <div class="topbar-left topbar-left--minimal">
             {% if request.endpoint != 'dashboard' %}
             <button type="button" class="icon-btn back-btn" onclick="history.length > 1 ? history.back() : location.href='{{ url_for('dashboard') }}'" aria-label="뒤로가기">‹</button>
             {% endif %}
-            <a href="{{ url_for('dashboard') }}" class="brand-mini daangn-wordmark" aria-label="대시보드로 이동">
-                <span class="brand-dot">W</span>
-                <span class="brand-text">
-                    <strong>Wash Manager</strong>
-                    <small>TuruCar 세차관리</small>
-                </span>
-            </a>
         </div>
         <div class="topbar-actions">
             <button type="button" class="install-chip pwa-install" hidden>앱 설치</button>
@@ -39,9 +32,9 @@
 
     <aside class="desktop-sidebar">
         <a href="{{ url_for('dashboard') }}" class="sidebar-brand daangn-sidebar-brand" aria-label="Turu Wash 홈">
-            <strong>Wash Manager</strong>
             <img src="{{ url_for('static', filename='img/turu_wordmark_black.png') }}" alt="TuruCar" class="sidebar-logo turu-wordmark">
-            <small>현장 세차 오더 앱</small>
+            <strong class="sidebar-subtitle">Wash Manager</strong>
+            <small>현장 세차 앱</small>
         </a>
 
         <nav class="side-nav">

@@ -30,10 +30,33 @@
     </tbody></table></div>
 </section>
 
-<section class="mobile-order-list">
-    {% for r in rows %}<a href="{{ url_for('car_detail', id=r['id']) }}" class="order-card-link"><article class="order-card"><div class="order-card-head"><span class="status-pill waiting">대기</span><span class="order-vendor">{{ r['업체'] or '-' }}</span></div><div class="car-number">{{ r['차량번호'] }}</div><p class="car-subline">{{ r['차종명'] or '-' }} · {{ r['차량소속'] or '-' }}</p><div class="spot-box"><strong>{{ r['스팟'] or '-' }}</strong><span>{{ r['주소'] or '-' }}</span></div><div class="order-tags"><span>{{ r['지역시도'] or '-' }} {{ r['지역구군'] or '' }}</span><span>{{ r['세차일'] or selected_date }}</span></div><div class="card-action-row"><b>상세 입력으로 이동</b><span>›</span></div></article></a>{% else %}<div class="empty-state"><strong>세차 대상이 없습니다.</strong><span>날짜를 바꾸거나 필터를 초기화해보세요.</span></div>{% endfor %}
+<section class="mobile-order-list turu-mobile-list">
+    <div class="mobile-list-summary">
+        <strong>총 {{ rows|length }}대</strong>
+        <span>최신 등록순</span>
+    </div>
+    {% for r in rows %}
+    <a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-row-link">
+        <article class="turu-order-row">
+            <div class="turu-row-main">
+                <div class="turu-row-title">
+                    <strong>{{ r['차량번호'] }}</strong>
+                    <span class="status-pill waiting">대기</span>
+                </div>
+                <p>{{ r['차종명'] or '-' }} · {{ r['차량소속'] or '-' }}</p>
+            </div>
+            <div class="turu-row-side">
+                <span class="turu-spot">{{ r['스팟'] or '-' }}</span>
+                <span class="turu-location">⌖ {{ r['지역시도'] or '-' }} {{ r['지역구군'] or '' }}</span>
+                <span class="turu-date">□ {{ r['세차일'] or selected_date }}</span>
+            </div>
+            <span class="turu-row-arrow">›</span>
+        </article>
+    </a>
+    {% else %}
+    <div class="empty-state turu-list-empty"><strong>세차 대상이 없습니다.</strong><span>날짜를 바꾸거나 필터를 초기화해보세요.</span></div>
+    {% endfor %}
 </section>
-
 <script>
 function moveDate(days){const current=new Date("{{ selected_date }}");current.setDate(current.getDate()+days);const yyyy=current.getFullYear();const mm=String(current.getMonth()+1).padStart(2,'0');const dd=String(current.getDate()).padStart(2,'0');window.location.href=`/wash_list?date=${yyyy}-${mm}-${dd}`;}
 function applyFilter(){const params=new URLSearchParams({date:"{{ selected_date }}",s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:""});window.location.href=`/wash_list?${params.toString()}`;}

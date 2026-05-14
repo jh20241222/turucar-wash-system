@@ -21,8 +21,33 @@
 
 <section class="desktop-table table-panel app-card"><div class="table-title-row"><h2>완료 기록</h2><span>{{ rows|length }}건</span></div><div class="table-scroll"><table><thead><tr><th>완료일</th><th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th><th>작업자</th><th>업체</th></tr></thead><tbody>{% for r in rows %}<tr><td>{{ r['세차완료일'] or '-' }}</td><td>{{ r['차량번호'] }}</td><td>{{ r['차종명'] or '-' }}</td><td>{{ r['차량소속'] or '-' }}</td><td>{{ r['스팟'] or '-' }}</td><td>{{ r['작업자'] or '-' }}</td><td>{{ r['업체'] or '-' }}</td></tr>{% else %}<tr><td colspan="7" class="empty-cell">완료 내역이 없습니다.</td></tr>{% endfor %}</tbody></table></div></section>
 
-<section class="mobile-history-list">{% for r in rows %}<article class="history-card"><div class="history-head"><span class="status-pill done">완료</span><strong>{{ r['세차완료일'] or '-' }}</strong></div><div class="car-number small">{{ r['차량번호'] }}</div><p>{{ r['차종명'] or '-' }} · {{ r['차량소속'] or '-' }}</p><div class="spot-box compact"><strong>{{ r['스팟'] or '-' }}</strong><span>{{ r['주소'] or '-' }}</span></div><div class="history-meta-grid"><div><small>주행거리</small><strong>{{ r['주행거리'] or '-' }}</strong></div><div><small>작업자</small><strong>{{ r['작업자'] or '-' }}</strong></div><div><small>훼손</small><strong>{{ r['훼손'] or '-' }}</strong></div><div><small>경고등</small><strong>{{ r['경고등'] or '-' }}</strong></div></div>{% if r['특이사항'] %}<div class="note-box"><small>특이사항</small><span>{{ r['특이사항'] }}</span></div>{% endif %}</article>{% else %}<div class="empty-state"><strong>완료 내역이 없습니다.</strong><span>검색 조건을 바꿔보세요.</span></div>{% endfor %}</section>
-
+<section class="mobile-history-list turu-mobile-list">
+    <div class="mobile-list-summary">
+        <strong>총 {{ rows|length }}건</strong>
+        <span>완료 등록순</span>
+    </div>
+    {% for r in rows %}
+    <article class="turu-order-row turu-done-row">
+        <div class="turu-row-main">
+            <div class="turu-row-title">
+                <strong>{{ r['차량번호'] }}</strong>
+                <span class="status-pill done">완료</span>
+            </div>
+            <p>{{ r['차종명'] or '-' }} · {{ r['차량소속'] or '-' }}</p>
+        </div>
+        <div class="turu-row-side">
+            <span class="turu-spot">{{ r['스팟'] or '-' }}</span>
+            <span class="turu-location">작업자 {{ r['작업자'] or '-' }}</span>
+            <span class="turu-date">□ {{ r['세차완료일'] or '-' }}</span>
+        </div>
+        {% if r['특이사항'] %}
+        <div class="turu-row-note">{{ r['특이사항'] }}</div>
+        {% endif %}
+    </article>
+    {% else %}
+    <div class="empty-state turu-list-empty"><strong>완료 내역이 없습니다.</strong><span>검색 조건을 바꿔보세요.</span></div>
+    {% endfor %}
+</section>
 <script>
 function buildStatusParams(){return new URLSearchParams({s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("car_org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:"",start:document.getElementById("start").value,end:document.getElementById("end").value});}
 function applyFilter(){window.location.href=`/wash_status?${buildStatusParams().toString()}`;}

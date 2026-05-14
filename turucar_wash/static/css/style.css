@@ -1552,3 +1552,197 @@ body {
         padding: 0 9px;
     }
 }
+
+
+/* Dashboard accumulated notice list */
+.dashboard-notice-list {
+    margin-top: 22px;
+    padding: 28px 30px;
+}
+.notice-list-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+.notice-list-head h2 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 950;
+    letter-spacing: -.06em;
+}
+.notice-list-head p {
+    margin: 8px 0 0;
+    color: var(--muted, #6D7B8F);
+    font-weight: 700;
+}
+.notice-write-btn {
+    flex: 0 0 auto;
+    border: 1px solid rgba(255,111,15,.35);
+    background: #fff;
+    color: var(--daangn-orange, #FF6F0F);
+    min-height: 42px;
+    padding: 0 16px;
+    border-radius: 14px;
+    font-weight: 950;
+    box-shadow: 0 10px 22px rgba(255,111,15,.07);
+}
+.notice-table-wrap {
+    overflow-x: auto;
+}
+.notice-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 780px;
+}
+.notice-table th {
+    height: 42px;
+    padding: 0 14px;
+    text-align: left;
+    color: var(--muted, #6D7B8F);
+    font-size: 13px;
+    font-weight: 900;
+    background: rgba(246,247,249,.76);
+    border-bottom: 1px solid var(--line, #D8E0EB);
+}
+.notice-table td {
+    padding: 14px;
+    border-bottom: 1px solid var(--line, #D8E0EB);
+    font-size: 14px;
+    font-weight: 800;
+    vertical-align: middle;
+}
+.notice-table td:first-child {
+    width: 70px;
+    color: var(--muted, #6D7B8F);
+}
+.notice-table td:nth-child(3) {
+    width: 190px;
+    white-space: nowrap;
+}
+.notice-table td:nth-child(4) {
+    width: 160px;
+    white-space: nowrap;
+}
+.notice-table strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 950;
+    color: var(--ink, #212121);
+}
+.notice-table small {
+    display: block;
+    margin-top: 5px;
+    color: var(--muted, #6D7B8F);
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 680px;
+}
+.notice-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding-top: 22px;
+}
+.notice-pagination a {
+    min-width: 34px;
+    height: 34px;
+    border-radius: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink, #212121);
+    font-weight: 900;
+    border: 1px solid transparent;
+}
+.notice-pagination a.active {
+    border-color: var(--daangn-orange, #FF6F0F);
+    color: var(--daangn-orange, #FF6F0F);
+    background: rgba(255,111,15,.06);
+}
+.notice-empty {
+    min-height: 120px;
+    border: 1px dashed var(--line, #D8E0EB);
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    padding: 24px;
+    color: var(--muted, #6D7B8F);
+}
+.notice-empty strong {
+    color: var(--ink, #212121);
+    font-size: 17px;
+}
+@media (max-width: 900px) {
+    .dashboard-notice-list {
+        padding: 24px 18px;
+        margin-top: 16px;
+    }
+    .notice-list-head {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .notice-write-btn {
+        width: 100%;
+    }
+    .notice-table {
+        min-width: 0;
+    }
+    .notice-table thead {
+        display: none;
+    }
+    .notice-table,
+    .notice-table tbody,
+    .notice-table tr,
+    .notice-table td {
+        display: block;
+        width: 100% !important;
+    }
+    .notice-table tr {
+        position: relative;
+        padding: 16px 34px 16px 0;
+        border-bottom: 1px solid var(--line, #D8E0EB);
+    }
+    .notice-table tr::after {
+        content: "›";
+        position: absolute;
+        right: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted, #6D7B8F);
+        font-size: 22px;
+        font-weight: 700;
+    }
+    .notice-table td {
+        border-bottom: 0;
+        padding: 0;
+    }
+    .notice-table td:first-child {
+        display: none;
+    }
+    .notice-table td:nth-child(2) strong {
+        font-size: 16px;
+    }
+    .notice-table td:nth-child(2) small {
+        display: none;
+    }
+    .notice-table td:nth-child(3),
+    .notice-table td:nth-child(4) {
+        display: inline-block;
+        width: auto !important;
+        margin-top: 8px;
+        margin-right: 12px;
+        color: var(--muted, #6D7B8F);
+        font-size: 13px;
+        white-space: nowrap;
+    }
+    .notice-pagination {
+        padding-top: 18px;
+    }
+}

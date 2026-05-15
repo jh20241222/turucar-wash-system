@@ -2664,3 +2664,23 @@ body.modal-open {
         grid-row: 1;
     }
 }
+
+
+/* Wash order excel download button */
+.order-excel-btn {
+    background: #212124 !important;
+    color: #fff !important;
+    border-color: transparent !important;
+}
+@media (max-width: 900px) {
+    .endpoint-wash_list .search-panel .filter-grid .order-excel-btn,
+    .endpoint-wash_list .filter-card .filter-grid .order-excel-btn {
+        min-height: 54px !important;
+        border-radius: 18px !important;
+        font-size: 17px !important;
+        font-weight: 850 !important;
+        background: #212124 !important;
+        color: #fff !important;
+        box-shadow: 0 12px 24px rgba(33,33,36,.12) !important;
+    }
+}

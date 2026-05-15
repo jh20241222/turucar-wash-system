@@ -45,7 +45,6 @@
     </div>
 </section>
 
-
 {% if current_user.is_master %}
 <form method="post" action="{{ url_for('wash_list_delete') }}" id="order-delete-form" class="master-delete-form order-delete-form" onsubmit="return confirmSelectedDelete('order-delete-form', '선택한 세차 오더를 삭제할까요?');">
     <input type="hidden" name="return_query" value="{{ request.query_string.decode() }}">
@@ -57,12 +56,18 @@
             <button type="button" class="cancel-delete-btn" onclick="toggleDeleteMode('order-delete-form', false)">취소</button>
         </div>
     </div>
+{% endif %}
 
 <section class="desktop-table table-panel app-card">
     <div class="table-title-row"><h2>대상 차량</h2><span>{{ rows|length }}대</span></div>
     <div class="table-scroll">
         <table>
-            <thead><tr>{% if current_user.is_master %}<th class="delete-col">선택</th>{% endif %}<th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th><th>지역</th><th>업체</th><th>세차일</th></tr></thead>
+            <thead>
+                <tr>
+                    {% if current_user.is_master %}<th class="delete-col">선택</th>{% endif %}
+                    <th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th><th>지역</th><th>업체</th><th>세차일</th>
+                </tr>
+            </thead>
             <tbody>
             {% for r in rows %}
             <tr>
@@ -90,22 +95,24 @@
     </div>
     {% for r in rows %}
     <div class="mobile-delete-row">
+        {% if current_user.is_master %}
         <label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>
+        {% endif %}
         <a href="{{ url_for('car_detail', id=r['id']) }}" class="app-row-link">
             <article class="app-order-row">
-            <div class="row-main">
-                <div class="row-title-line">
-                    <strong>{{ r['차량번호'] }}</strong>
-                    <span class="status-pill waiting">대기</span>
+                <div class="row-main">
+                    <div class="row-title-line">
+                        <strong>{{ r['차량번호'] }}</strong>
+                        <span class="status-pill waiting">대기</span>
+                    </div>
+                    <p>{{ r['차종명'] or '-' }} · {{ r['차량소속'] or '-' }}</p>
                 </div>
-                <p>{{ r['차종명'] or '-' }} · {{ r['차량소속'] or '-' }}</p>
-            </div>
-            <div class="row-meta">
-                <span class="row-spot">{{ r['스팟'] or '-' }}</span>
-                <span>{{ r['지역시도'] or '-' }} {{ r['지역구군'] or '' }}</span>
-                <span>{{ r['세차일'] or selected_date }}</span>
-            </div>
-            <span class="row-arrow">›</span>
+                <div class="row-meta">
+                    <span class="row-spot">{{ r['스팟'] or '-' }}</span>
+                    <span>{{ r['지역시도'] or '-' }} {{ r['지역구군'] or '' }}</span>
+                    <span>{{ r['세차일'] or selected_date }}</span>
+                </div>
+                <span class="row-arrow">›</span>
             </article>
         </a>
     </div>
@@ -114,6 +121,8 @@
     {% endfor %}
 </section>
 
+{% if current_user.is_master %}
+</form>
 {% endif %}
 
 <script>
@@ -124,30 +133,8 @@ function downloadOrderExcel(){window.location.href=`/wash_list_excel?${buildOrde
 function openMobileFilter(id){const el=document.getElementById(id);if(el){el.classList.add("open");document.body.classList.add("filter-sheet-open");}}
 function closeMobileFilter(id){const el=document.getElementById(id);if(el){el.classList.remove("open");document.body.classList.remove("filter-sheet-open");}}
 document.addEventListener("keydown",function(e){if(e.key==="Escape"){document.querySelectorAll(".mobile-filter-sheet.open").forEach(function(el){el.classList.remove("open");});document.body.classList.remove("filter-sheet-open");}});
-
-function toggleDeleteMode(formId, force){
-    const form = document.getElementById(formId);
-    if(!form){ return; }
-    const next = typeof force === "boolean" ? force : !form.classList.contains("delete-mode");
-    form.classList.toggle("delete-mode", next);
-    if(!next){
-        form.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-    }
-}
-function toggleAllDelete(master, formId){
-    const form = document.getElementById(formId);
-    if(!form){ return; }
-    form.querySelectorAll('input[name="ids"]').forEach(cb => cb.checked = master.checked);
-}
-function confirmSelectedDelete(formId, message){
-    const form = document.getElementById(formId);
-    const count = form ? form.querySelectorAll('input[name="ids"]:checked').length : 0;
-    if(count < 1){
-        alert("삭제할 항목을 선택해주세요.");
-        return false;
-    }
-    return confirm(message || "선택한 항목을 삭제할까요?");
-}
-
+function toggleDeleteMode(formId, force){const form=document.getElementById(formId);if(!form){return;}const next=typeof force==="boolean"?force:!form.classList.contains("delete-mode");form.classList.toggle("delete-mode",next);if(!next){form.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);}}
+function toggleAllDelete(master, formId){const form=document.getElementById(formId);if(!form){return;}form.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=master.checked);}
+function confirmSelectedDelete(formId,message){const form=document.getElementById(formId);const count=form?form.querySelectorAll('input[name="ids"]:checked').length:0;if(count<1){alert("삭제할 항목을 선택해주세요.");return false;}return confirm(message||"선택한 항목을 삭제할까요?");}
 </script>
 {% endblock %}

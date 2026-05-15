@@ -4033,3 +4033,37 @@ body.modal-open {
         max-width: 180px;
     }
 }
+
+
+/* Mobile filter selected summary */
+@media (max-width: 900px) {
+    .mobile-filter-open-btn .filter-trigger-copy {
+        gap: 0 !important;
+    }
+
+    .mobile-filter-open-btn .filter-trigger-copy b {
+        display: none !important;
+    }
+
+    .mobile-filter-open-btn .filter-trigger-copy em {
+        max-width: 225px !important;
+        color: #9CA5B2 !important;
+        font-size: 12px !important;
+        line-height: 1.35 !important;
+        font-weight: 650 !important;
+    }
+
+    .mobile-filter-open-btn .filter-trigger-copy em.active-filter-summary {
+        color: #212121 !important;
+        font-size: 15px !important;
+        font-weight: 850 !important;
+        letter-spacing: -.04em !important;
+    }
+}
+
+@media (max-width: 380px) {
+    .mobile-filter-open-btn .filter-trigger-copy em,
+    .mobile-filter-open-btn .filter-trigger-copy em.active-filter-summary {
+        max-width: 165px !important;
+    }
+}

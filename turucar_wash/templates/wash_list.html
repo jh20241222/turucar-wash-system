@@ -1,8 +1,12 @@
 {% extends "base.html" %}
 {% block document_title %}Turu Wash · 세차 오더{% endblock %}
 {% block content %}
-<section class="order-hero app-card elevated brand-line-card">
-    <div class="hero-copy-block"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo"><h1>세차 오더</h1><p class="hero-copy">배정된 차량을 선택하고 세차 기록을 시작하세요.</p></div>
+<section class="order-hero app-card elevated brand-line-card screen-hero">
+    <div class="hero-copy-block">
+        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo">
+        <h1>세차 오더</h1>
+        <p class="hero-copy">배정된 차량을 확인하고 세차 기록을 시작하세요.</p>
+    </div>
     <div class="date-controller">
         <button type="button" onclick="moveDate(-1)" aria-label="이전 날짜">‹</button>
         <div><small>작업일</small><strong id="date-display">{{ selected_date }}</strong></div>
@@ -10,8 +14,14 @@
     </div>
 </section>
 
-<section class="filter-card app-card">
-    <div class="filter-head"><div><strong>오더 검색</strong><small>차량번호, 스팟, 지역, 업체 기준으로 좁혀보세요.</small></div><span>{{ rows|length }}대</span></div>
+<section class="filter-card app-card search-panel">
+    <div class="filter-head">
+        <div>
+            <strong>오더 검색</strong>
+            <small>차량번호, 스팟, 지역, 업체 기준으로 좁혀보세요.</small>
+        </div>
+        <span>{{ rows|length }}대</span>
+    </div>
     <div class="filter-grid">
         <input id="search_input" class="app-input" placeholder="차량번호 또는 스팟 검색" value="{{ search_input }}">
         <select id="region1" class="app-input"><option value="">전체 시/도</option>{% for r in region1 %}<option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
@@ -25,38 +35,56 @@
 
 <section class="desktop-table table-panel app-card">
     <div class="table-title-row"><h2>대상 차량</h2><span>{{ rows|length }}대</span></div>
-    <div class="table-scroll"><table><thead><tr><th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th><th>지역</th><th>업체</th><th>세차일</th></tr></thead><tbody>
-        {% for r in rows %}<tr><td><a class="car-link" href="{{ url_for('car_detail', id=r['id']) }}">{{ r['차량번호'] }}</a></td><td>{{ r['차종명'] or '-' }}</td><td>{{ r['차량소속'] or '-' }}</td><td>{{ r['스팟'] or '-' }}</td><td>{{ r['지역시도'] or '-' }} {{ r['지역구군'] or '' }}</td><td>{{ r['업체'] or '-' }}</td><td>{{ r['세차일'] or selected_date }}</td></tr>{% else %}<tr><td colspan="7" class="empty-cell">해당 날짜에 세차 대상이 없습니다.</td></tr>{% endfor %}
-    </tbody></table></div>
+    <div class="table-scroll">
+        <table>
+            <thead><tr><th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th><th>지역</th><th>업체</th><th>세차일</th></tr></thead>
+            <tbody>
+            {% for r in rows %}
+            <tr>
+                <td><a class="car-link" href="{{ url_for('car_detail', id=r['id']) }}">{{ r['차량번호'] }}</a></td>
+                <td>{{ r['차종명'] or '-' }}</td>
+                <td>{{ r['차량소속'] or '-' }}</td>
+                <td>{{ r['스팟'] or '-' }}</td>
+                <td>{{ r['지역시도'] or '-' }} {{ r['지역구군'] or '' }}</td>
+                <td>{{ r['업체'] or '-' }}</td>
+                <td>{{ r['세차일'] or selected_date }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="empty-cell">해당 날짜에 세차 대상이 없습니다.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 
-<section class="mobile-order-list turu-mobile-list">
+<section class="mobile-order-list app-row-list">
     <div class="mobile-list-summary">
         <strong>총 {{ rows|length }}대</strong>
         <span>최신 등록순</span>
     </div>
     {% for r in rows %}
-    <a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-row-link">
-        <article class="turu-order-row">
-            <div class="turu-row-main">
-                <div class="turu-row-title">
+    <a href="{{ url_for('car_detail', id=r['id']) }}" class="app-row-link">
+        <article class="app-order-row">
+            <div class="row-main">
+                <div class="row-title-line">
                     <strong>{{ r['차량번호'] }}</strong>
                     <span class="status-pill waiting">대기</span>
                 </div>
                 <p>{{ r['차종명'] or '-' }} · {{ r['차량소속'] or '-' }}</p>
             </div>
-            <div class="turu-row-side">
-                <span class="turu-spot">{{ r['스팟'] or '-' }}</span>
-                <span class="turu-location">⌖ {{ r['지역시도'] or '-' }} {{ r['지역구군'] or '' }}</span>
-                <span class="turu-date">□ {{ r['세차일'] or selected_date }}</span>
+            <div class="row-meta">
+                <span class="row-spot">{{ r['스팟'] or '-' }}</span>
+                <span>{{ r['지역시도'] or '-' }} {{ r['지역구군'] or '' }}</span>
+                <span>{{ r['세차일'] or selected_date }}</span>
             </div>
-            <span class="turu-row-arrow">›</span>
+            <span class="row-arrow">›</span>
         </article>
     </a>
     {% else %}
-    <div class="empty-state turu-list-empty"><strong>세차 대상이 없습니다.</strong><span>날짜를 바꾸거나 필터를 초기화해보세요.</span></div>
+    <div class="empty-state polished-empty"><strong>세차 대상이 없습니다.</strong><span>날짜를 바꾸거나 필터를 초기화해보세요.</span></div>
     {% endfor %}
 </section>
+
 <script>
 function moveDate(days){const current=new Date("{{ selected_date }}");current.setDate(current.getDate()+days);const yyyy=current.getFullYear();const mm=String(current.getMonth()+1).padStart(2,'0');const dd=String(current.getDate()).padStart(2,'0');window.location.href=`/wash_list?date=${yyyy}-${mm}-${dd}`;}
 function applyFilter(){const params=new URLSearchParams({date:"{{ selected_date }}",s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:""});window.location.href=`/wash_list?${params.toString()}`;}

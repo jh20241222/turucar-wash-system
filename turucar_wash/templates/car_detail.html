@@ -1,54 +1,42 @@
 {% extends "base.html" %}
 {% block document_title %}Turu Wash · {{ car['차량번호'] }}{% endblock %}
 {% block content %}
-<header class="detail-simple-header">
-    <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="detail-simple-logo">
-    <h1>업무 수행 시작</h1>
-    <p>차량 정보를 확인하고 세차 기록을 입력하세요.</p>
-</header>
+<section class="detail-hero app-card elevated brand-line-card detail-hero-clean">
+    <div class="hero-copy-block">
+        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo">
+        <h1>업무 수행 시작</h1>
+        <p class="hero-copy">차량 정보를 확인하고 세차 기록을 입력하세요.</p>
+    </div>
+    <div class="plate-display">{{ car['차량번호'] }}</div>
+</section>
 
-<section class="detail-clean-layout">
-    <article class="detail-clean-card app-card">
-        <div class="detail-clean-head">
-            <div>
-                <span class="status-pill waiting">세차 대기</span>
-                <h2>{{ car['차량번호'] }}</h2>
-                <p>{{ car['차종명'] or '-' }} · {{ car['차량소속'] or '-' }}</p>
-            </div>
-            <span class="detail-vendor">{{ car['업체'] or '-' }}</span>
+<section class="detail-grid detail-grid-clean">
+    <article class="vehicle-card app-card vehicle-card-clean">
+        <div class="vehicle-topline">
+            <span class="status-pill waiting">세차 대기</span>
+            <span>{{ car['업체'] or '-' }}</span>
         </div>
-
-        <div class="detail-address-box">
-            <small>스팟 / 주소</small>
-            <strong>{{ car['스팟'] or '-' }}</strong>
-            <span>{{ car['주소'] or '-' }}</span>
-        </div>
-
-        <div class="detail-chip-row">
-            <span>{{ car['지역시도'] or '-' }} {{ car['지역구군'] or '' }}</span>
-            <span>{{ car['세차일'] or '-' }}</span>
+        <h2>{{ car['차량번호'] }}</h2>
+        <p>{{ car['차종명'] or '-' }} · {{ car['차량소속'] or '-' }}</p>
+        <div class="info-list">
+            <div><small>스팟</small><strong>{{ car['스팟'] or '-' }}</strong></div>
+            <div><small>주소</small><strong>{{ car['주소'] or '-' }}</strong></div>
+            <div><small>지역</small><strong>{{ car['지역시도'] or '-' }} {{ car['지역구군'] or '' }}</strong></div>
+            <div><small>세차일</small><strong>{{ car['세차일'] or '-' }}</strong></div>
         </div>
     </article>
 
-    <form id="wash-form" class="work-form clean-work-form app-card" action="{{ url_for('wash_complete', id=car['id']) }}" method="POST">
-        <div class="clean-form-head">
-            <h2>세차 기록 입력</h2>
-            <p>필요한 내용만 간단히 남겨주세요.</p>
-        </div>
-
+    <form id="wash-form" class="work-form app-card work-form-clean" action="{{ url_for('wash_complete', id=car['id']) }}" method="POST">
+        <div class="step-title clean-step-title"><span>01</span><strong>세차 기록 입력</strong></div>
         <label class="field-label" for="distance">주행거리</label>
         <input id="distance" class="app-input" name="distance" inputmode="numeric" placeholder="예: 12530km">
-
         <label class="field-label" for="damage">차량 훼손 부위</label>
         <textarea id="damage" class="app-input" name="damage" placeholder="없으면 비워두거나 '없음' 입력"></textarea>
-
         <label class="field-label" for="warning">경고등</label>
         <textarea id="warning" class="app-input" name="warning" placeholder="경고등 내용 입력"></textarea>
-
         <label class="field-label" for="etc">기타 특이사항</label>
         <textarea id="etc" class="app-input" name="etc" placeholder="추가로 공유할 내용 입력"></textarea>
-
-        <div class="sticky-actions clean-sticky-actions">
+        <div class="sticky-actions clean-action-area">
             <div class="action-grid">
                 <button type="button" class="secondary-btn" onclick="copyInfo()">복사</button>
                 <button type="button" class="blue-btn" onclick="openBand()">밴드</button>

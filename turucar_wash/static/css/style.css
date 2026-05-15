@@ -3701,3 +3701,269 @@ body.modal-open {
         float: none !important;
     }
 }
+
+
+/* Detail/status font normalization + centered hero titles */
+.endpoint-car_detail,
+.endpoint-wash_status,
+.endpoint-wash_list {
+    --clean-font: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", sans-serif;
+}
+
+.endpoint-car_detail *,
+.endpoint-wash_status *,
+.endpoint-wash_list * {
+    font-family: var(--clean-font) !important;
+}
+
+.endpoint-car_detail .detail-hero-clean .hero-copy-block,
+.endpoint-wash_status .status-hero .hero-copy-block,
+.endpoint-wash_list .order-hero .hero-copy-block {
+    text-align: center !important;
+    width: 100%;
+}
+
+.endpoint-car_detail .detail-hero-clean .page-hero-logo,
+.endpoint-wash_status .status-hero .page-hero-logo,
+.endpoint-wash_list .order-hero .page-hero-logo {
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+.endpoint-car_detail .detail-hero-clean h1,
+.endpoint-wash_status .status-hero h1,
+.endpoint-wash_list .order-hero h1 {
+    text-align: center !important;
+    font-weight: 850 !important;
+    letter-spacing: -.055em !important;
+}
+
+.endpoint-car_detail .detail-hero-clean .hero-copy,
+.endpoint-wash_status .status-hero .hero-copy,
+.endpoint-wash_list .order-hero .hero-copy {
+    text-align: center !important;
+    font-weight: 650 !important;
+    letter-spacing: -.025em !important;
+    color: #6D7B8F !important;
+}
+
+.endpoint-car_detail .vehicle-card-clean,
+.endpoint-car_detail .work-form-clean,
+.endpoint-wash_status .app-order-row,
+.endpoint-wash_list .app-order-row {
+    font-family: var(--clean-font) !important;
+}
+
+.endpoint-car_detail .vehicle-card-clean .vehicle-topline,
+.endpoint-car_detail .vehicle-card-clean .vehicle-topline span {
+    font-size: 13px !important;
+    font-weight: 750 !important;
+    letter-spacing: -.025em !important;
+    color: #6D7B8F !important;
+}
+
+.endpoint-car_detail .vehicle-card-clean .status-pill {
+    color: #FF6F0F !important;
+    background: rgba(255,111,15,.08) !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+}
+
+.endpoint-car_detail .vehicle-card-clean h2 {
+    font-size: 25px !important;
+    line-height: 1.12 !important;
+    font-weight: 850 !important;
+    letter-spacing: -.055em !important;
+    color: #212121 !important;
+}
+
+.endpoint-car_detail .vehicle-card-clean p {
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    font-weight: 650 !important;
+    letter-spacing: -.025em !important;
+    color: #6D7B8F !important;
+}
+
+.endpoint-car_detail .vehicle-card-clean .info-list small {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 12px !important;
+    line-height: 1.2 !important;
+    font-weight: 700 !important;
+    letter-spacing: -.02em !important;
+    color: #8B949F !important;
+}
+
+.endpoint-car_detail .vehicle-card-clean .info-list strong {
+    display: block;
+    font-size: 14px !important;
+    line-height: 1.42 !important;
+    font-weight: 760 !important;
+    letter-spacing: -.03em !important;
+    color: #212121 !important;
+    word-break: keep-all;
+}
+
+.endpoint-car_detail .work-form-clean .step-title strong,
+.endpoint-car_detail .work-form-clean .clean-step-title strong {
+    font-size: 22px !important;
+    line-height: 1.2 !important;
+    font-weight: 850 !important;
+    letter-spacing: -.055em !important;
+    color: #212121 !important;
+}
+
+.endpoint-car_detail .work-form-clean .step-title span,
+.endpoint-car_detail .work-form-clean .clean-step-title span {
+    font-size: 12px !important;
+    font-weight: 850 !important;
+}
+
+.endpoint-car_detail .work-form-clean .field-label {
+    font-size: 14px !important;
+    font-weight: 760 !important;
+    letter-spacing: -.03em !important;
+    color: #212121 !important;
+}
+
+.endpoint-car_detail .work-form-clean .app-input,
+.endpoint-car_detail .work-form-clean textarea.app-input {
+    font-size: 14px !important;
+    font-weight: 650 !important;
+    letter-spacing: -.02em !important;
+    color: #212121 !important;
+}
+
+.endpoint-car_detail .work-form-clean .app-input::placeholder,
+.endpoint-car_detail .work-form-clean textarea.app-input::placeholder {
+    color: #B3BDCC !important;
+    font-weight: 650 !important;
+}
+
+.endpoint-wash_status .row-title-line strong,
+.endpoint-wash_list .row-title-line strong {
+    font-weight: 820 !important;
+    letter-spacing: -.05em !important;
+}
+
+.endpoint-wash_status .row-main p,
+.endpoint-wash_list .row-main p,
+.endpoint-wash_status .row-meta,
+.endpoint-wash_list .row-meta {
+    font-weight: 650 !important;
+    letter-spacing: -.025em !important;
+    color: #7D8793 !important;
+}
+
+@media (min-width: 901px) {
+    .endpoint-car_detail .detail-hero-clean,
+    .endpoint-wash_status .status-hero,
+    .endpoint-wash_list .order-hero {
+        display: grid !important;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+    }
+
+    .endpoint-car_detail .detail-hero-clean .hero-copy-block,
+    .endpoint-wash_status .status-hero .hero-copy-block,
+    .endpoint-wash_list .order-hero .hero-copy-block {
+        justify-self: center;
+        max-width: 620px;
+    }
+
+    .endpoint-car_detail .detail-hero-clean h1,
+    .endpoint-wash_status .status-hero h1,
+    .endpoint-wash_list .order-hero h1 {
+        font-size: 38px !important;
+    }
+}
+
+@media (max-width: 900px) {
+    .endpoint-car_detail .detail-hero-clean,
+    .endpoint-wash_status .status-hero,
+    .endpoint-wash_list .order-hero {
+        padding-top: 4px !important;
+        margin-bottom: 18px !important;
+    }
+
+    .endpoint-car_detail .detail-hero-clean .page-hero-logo,
+    .endpoint-wash_status .status-hero .page-hero-logo,
+    .endpoint-wash_list .order-hero .page-hero-logo {
+        width: 210px !important;
+        max-width: 74vw !important;
+        margin-bottom: 16px !important;
+    }
+
+    .endpoint-car_detail .detail-hero-clean h1,
+    .endpoint-wash_status .status-hero h1,
+    .endpoint-wash_list .order-hero h1 {
+        font-size: 29px !important;
+        line-height: 1.16 !important;
+        margin-bottom: 8px !important;
+    }
+
+    .endpoint-car_detail .detail-hero-clean .hero-copy,
+    .endpoint-wash_status .status-hero .hero-copy,
+    .endpoint-wash_list .order-hero .hero-copy {
+        font-size: 14px !important;
+        line-height: 1.45 !important;
+        max-width: 280px;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    .endpoint-car_detail .vehicle-card-clean {
+        padding: 18px !important;
+        border-radius: 22px !important;
+    }
+
+    .endpoint-car_detail .vehicle-card-clean h2 {
+        font-size: 24px !important;
+        margin-top: 12px !important;
+    }
+
+    .endpoint-car_detail .vehicle-card-clean .info-list {
+        gap: 9px !important;
+    }
+
+    .endpoint-car_detail .vehicle-card-clean .info-list div {
+        padding: 12px 13px !important;
+        border-radius: 15px !important;
+    }
+
+    .endpoint-car_detail .work-form-clean {
+        padding: 20px 18px !important;
+        border-radius: 22px !important;
+    }
+
+    .endpoint-car_detail .work-form-clean .step-title,
+    .endpoint-car_detail .work-form-clean .clean-step-title {
+        align-items: center !important;
+        gap: 10px !important;
+        margin-bottom: 18px !important;
+    }
+
+    .endpoint-car_detail .work-form-clean .step-title strong,
+    .endpoint-car_detail .work-form-clean .clean-step-title strong {
+        font-size: 23px !important;
+    }
+
+    .endpoint-car_detail .work-form-clean .app-input {
+        min-height: 48px !important;
+        border-radius: 15px !important;
+    }
+
+    .endpoint-car_detail .work-form-clean textarea.app-input {
+        min-height: 86px !important;
+    }
+
+    .endpoint-car_detail .clean-action-area .action-grid {
+        gap: 8px !important;
+    }
+
+    .endpoint-car_detail .clean-action-area button {
+        font-size: 14px !important;
+        font-weight: 850 !important;
+    }
+}

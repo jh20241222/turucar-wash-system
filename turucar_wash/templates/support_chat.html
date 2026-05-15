@@ -8,7 +8,7 @@
                 <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar">
             </span>
             <div>
-                <h1>Turu 문의봇</h1>
+                <h1>투루카 담당자</h1>
                 <p>세차 작업 중 문의사항을 남겨주세요.</p>
             </div>
         </div>
@@ -24,7 +24,7 @@
                 <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar">
             </span>
             <div class="bot-message">
-                <strong>Turu 문의봇</strong>
+                <strong>투루카 담당자</strong>
                 <p>작업 중 문제가 있다면 먼저 유형을 선택해주세요.<br>유형 선택 후에는 자유롭게 대화하듯 메시지를 입력하면 됩니다.</p>
                 <div class="issue-options" id="issue-options">
                     <button type="button" data-category="문 안 잠김">문 안 잠김</button>
@@ -45,9 +45,8 @@
                 <span class="ticket-status">{{ t.status }}</span>
                 <strong>{{ t.category }} · {{ t.car_number }}</strong>
                 <small>{{ t.created_at }}</small>
-                {% if t.admin_reply %}
-                <p>{{ t.admin_reply }}</p>
-                {% endif %}
+                <p class="recent-ticket-message">{{ (t.message or '').replace('[작업자] ', '') }}</p>
+                <p class="recent-ticket-reply"><b>담당자 답변:</b> {{ t.admin_reply or '확인 중입니다.' }}</p>
             </article>
             {% endfor %}
         </section>
@@ -99,7 +98,7 @@ function appendBot(html){
     row.className = "bot-row";
     row.innerHTML = `
         <span class="bot-avatar wordmark-avatar"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar"></span>
-        <div class="bot-message"><strong>Turu 문의봇</strong>${html}</div>
+        <div class="bot-message"><strong>투루카 담당자</strong>${html}</div>
     `;
     body.appendChild(row);
     scrollChat();

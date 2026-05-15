@@ -44,6 +44,11 @@
                 <input name="admin_reply" class="app-input" placeholder="답변 입력" value="{{ t.admin_reply or '' }}">
                 <button class="primary-btn" type="submit">저장</button>
             </form>
+            {% if current_user.is_master %}
+            <form method="post" action="{{ url_for('support_delete', ticket_id=t.id) }}" onsubmit="return confirm('이 문의 내역을 삭제할까요?');" class="ticket-delete-form">
+                <button type="submit" class="danger-delete-btn">문의 삭제</button>
+            </form>
+            {% endif %}
         </article>
         {% else %}
         <div class="notice-empty"><strong>접수된 문의가 없습니다.</strong><span>작업자가 문의하면 이곳에 표시됩니다.</span></div>

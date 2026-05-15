@@ -45,14 +45,28 @@
     </div>
 </section>
 
+
+{% if current_user.is_master %}
+<form method="post" action="{{ url_for('wash_list_delete') }}" id="order-delete-form" class="master-delete-form order-delete-form" onsubmit="return confirmSelectedDelete('order-delete-form', '선택한 세차 오더를 삭제할까요?');">
+    <input type="hidden" name="return_query" value="{{ request.query_string.decode() }}">
+    <div class="master-delete-toolbar order-delete-toolbar">
+        <button type="button" class="delete-mode-btn" onclick="toggleDeleteMode('order-delete-form')">삭제</button>
+        <div class="delete-mode-actions">
+            <label><input type="checkbox" onclick="toggleAllDelete(this, 'order-delete-form')"> 전체 선택</label>
+            <button type="submit" class="danger-delete-btn">선택 삭제</button>
+            <button type="button" class="cancel-delete-btn" onclick="toggleDeleteMode('order-delete-form', false)">취소</button>
+        </div>
+    </div>
+
 <section class="desktop-table table-panel app-card">
     <div class="table-title-row"><h2>대상 차량</h2><span>{{ rows|length }}대</span></div>
     <div class="table-scroll">
         <table>
-            <thead><tr><th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th><th>지역</th><th>업체</th><th>세차일</th></tr></thead>
+            <thead><tr>{% if current_user.is_master %}<th class="delete-col">선택</th>{% endif %}<th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th><th>지역</th><th>업체</th><th>세차일</th></tr></thead>
             <tbody>
             {% for r in rows %}
             <tr>
+                {% if current_user.is_master %}<td class="delete-col"><input type="checkbox" name="ids" value="{{ r['id'] }}"></td>{% endif %}
                 <td><a class="car-link" href="{{ url_for('car_detail', id=r['id']) }}">{{ r['차량번호'] }}</a></td>
                 <td>{{ r['차종명'] or '-' }}</td>
                 <td>{{ r['차량소속'] or '-' }}</td>
@@ -62,7 +76,7 @@
                 <td>{{ r['세차일'] or selected_date }}</td>
             </tr>
             {% else %}
-            <tr><td colspan="7" class="empty-cell">해당 날짜에 세차 대상이 없습니다.</td></tr>
+            <tr><td colspan="{% if current_user.is_master %}8{% else %}7{% endif %}" class="empty-cell">해당 날짜에 세차 대상이 없습니다.</td></tr>
             {% endfor %}
             </tbody>
         </table>
@@ -75,6 +89,7 @@
         <span>최신 등록순</span>
     </div>
     {% for r in rows %}
+    <label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>
     <a href="{{ url_for('car_detail', id=r['id']) }}" class="app-row-link">
         <article class="app-order-row">
             <div class="row-main">
@@ -97,6 +112,8 @@
     {% endfor %}
 </section>
 
+{% endif %}
+
 <script>
 function moveDate(days){const current=new Date("{{ selected_date }}");current.setDate(current.getDate()+days);const yyyy=current.getFullYear();const mm=String(current.getMonth()+1).padStart(2,'0');const dd=String(current.getDate()).padStart(2,'0');window.location.href=`/wash_list?date=${yyyy}-${mm}-${dd}`;}
 function buildOrderParams(){return new URLSearchParams({date:"{{ selected_date }}",s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:""});}
@@ -105,5 +122,30 @@ function downloadOrderExcel(){window.location.href=`/wash_list_excel?${buildOrde
 function openMobileFilter(id){const el=document.getElementById(id);if(el){el.classList.add("open");document.body.classList.add("filter-sheet-open");}}
 function closeMobileFilter(id){const el=document.getElementById(id);if(el){el.classList.remove("open");document.body.classList.remove("filter-sheet-open");}}
 document.addEventListener("keydown",function(e){if(e.key==="Escape"){document.querySelectorAll(".mobile-filter-sheet.open").forEach(function(el){el.classList.remove("open");});document.body.classList.remove("filter-sheet-open");}});
+
+function toggleDeleteMode(formId, force){
+    const form = document.getElementById(formId);
+    if(!form){ return; }
+    const next = typeof force === "boolean" ? force : !form.classList.contains("delete-mode");
+    form.classList.toggle("delete-mode", next);
+    if(!next){
+        form.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    }
+}
+function toggleAllDelete(master, formId){
+    const form = document.getElementById(formId);
+    if(!form){ return; }
+    form.querySelectorAll('input[name="ids"]').forEach(cb => cb.checked = master.checked);
+}
+function confirmSelectedDelete(formId, message){
+    const form = document.getElementById(formId);
+    const count = form ? form.querySelectorAll('input[name="ids"]:checked').length : 0;
+    if(count < 1){
+        alert("삭제할 항목을 선택해주세요.");
+        return false;
+    }
+    return confirm(message || "선택한 항목을 삭제할까요?");
+}
+
 </script>
 {% endblock %}

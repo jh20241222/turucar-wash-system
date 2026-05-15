@@ -4553,3 +4553,145 @@ body.modal-open {
         min-height: 58px !important;
     }
 }
+
+
+/* Force centered page heroes + match home notice title tone */
+:root {
+    --turu-title-font: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", sans-serif;
+}
+
+/* Hard reset for non-home page hero alignment */
+.endpoint-wash_list .order-hero,
+.endpoint-wash_status .status-hero,
+.endpoint-profile .profile-hero {
+    text-align: center !important;
+}
+
+.endpoint-profile .profile-hero {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.endpoint-profile .profile-hero-inner,
+.endpoint-profile .profile-hero .hero-copy-block,
+.endpoint-wash_list .order-hero .hero-copy-block,
+.endpoint-wash_status .status-hero .hero-copy-block {
+    width: 100% !important;
+    max-width: 420px !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+.endpoint-profile .profile-hero .page-hero-logo,
+.endpoint-wash_list .order-hero .page-hero-logo,
+.endpoint-wash_status .status-hero .page-hero-logo {
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+/* Title = home notice-like: smaller, cleaner, same system font */
+.endpoint-wash_list .order-hero h1,
+.endpoint-wash_status .status-hero h1,
+.endpoint-profile .profile-hero h1 {
+    font-family: var(--turu-title-font) !important;
+    font-size: 22px !important;
+    line-height: 1.15 !important;
+    font-weight: 850 !important;
+    letter-spacing: -0.055em !important;
+    color: #212121 !important;
+    text-align: center !important;
+    margin: 0 !important;
+}
+
+.endpoint-wash_list .order-hero .hero-copy,
+.endpoint-wash_status .status-hero .hero-copy,
+.endpoint-profile .profile-hero .hero-copy {
+    font-family: var(--turu-title-font) !important;
+    font-size: 12px !important;
+    line-height: 1.45 !important;
+    font-weight: 650 !important;
+    letter-spacing: -0.025em !important;
+    color: #6D7B8F !important;
+    text-align: center !important;
+    margin: 7px auto 0 !important;
+    max-width: 280px !important;
+}
+
+@media (min-width: 901px) {
+    .endpoint-wash_list .order-hero,
+    .endpoint-wash_status .status-hero,
+    .endpoint-profile .profile-hero {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    .endpoint-wash_list .order-hero h1,
+    .endpoint-wash_status .status-hero h1,
+    .endpoint-profile .profile-hero h1 {
+        font-size: 28px !important;
+    }
+
+    .endpoint-wash_list .order-hero .page-hero-logo,
+    .endpoint-wash_status .status-hero .page-hero-logo,
+    .endpoint-profile .profile-hero .page-hero-logo {
+        width: 210px !important;
+        margin-bottom: 12px !important;
+    }
+}
+
+@media (max-width: 900px) {
+    .endpoint-wash_list .order-hero,
+    .endpoint-wash_status .status-hero,
+    .endpoint-profile .profile-hero {
+        background: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        padding: 8px 0 12px !important;
+        margin: 0 0 12px !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    .endpoint-wash_list .order-hero .hero-copy-block,
+    .endpoint-wash_status .status-hero .hero-copy-block,
+    .endpoint-profile .profile-hero-inner,
+    .endpoint-profile .profile-hero .hero-copy-block {
+        padding: 0 !important;
+        transform: none !important;
+        text-align: center !important;
+    }
+
+    .endpoint-wash_list .order-hero .page-hero-logo,
+    .endpoint-wash_status .status-hero .page-hero-logo,
+    .endpoint-profile .profile-hero .page-hero-logo {
+        width: 148px !important;
+        max-width: 52vw !important;
+        margin: 0 auto 8px !important;
+    }
+
+    .endpoint-wash_list .order-hero h1,
+    .endpoint-wash_status .status-hero h1,
+    .endpoint-profile .profile-hero h1 {
+        font-size: 21px !important;
+        line-height: 1.12 !important;
+        margin: 0 !important;
+    }
+
+    .endpoint-wash_list .order-hero .hero-copy,
+    .endpoint-wash_status .status-hero .hero-copy,
+    .endpoint-profile .profile-hero .hero-copy {
+        font-size: 12px !important;
+        line-height: 1.4 !important;
+        margin-top: 7px !important;
+        max-width: 260px !important;
+    }
+}

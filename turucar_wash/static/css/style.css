@@ -4067,3 +4067,267 @@ body.modal-open {
         max-width: 165px !important;
     }
 }
+
+
+/* Mobile compact order/status layout */
+@media (max-width: 900px) {
+    .endpoint-wash_list .order-hero,
+    .endpoint-wash_status .status-hero {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+        padding: 4px 2px 8px !important;
+        margin-bottom: 12px !important;
+        background: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
+    }
+
+    .endpoint-wash_list .order-hero .hero-copy-block,
+    .endpoint-wash_status .status-hero .hero-copy-block {
+        display: grid !important;
+        justify-items: center !important;
+        text-align: center !important;
+    }
+
+    .endpoint-wash_list .order-hero .page-hero-logo,
+    .endpoint-wash_status .status-hero .page-hero-logo {
+        width: 164px !important;
+        max-width: 58vw !important;
+        margin: 0 auto 8px !important;
+    }
+
+    .endpoint-wash_list .order-hero h1,
+    .endpoint-wash_status .status-hero h1 {
+        font-size: 25px !important;
+        line-height: 1.1 !important;
+        margin: 0 !important;
+        font-weight: 850 !important;
+        letter-spacing: -.06em !important;
+    }
+
+    .endpoint-wash_list .order-hero .hero-copy,
+    .endpoint-wash_status .status-hero .hero-copy {
+        display: none !important;
+    }
+
+    .endpoint-wash_list .date-controller {
+        width: 100% !important;
+        min-height: 50px !important;
+        margin: 12px 0 0 !important;
+        border-radius: 18px !important;
+        background: rgba(255,255,255,.78) !important;
+        border: 1px solid rgba(216,224,235,.7) !important;
+        box-shadow: 0 10px 26px rgba(9,30,63,.04) !important;
+    }
+
+    .endpoint-wash_list .date-controller small {
+        font-size: 11px !important;
+        color: #A0A8B4 !important;
+        font-weight: 750 !important;
+    }
+
+    .endpoint-wash_list .date-controller strong {
+        font-size: 15px !important;
+        font-weight: 850 !important;
+        letter-spacing: -.025em !important;
+    }
+
+    .endpoint-wash_status .hero-count {
+        display: none !important;
+    }
+
+    .mobile-filter-trigger {
+        margin: 0 0 12px !important;
+    }
+
+    .mobile-filter-open-btn {
+        min-height: 56px !important;
+        padding: 0 12px 0 16px !important;
+        border-radius: 18px !important;
+        box-shadow: 0 10px 24px rgba(9,30,63,.055) !important;
+        border-color: rgba(216,224,235,.9) !important;
+    }
+
+    .mobile-filter-open-btn .filter-trigger-copy em {
+        max-width: 188px !important;
+        font-size: 13px !important;
+        font-weight: 750 !important;
+        color: #8E98A6 !important;
+        letter-spacing: -.035em !important;
+    }
+
+    .mobile-filter-open-btn .filter-trigger-copy em.active-filter-summary {
+        max-width: 188px !important;
+        font-size: 14px !important;
+        color: #212121 !important;
+        font-weight: 850 !important;
+    }
+
+    .mobile-filter-open-btn strong {
+        min-height: 32px !important;
+        padding: 0 11px !important;
+        margin-left: auto !important;
+        font-size: 13px !important;
+    }
+
+    .mobile-filter-open-btn::after {
+        min-height: 32px !important;
+        padding: 0 10px !important;
+        margin-left: 7px !important;
+        font-size: 12px !important;
+    }
+
+    .endpoint-wash_list .mobile-list-summary,
+    .endpoint-wash_status .mobile-list-summary {
+        padding: 2px 2px 10px !important;
+        color: #6D7B8F !important;
+    }
+
+    .endpoint-wash_list .mobile-list-summary strong,
+    .endpoint-wash_status .mobile-list-summary strong,
+    .endpoint-wash_list .mobile-list-summary span,
+    .endpoint-wash_status .mobile-list-summary span {
+        font-size: 13px !important;
+        font-weight: 800 !important;
+        letter-spacing: -.025em !important;
+    }
+
+    .endpoint-wash_list .mobile-delete-row,
+    .endpoint-wash_status .mobile-delete-row {
+        border-bottom: 1px solid #D8E0EB !important;
+    }
+
+    .endpoint-wash_list .mobile-delete-row:first-of-type,
+    .endpoint-wash_status .mobile-delete-row:first-of-type {
+        border-top: 1px solid #D8E0EB !important;
+    }
+
+    .endpoint-wash_list .app-order-row,
+    .endpoint-wash_status .app-order-row {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) 18px !important;
+        gap: 8px 10px !important;
+        min-height: auto !important;
+        padding: 15px 2px !important;
+        align-items: center !important;
+    }
+
+    .endpoint-wash_list .row-main,
+    .endpoint-wash_status .row-main {
+        grid-column: 1;
+        min-width: 0;
+    }
+
+    .endpoint-wash_list .row-title-line,
+    .endpoint-wash_status .row-title-line {
+        gap: 7px !important;
+        align-items: center !important;
+    }
+
+    .endpoint-wash_list .row-title-line strong,
+    .endpoint-wash_status .row-title-line strong {
+        font-size: 21px !important;
+        line-height: 1.08 !important;
+        font-weight: 820 !important;
+        letter-spacing: -.055em !important;
+        color: #15171B !important;
+    }
+
+    .endpoint-wash_list .app-order-row .status-pill,
+    .endpoint-wash_status .app-order-row .status-pill {
+        min-height: 22px !important;
+        padding: 0 8px !important;
+        border-radius: 999px !important;
+        font-size: 11px !important;
+        font-weight: 850 !important;
+        flex: 0 0 auto;
+    }
+
+    .endpoint-wash_list .row-main p,
+    .endpoint-wash_status .row-main p {
+        margin-top: 7px !important;
+        font-size: 13px !important;
+        line-height: 1.32 !important;
+        font-weight: 650 !important;
+        color: #7D8793 !important;
+        letter-spacing: -.03em !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    .endpoint-wash_list .row-meta,
+    .endpoint-wash_status .row-meta {
+        grid-column: 1;
+        display: block !important;
+        min-width: 0;
+        margin-top: 2px !important;
+        color: #6D7B8F !important;
+        font-size: 12px !important;
+        line-height: 1.42 !important;
+        font-weight: 650 !important;
+        letter-spacing: -.025em !important;
+    }
+
+    .endpoint-wash_list .row-meta span,
+    .endpoint-wash_status .row-meta span {
+        display: inline !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+    }
+
+    .endpoint-wash_list .row-meta span::after,
+    .endpoint-wash_status .row-meta span::after {
+        content: " · ";
+        color: #C0C7D0;
+        font-weight: 700;
+    }
+
+    .endpoint-wash_list .row-meta span:last-child::after,
+    .endpoint-wash_status .row-meta span:last-child::after {
+        content: "";
+    }
+
+    .endpoint-wash_list .row-spot,
+    .endpoint-wash_status .row-spot {
+        color: #505A66 !important;
+        font-weight: 750 !important;
+    }
+
+    .endpoint-wash_list .row-arrow,
+    .endpoint-wash_status .row-arrow {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        align-self: center;
+        justify-self: end;
+        font-size: 26px !important;
+        color: #111 !important;
+        font-weight: 650 !important;
+    }
+
+    .endpoint-wash_status .done-row {
+        grid-template-columns: minmax(0, 1fr) 18px !important;
+    }
+
+    .endpoint-wash_status .row-note {
+        grid-column: 1 / -1;
+        margin-top: 8px !important;
+        padding: 10px 12px !important;
+        border-radius: 14px !important;
+        font-size: 12px !important;
+    }
+}
+
+@media (max-width: 380px) {
+    .mobile-filter-open-btn .filter-trigger-copy em,
+    .mobile-filter-open-btn .filter-trigger-copy em.active-filter-summary {
+        max-width: 142px !important;
+    }
+
+    .endpoint-wash_list .row-title-line strong,
+    .endpoint-wash_status .row-title-line strong {
+        font-size: 19px !important;
+    }
+}

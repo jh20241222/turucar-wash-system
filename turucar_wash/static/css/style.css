@@ -2949,3 +2949,437 @@ body.modal-open {
         opacity: .85;
     }
 }
+
+
+/* Home support buttons */
+.home-support-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 18px;
+}
+.home-support-card {
+    min-height: 78px;
+    border-radius: 24px;
+    border: 1px solid var(--line, #D8E0EB);
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(9,30,63,.06);
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) 18px;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+}
+.home-support-card::after {
+    content: "›";
+    color: #8B949F;
+    font-size: 26px;
+    font-weight: 700;
+}
+.home-support-card span {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,111,15,.08);
+    color: #FF6F0F;
+    font-size: 22px;
+}
+.home-support-card strong {
+    display: block;
+    color: var(--ink, #212121);
+    font-size: 19px;
+    font-weight: 900;
+    letter-spacing: -.045em;
+}
+.home-support-card em {
+    display: block;
+    margin-top: 3px;
+    color: #6D7B8F;
+    font-style: normal;
+    font-size: 12px;
+    font-weight: 700;
+}
+.home-support-card.urgent span {
+    background: rgba(251,196,0,.14);
+    color: #FF8021;
+}
+
+/* Support chatbot */
+.endpoint-support_chat .app-topbar,
+.endpoint-support_chat .desktop-sidebar,
+.endpoint-support_chat .mobile-tabbar,
+.endpoint-support_chat .floating-turu-home-link {
+    display: none !important;
+}
+.endpoint-support_chat .app-main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    min-height: 100vh;
+}
+.chatbot-screen {
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    background: #F3F3FA;
+    color: #212121;
+}
+.chatbot-header {
+    background: linear-gradient(180deg, #FF9415 0%, #FF8A12 100%);
+    color: #fff;
+    padding: calc(24px + env(safe-area-inset-top)) 24px 24px;
+}
+.chatbot-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.chatbot-logo {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.chatbot-logo img {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+}
+.chatbot-brand h1 {
+    margin: 0;
+    font-size: 25px;
+    font-weight: 850;
+    letter-spacing: -.045em;
+}
+.chatbot-brand p {
+    margin: 6px 0 0;
+    font-size: 14px;
+    opacity: .96;
+    font-weight: 600;
+}
+.chatbot-close {
+    position: absolute;
+    right: 24px;
+    top: calc(28px + env(safe-area-inset-top));
+    color: #fff;
+    font-size: 46px;
+    line-height: 1;
+    font-weight: 200;
+}
+.chatbot-header::after {
+    content: "하나로 잇는 생생한 모든 이동 Turu Wash";
+    display: block;
+    margin-top: 22px;
+    min-height: 44px;
+    border-radius: 999px;
+    background: rgba(185,106,6,.28);
+    padding: 12px 20px;
+    font-size: 15px;
+    font-weight: 650;
+}
+.chatbot-body {
+    overflow-y: auto;
+    padding: 26px 20px 18px;
+}
+.chat-date {
+    text-align: center;
+    color: #A1A8B3;
+    font-size: 14px;
+    font-weight: 650;
+    margin-bottom: 24px;
+}
+.bot-row {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    margin-bottom: 18px;
+}
+.bot-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.bot-avatar img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}
+.bot-message {
+    background: #fff;
+    border-radius: 0 24px 24px 24px;
+    padding: 18px;
+    box-shadow: 0 8px 22px rgba(9,30,63,.04);
+}
+.bot-message strong {
+    display: block;
+    color: #50545B;
+    font-size: 15px;
+    font-weight: 850;
+    margin-bottom: 10px;
+}
+.bot-message p {
+    margin: 0 0 12px;
+    color: #555B64;
+    font-size: 15px;
+    line-height: 1.72;
+    font-weight: 600;
+}
+.issue-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.issue-options button {
+    min-height: 38px;
+    padding: 0 13px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,111,15,.34);
+    background: #fff;
+    color: #FF6F0F;
+    font-size: 13px;
+    font-weight: 850;
+}
+.user-row {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0 18px;
+}
+.user-message {
+    max-width: min(78%, 420px);
+    border-radius: 22px 0 22px 22px;
+    background: #FF8A12;
+    color: #fff;
+    padding: 14px 16px;
+    font-size: 15px;
+    line-height: 1.55;
+    font-weight: 650;
+}
+.ticket-number {
+    display: inline-flex;
+    margin: 4px 0 0 !important;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255,111,15,.08);
+    color: #FF6F0F !important;
+    font-size: 12px !important;
+    font-weight: 850 !important;
+}
+.chatbot-inputbar {
+    min-height: 78px;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    background: #fff;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) 46px;
+    align-items: center;
+    gap: 10px;
+    border-top: 1px solid rgba(216,224,235,.75);
+}
+.chatbot-inputbar input {
+    width: 100%;
+    min-height: 46px;
+    border: 0;
+    border-bottom: 1px solid #D8E0EB;
+    outline: none;
+    font-size: 15px;
+    font-weight: 600;
+}
+.attach-btn,
+.send-btn {
+    border: 0;
+    background: transparent;
+    color: #212121;
+    font-size: 30px;
+}
+.send-btn {
+    transform: rotate(-8deg);
+}
+.my-ticket-box {
+    margin-top: 24px;
+    padding: 16px;
+    border-radius: 22px;
+    background: rgba(255,255,255,.72);
+    border: 1px solid rgba(216,224,235,.8);
+}
+.my-ticket-box h2 {
+    margin: 0 0 12px;
+    font-size: 16px;
+    font-weight: 850;
+}
+.my-ticket-box article {
+    padding: 12px 0;
+    border-top: 1px solid #D8E0EB;
+}
+.my-ticket-box article:first-of-type {
+    border-top: 0;
+}
+.ticket-status {
+    display: inline-flex;
+    min-height: 24px;
+    padding: 0 9px;
+    border-radius: 999px;
+    background: rgba(255,111,15,.08);
+    color: #FF6F0F;
+    font-size: 12px;
+    font-weight: 850;
+}
+
+/* Support manage */
+.support-manage-page {
+    padding: 30px;
+}
+.support-manage-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+.support-manage-head h1 {
+    margin: 0;
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: -.06em;
+}
+.support-manage-head p {
+    margin: 8px 0 0;
+    color: #6D7B8F;
+    font-weight: 700;
+}
+.support-filter {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+.support-filter a {
+    min-height: 36px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid #D8E0EB;
+    display: inline-flex;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 850;
+}
+.support-filter a.active {
+    background: rgba(255,111,15,.08);
+    border-color: rgba(255,111,15,.3);
+    color: #FF6F0F;
+}
+.support-ticket-list {
+    display: grid;
+    gap: 14px;
+}
+.support-ticket-card {
+    border: 1px solid #D8E0EB;
+    border-radius: 22px;
+    padding: 18px;
+    background: #fff;
+}
+.ticket-title-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.ticket-title-row strong {
+    font-size: 18px;
+    font-weight: 900;
+}
+.ticket-title-row small,
+.ticket-meta {
+    color: #6D7B8F;
+    font-size: 13px;
+    font-weight: 700;
+}
+.ticket-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    margin-top: 10px;
+}
+.ticket-message {
+    margin: 14px 0;
+    color: #212121;
+    font-weight: 700;
+    line-height: 1.55;
+}
+.ticket-reply {
+    border-radius: 16px;
+    background: rgba(246,247,249,.8);
+    padding: 12px 14px;
+    margin-bottom: 12px;
+}
+.ticket-reply strong {
+    color: #FF6F0F;
+    font-size: 13px;
+}
+.ticket-reply p {
+    margin: 6px 0 0;
+    color: #505A66;
+    font-weight: 650;
+}
+.ticket-reply-form {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr) 90px;
+    gap: 8px;
+}
+@media (max-width: 900px) {
+    .home-support-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+        margin-bottom: 102px;
+    }
+    .home-support-card {
+        min-height: 66px;
+        border-radius: 20px;
+        grid-template-columns: 38px minmax(0, 1fr) 12px;
+        gap: 9px;
+        padding: 12px;
+    }
+    .home-support-card span {
+        width: 38px;
+        height: 38px;
+        font-size: 18px;
+    }
+    .home-support-card strong {
+        font-size: 16px;
+    }
+    .home-support-card em {
+        display: none;
+    }
+    .chatbot-header {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    .chatbot-brand h1 {
+        font-size: 23px;
+    }
+    .chatbot-body {
+        padding: 24px 18px 18px;
+    }
+    .bot-message {
+        padding: 16px;
+    }
+    .ticket-reply-form {
+        grid-template-columns: 1fr;
+    }
+    .support-manage-page {
+        padding: 22px 18px;
+    }
+    .support-manage-head {
+        flex-direction: column;
+    }
+}

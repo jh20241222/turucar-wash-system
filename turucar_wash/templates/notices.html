@@ -1,57 +1,40 @@
 {% extends "base.html" %}
-{% block document_title %}Turu Wash · 홈{% endblock %}
+{% block document_title %}Turu Wash · 공지사항{% endblock %}
 {% block content %}
 
-<header class="dashboard-brand-top">
+<header class="dashboard-brand-top notice-page-brand">
     <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="dashboard-brand-logo">
 </header>
 
-<section class="dashboard-notice-list app-card elevated notice-board-final notice-preview-board" id="notice-list">
+<section class="dashboard-notice-list app-card elevated notice-board-final notice-full-board" id="notice-list">
     <div class="notice-list-head">
-        <div><h2>공지사항</h2></div>
-        <div class="notice-head-actions">
-            {% if current_user.is_master %}
-            <button type="button" class="notice-write-btn" onclick="openNoticeEditor()">+ 작성</button>
-            {% endif %}
-            <a href="{{ url_for('notices') }}" class="notice-more-btn">더보기</a>
-        </div>
+        <div><h2>공지사항 전체</h2><p>등록된 공지사항 전체 목록입니다.</p></div>
+        <a href="{{ url_for('dashboard') }}" class="notice-more-btn">홈으로</a>
     </div>
-
-    {% if current_user.is_master %}
-    <details class="notice-editor notice-editor-inline" id="notice-editor">
-        <summary>공지사항 작성 열기</summary>
-        <form method="post" action="{{ url_for('update_dashboard_notice') }}" class="notice-form">
-            <label><span>제목</span><input type="text" name="notice_title" value="{{ notice_title }}" class="app-input" maxlength="80"></label>
-            <label><span>내용</span><textarea name="notice_body" class="app-input notice-textarea" rows="4" maxlength="500">{{ notice_body }}</textarea></label>
-            <input type="hidden" name="notice_author" value="투루카 담당자">
-            <button type="submit" class="btn-primary notice-save-btn">저장</button>
-        </form>
-    </details>
-    {% endif %}
 
     {% if notice_rows %}
     <div class="notice-table-wrap">
-        <table class="notice-table notice-board-table notice-preview-table">
-            <thead><tr><th>제목</th><th>작성일</th><th>작성자</th>{% if current_user.is_master %}<th class="notice-manage-head">관리</th>{% endif %}</tr></thead>
+        <table class="notice-table notice-board-table">
+            <thead><tr><th>번호</th><th>제목</th><th>작성일</th><th>작성자</th>{% if current_user.is_master %}<th class="notice-manage-head">관리</th>{% endif %}</tr></thead>
             <tbody>
-                {% for notice in notice_rows[:3] %}
+                {% for notice in notice_rows %}
                 <tr class="notice-row">
+                    <td>{{ notice.id }}</td>
                     <td class="notice-title-cell">
                         <button type="button" class="notice-title-button" data-title="{{ notice.title|e }}" data-body="{{ notice.body|e }}" data-created="{{ notice.created_at|e }}" data-author="{{ notice.author|e }}" onclick="openNoticeViewer(this)">
-                            <strong>{{ notice.title }}</strong>
-                            {% if notice.body %}<small>{{ notice.body }}</small>{% endif %}
+                            <strong>{{ notice.title }}</strong>{% if notice.body %}<small>{{ notice.body }}</small>{% endif %}
                         </button>
                     </td>
-                    <td>{{ notice.created_at }}</td>
-                    <td>{{ notice.author }}</td>
+                    <td>{{ notice.created_at }}</td><td>{{ notice.author }}</td>
                     {% if current_user.is_master %}
                     <td class="notice-kebab-cell">
                         <div class="notice-kebab-wrap">
                             <button type="button" class="notice-kebab-btn" onclick="toggleNoticeMenu(event, this)" aria-label="공지사항 관리">⋮</button>
                             <div class="notice-kebab-menu">
-                                <button type="button" data-id="{{ notice.id }}" data-title="{{ notice.title|e }}" data-body="{{ notice.body|e }}" data-author="{{ notice.author|e }}" data-page="1" onclick="openNoticeEdit(this)">수정</button>
+                                <button type="button" data-id="{{ notice.id }}" data-title="{{ notice.title|e }}" data-body="{{ notice.body|e }}" data-author="{{ notice.author|e }}" data-page="{{ notice_page }}" onclick="openNoticeEdit(this)">수정</button>
                                 <form method="post" action="{{ url_for('delete_dashboard_notice', notice_id=notice.id) }}" onsubmit="return confirm('이 공지사항을 삭제할까요?');">
-                                    <input type="hidden" name="notice_page" value="1">
+                                    <input type="hidden" name="notice_page" value="{{ notice_page }}">
+                                    <input type="hidden" name="return_to" value="notices">
                                     <button type="submit" class="danger">삭제</button>
                                 </form>
                             </div>
@@ -63,24 +46,17 @@
             </tbody>
         </table>
     </div>
-    {% else %}
-    <div class="notice-empty"><strong>아직 등록된 공지사항이 없습니다.</strong><span>공지사항을 작성하면 이곳에 누적됩니다.</span></div>
-    {% endif %}
-</section>
 
-<section class="quick-actions compact-dashboard-actions home-final-actions brand-action-grid dashboard-main-actions">
-    <a class="quick-card brand-action-card action-yellow" href="{{ url_for('wash_list') }}">
-        <span class="quick-icon action-svg-icon" aria-hidden="true"><svg viewBox="0 0 64 64" role="img"><path d="M20 10h18l10 10v34H20z"></path><path d="M38 10v12h10"></path><line x1="27" y1="31" x2="41" y2="31"></line><line x1="27" y1="39" x2="39" y2="39"></line><line x1="27" y1="47" x2="34" y2="47"></line></svg></span>
-        <strong>세차 오더</strong><small>대상 차량 확인</small>
-    </a>
-    <a class="quick-card brand-action-card action-orange" href="https://pm.peoplecar.co.kr:8082/#">
-        <span class="quick-icon action-svg-icon" aria-hidden="true"><svg viewBox="0 0 64 64" role="img"><path d="M18 50V23c0-5 4-9 9-9h19c3 0 5 2 5 5v31z"></path><path d="M25 20h18v16H25z"></path><line x1="25" y1="43" x2="34" y2="43"></line><circle cx="45" cy="42" r="2"></circle></svg></span>
-        <strong>예약/문제어</strong><small>예약/제어 관리자앱</small>
-    </a>
-    <a class="quick-card brand-action-card action-red" href="{{ url_for('wash_status') }}">
-        <span class="quick-icon action-svg-icon" aria-hidden="true"><svg viewBox="0 0 64 64" role="img"><path d="M18 10h22l10 10v34H18z"></path><path d="M40 10v12h10"></path><circle cx="34" cy="39" r="10"></circle><path d="M29 39l4 4 8-9"></path></svg></span>
-        <strong>완료 현황</strong><small>작업 기록 조회</small>
-    </a>
+    {% if notice_total_pages > 1 %}
+    <nav class="notice-pagination" aria-label="공지사항 페이지">
+        {% if notice_page > 1 %}<a href="{{ url_for('notices', notice_page=notice_page-1) }}#notice-list">‹</a>{% endif %}
+        {% for p in range(1, notice_total_pages + 1) %}<a href="{{ url_for('notices', notice_page=p) }}#notice-list" class="{% if p == notice_page %}active{% endif %}">{{ p }}</a>{% endfor %}
+        {% if notice_page < notice_total_pages %}<a href="{{ url_for('notices', notice_page=notice_page+1) }}#notice-list">›</a>{% endif %}
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="notice-empty"><strong>아직 등록된 공지사항이 없습니다.</strong><span>홈 화면에서 공지사항을 작성해보세요.</span></div>
+    {% endif %}
 </section>
 
 <div class="notice-modal-backdrop" id="notice-viewer-modal" hidden>
@@ -100,7 +76,8 @@
         <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="notice-modal-logo">
         <p class="eyebrow">Edit Notice</p><h2 id="notice-edit-title">공지사항 수정</h2>
         <form method="post" id="notice-edit-form" class="notice-form notice-edit-form">
-            <input type="hidden" name="notice_page" id="notice-edit-page" value="1">
+            <input type="hidden" name="notice_page" id="notice-edit-page" value="{{ notice_page }}">
+            <input type="hidden" name="return_to" value="notices">
             <input type="hidden" name="notice_author" id="notice-edit-author" value="투루카 담당자">
             <label><span>제목</span><input type="text" name="notice_title" id="notice-edit-title-input" class="app-input" maxlength="80"></label>
             <label><span>내용</span><textarea name="notice_body" id="notice-edit-body-input" class="app-input notice-textarea" rows="5" maxlength="500"></textarea></label>
@@ -111,7 +88,6 @@
 {% endif %}
 
 <script>
-function openNoticeEditor(){const editor=document.getElementById('notice-editor');if(editor){editor.open=true;editor.scrollIntoView({behavior:'smooth',block:'center'});const input=editor.querySelector('input[name="notice_title"]');if(input){setTimeout(()=>input.focus(),350);}}}
 function openNoticeViewer(button){document.getElementById('notice-viewer-title').textContent=button.dataset.title||'공지사항';document.getElementById('notice-viewer-body').textContent=button.dataset.body||'공지사항 내용이 없습니다.';document.getElementById('notice-viewer-created').textContent=button.dataset.created||'';document.getElementById('notice-viewer-author').textContent=button.dataset.author||'투루카 담당자';document.getElementById('notice-viewer-modal').hidden=false;document.body.classList.add('modal-open');}
 function closeNoticeViewer(){document.getElementById('notice-viewer-modal').hidden=true;document.body.classList.remove('modal-open');}
 function toggleNoticeMenu(event,button){event.stopPropagation();document.querySelectorAll('.notice-kebab-wrap.open').forEach(function(menu){if(menu!==button.closest('.notice-kebab-wrap')){menu.classList.remove('open');}});button.closest('.notice-kebab-wrap').classList.toggle('open');}
@@ -120,5 +96,4 @@ function closeNoticeEdit(){document.getElementById('notice-edit-modal').hidden=t
 document.addEventListener('click',function(event){if(!event.target.closest('.notice-kebab-wrap')){document.querySelectorAll('.notice-kebab-wrap.open').forEach(function(menu){menu.classList.remove('open');});}});
 document.addEventListener('keydown',function(event){if(event.key==='Escape'){if(!document.getElementById('notice-viewer-modal').hidden){closeNoticeViewer();}const editModal=document.getElementById('notice-edit-modal');if(editModal&&!editModal.hidden){closeNoticeEdit();}document.querySelectorAll('.notice-kebab-wrap.open').forEach(function(menu){menu.classList.remove('open');});}});
 </script>
-
 {% endblock %}

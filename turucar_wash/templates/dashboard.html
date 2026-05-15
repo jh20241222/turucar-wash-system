@@ -64,7 +64,18 @@
         </table>
     </div>
     {% else %}
-    <div class="notice-empty"><strong>아직 등록된 공지사항이 없습니다.</strong><span>공지사항을 작성하면 이곳에 누적됩니다.</span></div>
+    <div class="notice-empty home-visual-empty">
+        <div class="notice-megaphone-illo" aria-hidden="true">
+            <span class="mega-handle"></span>
+            <span class="mega-body"></span>
+            <span class="mega-mouth"></span>
+            <i></i><b></b>
+        </div>
+        <div class="notice-empty-copy">
+            <strong>아직 등록된 공지사항이 없습니다.</strong>
+            <span>공지사항을 작성하면 이곳에 누적됩니다.</span>
+        </div>
+    </div>
     {% endif %}
 </section>
 
@@ -73,9 +84,11 @@
         <span class="quick-icon action-svg-icon" aria-hidden="true"><svg viewBox="0 0 64 64" role="img"><path d="M20 10h18l10 10v34H20z"></path><path d="M38 10v12h10"></path><line x1="27" y1="31" x2="41" y2="31"></line><line x1="27" y1="39" x2="39" y2="39"></line><line x1="27" y1="47" x2="34" y2="47"></line></svg></span>
         <strong>세차 오더</strong><small>대상 차량 확인</small>
     </a>
-    <a class="quick-card brand-action-card action-orange" href="https://pm.peoplecar.co.kr:8082/#">
-        <span class="quick-icon action-svg-icon" aria-hidden="true"><svg viewBox="0 0 64 64" role="img"><path d="M18 50V23c0-5 4-9 9-9h19c3 0 5 2 5 5v31z"></path><path d="M25 20h18v16H25z"></path><line x1="25" y1="43" x2="34" y2="43"></line><circle cx="45" cy="42" r="2"></circle></svg></span>
-        <strong>예약/문제어</strong><small>예약/제어 관리자앱</small>
+    <a class="quick-card brand-action-card action-orange visual-action-card" href="https://pm.peoplecar.co.kr:8082/#">
+        <span class="home-card-illo control-illo" aria-hidden="true">
+            <i class="clock-face"></i><i class="control-car"></i><i class="headlight l1"></i><i class="headlight l2"></i><i class="lock-body"></i>
+        </span>
+        <strong>예약/문제어</strong><small>예약/제어 관리자앱</small><em class="home-card-arrow">›</em>
     </a>
     <a class="quick-card brand-action-card action-red" href="{{ url_for('wash_status') }}">
         <span class="quick-icon action-svg-icon" aria-hidden="true"><svg viewBox="0 0 64 64" role="img"><path d="M18 10h22l10 10v34H18z"></path><path d="M40 10v12h10"></path><circle cx="34" cy="39" r="10"></circle><path d="M29 39l4 4 8-9"></path></svg></span>
@@ -85,15 +98,15 @@
 
 
 <section class="home-support-actions">
-    <a href="javascript:void(0)" onclick="showUrgentWashComingSoon()" class="home-support-card urgent">
-        <span>⚡</span>
+    <a href="javascript:void(0)" onclick="showUrgentWashComingSoon()" class="home-support-card urgent visual-support-card">
+        <span class="support-illo urgent-siren" aria-hidden="true"><i></i><b></b></span>
         <strong>긴급 세차</strong>
-        <em>빠른 요청</em>
+        <em>긴급 세차 요청</em>
     </a>
-    <a href="{{ url_for('support_chat') }}" class="home-support-card chat">
-        <span>☏</span>
+    <a href="{{ url_for('support_chat') }}" class="home-support-card chat visual-support-card">
+        <span class="support-illo chat-bubble" aria-hidden="true"><i></i><b></b></span>
         <strong>문의하기</strong>
-        <em>문의봇 접수</em>
+        <em>문의 및 요청 접수</em>
     </a>
 </section>
 

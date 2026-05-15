@@ -226,6 +226,21 @@ def init_db():
             created_at TEXT NOT NULL
         )
     """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS support_tickets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            category TEXT NOT NULL,
+            car_number TEXT NOT NULL,
+            message TEXT NOT NULL,
+            requester TEXT NOT NULL,
+            requester_role TEXT,
+            vendor TEXT,
+            status TEXT NOT NULL DEFAULT '접수',
+            admin_reply TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT
+        )
+    """)
     # 마스터 계정 없으면 자동 생성
     existing = cur.execute("SELECT 1 FROM accounts WHERE username='jeongyeon.kim'").fetchone()
     if not existing:
@@ -1456,6 +1471,138 @@ def wash_status_excel():
         download_name="wash_status.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
+
+
+# =========================================================
+# 문의봇 / 문의 관리
+# =========================================================
+@app.route("/support-chat")
+@login_required
+def support_chat():
+    conn = get_user_db()
+    rows = conn.execute(
+        """
+        SELECT *
+        FROM support_tickets
+        WHERE requester=?
+        ORDER BY id DESC
+        LIMIT 10
+        """,
+        (current_user.username,)
+    ).fetchall()
+    conn.close()
+    return render_template("support_chat.html", tickets=rows)
+
+
+@app.route("/support-chat/submit", methods=["POST"])
+@login_required
+def support_chat_submit():
+    data = request.get_json(silent=True) or request.form
+
+    category = (data.get("category") or "").strip()
+    car_number = (data.get("car_number") or "").strip()
+    message = (data.get("message") or "").strip()
+
+    if not category or not car_number or not message:
+        return jsonify({"ok": False, "message": "문의유형, 차량번호, 상세내용을 모두 입력해주세요."}), 400
+
+    conn = get_user_db()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        INSERT INTO support_tickets
+            (category, car_number, message, requester, requester_role, vendor, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, '접수', ?, ?)
+        """,
+        (
+            category,
+            car_number,
+            message,
+            current_user.username,
+            getattr(current_user, "role", ""),
+            getattr(current_user, "vendor", ""),
+            datetime.now().strftime("%Y-%m-%d %H:%M"),
+            datetime.now().strftime("%Y-%m-%d %H:%M")
+        )
+    )
+    ticket_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "ticket_id": ticket_id,
+        "message": "문의가 접수되었습니다. 담당자가 확인 후 답변드리겠습니다."
+    })
+
+
+@app.route("/support-manage")
+@login_required
+def support_manage():
+    if not current_user.is_admin:
+        flash("❌ 관리자 이상만 문의 관리를 볼 수 있습니다.")
+        return redirect(url_for("dashboard"))
+
+    status = request.args.get("status", "")
+    query = "SELECT * FROM support_tickets WHERE 1=1"
+    params = []
+
+    if status:
+        query += " AND status=?"
+        params.append(status)
+
+    if not current_user.is_master and getattr(current_user, "vendor", ""):
+        query += " AND vendor=?"
+        params.append(current_user.vendor)
+
+    query += " ORDER BY id DESC"
+
+    conn = get_user_db()
+    rows = conn.execute(query, params).fetchall()
+    conn.close()
+
+    return render_template("support_manage.html", rows=rows, selected_status=status)
+
+
+@app.route("/support-manage/<int:ticket_id>/reply", methods=["POST"])
+@login_required
+def support_reply(ticket_id):
+    if not current_user.is_admin:
+        flash("❌ 관리자 이상만 문의에 답변할 수 있습니다.")
+        return redirect(url_for("dashboard"))
+
+    status = request.form.get("status", "확인중").strip() or "확인중"
+    admin_reply = request.form.get("admin_reply", "").strip()
+
+    conn = get_user_db()
+    cur = conn.cursor()
+
+    if not current_user.is_master and getattr(current_user, "vendor", ""):
+        cur.execute(
+            """
+            UPDATE support_tickets
+            SET status=?, admin_reply=?, updated_at=?
+            WHERE id=? AND vendor=?
+            """,
+            (status, admin_reply, datetime.now().strftime("%Y-%m-%d %H:%M"), ticket_id, current_user.vendor)
+        )
+    else:
+        cur.execute(
+            """
+            UPDATE support_tickets
+            SET status=?, admin_reply=?, updated_at=?
+            WHERE id=?
+            """,
+            (status, admin_reply, datetime.now().strftime("%Y-%m-%d %H:%M"), ticket_id)
+        )
+
+    conn.commit()
+    conn.close()
+
+    flash("문의 답변이 저장되었습니다.")
+    return redirect(url_for("support_manage"))
+
 
 
 if __name__ == "__main__":

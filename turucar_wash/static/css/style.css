@@ -5361,3 +5361,151 @@ body.modal-open {
         display: none !important;
     }
 }
+
+
+/* Home clean SVG card fix */
+.home-card-illo.clean-card-illo,
+.support-illo.clean-support-illo {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: visible !important;
+    background: transparent !important;
+}
+
+.home-card-illo.clean-card-illo svg,
+.support-illo.clean-support-illo svg {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+}
+
+.illo-order {
+    color: #FBC400 !important;
+}
+
+.illo-control {
+    color: #FF6F0F !important;
+}
+
+.illo-status {
+    color: #E4193C !important;
+}
+
+.clean-support-illo.urgent-siren {
+    color: #E4193C !important;
+    background: rgba(228,25,60,.07) !important;
+}
+
+.clean-support-illo.chat-bubble {
+    color: #FFAA00 !important;
+    background: rgba(255,170,0,.08) !important;
+}
+
+/* Hide any pseudo-drawn leftovers from previous patch */
+.home-card-illo.clean-card-illo i,
+.home-card-illo.clean-card-illo b,
+.home-card-illo.clean-card-illo::before,
+.home-card-illo.clean-card-illo::after,
+.support-illo.clean-support-illo i,
+.support-illo.clean-support-illo b,
+.support-illo.clean-support-illo::before,
+.support-illo.clean-support-illo::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* Clean the card visual tone so it doesn't look overdone */
+.visual-action-card {
+    min-height: 152px !important;
+    padding: 14px 10px 14px !important;
+    border-radius: 20px !important;
+    background: #fff !important;
+    border: 1px solid #D8E0EB !important;
+    box-shadow: 0 10px 26px rgba(9,30,63,.06) !important;
+}
+
+.visual-action-card::before {
+    inset: 10px 10px auto 10px !important;
+    height: 70px !important;
+    border-radius: 16px !important;
+    opacity: .72 !important;
+}
+
+.home-card-illo.clean-card-illo {
+    width: 78px !important;
+    height: 64px !important;
+    margin: 0 auto 12px !important;
+    transform: none !important;
+}
+
+.visual-action-card strong {
+    font-size: 14px !important;
+    line-height: 1.15 !important;
+    font-weight: 850 !important;
+}
+
+.visual-action-card small {
+    font-size: 10px !important;
+    margin-top: 6px !important;
+}
+
+.home-card-arrow {
+    display: none !important;
+}
+
+.visual-support-card {
+    background: #fff !important;
+    border: 1px solid #D8E0EB !important;
+    box-shadow: 0 9px 22px rgba(9,30,63,.055) !important;
+}
+
+.support-illo.clean-support-illo {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 13px !important;
+    transform: none !important;
+}
+
+@media (max-width: 900px) {
+    .dashboard-main-actions.brand-action-grid {
+        gap: 10px !important;
+    }
+
+    .visual-action-card {
+        min-height: 144px !important;
+        padding: 12px 7px 12px !important;
+        border-radius: 17px !important;
+    }
+
+    .visual-action-card::before {
+        inset: 8px 8px auto 8px !important;
+        height: 66px !important;
+        border-radius: 14px !important;
+    }
+
+    .home-card-illo.clean-card-illo {
+        width: 72px !important;
+        height: 58px !important;
+        margin-bottom: 10px !important;
+    }
+
+    .visual-action-card strong {
+        font-size: 13px !important;
+    }
+
+    .visual-action-card small {
+        font-size: 9px !important;
+    }
+
+    .visual-support-card {
+        min-height: 52px !important;
+        grid-template-columns: 38px minmax(0, 1fr) 10px !important;
+        padding: 8px 10px !important;
+    }
+
+    .visual-support-card strong {
+        font-size: 13px !important;
+    }
+}

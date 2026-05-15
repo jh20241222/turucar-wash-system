@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block document_title %}Turu Wash · 문의하기{% endblock %}
+{% block content %}
+<section class="chatbot-screen">
+    <header class="chatbot-header">
+        <div class="chatbot-brand">
+            <span class="chatbot-logo"><img src="{{ url_for('static', filename='img/turu-symbol.png') }}" alt="Turu"></span>
+            <div>
+                <h1>Turu 문의봇</h1>
+                <p>작업 중 문제가 있다면 유형을 선택해주세요.</p>
+            </div>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="chatbot-close" aria-label="닫기">×</a>
+    </header>
+
+    <main class="chatbot-body" id="chatbot-body">
+        <div class="chat-date">{{ now_text if now_text else '' }}</div>
+
+        <div class="bot-row">
+            <span class="bot-avatar"><img src="{{ url_for('static', filename='img/turu-symbol.png') }}" alt="Turu"></span>
+            <div class="bot-message">
+                <strong>Turu 문의봇</strong>
+                <p>작업 중 문제가 있다면 유형을 선택해주세요.</p>
+                <div class="issue-options" id="issue-options">
+                    <button type="button" data-category="문 안 잠김">문 안 잠김</button>
+                    <button type="button" data-category="문 안 열림">문 안 열림</button>
+                    <button type="button" data-category="시동 불가">시동 불가</button>
+                    <button type="button" data-category="반납 불가">반납 불가</button>
+                    <button type="button" data-category="차량 훼손 발견">차량 훼손 발견</button>
+                    <button type="button" data-category="기타 문의">기타 문의</button>
+                </div>
+            </div>
+        </div>
+
+        {% if tickets %}
+        <section class="my-ticket-box">
+            <h2>최근 문의 내역</h2>
+            {% for t in tickets[:3] %}
+            <article>
+                <span class="ticket-status">{{ t.status }}</span>
+                <strong>{{ t.category }} · {{ t.car_number }}</strong>
+                <small>{{ t.created_at }}</small>
+                {% if t.admin_reply %}
+                <p>{{ t.admin_reply }}</p>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </section>
+        {% endif %}
+    </main>
+
+    <footer class="chatbot-inputbar">
+        <button type="button" class="attach-btn" aria-label="첨부">⌕</button>
+        <input id="chat-input" type="text" placeholder="문의 유형을 먼저 선택해주세요." autocomplete="off">
+        <button type="button" id="chat-send" class="send-btn" aria-label="전송">➤</button>
+    </footer>
+</section>
+
+<script>
+const chatState = {
+    step: "category",
+    category: "",
+    carNumber: "",
+    message: ""
+};
+
+const body = document.getElementById("chatbot-body");
+const input = document.getElementById("chat-input");
+const sendBtn = document.getElementById("chat-send");
+const options = document.getElementById("issue-options");
+
+function scrollChat(){
+    body.scrollTop = body.scrollHeight;
+}
+
+function appendUser(text){
+    const row = document.createElement("div");
+    row.className = "user-row";
+    row.innerHTML = `<div class="user-message">${escapeHtml(text)}</div>`;
+    body.appendChild(row);
+    scrollChat();
+}
+
+function appendBot(html){
+    const row = document.createElement("div");
+    row.className = "bot-row";
+    row.innerHTML = `
+        <span class="bot-avatar"><img src="{{ url_for('static', filename='img/turu-symbol.png') }}" alt="Turu"></span>
+        <div class="bot-message"><strong>Turu 문의봇</strong>${html}</div>
+    `;
+    body.appendChild(row);
+    scrollChat();
+}
+
+function escapeHtml(text){
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function selectCategory(category){
+    chatState.category = category;
+    chatState.step = "car";
+    appendUser(category);
+    appendBot(`<p>${escapeHtml(category)} 문의를 선택했어요.<br>관련 차량번호를 입력해주세요.</p>`);
+    input.placeholder = "차량번호 입력 예: 161하9096";
+    input.focus();
+}
+
+async function submitTicket(){
+    const response = await fetch("{{ url_for('support_chat_submit') }}", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            category: chatState.category,
+            car_number: chatState.carNumber,
+            message: chatState.message
+        })
+    });
+
+    const data = await response.json();
+
+    if(!response.ok || !data.ok){
+        appendBot(`<p>${escapeHtml(data.message || "문의 접수 중 오류가 발생했습니다.")}</p>`);
+        return;
+    }
+
+    appendBot(`<p>문의가 접수되었습니다.<br>담당자가 확인 후 답변드리겠습니다.</p><p class="ticket-number">접수번호 #${data.ticket_id}</p>`);
+    chatState.step = "done";
+    input.value = "";
+    input.placeholder = "새 문의는 유형을 다시 선택해주세요.";
+}
+
+async function handleSend(){
+    const value = input.value.trim();
+    if(!value){ return; }
+
+    if(chatState.step === "category"){
+        appendBot("<p>먼저 문의 유형을 선택해주세요.</p>");
+        return;
+    }
+
+    appendUser(value);
+    input.value = "";
+
+    if(chatState.step === "car"){
+        chatState.carNumber = value;
+        chatState.step = "message";
+        appendBot("<p>상세 내용을 입력해주세요.</p>");
+        input.placeholder = "예: 세차 완료했는데 문 잠금이 안 됩니다.";
+        input.focus();
+        return;
+    }
+
+    if(chatState.step === "message"){
+        chatState.message = value;
+        await submitTicket();
+        return;
+    }
+
+    if(chatState.step === "done"){
+        appendBot("<p>추가 문의는 위 유형 버튼을 다시 선택해주세요.</p>");
+    }
+}
+
+options.addEventListener("click", function(event){
+    const button = event.target.closest("button[data-category]");
+    if(!button){ return; }
+    selectCategory(button.dataset.category);
+});
+
+sendBtn.addEventListener("click", handleSend);
+input.addEventListener("keydown", function(event){
+    if(event.key === "Enter"){
+        event.preventDefault();
+        handleSend();
+    }
+});
+</script>
+{% endblock %}

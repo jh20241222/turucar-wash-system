@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block document_title %}Turu Wash · 문의 관리{% endblock %}
+{% block content %}
+<section class="app-card elevated support-manage-page">
+    <div class="support-manage-head">
+        <div>
+            <p class="eyebrow">Support</p>
+            <h1>문의 관리</h1>
+            <p>작업자가 접수한 문의를 확인하고 답변합니다.</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="notice-more-btn">홈으로</a>
+    </div>
+
+    <div class="support-filter">
+        <a class="{% if not selected_status %}active{% endif %}" href="{{ url_for('support_manage') }}">전체</a>
+        <a class="{% if selected_status == '접수' %}active{% endif %}" href="{{ url_for('support_manage', status='접수') }}">접수</a>
+        <a class="{% if selected_status == '확인중' %}active{% endif %}" href="{{ url_for('support_manage', status='확인중') }}">확인중</a>
+        <a class="{% if selected_status == '완료' %}active{% endif %}" href="{{ url_for('support_manage', status='완료') }}">완료</a>
+    </div>
+
+    <div class="support-ticket-list">
+        {% for t in rows %}
+        <article class="support-ticket-card">
+            <div class="ticket-title-row">
+                <span class="ticket-status">{{ t.status }}</span>
+                <strong>{{ t.category }}</strong>
+                <small>{{ t.created_at }}</small>
+            </div>
+            <div class="ticket-meta">
+                <span>차량번호 {{ t.car_number }}</span>
+                <span>작업자 {{ t.requester }}</span>
+                {% if t.vendor %}<span>업체 {{ t.vendor }}</span>{% endif %}
+            </div>
+            <p class="ticket-message">{{ t.message }}</p>
+            {% if t.admin_reply %}
+            <div class="ticket-reply"><strong>답변</strong><p>{{ t.admin_reply }}</p></div>
+            {% endif %}
+            <form method="post" action="{{ url_for('support_reply', ticket_id=t.id) }}" class="ticket-reply-form">
+                <select name="status" class="app-input">
+                    <option value="접수" {% if t.status == '접수' %}selected{% endif %}>접수</option>
+                    <option value="확인중" {% if t.status == '확인중' %}selected{% endif %}>확인중</option>
+                    <option value="완료" {% if t.status == '완료' %}selected{% endif %}>완료</option>
+                </select>
+                <input name="admin_reply" class="app-input" placeholder="답변 입력" value="{{ t.admin_reply or '' }}">
+                <button class="primary-btn" type="submit">저장</button>
+            </form>
+        </article>
+        {% else %}
+        <div class="notice-empty"><strong>접수된 문의가 없습니다.</strong><span>작업자가 문의하면 이곳에 표시됩니다.</span></div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

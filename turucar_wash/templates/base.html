@@ -58,6 +58,9 @@
             <a href="{{ url_for('account_manage') }}" class="side-link {% if request.endpoint == 'account_manage' %}active{% endif %}">
                 <span>●</span><b>계정/지역</b>
             </a>
+            <a href="{{ url_for('support_manage') }}" class="side-link {% if request.endpoint == 'support_manage' %}active{% endif %}">
+                <span>☏</span><b>문의 관리</b>
+            </a>
             {% endif %}
 
             {% if current_user.is_master %}

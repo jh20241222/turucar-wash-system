@@ -83,6 +83,20 @@
     </a>
 </section>
 
+
+<section class="home-support-actions">
+    <a href="{{ url_for('support_chat') }}?type=urgent" class="home-support-card urgent">
+        <span>⚡</span>
+        <strong>긴급 세차</strong>
+        <em>빠른 요청</em>
+    </a>
+    <a href="{{ url_for('support_chat') }}" class="home-support-card chat">
+        <span>☏</span>
+        <strong>문의하기</strong>
+        <em>문의봇 접수</em>
+    </a>
+</section>
+
 <div class="notice-modal-backdrop" id="notice-viewer-modal" hidden>
     <section class="notice-modal turu-mini-modal" role="dialog" aria-modal="true" aria-labelledby="notice-viewer-title">
         <button type="button" class="notice-modal-close" onclick="closeNoticeViewer()" aria-label="닫기">×</button>

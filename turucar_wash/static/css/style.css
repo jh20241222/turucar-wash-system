@@ -5509,3 +5509,236 @@ body.modal-open {
         font-size: 13px !important;
     }
 }
+
+/* =========================================================
+   V4 home polish: web/app optimized Turu CAR dashboard
+   ========================================================= */
+.endpoint-dashboard .app-main {
+    max-width: 1180px;
+}
+
+@media (min-width: 901px) {
+    .endpoint-dashboard .app-main {
+        padding-top: 72px !important;
+        padding-left: 40px !important;
+        padding-right: 40px !important;
+    }
+    .endpoint-dashboard .dashboard-brand-top {
+        margin-bottom: 24px !important;
+    }
+    .endpoint-dashboard .dashboard-brand-logo {
+        width: 250px !important;
+    }
+    .endpoint-dashboard .notice-board-final {
+        border-radius: 32px !important;
+        padding: 34px 38px 32px !important;
+        box-shadow: 0 22px 58px rgba(9, 30, 63, .08) !important;
+    }
+    .endpoint-dashboard .notice-empty.home-visual-empty {
+        min-height: 190px !important;
+        grid-template-columns: 168px minmax(0, 1fr) !important;
+        gap: 30px !important;
+        padding: 18px 26px 24px !important;
+    }
+    .endpoint-dashboard .notice-megaphone-illo {
+        transform: scale(1.18);
+        transform-origin: center;
+        margin-left: 18px;
+    }
+    .endpoint-dashboard .home-final-actions.brand-action-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 24px !important;
+        margin-top: 26px !important;
+    }
+    .endpoint-dashboard .visual-action-card {
+        min-height: 250px !important;
+        padding: 26px 20px 28px !important;
+        border-radius: 30px !important;
+    }
+    .endpoint-dashboard .home-card-illo {
+        width: 142px !important;
+        height: 114px !important;
+        margin-bottom: 18px !important;
+    }
+    .endpoint-dashboard .visual-action-card strong {
+        font-size: 24px !important;
+    }
+    .endpoint-dashboard .visual-action-card small {
+        font-size: 15px !important;
+    }
+    .endpoint-dashboard .home-support-actions {
+        gap: 22px !important;
+        margin-top: 24px !important;
+    }
+    .endpoint-dashboard .visual-support-card {
+        min-height: 96px !important;
+        padding: 20px 26px !important;
+        border-radius: 28px !important;
+    }
+}
+
+@media (max-width: 900px) {
+    body.endpoint-dashboard {
+        background:
+            radial-gradient(circle at 74% -8%, rgba(255, 111, 15, .08), transparent 34%),
+            radial-gradient(circle at 0% 20%, rgba(251, 196, 0, .10), transparent 28%),
+            #F7F9FC !important;
+    }
+    .endpoint-dashboard .app-topbar {
+        display: none !important;
+    }
+    .endpoint-dashboard .app-main {
+        min-height: 100svh !important;
+        padding: calc(42px + env(safe-area-inset-top)) 16px calc(112px + env(safe-area-inset-bottom)) !important;
+        background: transparent !important;
+    }
+    .endpoint-dashboard .dashboard-brand-top {
+        margin: 0 0 36px !important;
+        padding-left: 2px !important;
+    }
+    .endpoint-dashboard .dashboard-brand-logo {
+        width: 176px !important;
+        max-width: 52vw !important;
+    }
+    .endpoint-dashboard .notice-preview-board {
+        margin-top: 0 !important;
+        padding: 22px 18px 20px !important;
+        border-radius: 28px !important;
+        background: rgba(255, 255, 255, .96) !important;
+        border: 1px solid rgba(216, 224, 235, .72) !important;
+        box-shadow: 0 18px 42px rgba(9, 30, 63, .08) !important;
+    }
+    .endpoint-dashboard .notice-board-final .notice-list-head {
+        margin-bottom: 18px !important;
+    }
+    .endpoint-dashboard .notice-board-final .notice-list-head h2 {
+        font-size: 24px !important;
+        letter-spacing: -.055em !important;
+    }
+    .endpoint-dashboard .notice-head-actions {
+        gap: 8px !important;
+    }
+    .endpoint-dashboard .notice-more-btn,
+    .endpoint-dashboard .notice-write-btn {
+        min-height: 42px !important;
+        padding: 0 16px !important;
+        border-radius: 999px !important;
+        background: #fff !important;
+        border: 1px solid rgba(216, 224, 235, .95) !important;
+        color: #212124 !important;
+        box-shadow: 0 6px 16px rgba(9, 30, 63, .05) !important;
+    }
+    .endpoint-dashboard .notice-empty.home-visual-empty {
+        grid-template-columns: 112px minmax(0, 1fr) !important;
+        min-height: 136px !important;
+        gap: 18px !important;
+        padding: 8px 2px 10px !important;
+    }
+    .endpoint-dashboard .notice-megaphone-illo {
+        transform: scale(.9);
+        transform-origin: center;
+    }
+    .endpoint-dashboard .notice-empty-copy strong {
+        font-size: 18px !important;
+        line-height: 1.35 !important;
+    }
+    .endpoint-dashboard .notice-empty-copy span {
+        font-size: 14px !important;
+        line-height: 1.55 !important;
+    }
+    .endpoint-dashboard .dashboard-main-actions.home-final-actions.brand-action-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+        margin-top: 28px !important;
+    }
+    .endpoint-dashboard .visual-action-card {
+        min-height: 218px !important;
+        padding: 16px 8px 18px !important;
+        border-radius: 24px !important;
+        background: #fff !important;
+        box-shadow: 0 14px 30px rgba(9, 30, 63, .08) !important;
+    }
+    .endpoint-dashboard .visual-action-card::before {
+        inset: 10px 10px auto 10px !important;
+        height: 94px !important;
+        border-radius: 20px !important;
+    }
+    .endpoint-dashboard .home-card-illo {
+        width: 106px !important;
+        height: 92px !important;
+        margin: 0 auto 20px !important;
+        transform: scale(.92);
+    }
+    .endpoint-dashboard .visual-action-card strong {
+        font-size: 18px !important;
+        line-height: 1.18 !important;
+        letter-spacing: -.06em !important;
+        white-space: nowrap !important;
+    }
+    .endpoint-dashboard .visual-action-card small {
+        margin-top: 9px !important;
+        font-size: 12px !important;
+        line-height: 1.28 !important;
+        word-break: keep-all !important;
+    }
+    .endpoint-dashboard .home-card-arrow {
+        bottom: 15px !important;
+        width: 31px !important;
+        height: 31px !important;
+        font-size: 25px !important;
+    }
+    .endpoint-dashboard .home-support-actions {
+        gap: 14px !important;
+        margin-top: 26px !important;
+    }
+    .endpoint-dashboard .visual-support-card {
+        min-height: 72px !important;
+        grid-template-columns: 54px minmax(0, 1fr) 16px !important;
+        padding: 13px 16px !important;
+        border-radius: 22px !important;
+        background: #fff !important;
+        box-shadow: 0 13px 30px rgba(9,30,63,.07) !important;
+    }
+    .endpoint-dashboard .support-illo {
+        width: 42px !important;
+        height: 42px !important;
+    }
+    .endpoint-dashboard .visual-support-card strong {
+        font-size: 17px !important;
+        letter-spacing: -.05em !important;
+    }
+    .endpoint-dashboard .visual-support-card em {
+        display: none !important;
+    }
+    .endpoint-dashboard .turu-mobile-tabbar,
+    .endpoint-dashboard .mobile-tabbar {
+        left: 16px !important;
+        right: 16px !important;
+        bottom: calc(16px + env(safe-area-inset-bottom)) !important;
+        min-height: 74px !important;
+        border-radius: 28px !important;
+        background: rgba(255,255,255,.96) !important;
+        box-shadow: 0 18px 48px rgba(9,30,63,.12) !important;
+    }
+}
+
+@media (max-width: 390px) {
+    .endpoint-dashboard .app-main {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+    .endpoint-dashboard .visual-action-card {
+        min-height: 204px !important;
+        border-radius: 22px !important;
+    }
+    .endpoint-dashboard .home-card-illo {
+        transform: scale(.82);
+        margin-bottom: 12px !important;
+    }
+    .endpoint-dashboard .visual-action-card strong {
+        font-size: 16px !important;
+    }
+    .endpoint-dashboard .visual-action-card small {
+        font-size: 11px !important;
+    }
+}

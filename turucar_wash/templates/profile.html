@@ -1,28 +1,24 @@
 {% extends "base.html" %}
 {% block document_title %}Turu Wash · 내정보{% endblock %}
 {% block content %}
-<section class="profile-hero app-card elevated brand-line-card">
-    <div class="hero-copy-block"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo"><h1>내정보</h1><p class="hero-copy">계정 정보, 관리 메뉴, 앱 설정, 로그아웃을 한 화면에서 확인합니다.</p></div>
-    <div class="profile-hero-copy">
-        <p class="eyebrow">My Turu Wash</p>
+<section class="profile-hero app-card elevated brand-line-card screen-hero">
+    <div class="hero-copy-block">
+        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo">
         <h1>내정보</h1>
-        <p class="hero-copy">계정 정보, 관리 메뉴, 앱 설정, 로그아웃을 한 화면에서 확인합니다.</p>
+        <p class="hero-copy">계정과 담당 지역을 확인합니다.</p>
     </div>
 </section>
 
-<section class="profile-card app-card">
+<section class="profile-card app-card profile-account-card">
     <div class="profile-card-head">
         <div>
             <p class="eyebrow">Account</p>
             <h2>내 계정</h2>
         </div>
-        <span class="badge">{{ current_user.role }}</span>
     </div>
-    <div class="profile-info-grid">
+    <div class="profile-info-grid profile-info-grid-simple">
         <div><small>아이디</small><strong>{{ current_user.username }}</strong></div>
-        <div><small>권한</small><strong>{{ current_user.role }}</strong></div>
         <div><small>업체</small><strong>{{ current_user.vendor or '전체 관리' }}</strong></div>
-        <div><small>하위 계정</small><strong>{{ child_count }}개</strong></div>
     </div>
 </section>
 

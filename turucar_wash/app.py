@@ -241,6 +241,16 @@ def init_db():
             updated_at TEXT
         )
     """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS support_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticket_id INTEGER NOT NULL,
+            sender TEXT NOT NULL,
+            message TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY(ticket_id) REFERENCES support_tickets(id)
+        )
+    """)
     # 마스터 계정 없으면 자동 생성
     existing = cur.execute("SELECT 1 FROM accounts WHERE username='jeongyeon.kim'").fetchone()
     if not existing:
@@ -1501,14 +1511,58 @@ def support_chat_submit():
     data = request.get_json(silent=True) or request.form
 
     category = (data.get("category") or "").strip()
-    car_number = (data.get("car_number") or "").strip()
     message = (data.get("message") or "").strip()
+    ticket_id = data.get("ticket_id")
 
-    if not category or not car_number or not message:
-        return jsonify({"ok": False, "message": "문의유형, 차량번호, 상세내용을 모두 입력해주세요."}), 400
+    if not category or not message:
+        return jsonify({"ok": False, "message": "문의유형과 메시지를 입력해주세요."}), 400
 
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
     conn = get_user_db()
     cur = conn.cursor()
+
+    if ticket_id:
+        ticket = cur.execute(
+            "SELECT * FROM support_tickets WHERE id=? AND requester=?",
+            (ticket_id, current_user.username)
+        ).fetchone()
+
+        if not ticket:
+            conn.close()
+            return jsonify({"ok": False, "message": "문의 내역을 찾을 수 없습니다."}), 404
+
+        existing_message = ticket["message"] or ""
+        updated_message = (existing_message + "\n\n" if existing_message else "") + f"[작업자] {message}"
+        cur.execute(
+            """
+            UPDATE support_tickets
+            SET message=?, status=CASE WHEN status='완료' THEN '접수' ELSE status END, updated_at=?
+            WHERE id=?
+            """,
+            (updated_message, now, ticket_id)
+        )
+        cur.execute(
+            """
+            INSERT INTO support_messages (ticket_id, sender, message, created_at)
+            VALUES (?, 'worker', ?, ?)
+            """,
+            (ticket_id, message, now)
+        )
+        conn.commit()
+        conn.close()
+
+        return jsonify({
+            "ok": True,
+            "ticket_id": int(ticket_id),
+            "message": "메시지가 전달되었습니다."
+        })
+
+    # First free-chat message creates ticket.
+    car_number = (data.get("car_number") or "").strip()
+    if not car_number:
+        # Free chat mode: car number is optional; keep a visible placeholder for manager.
+        car_number = "미입력"
+
     cur.execute(
         """
         INSERT INTO support_tickets
@@ -1518,23 +1572,32 @@ def support_chat_submit():
         (
             category,
             car_number,
-            message,
+            f"[작업자] {message}",
             current_user.username,
             getattr(current_user, "role", ""),
             getattr(current_user, "vendor", ""),
-            datetime.now().strftime("%Y-%m-%d %H:%M"),
-            datetime.now().strftime("%Y-%m-%d %H:%M")
+            now,
+            now
         )
     )
-    ticket_id = cur.lastrowid
+    new_ticket_id = cur.lastrowid
+    cur.execute(
+        """
+        INSERT INTO support_messages (ticket_id, sender, message, created_at)
+        VALUES (?, 'worker', ?, ?)
+        """,
+        (new_ticket_id, message, now)
+    )
     conn.commit()
     conn.close()
 
     return jsonify({
         "ok": True,
-        "ticket_id": ticket_id,
+        "ticket_id": new_ticket_id,
         "message": "문의가 접수되었습니다. 담당자가 확인 후 답변드리겠습니다."
     })
+
+
 
 
 @app.route("/support-manage")
@@ -1595,6 +1658,15 @@ def support_reply(ticket_id):
             WHERE id=?
             """,
             (status, admin_reply, datetime.now().strftime("%Y-%m-%d %H:%M"), ticket_id)
+        )
+
+    if admin_reply:
+        cur.execute(
+            """
+            INSERT INTO support_messages (ticket_id, sender, message, created_at)
+            VALUES (?, 'admin', ?, ?)
+            """,
+            (ticket_id, admin_reply, datetime.now().strftime("%Y-%m-%d %H:%M"))
         )
 
     conn.commit()

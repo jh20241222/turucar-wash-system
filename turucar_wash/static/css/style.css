@@ -2684,3 +2684,161 @@ body.modal-open {
         box-shadow: 0 12px 24px rgba(33,33,36,.12) !important;
     }
 }
+
+
+/* Mobile compact filter sheet for order/status */
+.mobile-filter-trigger,
+.mobile-filter-sheet-head {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .endpoint-wash_list .order-excel-btn,
+    .endpoint-wash_status .blue-btn {
+        display: none !important;
+    }
+
+    .mobile-filter-trigger {
+        display: block;
+        margin: 0 0 14px;
+    }
+
+    .mobile-filter-open-btn {
+        width: 100%;
+        min-height: 58px;
+        padding: 0 18px;
+        border-radius: 20px;
+        border: 1px solid var(--line, #D8E0EB);
+        background: #fff;
+        box-shadow: 0 12px 30px rgba(9,30,63,.06);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--ink, #212121);
+    }
+
+    .mobile-filter-open-btn span {
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: -.04em;
+    }
+
+    .mobile-filter-open-btn strong {
+        min-height: 34px;
+        padding: 0 13px;
+        border-radius: 999px;
+        background: rgba(255,111,15,.08);
+        color: #FF6F0F;
+        display: inline-flex;
+        align-items: center;
+        font-size: 14px;
+        font-weight: 850;
+    }
+
+    .mobile-filter-open-btn::after {
+        content: "검색하기";
+        margin-left: 10px;
+        color: #6D7B8F;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .mobile-filter-sheet {
+        position: fixed !important;
+        left: 14px;
+        right: 14px;
+        bottom: calc(18px + env(safe-area-inset-bottom));
+        z-index: 240;
+        max-height: min(78vh, 720px);
+        overflow-y: auto;
+        display: none;
+        padding: 18px !important;
+        border-radius: 26px !important;
+        box-shadow: 0 28px 80px rgba(9,30,63,.24) !important;
+        border: 1px solid rgba(216,224,235,.9) !important;
+        background: #fff !important;
+        margin: 0 !important;
+    }
+
+    .mobile-filter-sheet.open {
+        display: block !important;
+        animation: filterSheetUp .18s ease-out;
+    }
+
+    body.filter-sheet-open::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 230;
+        background: rgba(17,24,39,.34);
+        backdrop-filter: blur(7px);
+    }
+
+    body.filter-sheet-open {
+        overflow: hidden;
+    }
+
+    .mobile-filter-sheet-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .mobile-filter-sheet-head strong {
+        font-size: 22px;
+        font-weight: 850;
+        letter-spacing: -.05em;
+        color: var(--ink, #212121);
+    }
+
+    .mobile-filter-sheet-head button {
+        width: 38px;
+        height: 38px;
+        border: 0;
+        border-radius: 999px;
+        background: rgba(246,247,249,.96);
+        color: #111;
+        font-size: 24px;
+        font-weight: 850;
+        line-height: 1;
+    }
+
+    .mobile-filter-sheet .filter-head {
+        display: none !important;
+    }
+
+    .mobile-filter-sheet .filter-grid,
+    .mobile-filter-sheet .status-filter-grid {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    .mobile-filter-sheet .app-input {
+        min-height: 52px !important;
+        border-radius: 17px !important;
+        font-size: 15px !important;
+        font-weight: 650 !important;
+    }
+
+    .mobile-filter-sheet .primary-btn {
+        min-height: 54px !important;
+        border-radius: 17px !important;
+        margin-top: 4px;
+        font-size: 17px !important;
+        font-weight: 850 !important;
+    }
+
+    @keyframes filterSheetUp {
+        from {
+            transform: translateY(16px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+}

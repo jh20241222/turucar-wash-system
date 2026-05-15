@@ -89,9 +89,10 @@
         <span>최신 등록순</span>
     </div>
     {% for r in rows %}
-    <label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>
-    <a href="{{ url_for('car_detail', id=r['id']) }}" class="app-row-link">
-        <article class="app-order-row">
+    <div class="mobile-delete-row">
+        <label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>
+        <a href="{{ url_for('car_detail', id=r['id']) }}" class="app-row-link">
+            <article class="app-order-row">
             <div class="row-main">
                 <div class="row-title-line">
                     <strong>{{ r['차량번호'] }}</strong>
@@ -105,8 +106,9 @@
                 <span>{{ r['세차일'] or selected_date }}</span>
             </div>
             <span class="row-arrow">›</span>
-        </article>
-    </a>
+            </article>
+        </a>
+    </div>
     {% else %}
     <div class="empty-state polished-empty"><strong>세차 대상이 없습니다.</strong><span>날짜를 바꾸거나 필터를 초기화해보세요.</span></div>
     {% endfor %}

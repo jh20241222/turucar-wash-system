@@ -78,8 +78,9 @@
         <span>완료 등록순</span>
     </div>
     {% for r in rows %}
-    <label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>
-    <article class="app-order-row done-row">
+    <div class="mobile-delete-row">
+        <label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>
+        <article class="app-order-row done-row">
         <div class="row-main">
             <div class="row-title-line">
                 <strong>{{ r['차량번호'] }}</strong>
@@ -93,7 +94,8 @@
             <span>{{ r['세차완료일'] or '-' }}</span>
         </div>
         {% if r['특이사항'] %}<div class="row-note">{{ r['특이사항'] }}</div>{% endif %}
-    </article>
+        </article>
+    </div>
     {% else %}
     <div class="empty-state polished-empty"><strong>완료 내역이 없습니다.</strong><span>검색 조건을 바꿔보세요.</span></div>
     {% endfor %}

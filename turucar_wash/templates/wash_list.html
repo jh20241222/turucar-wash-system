@@ -30,6 +30,7 @@
         <select id="spot" class="app-input"><option value="">전체 스팟</option>{% for s in spot_list %}<option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
         {% if current_user.is_master %}<select id="vendor" class="app-input"><option value="">전체 업체</option>{% for v in vendor_list %}<option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>{% endif %}
         <button type="button" onclick="applyFilter()" class="primary-btn">검색</button>
+        <button type="button" onclick="downloadOrderExcel()" class="blue-btn order-excel-btn">엑셀</button>
     </div>
 </section>
 
@@ -87,6 +88,8 @@
 
 <script>
 function moveDate(days){const current=new Date("{{ selected_date }}");current.setDate(current.getDate()+days);const yyyy=current.getFullYear();const mm=String(current.getMonth()+1).padStart(2,'0');const dd=String(current.getDate()).padStart(2,'0');window.location.href=`/wash_list?date=${yyyy}-${mm}-${dd}`;}
-function applyFilter(){const params=new URLSearchParams({date:"{{ selected_date }}",s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:""});window.location.href=`/wash_list?${params.toString()}`;}
+function buildOrderParams(){return new URLSearchParams({date:"{{ selected_date }}",s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:""});}
+function applyFilter(){window.location.href=`/wash_list?${buildOrderParams().toString()}`;}
+function downloadOrderExcel(){window.location.href=`/wash_list_excel?${buildOrderParams().toString()}`;}
 </script>
 {% endblock %}

@@ -85,7 +85,7 @@
 
 
 <section class="home-support-actions">
-    <a href="{{ url_for('support_chat') }}?type=urgent" class="home-support-card urgent">
+    <a href="javascript:void(0)" onclick="showUrgentWashComingSoon()" class="home-support-card urgent">
         <span>⚡</span>
         <strong>긴급 세차</strong>
         <em>빠른 요청</em>
@@ -133,6 +133,19 @@ function openNoticeEdit(button){const form=document.getElementById('notice-edit-
 function closeNoticeEdit(){document.getElementById('notice-edit-modal').hidden=true;document.body.classList.remove('modal-open');}
 document.addEventListener('click',function(event){if(!event.target.closest('.notice-kebab-wrap')){document.querySelectorAll('.notice-kebab-wrap.open').forEach(function(menu){menu.classList.remove('open');});}});
 document.addEventListener('keydown',function(event){if(event.key==='Escape'){if(!document.getElementById('notice-viewer-modal').hidden){closeNoticeViewer();}const editModal=document.getElementById('notice-edit-modal');if(editModal&&!editModal.hidden){closeNoticeEdit();}document.querySelectorAll('.notice-kebab-wrap.open').forEach(function(menu){menu.classList.remove('open');});}});
+
+function showUrgentWashComingSoon(){
+    const toast = document.createElement("div");
+    toast.className = "urgent-dev-toast";
+    toast.textContent = "긴급세차 요청 기능은 개발중입니다.";
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add("show"), 10);
+    setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 250);
+    }, 1800);
+}
+
 </script>
 
 {% endblock %}

@@ -1135,6 +1135,90 @@ def wash_list():
     )
 
 
+
+# =========================================================
+# 세차 오더 엑셀 다운로드
+# =========================================================
+@app.route("/wash_list_excel")
+@login_required
+def wash_list_excel():
+    from io import BytesIO
+
+    today = datetime.today().strftime("%Y-%m-%d")
+    selected_date = request.args.get("date", today)
+    search = request.args.get("s", "")
+    r1 = request.args.get("r1", "")
+    r2 = request.args.get("r2", "")
+    org = request.args.get("org", "")
+    spot = request.args.get("spot", "")
+    vendor = request.args.get("vendor", "")
+
+    conn = get_wash_db()
+    query = "SELECT * FROM wash_list WHERE 세차일 = ?"
+    params = [selected_date]
+
+    scope_sql, scope_params = scoped_condition("wash_list", current_user)
+    query += scope_sql
+    params += scope_params
+
+    if search:
+        query += " AND (차량번호 LIKE ? OR 스팟 LIKE ?)"
+        params += [f"%{search}%", f"%{search}%"]
+    if r1:
+        query += " AND 지역시도 = ?"
+        params.append(r1)
+    if r2:
+        query += " AND 지역구군 = ?"
+        params.append(r2)
+    if org:
+        query += " AND 차량소속 = ?"
+        params.append(org)
+    if spot:
+        query += " AND 스팟 = ?"
+        params.append(spot)
+    if vendor and current_user.is_master:
+        query += " AND 업체 = ?"
+        params.append(vendor)
+
+    query += " ORDER BY id DESC"
+
+    df = pd.read_sql_query(query, conn, params=params)
+    conn.close()
+
+    preferred_cols = [
+        "id", "차량번호", "차종명", "차량소속", "스팟", "주소",
+        "지역시도", "지역구군", "업체", "세차일"
+    ]
+    existing_cols = [col for col in preferred_cols if col in df.columns]
+    extra_cols = [col for col in df.columns if col not in existing_cols]
+    if existing_cols:
+        df = df[existing_cols + extra_cols]
+
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="세차오더")
+        worksheet = writer.sheets["세차오더"]
+        for column_cells in worksheet.columns:
+            max_length = 10
+            column_letter = column_cells[0].column_letter
+            for cell in column_cells:
+                value = "" if cell.value is None else str(cell.value)
+                max_length = max(max_length, min(len(value) + 2, 40))
+            worksheet.column_dimensions[column_letter].width = max_length
+
+    output.seek(0)
+    filename = f"wash_orders_{selected_date}.xlsx"
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name=filename,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+
+
+
 # =========================================================
 # 차량 상세 입력 페이지
 # =========================================================

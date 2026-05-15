@@ -3383,3 +3383,90 @@ body.modal-open {
         flex-direction: column;
     }
 }
+
+
+/* Support chatbot free-chat fix */
+.free-chatbot-screen .chatbot-header {
+    background: linear-gradient(180deg, #FF8A12 0%, #FF8A12 100%) !important;
+}
+.free-chatbot-screen .chatbot-header::after {
+    display: none !important;
+}
+.free-chatbot-screen .chatbot-notice-strip {
+    display: block;
+    margin-top: 22px;
+    min-height: 44px;
+    border-radius: 999px;
+    background: rgba(194, 104, 0, .26);
+    padding: 12px 20px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+}
+.free-chatbot-screen .wordmark-logo {
+    width: 58px;
+    height: 58px;
+    overflow: hidden;
+}
+.free-chatbot-screen .wordmark-logo img {
+    width: 118px !important;
+    max-width: none !important;
+    height: auto !important;
+    transform: scale(.68);
+}
+.free-chatbot-screen .wordmark-avatar {
+    overflow: hidden;
+}
+.free-chatbot-screen .wordmark-avatar img {
+    width: 82px !important;
+    max-width: none !important;
+    height: auto !important;
+    transform: scale(.66);
+}
+.free-chatbot-screen .chatbot-brand h1 {
+    font-size: 24px;
+    letter-spacing: -.045em;
+}
+.free-chatbot-screen .chatbot-brand p {
+    font-weight: 700;
+}
+.issue-options button.selected {
+    background: #FF8A12 !important;
+    color: #fff !important;
+    border-color: #FF8A12 !important;
+}
+.free-chatbot-screen .bot-message {
+    max-width: 100%;
+}
+.free-chatbot-screen .chatbot-inputbar {
+    grid-template-columns: 42px minmax(0, 1fr) 46px;
+}
+.free-chatbot-screen .attach-btn {
+    font-size: 28px;
+    color: #777F8B;
+}
+.free-chatbot-screen .send-btn {
+    color: #212121;
+}
+@media (max-width: 900px) {
+    .free-chatbot-screen .chatbot-header {
+        padding-top: calc(22px + env(safe-area-inset-top));
+    }
+    .free-chatbot-screen .chatbot-logo {
+        width: 54px;
+        height: 54px;
+    }
+    .free-chatbot-screen .chatbot-notice-strip {
+        font-size: 14px;
+        padding: 11px 18px;
+    }
+    .free-chatbot-screen .issue-options {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .free-chatbot-screen .issue-options button {
+        min-height: 38px;
+        padding: 0 9px;
+        font-size: 12px;
+    }
+}

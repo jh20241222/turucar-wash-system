@@ -1484,6 +1484,76 @@ def wash_status_excel():
 
 
 
+
+# =========================================================
+# Master delete actions
+# =========================================================
+@app.route("/wash_list/delete", methods=["POST"])
+@login_required
+def wash_list_delete():
+    if not current_user.is_master:
+        flash("❌ 마스터 계정만 세차 오더를 삭제할 수 있습니다.")
+        return redirect(url_for("wash_list"))
+
+    ids = request.form.getlist("ids")
+    return_query = request.form.get("return_query", "")
+
+    if not ids:
+        flash("삭제할 세차 오더를 선택해주세요.")
+        return redirect(url_for("wash_list") + (f"?{return_query}" if return_query else ""))
+
+    placeholders = ",".join(["?"] * len(ids))
+    conn = get_wash_db()
+    conn.execute(f"DELETE FROM wash_list WHERE id IN ({placeholders})", ids)
+    conn.commit()
+    conn.close()
+
+    flash(f"세차 오더 {len(ids)}건이 삭제되었습니다.")
+    return redirect(url_for("wash_list") + (f"?{return_query}" if return_query else ""))
+
+
+@app.route("/wash_status/delete", methods=["POST"])
+@login_required
+def wash_status_delete():
+    if not current_user.is_master:
+        flash("❌ 마스터 계정만 완료 이력을 삭제할 수 있습니다.")
+        return redirect(url_for("wash_status"))
+
+    ids = request.form.getlist("ids")
+    return_query = request.form.get("return_query", "")
+
+    if not ids:
+        flash("삭제할 완료 이력을 선택해주세요.")
+        return redirect(url_for("wash_status") + (f"?{return_query}" if return_query else ""))
+
+    placeholders = ",".join(["?"] * len(ids))
+    conn = get_wash_db()
+    conn.execute(f"DELETE FROM wash_history WHERE id IN ({placeholders})", ids)
+    conn.commit()
+    conn.close()
+
+    flash(f"완료 이력 {len(ids)}건이 삭제되었습니다.")
+    return redirect(url_for("wash_status") + (f"?{return_query}" if return_query else ""))
+
+
+@app.route("/support-manage/<int:ticket_id>/delete", methods=["POST"])
+@login_required
+def support_delete(ticket_id):
+    if not current_user.is_master:
+        flash("❌ 마스터 계정만 문의를 삭제할 수 있습니다.")
+        return redirect(url_for("support_manage"))
+
+    conn = get_user_db()
+    conn.execute("DELETE FROM support_messages WHERE ticket_id=?", (ticket_id,))
+    conn.execute("DELETE FROM support_tickets WHERE id=?", (ticket_id,))
+    conn.commit()
+    conn.close()
+
+    flash("문의 내역이 삭제되었습니다.")
+    return redirect(url_for("support_manage"))
+
+
+
 # =========================================================
 # 문의봇 / 문의 관리
 # =========================================================

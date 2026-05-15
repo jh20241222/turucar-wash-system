@@ -3503,3 +3503,127 @@ body.modal-open {
         bottom: 42px;
     }
 }
+
+
+/* Master delete mode for wash orders / status */
+.master-delete-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin: 0 0 14px;
+}
+.delete-mode-actions {
+    display: none;
+    align-items: center;
+    gap: 8px;
+}
+.master-delete-form.delete-mode .delete-mode-actions {
+    display: flex;
+}
+.delete-mode-btn,
+.cancel-delete-btn,
+.danger-delete-btn {
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid #D8E0EB;
+    background: #fff;
+    color: #212121;
+    font-size: 13px;
+    font-weight: 850;
+}
+.danger-delete-btn {
+    border-color: rgba(228,25,60,.18);
+    background: rgba(228,25,60,.08);
+    color: #E4193C;
+}
+.delete-mode-actions label {
+    min-height: 38px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(246,247,249,.9);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #6D7B8F;
+}
+.delete-col {
+    display: none;
+    width: 54px;
+    text-align: center !important;
+}
+.master-delete-form.delete-mode .delete-col {
+    display: table-cell;
+}
+.mobile-delete-check {
+    display: none;
+}
+.master-delete-form.delete-mode .mobile-delete-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    float: left;
+    min-height: 76px;
+    margin-right: 8px;
+}
+.mobile-delete-check input {
+    width: 20px;
+    height: 20px;
+}
+.master-delete-form.delete-mode .app-row-link,
+.master-delete-form.delete-mode .app-order-row.done-row {
+    opacity: .94;
+}
+.ticket-delete-form {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+}
+.recent-ticket-message {
+    margin: 8px 0 0 !important;
+    color: #212121 !important;
+    font-weight: 650 !important;
+    line-height: 1.45 !important;
+}
+.recent-ticket-reply {
+    margin: 8px 0 0 !important;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(255,111,15,.07);
+    color: #505A66 !important;
+    font-weight: 650 !important;
+    line-height: 1.45 !important;
+}
+.recent-ticket-reply b {
+    color: #FF6F0F;
+}
+@media (max-width: 900px) {
+    .master-delete-toolbar {
+        justify-content: space-between;
+        margin: 0 2px 12px;
+    }
+    .delete-mode-actions {
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    .delete-mode-btn,
+    .cancel-delete-btn,
+    .danger-delete-btn,
+    .delete-mode-actions label {
+        min-height: 34px;
+        padding: 0 10px;
+        font-size: 12px;
+    }
+    .master-delete-form.delete-mode .mobile-delete-check + .app-row-link .app-order-row,
+    .master-delete-form.delete-mode .mobile-delete-check + .app-order-row {
+        padding-left: 4px;
+    }
+    .master-delete-form.delete-mode .app-order-row {
+        grid-template-columns: minmax(0, 1fr) minmax(96px, .72fr) 14px;
+    }
+}

@@ -664,7 +664,7 @@ def edit_dashboard_notice(notice_id):
     update_dashboard_notice_item(notice_id, notice_title, notice_body, notice_author)
     flash("공지사항이 수정되었습니다.")
     page = request.form.get("notice_page", 1)
-    return redirect(url_for("dashboard", notice_page=page) + "#notice-list")
+    return redirect((url_for("notices", notice_page=page) if request.form.get("return_to") == "notices" else url_for("dashboard") + "#notice-list"))
 
 
 @app.route("/dashboard/notice/<int:notice_id>/delete", methods=["POST"])
@@ -677,7 +677,7 @@ def delete_dashboard_notice(notice_id):
     delete_dashboard_notice_item(notice_id)
     flash("공지사항이 삭제되었습니다.")
     page = request.form.get("notice_page", 1)
-    return redirect(url_for("dashboard", notice_page=page) + "#notice-list")
+    return redirect((url_for("notices", notice_page=page) if request.form.get("return_to") == "notices" else url_for("dashboard") + "#notice-list"))
 
 
 
@@ -706,8 +706,7 @@ def dashboard():
         f"{current_user.username} 계정으로 접속 중입니다. 오더 확인, 완료 처리까지 앱처럼 빠르게 확인하세요."
     )
 
-    notice_page = request.args.get("notice_page", 1, type=int)
-    notice_rows, notice_total, notice_page, notice_total_pages = get_dashboard_notices(notice_page, 10)
+    notice_rows, notice_total, _, _ = get_dashboard_notices(1, 3)
 
     return render_template(
         "dashboard.html",
@@ -716,6 +715,21 @@ def dashboard():
         vendor_counts=vendor_counts,
         notice_title=notice_title,
         notice_body=notice_body,
+        notice_rows=notice_rows,
+        notice_total=notice_total,
+        notice_page=1,
+        notice_total_pages=1,
+    )
+
+
+
+@app.route("/notices")
+@login_required
+def notices():
+    notice_page = request.args.get("notice_page", 1, type=int)
+    notice_rows, notice_total, notice_page, notice_total_pages = get_dashboard_notices(notice_page, 10)
+    return render_template(
+        "notices.html",
         notice_rows=notice_rows,
         notice_total=notice_total,
         notice_page=notice_page,

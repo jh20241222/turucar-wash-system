@@ -3629,7 +3629,22 @@ body.modal-open {
 }
 
 
-/* Critical fix: show mobile order/status list under compact filter */
+/* Restore order/status rows for staff users */
+@media (min-width: 901px) {
+    .endpoint-wash_list .desktop-table,
+    .endpoint-wash_status .desktop-table,
+    .endpoint-wash_list .table-panel,
+    .endpoint-wash_status .table-panel {
+        display: block !important;
+        margin-top: 16px !important;
+    }
+    .endpoint-wash_list .mobile-order-list,
+    .endpoint-wash_status .mobile-history-list,
+    .endpoint-wash_list .app-row-list,
+    .endpoint-wash_status .app-row-list {
+        display: none !important;
+    }
+}
 @media (max-width: 900px) {
     .endpoint-wash_list .mobile-order-list,
     .endpoint-wash_status .mobile-history-list,
@@ -3638,55 +3653,44 @@ body.modal-open {
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
-        height: auto !important;
         min-height: 80px !important;
         margin-top: 14px !important;
         padding: 0 2px 116px !important;
-        position: relative !important;
-        z-index: 1 !important;
     }
-
     .endpoint-wash_list .desktop-table,
     .endpoint-wash_status .desktop-table,
     .endpoint-wash_list .table-panel,
     .endpoint-wash_status .table-panel {
         display: none !important;
     }
-
     .mobile-delete-row {
         display: grid !important;
-        grid-template-columns: 0 minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr);
         align-items: stretch;
         width: 100%;
         position: relative;
         border-bottom: 1px solid #D8E0EB;
     }
-
     .mobile-delete-row:first-of-type {
         border-top: 1px solid #D8E0EB;
     }
-
     .mobile-delete-row .app-row-link {
         display: block !important;
         min-width: 0;
         color: inherit;
         text-decoration: none;
     }
-
     .mobile-delete-row .app-order-row {
         border-top: 0 !important;
         border-bottom: 0 !important;
     }
-
     .master-delete-form.delete-mode .mobile-delete-row {
         grid-template-columns: 36px minmax(0, 1fr);
         column-gap: 8px;
     }
-
     .mobile-delete-row .mobile-delete-check {
         display: none;
     }
-
     .master-delete-form.delete-mode .mobile-delete-row .mobile-delete-check {
         display: flex !important;
         align-items: center;
@@ -3695,36 +3699,5 @@ body.modal-open {
         min-height: 76px !important;
         margin: 0 !important;
         float: none !important;
-    }
-
-    .master-delete-form.delete-mode .mobile-delete-row .mobile-delete-check input {
-        width: 20px;
-        height: 20px;
-    }
-
-    .endpoint-wash_list .app-order-row,
-    .endpoint-wash_status .app-order-row {
-        display: grid !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        min-height: 86px !important;
-        background: transparent !important;
-    }
-
-    .endpoint-wash_list .row-main,
-    .endpoint-wash_list .row-meta,
-    .endpoint-wash_status .row-main,
-    .endpoint-wash_status .row-meta {
-        display: block;
-        min-width: 0;
-    }
-
-    .endpoint-wash_list .mobile-list-summary,
-    .endpoint-wash_status .mobile-list-summary {
-        display: flex !important;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 2px 12px;
-        color: #7D8793;
     }
 }

@@ -10,7 +10,18 @@
     <div class="hero-count done"><span>{{ rows|length }}</span><small>조회</small></div>
 </section>
 
-<section class="filter-card app-card search-panel">
+<section class="mobile-filter-trigger status-filter-trigger">
+    <button type="button" onclick="openMobileFilter('status-filter-sheet')" class="mobile-filter-open-btn">
+        <span>검색 조건</span>
+        <strong>{{ rows|length }}건</strong>
+    </button>
+</section>
+
+<section id="status-filter-sheet" class="filter-card app-card search-panel mobile-filter-sheet">
+    <div class="mobile-filter-sheet-head">
+        <strong>완료 이력 검색</strong>
+        <button type="button" onclick="closeMobileFilter('status-filter-sheet')" aria-label="닫기">×</button>
+    </div>
     <div class="filter-head">
         <div>
             <strong>완료 이력 검색</strong>
@@ -78,5 +89,8 @@
 function buildStatusParams(){return new URLSearchParams({s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("car_org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:"",start:document.getElementById("start").value,end:document.getElementById("end").value});}
 function applyFilter(){window.location.href=`/wash_status?${buildStatusParams().toString()}`;}
 function downloadExcel(){window.location.href=`/wash_status_excel?${buildStatusParams().toString()}`;}
+function openMobileFilter(id){const el=document.getElementById(id);if(el){el.classList.add("open");document.body.classList.add("filter-sheet-open");}}
+function closeMobileFilter(id){const el=document.getElementById(id);if(el){el.classList.remove("open");document.body.classList.remove("filter-sheet-open");}}
+document.addEventListener("keydown",function(e){if(e.key==="Escape"){document.querySelectorAll(".mobile-filter-sheet.open").forEach(function(el){el.classList.remove("open");});document.body.classList.remove("filter-sheet-open");}});
 </script>
 {% endblock %}

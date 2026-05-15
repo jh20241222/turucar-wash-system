@@ -93,15 +93,15 @@
         {% block content %}{% endblock %}
     </main>
 
-    <nav class="mobile-tabbar" aria-label="주요 메뉴">
+    <nav class="mobile-tabbar turu-mobile-tabbar" aria-label="주요 메뉴">
         <a href="{{ url_for('dashboard') }}" class="tab-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
             <span>⌂</span><b>홈</b>
         </a>
-        <a href="https://pm.peoplecar.co.kr:8082/#" class="tab-item admin-app-tab">
-            <span>↗</span><b>예약</b>
-        </a>
         <a href="{{ url_for('wash_list') }}" class="tab-item {% if request.endpoint in ['wash_list','car_detail'] %}active{% endif %}">
             <span>▣</span><b>오더</b>
+        </a>
+        <a href="https://pm.peoplecar.co.kr:8082/#" class="tab-item admin-app-tab">
+            <span>↗</span><b>제어</b>
         </a>
         <a href="{{ url_for('wash_status') }}" class="tab-item {% if request.endpoint == 'wash_status' %}active{% endif %}">
             <span>✓</span><b>완료</b>

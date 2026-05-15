@@ -85,8 +85,17 @@
         <strong>세차 오더</strong><small>대상 차량 확인</small>
     </a>
     <a class="quick-card brand-action-card action-orange visual-action-card" href="https://pm.peoplecar.co.kr:8082/#">
-        <span class="home-card-illo control-illo" aria-hidden="true">
-            <i class="clock-face"></i><i class="control-car"></i><i class="headlight l1"></i><i class="headlight l2"></i><i class="lock-body"></i>
+        <span class="home-card-illo clean-card-illo illo-control" aria-hidden="true">
+            <svg viewBox="0 0 96 80" role="img">
+                <circle cx="29" cy="25" r="16" fill="none" stroke="currentColor" stroke-width="5"/>
+                <path d="M29 15v11l8 5" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                <path d="M25 58h42c5 0 9-4 9-9v-5c0-5-4-9-9-9H38c-7 0-12 5-15 11l-3 7c-1 3 1 5 5 5z" fill="currentColor" opacity=".18"/>
+                <path d="M34 58h34" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+                <circle cx="39" cy="61" r="4" fill="currentColor"/><circle cx="66" cy="61" r="4" fill="currentColor"/>
+                <path d="M21 47l-8-3M77 47l8-3" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" opacity=".75"/>
+                <rect x="65" y="13" width="17" height="18" rx="4" fill="none" stroke="#212124" stroke-width="4"/>
+                <path d="M69 13v-4c0-5 9-5 9 0v4" fill="none" stroke="#212124" stroke-width="4" stroke-linecap="round"/>
+            </svg>
         </span>
         <strong>예약/문제어</strong><small>예약/제어 관리자앱</small><em class="home-card-arrow">›</em>
     </a>
@@ -99,12 +108,25 @@
 
 <section class="home-support-actions">
     <a href="javascript:void(0)" onclick="showUrgentWashComingSoon()" class="home-support-card urgent visual-support-card">
-        <span class="support-illo urgent-siren" aria-hidden="true"><i></i><b></b></span>
+        <span class="support-illo clean-support-illo urgent-siren" aria-hidden="true">
+            <svg viewBox="0 0 56 56" role="img">
+                <path d="M18 36V24c0-7 5-12 10-12s10 5 10 12v12" fill="currentColor" opacity=".16"/>
+                <path d="M18 36V24c0-7 5-12 10-12s10 5 10 12v12" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                <path d="M14 39h28" fill="none" stroke="#212124" stroke-width="4" stroke-linecap="round"/>
+                <path d="M12 18l-5-5M44 18l5-5M28 7V3" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+        </span>
         <strong>긴급 세차</strong>
         <em>긴급 세차 요청</em>
     </a>
     <a href="{{ url_for('support_chat') }}" class="home-support-card chat visual-support-card">
-        <span class="support-illo chat-bubble" aria-hidden="true"><i></i><b></b></span>
+        <span class="support-illo clean-support-illo chat-bubble" aria-hidden="true">
+            <svg viewBox="0 0 56 56" role="img">
+                <path d="M12 15h32c4 0 7 3 7 7v12c0 4-3 7-7 7H26l-12 8v-8h-2c-4 0-7-3-7-7V22c0-4 3-7 7-7z" fill="currentColor" opacity=".14"/>
+                <path d="M12 15h32c4 0 7 3 7 7v12c0 4-3 7-7 7H26l-12 8v-8h-2c-4 0-7-3-7-7V22c0-4 3-7 7-7z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+                <path d="M18 28h.1M28 28h.1M38 28h.1" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+            </svg>
+        </span>
         <strong>문의하기</strong>
         <em>문의 및 요청 접수</em>
     </a>

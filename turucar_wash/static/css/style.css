@@ -4331,3 +4331,225 @@ body.modal-open {
         font-size: 19px !important;
     }
 }
+
+
+/* Profile screen cleanup + common mobile title sizing */
+.endpoint-profile {
+    --clean-font: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", sans-serif;
+}
+
+.endpoint-profile *,
+.endpoint-wash_list *,
+.endpoint-wash_status *,
+.endpoint-car_detail * {
+    font-family: var(--clean-font) !important;
+}
+
+/* Common main titles: closer to home notice title tone */
+.endpoint-wash_list .order-hero h1,
+.endpoint-wash_status .status-hero h1,
+.endpoint-car_detail .detail-hero-clean h1,
+.endpoint-profile .profile-hero h1 {
+    font-weight: 850 !important;
+    letter-spacing: -.055em !important;
+    color: #212121 !important;
+}
+
+.endpoint-wash_list .order-hero .hero-copy,
+.endpoint-wash_status .status-hero .hero-copy,
+.endpoint-car_detail .detail-hero-clean .hero-copy,
+.endpoint-profile .profile-hero .hero-copy {
+    font-weight: 650 !important;
+    letter-spacing: -.025em !important;
+    color: #6D7B8F !important;
+}
+
+.endpoint-profile .profile-hero .hero-copy-block {
+    width: 100%;
+    text-align: center !important;
+    display: grid;
+    justify-items: center;
+}
+
+.endpoint-profile .profile-hero .page-hero-logo {
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+.endpoint-profile .profile-card {
+    border: 1px solid #D8E0EB !important;
+    box-shadow: 0 12px 30px rgba(9,30,63,.06) !important;
+}
+
+.endpoint-profile .profile-card-head h2 {
+    font-weight: 850 !important;
+    letter-spacing: -.05em !important;
+    color: #212121 !important;
+}
+
+.endpoint-profile .profile-info-grid-simple {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.endpoint-profile .profile-info-grid div {
+    background: rgba(246,247,249,.72) !important;
+    border: 1px solid #D8E0EB !important;
+}
+
+.endpoint-profile .profile-info-grid small {
+    color: #7D8793 !important;
+    font-weight: 700 !important;
+    letter-spacing: -.025em !important;
+}
+
+.endpoint-profile .profile-info-grid strong {
+    color: #212121 !important;
+    font-weight: 800 !important;
+    letter-spacing: -.035em !important;
+}
+
+.endpoint-profile .region-chip-list {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 8px !important;
+}
+
+.endpoint-profile .region-chip-list span {
+    min-height: 34px !important;
+    padding: 0 13px !important;
+    border-radius: 999px !important;
+    background: rgba(255,111,15,.085) !important;
+    color: #FF6F0F !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    font-size: 13px !important;
+    font-weight: 850 !important;
+    letter-spacing: -.03em !important;
+    opacity: 1 !important;
+    white-space: nowrap;
+}
+
+@media (min-width: 901px) {
+    .endpoint-profile .profile-hero {
+        display: grid !important;
+        place-items: center !important;
+    }
+
+    .endpoint-profile .profile-hero .page-hero-logo {
+        width: 230px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .endpoint-wash_list .order-hero h1,
+    .endpoint-wash_status .status-hero h1,
+    .endpoint-car_detail .detail-hero-clean h1,
+    .endpoint-profile .profile-hero h1 {
+        font-size: 34px !important;
+        line-height: 1.14 !important;
+    }
+}
+
+@media (max-width: 900px) {
+    .endpoint-profile .profile-hero {
+        background: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        padding: 4px 2px 8px !important;
+        margin: 0 0 12px !important;
+        border-radius: 0 !important;
+        display: grid !important;
+        place-items: center !important;
+    }
+
+    .endpoint-profile .profile-hero .page-hero-logo {
+        width: 164px !important;
+        max-width: 58vw !important;
+        margin: 0 auto 8px !important;
+    }
+
+    .endpoint-wash_list .order-hero h1,
+    .endpoint-wash_status .status-hero h1,
+    .endpoint-car_detail .detail-hero-clean h1,
+    .endpoint-profile .profile-hero h1 {
+        font-size: 25px !important;
+        line-height: 1.1 !important;
+        margin: 0 0 6px !important;
+    }
+
+    .endpoint-profile .profile-hero .hero-copy {
+        font-size: 13px !important;
+        line-height: 1.42 !important;
+        max-width: 260px;
+        margin: 0 auto !important;
+        text-align: center !important;
+    }
+
+    .endpoint-profile .profile-card {
+        border-radius: 22px !important;
+        padding: 18px !important;
+        margin-bottom: 12px !important;
+        background: #fff !important;
+    }
+
+    .endpoint-profile .profile-card-head {
+        margin-bottom: 14px !important;
+    }
+
+    .endpoint-profile .profile-card-head .eyebrow {
+        font-size: 11px !important;
+        font-weight: 850 !important;
+        color: #FF6F0F !important;
+        letter-spacing: .02em !important;
+    }
+
+    .endpoint-profile .profile-card-head h2 {
+        font-size: 20px !important;
+        line-height: 1.16 !important;
+        margin-top: 3px !important;
+    }
+
+    .endpoint-profile .profile-info-grid,
+    .endpoint-profile .profile-info-grid-simple {
+        grid-template-columns: 1fr !important;
+        gap: 9px !important;
+    }
+
+    .endpoint-profile .profile-info-grid div {
+        border-radius: 16px !important;
+        padding: 13px 14px !important;
+    }
+
+    .endpoint-profile .profile-info-grid small {
+        font-size: 12px !important;
+    }
+
+    .endpoint-profile .profile-info-grid strong {
+        font-size: 15px !important;
+    }
+
+    .endpoint-profile .region-chip-list {
+        gap: 8px !important;
+        padding-top: 2px;
+    }
+
+    .endpoint-profile .region-chip-list span {
+        min-height: 36px !important;
+        padding: 0 14px !important;
+        font-size: 13px !important;
+        box-shadow: 0 8px 18px rgba(255,111,15,.08);
+    }
+
+    .endpoint-profile .soft-badge {
+        min-height: 30px !important;
+        padding: 0 10px !important;
+        font-size: 12px !important;
+        font-weight: 850 !important;
+        background: rgba(255,111,15,.08) !important;
+        color: #FF6F0F !important;
+    }
+
+    .endpoint-profile .menu-row {
+        border-radius: 17px !important;
+        min-height: 58px !important;
+    }
+}

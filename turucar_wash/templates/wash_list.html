@@ -14,11 +14,22 @@
     </div>
 </section>
 
+{% set order_filter_parts = [] %}
+{% if selected_r1 %}{% set _ = order_filter_parts.append(selected_r1) %}{% endif %}
+{% if selected_r2 %}{% set _ = order_filter_parts.append(selected_r2) %}{% endif %}
+{% if selected_org %}{% set _ = order_filter_parts.append(selected_org) %}{% endif %}
+{% if selected_spot %}{% set _ = order_filter_parts.append(selected_spot) %}{% endif %}
+{% if current_user.is_master and selected_vendor %}{% set _ = order_filter_parts.append(selected_vendor) %}{% endif %}
+{% if search_input %}{% set _ = order_filter_parts.append(search_input) %}{% endif %}
+
 <section class="mobile-filter-trigger order-filter-trigger">
     <button type="button" onclick="openMobileFilter('order-filter-sheet')" class="mobile-filter-open-btn">
         <span class="filter-trigger-copy">
-            <b>조회 조건</b>
+            {% if order_filter_parts %}
+            <em class="active-filter-summary">{{ order_filter_parts|join(' · ') }}</em>
+            {% else %}
             <em>지역별, 스팟별 등 필터하려면 이곳을 선택해주세요.</em>
+            {% endif %}
         </span>
         <strong>{{ rows|length }}대</strong>
     </button>

@@ -10,11 +10,23 @@
     <div class="hero-count done"><span>{{ rows|length }}</span><small>조회</small></div>
 </section>
 
+{% set status_filter_parts = [] %}
+{% if selected_r1 %}{% set _ = status_filter_parts.append(selected_r1) %}{% endif %}
+{% if selected_r2 %}{% set _ = status_filter_parts.append(selected_r2) %}{% endif %}
+{% if selected_org %}{% set _ = status_filter_parts.append(selected_org) %}{% endif %}
+{% if selected_spot %}{% set _ = status_filter_parts.append(selected_spot) %}{% endif %}
+{% if current_user.is_master and selected_vendor %}{% set _ = status_filter_parts.append(selected_vendor) %}{% endif %}
+{% if search_input %}{% set _ = status_filter_parts.append(search_input) %}{% endif %}
+{% if start or end %}{% set _ = status_filter_parts.append((start or '시작일') ~ '~' ~ (end or '종료일')) %}{% endif %}
+
 <section class="mobile-filter-trigger status-filter-trigger">
     <button type="button" onclick="openMobileFilter('status-filter-sheet')" class="mobile-filter-open-btn">
         <span class="filter-trigger-copy">
-            <b>조회 조건</b>
+            {% if status_filter_parts %}
+            <em class="active-filter-summary">{{ status_filter_parts|join(' · ') }}</em>
+            {% else %}
             <em>차량, 지역, 기간별로 필터하려면 이곳을 선택해주세요.</em>
+            {% endif %}
         </span>
         <strong>{{ rows|length }}건</strong>
     </button>

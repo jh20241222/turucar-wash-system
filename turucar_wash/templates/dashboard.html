@@ -80,31 +80,33 @@
 </section>
 
 <section class="quick-actions compact-dashboard-actions home-final-actions brand-action-grid dashboard-main-actions">
-    <a class="quick-card brand-action-card action-yellow" href="{{ url_for('wash_list') }}">
-        <span class="quick-icon action-svg-icon" aria-hidden="true"><svg viewBox="0 0 64 64" role="img"><path d="M20 10h18l10 10v34H20z"></path><path d="M38 10v12h10"></path><line x1="27" y1="31" x2="41" y2="31"></line><line x1="27" y1="39" x2="39" y2="39"></line><line x1="27" y1="47" x2="34" y2="47"></line></svg></span>
-        <strong>세차 오더</strong><small>대상 차량 확인</small>
+    <a class="quick-card brand-action-card action-yellow home-action-card" href="{{ url_for('wash_list') }}">
+        <div class="home-icon-wrap">
+            <img src="{{ url_for('static', filename='images/home/icon-wash-order.png') }}" alt="세차 오더" class="home-action-icon" loading="eager">
+        </div>
+        <strong>세차 오더</strong>
+        <small>대상 차량 확인</small>
+        <em class="home-card-arrow">›</em>
     </a>
-    <a class="quick-card brand-action-card action-orange visual-action-card" href="https://pm.peoplecar.co.kr:8082/#">
-        <span class="home-card-illo clean-card-illo illo-control" aria-hidden="true">
-            <svg viewBox="0 0 96 80" role="img">
-                <circle cx="29" cy="25" r="16" fill="none" stroke="currentColor" stroke-width="5"/>
-                <path d="M29 15v11l8 5" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-                <path d="M25 58h42c5 0 9-4 9-9v-5c0-5-4-9-9-9H38c-7 0-12 5-15 11l-3 7c-1 3 1 5 5 5z" fill="currentColor" opacity=".18"/>
-                <path d="M34 58h34" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
-                <circle cx="39" cy="61" r="4" fill="currentColor"/><circle cx="66" cy="61" r="4" fill="currentColor"/>
-                <path d="M21 47l-8-3M77 47l8-3" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" opacity=".75"/>
-                <rect x="65" y="13" width="17" height="18" rx="4" fill="none" stroke="#212124" stroke-width="4"/>
-                <path d="M69 13v-4c0-5 9-5 9 0v4" fill="none" stroke="#212124" stroke-width="4" stroke-linecap="round"/>
-            </svg>
-        </span>
-        <strong>예약/문제어</strong><small>예약/제어 관리자앱</small><em class="home-card-arrow">›</em>
+
+    <a class="quick-card brand-action-card action-orange home-action-card" href="https://pm.peoplecar.co.kr:8082/#">
+        <div class="home-icon-wrap">
+            <img src="{{ url_for('static', filename='images/home/icon-control.png') }}" alt="예약/문제어" class="home-action-icon" loading="eager">
+        </div>
+        <strong>예약/문제어</strong>
+        <small>예약/제어 관리자앱</small>
+        <em class="home-card-arrow">›</em>
     </a>
-    <a class="quick-card brand-action-card action-red" href="{{ url_for('wash_status') }}">
-        <span class="quick-icon action-svg-icon" aria-hidden="true"><svg viewBox="0 0 64 64" role="img"><path d="M18 10h22l10 10v34H18z"></path><path d="M40 10v12h10"></path><circle cx="34" cy="39" r="10"></circle><path d="M29 39l4 4 8-9"></path></svg></span>
-        <strong>완료 현황</strong><small>작업 기록 조회</small>
+
+    <a class="quick-card brand-action-card action-red home-action-card" href="{{ url_for('wash_status') }}">
+        <div class="home-icon-wrap">
+            <img src="{{ url_for('static', filename='images/home/icon-complete.png') }}" alt="완료 현황" class="home-action-icon" loading="eager">
+        </div>
+        <strong>완료 현황</strong>
+        <small>작업 기록 조회</small>
+        <em class="home-card-arrow">›</em>
     </a>
 </section>
-
 
 <section class="home-support-actions">
     <a href="javascript:void(0)" onclick="showUrgentWashComingSoon()" class="home-support-card urgent visual-support-card">

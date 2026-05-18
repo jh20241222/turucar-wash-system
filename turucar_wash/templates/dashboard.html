@@ -13,7 +13,7 @@
         </div>
         <div class="notice-body-v12">
             <div class="notice-visual-v12" aria-hidden="true">
-                <img src="{{ url_for('static', filename='img/icon-megaphone.svg') }}" alt="">
+                <img src="{{ url_for('static', filename='img/icon-megaphone.png') }}" alt="">
             </div>
             <div class="notice-copy-v12">
                 {% if latest_notice %}
@@ -29,19 +29,19 @@
 
     <section class="home-main-grid-v12" aria-label="주요 메뉴">
         <a href="{{ url_for('wash_list') }}" class="home-main-card-v12 card-wash-v12">
-            <span class="main-icon-v12"><img src="{{ url_for('static', filename='img/icon-wash-order.svg') }}" alt=""></span>
+            <span class="main-icon-v12"><img src="{{ url_for('static', filename='img/icon-wash-order.png') }}" alt=""></span>
             <strong>세차 오더</strong>
             <small>대상 차량 확인</small>
             <em>›</em>
         </a>
         <a href="https://pm.peoplecar.co.kr:8082/#" target="_blank" rel="noopener" class="home-main-card-v12 card-control-v12">
-            <span class="main-icon-v12"><img src="{{ url_for('static', filename='img/icon-control.svg') }}" alt=""></span>
+            <span class="main-icon-v12"><img src="{{ url_for('static', filename='img/icon-control.png') }}" alt=""></span>
             <strong>예약/문제어</strong>
             <small>예약/제어 관리</small>
             <em>›</em>
         </a>
         <a href="{{ url_for('wash_status') }}" class="home-main-card-v12 card-complete-v12">
-            <span class="main-icon-v12"><img src="{{ url_for('static', filename='img/icon-complete.svg') }}" alt=""></span>
+            <span class="main-icon-v12"><img src="{{ url_for('static', filename='img/icon-complete.png') }}" alt=""></span>
             <strong>완료 현황</strong>
             <small>작업 기록 조회</small>
             <em>›</em>

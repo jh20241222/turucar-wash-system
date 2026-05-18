@@ -1,4 +1,4 @@
-const CACHE_NAME = 'turu-home-preview-v8';
+const CACHE_NAME = 'turu-dashboard-v11-fixed';
 const APP_SHELL = [
   '/offline',
   '/static/css/style.css',

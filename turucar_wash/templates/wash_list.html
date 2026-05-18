@@ -2,9 +2,7 @@
 {% block document_title %}Turu Wash · 세차 대상 차량{% endblock %}
 {% block content %}
 <section class="turu-app-page-v24 turu-order-page-v24">
-    <header class="turu-page-brand-v24">
-        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR">
-    </header>
+    <header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=26" alt="TURU CAR"></header>
 
     <div class="turu-page-head-v24 turu-page-head--single-v25">
         <div>
@@ -13,9 +11,9 @@
         </div>
     </div>
 
-    <div class="turu-date-nav-v25" aria-label="세차 대상 날짜 이동">
+    <div class="turu-date-nav-v25 turu-date-nav-v26" aria-label="세차 대상 날짜 이동">
         <button type="button" class="turu-date-nav-btn-v25" onclick="moveDate(-1)" aria-label="이전 날짜">‹</button>
-        <strong>{{ selected_date }}</strong>
+        <div class="turu-date-current-v26"><span>세차일</span><strong>{{ selected_date }}</strong></div>
         <button type="button" class="turu-date-nav-btn-v25" onclick="moveDate(1)" aria-label="다음 날짜">›</button>
     </div>
 

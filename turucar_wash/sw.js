@@ -1,8 +1,8 @@
-const CACHE_NAME = 'turu-home-v12-preview-match';
+const CACHE_NAME = 'turu-home-v13-final-layout';
 const APP_SHELL = [
   '/offline',
   '/static/css/style.css',
-  '/static/img/TuruCAR_logo.png',
+  '/static/img/turucar_logo_brand.png',
   '/static/img/icon-megaphone.svg',
   '/static/img/icon-wash-order.svg',
   '/static/img/icon-control.svg',

@@ -1,13 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 160" fill="none">
-  <ellipse cx="82" cy="132" rx="70" ry="12" fill="#FFE5AE"/>
-  <path d="M64 78 148 42v76L64 95Z" fill="#FFF0C7"/>
-  <path d="M64 78 90 66v40L64 95Z" fill="#FFD99A" opacity=".7"/>
-  <rect x="28" y="68" width="52" height="38" rx="17" fill="#FF7800"/>
-  <path d="M54 101h23l13 36H61z" fill="#FF7800"/>
-  <ellipse cx="151" cy="80" rx="24" ry="50" fill="#FFC400"/>
-  <ellipse cx="151" cy="80" rx="14" ry="32" fill="#FFF2C6"/>
-  <path d="M177 58 204 40" stroke="#FF7200" stroke-width="10" stroke-linecap="round"/>
-  <path d="M185 80h27" stroke="#FF7200" stroke-width="10" stroke-linecap="round"/>
-  <path d="M177 102l27 18" stroke="#FF7200" stroke-width="10" stroke-linecap="round"/>
-  <circle cx="164" cy="75" r="9" fill="#fff" opacity=".25"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 180" role="img" aria-label="공지사항">
+  <defs>
+    <linearGradient id="g1" x1="22" y1="124" x2="178" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#FF6A00"/><stop offset=".5" stop-color="#FF9E19"/><stop offset="1" stop-color="#FFC400"/></linearGradient>
+    <linearGradient id="cone" x1="80" y1="90" x2="177" y2="90" gradientUnits="userSpaceOnUse"><stop stop-color="#FFF0C8"/><stop offset=".52" stop-color="#fff"/><stop offset="1" stop-color="#F3F5F7"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#091E3F" flood-opacity=".12"/></filter>
+  </defs>
+  <ellipse cx="104" cy="151" rx="78" ry="12" fill="#FFE4A8" opacity=".75"/>
+  <g filter="url(#shadow)">
+    <path d="M78 79 172 43v94L78 101Z" fill="url(#cone)"/>
+    <path d="M77 78h-35c-17 0-30 13-30 30s13 30 30 30h35z" fill="#FF7A00"/>
+    <path d="M55 132h32l16 44H66z" fill="#FF7A00"/>
+    <path d="M73 82 102 70v58l-29-26z" fill="#FFDFA5" opacity=".7"/>
+    <ellipse cx="174" cy="90" rx="31" ry="57" fill="url(#g1)"/>
+    <ellipse cx="174" cy="90" rx="19" ry="38" fill="#FFF4CE"/>
+    <ellipse cx="183" cy="84" rx="7" ry="17" fill="#fff" opacity=".45"/>
+  </g>
+  <path d="M210 57 241 37" stroke="#FF7417" stroke-width="10" stroke-linecap="round"/>
+  <path d="M216 91h36" stroke="#FF7417" stroke-width="10" stroke-linecap="round"/>
+  <path d="M210 125 241 145" stroke="#FF7417" stroke-width="10" stroke-linecap="round"/>
 </svg>

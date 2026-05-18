@@ -2,6 +2,7 @@ const CACHE_NAME = 'turu-home-v19-fillup';
 const APP_SHELL = [
   '/offline',
   '/static/css/style.css',
+  '/static/js/support_alerts.js',
   '/static/img/turucar_logo_brand.png',
   '/static/img/icon-megaphone.png',
   '/static/img/icon-wash-order.png',

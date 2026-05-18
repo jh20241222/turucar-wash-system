@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="세차 오더">
+  <defs>
+    <linearGradient id="y" x1="30" y1="25" x2="118" y2="155" gradientUnits="userSpaceOnUse"><stop stop-color="#FFC928"/><stop offset="1" stop-color="#FF9900"/></linearGradient>
+    <linearGradient id="o" x1="45" y1="70" x2="76" y2="110" gradientUnits="userSpaceOnUse"><stop stop-color="#FF8A00"/><stop offset="1" stop-color="#FF5B00"/></linearGradient>
+    <linearGradient id="glass" x1="75" y1="92" x2="136" y2="121" gradientUnits="userSpaceOnUse"><stop stop-color="#253347"/><stop offset="1" stop-color="#111B2A"/></linearGradient>
+  </defs>
+  <ellipse cx="90" cy="151" rx="67" ry="12" fill="#F9DFA3" opacity=".75"/>
+  <path d="M45 123V45c0-7 6-13 13-13h56c7 0 13 6 13 13v77c0 7-6 13-13 13H58c-7 0-13-6-13-12Z" fill="#fff" stroke="url(#y)" stroke-width="9"/>
+  <path d="M72 23h28c7 0 12 5 12 12v6H60v-6c0-7 5-12 12-12Z" fill="url(#y)"/>
+  <circle cx="86" cy="28" r="7" fill="#fff" opacity=".85"/>
+  <path d="m61 61 8 8 17-19" fill="none" stroke="#FF6B00" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M95 62h22M95 85h22M95 108h17" stroke="#E9E2DA" stroke-width="8" stroke-linecap="round"/>
+  <path d="m61 84 8 8 17-19M61 107l8 8 17-19" fill="none" stroke="#FF6B00" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M144 66l4 10 10 4-10 4-4 10-4-10-10-4 10-4 4-10Z" fill="#FFD56B" opacity=".9"/>
+  <path d="M154 100l2.5 6 6 2.5-6 2.5-2.5 6-2.5-6-6-2.5 6-2.5 2.5-6Z" fill="#FFD56B" opacity=".75"/>
+  <g transform="translate(55 89)">
+    <path d="M17 23c5-14 15-20 35-20h33c12 0 22 7 28 21l4 15c2 7-3 14-10 14H14C6 53 1 45 4 37l5-11c1-2 4-3 8-3Z" fill="#FFF4DE"/>
+    <path d="M34 8c9-5 18-6 31-5 12 1 20 5 25 14H31c0-4 1-7 3-9Z" fill="url(#glass)"/>
+    <path d="M33 17h60" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".92"/>
+    <path d="M14 27h20c5 0 8 3 8 8v20" fill="none" stroke="url(#o)" stroke-width="8" stroke-linecap="round"/>
+    <path d="M72 35h22" stroke="#162132" stroke-width="5" stroke-linecap="round"/>
+    <path d="M65 46h38" stroke="#162132" stroke-width="6" stroke-linecap="round"/>
+    <ellipse cx="28" cy="53" rx="12" ry="18" fill="#122033"/><ellipse cx="28" cy="53" rx="6" ry="11" fill="#FFF8EA"/>
+    <ellipse cx="59" cy="53" rx="12" ry="18" fill="#122033"/><ellipse cx="59" cy="53" rx="6" ry="11" fill="#FFF8EA"/>
+    <path d="M12 37h15" stroke="#FF7A00" stroke-width="5" stroke-linecap="round"/>
+    <path d="M104 32c6 1 8 4 9 8" stroke="#122033" stroke-width="4" stroke-linecap="round" opacity=".7"/>
+  </g>
+</svg>

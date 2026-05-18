@@ -5952,3 +5952,179 @@ body.modal-open {
         font-size: 23px !important;
     }
 }
+
+/* =========================================================
+   V5 fix: notice hero + larger transparent SVG icons
+   ========================================================= */
+.endpoint-dashboard .notice-preview-hero.home-visual-notice {
+    appearance: none !important;
+    border: 0 !important;
+    width: 100% !important;
+    background: transparent !important;
+    display: grid !important;
+    grid-template-columns: 126px minmax(0, 1fr) 22px !important;
+    align-items: center !important;
+    gap: 24px !important;
+    min-height: 150px !important;
+    padding: 8px 2px 10px !important;
+    text-align: left !important;
+    cursor: pointer !important;
+}
+
+.endpoint-dashboard .notice-preview-hero .notice-megaphone-illo {
+    margin: 0 auto !important;
+    transform: scale(1.02) !important;
+    transform-origin: center !important;
+}
+
+.endpoint-dashboard .notice-preview-copy {
+    display: flex !important;
+    min-width: 0 !important;
+    flex-direction: column !important;
+    gap: 9px !important;
+}
+
+.endpoint-dashboard .notice-preview-copy strong {
+    color: #151922 !important;
+    font-size: 20px !important;
+    font-weight: 900 !important;
+    line-height: 1.28 !important;
+    letter-spacing: -.055em !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 1 !important;
+    -webkit-box-orient: vertical !important;
+}
+
+.endpoint-dashboard .notice-preview-copy small {
+    color: #6F7785 !important;
+    font-size: 15px !important;
+    font-weight: 650 !important;
+    line-height: 1.45 !important;
+    letter-spacing: -.04em !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+}
+
+.endpoint-dashboard .notice-preview-meta-inline {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    color: #6A7892 !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+}
+
+.endpoint-dashboard .notice-preview-meta-inline b,
+.endpoint-dashboard .notice-preview-meta-inline em {
+    font: inherit !important;
+    font-style: normal !important;
+}
+
+.endpoint-dashboard .notice-preview-hero > i {
+    color: #8C96A6 !important;
+    font-size: 30px !important;
+    font-style: normal !important;
+    font-weight: 900 !important;
+    text-align: right !important;
+}
+
+.endpoint-dashboard .home-icon-wrap {
+    width: clamp(112px, 29vw, 150px) !important;
+    height: clamp(112px, 29vw, 150px) !important;
+    flex-basis: clamp(112px, 29vw, 150px) !important;
+    margin-bottom: 12px !important;
+}
+
+.endpoint-dashboard .home-action-icon {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+}
+
+@media (min-width: 901px) {
+    .endpoint-dashboard .notice-preview-hero.home-visual-notice {
+        grid-template-columns: 160px minmax(0, 1fr) 26px !important;
+        min-height: 178px !important;
+        gap: 30px !important;
+        padding: 12px 18px 16px !important;
+    }
+    .endpoint-dashboard .notice-preview-hero .notice-megaphone-illo {
+        transform: scale(1.18) !important;
+    }
+    .endpoint-dashboard .notice-preview-copy strong { font-size: 24px !important; }
+    .endpoint-dashboard .notice-preview-copy small { font-size: 17px !important; }
+    .endpoint-dashboard .home-icon-wrap {
+        width: 164px !important;
+        height: 164px !important;
+        flex-basis: 164px !important;
+        margin-bottom: 14px !important;
+    }
+    .endpoint-dashboard .home-action-card {
+        min-height: 302px !important;
+        padding-top: 18px !important;
+    }
+}
+
+@media (max-width: 900px) {
+    .endpoint-dashboard .notice-preview-hero.home-visual-notice {
+        grid-template-columns: 112px minmax(0, 1fr) 18px !important;
+        min-height: 142px !important;
+        gap: 18px !important;
+        padding: 6px 0 8px !important;
+    }
+    .endpoint-dashboard .notice-preview-hero .notice-megaphone-illo {
+        transform: scale(.92) !important;
+    }
+    .endpoint-dashboard .notice-preview-copy strong {
+        font-size: 18px !important;
+        -webkit-line-clamp: 1 !important;
+    }
+    .endpoint-dashboard .notice-preview-copy small {
+        font-size: 14px !important;
+        -webkit-line-clamp: 2 !important;
+    }
+    .endpoint-dashboard .notice-preview-meta-inline {
+        font-size: 11px !important;
+        gap: 10px !important;
+    }
+    .endpoint-dashboard .home-icon-wrap {
+        width: clamp(104px, 30vw, 122px) !important;
+        height: clamp(104px, 30vw, 122px) !important;
+        flex-basis: clamp(104px, 30vw, 122px) !important;
+        margin-bottom: 10px !important;
+    }
+    .endpoint-dashboard .home-action-card {
+        min-height: 220px !important;
+        padding-top: 12px !important;
+    }
+}
+
+@media (max-width: 390px) {
+    .endpoint-dashboard .notice-preview-hero.home-visual-notice {
+        grid-template-columns: 96px minmax(0,1fr) 16px !important;
+        gap: 12px !important;
+        min-height: 124px !important;
+    }
+    .endpoint-dashboard .notice-preview-hero .notice-megaphone-illo {
+        transform: scale(.80) !important;
+    }
+    .endpoint-dashboard .notice-preview-copy strong { font-size: 16px !important; }
+    .endpoint-dashboard .notice-preview-copy small { font-size: 12px !important; }
+    .endpoint-dashboard .notice-preview-meta-inline { font-size: 10px !important; }
+    .endpoint-dashboard .home-icon-wrap {
+        width: 98px !important;
+        height: 98px !important;
+        flex-basis: 98px !important;
+        margin-bottom: 8px !important;
+    }
+    .endpoint-dashboard .home-action-card {
+        min-height: 205px !important;
+        padding-top: 10px !important;
+    }
+}

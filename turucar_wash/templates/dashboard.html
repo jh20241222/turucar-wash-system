@@ -1,72 +1,69 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="turu-home-v10" aria-label="TURU CAR 홈">
-    <div class="turu-home-v10__inner">
-        <header class="turu-home-v10__brand">
-            <img src="{{ url_for('static', filename='img/TuruCAR_logo.png') }}" alt="TURU CAR">
-        </header>
+<section class="turu-dashboard-v11" aria-label="TURU CAR 홈">
+    <header class="td-home-header">
+        <img src="{{ url_for('static', filename='img/TuruCAR_logo.png') }}" alt="TURU CAR" class="td-logo">
+    </header>
 
-        <section class="turu-home-v10-card turu-notice-v10" aria-label="공지사항">
-            <div class="turu-notice-v10__head">
-                <h2>공지사항</h2>
-                <a href="{{ url_for('notices') }}">더보기</a>
+    <section class="td-notice-card" aria-label="공지사항">
+        <div class="td-notice-head">
+            <h2>공지사항</h2>
+            <a href="{{ url_for('notices') }}" class="td-more-btn">더보기</a>
+        </div>
+        <div class="td-notice-body">
+            <div class="td-notice-icon" aria-hidden="true">
+                <img src="{{ url_for('static', filename='img/icon-megaphone.svg') }}" alt="">
             </div>
-            <div class="turu-notice-v10__body">
-                <div class="turu-notice-v10__icon" aria-hidden="true">
-                    <img src="{{ url_for('static', filename='img/home-v10/icon-megaphone.svg') }}" alt="">
-                </div>
-                <div class="turu-notice-v10__copy">
+            <div class="td-notice-copy">
+                {% if notice_rows and notice_rows|length > 0 %}
+                    <strong>{{ notice_rows[0]['title'] }}</strong>
+                    <span>{{ notice_rows[0]['body'] if notice_rows[0]['body'] else '공지사항 내용을 확인해 주세요.' }}</span>
+                {% else %}
                     <strong>아직 등록된 공지사항이 없습니다.</strong>
                     <span>공지사항을 작성하면<br>이곳에 누적됩니다.</span>
-                </div>
+                {% endif %}
             </div>
-        </section>
+        </div>
+    </section>
 
-        <section class="turu-home-v10__actions" aria-label="주요 메뉴">
-            <a class="turu-home-v10-card turu-action-v10 turu-action-v10--yellow" href="{{ url_for('wash_list') }}">
-                <span class="turu-action-v10__icon" aria-hidden="true">
-                    <img src="{{ url_for('static', filename='img/home-v10/icon-wash-order.svg') }}" alt="">
-                </span>
-                <strong>세차 오더</strong>
-                <small>대상 차량 확인</small>
-                <em>›</em>
-            </a>
+    <section class="td-main-grid" aria-label="주요 메뉴">
+        <a class="td-action-card td-yellow" href="{{ url_for('wash_list') }}">
+            <span class="td-action-icon"><img src="{{ url_for('static', filename='img/icon-wash-order.svg') }}" alt=""></span>
+            <strong>세차 오더</strong>
+            <small>대상 차량 확인</small>
+            <em>›</em>
+        </a>
 
-            <a class="turu-home-v10-card turu-action-v10 turu-action-v10--orange" href="https://pm.peoplecar.co.kr:8082/#" target="_blank" rel="noopener">
-                <span class="turu-action-v10__icon" aria-hidden="true">
-                    <img src="{{ url_for('static', filename='img/home-v10/icon-control.svg') }}" alt="">
-                </span>
-                <strong>예약/문제어</strong>
-                <small>예약/제어 관리자앱</small>
-                <em>›</em>
-            </a>
+        <a class="td-action-card td-orange" href="https://pm.peoplecar.co.kr:8082/#" target="_blank" rel="noopener">
+            <span class="td-action-icon"><img src="{{ url_for('static', filename='img/icon-control.svg') }}" alt=""></span>
+            <strong>예약/문제어</strong>
+            <small>예약/제어 관리자앱</small>
+            <em>›</em>
+        </a>
 
-            <a class="turu-home-v10-card turu-action-v10 turu-action-v10--red" href="{{ url_for('wash_status') }}">
-                <span class="turu-action-v10__icon" aria-hidden="true">
-                    <img src="{{ url_for('static', filename='img/home-v10/icon-complete.svg') }}" alt="">
-                </span>
-                <strong>완료 현황</strong>
-                <small>작업 기록 조회</small>
-                <em>›</em>
-            </a>
-        </section>
+        <a class="td-action-card td-red" href="{{ url_for('wash_status') }}">
+            <span class="td-action-icon"><img src="{{ url_for('static', filename='img/icon-complete.svg') }}" alt=""></span>
+            <strong>완료 현황</strong>
+            <small>작업 기록 조회</small>
+            <em>›</em>
+        </a>
+    </section>
 
-        <section class="turu-home-v10__support" aria-label="지원 메뉴">
-            <a class="turu-home-v10-card turu-support-v10" href="{{ url_for('support_chat') }}?type=urgent">
-                <span class="turu-support-v10__icon turu-support-v10__icon--urgent" aria-hidden="true">
-                    <svg viewBox="0 0 48 48" fill="none"><path d="M19 20h10c5 0 9 4 9 9v8H10v-8c0-5 4-9 9-9Z" fill="#FF6840"/><path d="M15 37h18" stroke="#172436" stroke-width="4" stroke-linecap="round"/><path d="M24 8v6M11 13l5 5M37 13l-5 5M7 27h6M41 27h-6" stroke="#FF4D25" stroke-width="3" stroke-linecap="round"/><rect x="8" y="37" width="32" height="5" rx="2.5" fill="#172436"/></svg>
-                </span>
-                <strong>긴급 세차</strong>
-                <em>›</em>
-            </a>
-            <a class="turu-home-v10-card turu-support-v10" href="{{ url_for('support_chat') }}">
-                <span class="turu-support-v10__icon turu-support-v10__icon--chat" aria-hidden="true">
-                    <svg viewBox="0 0 48 48" fill="none"><path d="M11 10h26a7 7 0 0 1 7 7v13a7 7 0 0 1-7 7H23L12 44v-7h-1a7 7 0 0 1-7-7V17a7 7 0 0 1 7-7Z" fill="#FFF7E6" stroke="#FF9800" stroke-width="3.5" stroke-linejoin="round"/><circle cx="19" cy="24" r="2.5" fill="#FF9800"/><circle cx="28" cy="24" r="2.5" fill="#FF9800"/><circle cx="37" cy="24" r="2.5" fill="#FF9800"/></svg>
-                </span>
-                <strong>문의하기</strong>
-                <em>›</em>
-            </a>
-        </section>
-    </div>
+    <section class="td-support-grid" aria-label="지원 메뉴">
+        <a class="td-support-card" href="{{ url_for('support_chat') }}?type=urgent">
+            <span class="td-support-icon td-siren" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none"><path d="M17 47h30" stroke="#152033" stroke-width="5" stroke-linecap="round"/><rect x="20" y="25" width="24" height="20" rx="9" fill="#FF5B35"/><path d="M24 28c3-9 15-8 17 2" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".45"/><rect x="16" y="45" width="32" height="7" rx="3.5" fill="#152033"/><path d="M32 10v8M15 18l6 6M49 18l-6 6M9 34h8M55 34h-8" stroke="#FF5B35" stroke-width="4" stroke-linecap="round"/></svg>
+            </span>
+            <strong>긴급 세차</strong>
+            <em>›</em>
+        </a>
+        <a class="td-support-card" href="{{ url_for('support_chat') }}">
+            <span class="td-support-icon td-chat" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none"><path d="M15 15h34a8 8 0 0 1 8 8v16a8 8 0 0 1-8 8H30l-14 8v-8h-1a8 8 0 0 1-8-8V23a8 8 0 0 1 8-8Z" fill="#FFF8EA" stroke="#FF9900" stroke-width="4" stroke-linejoin="round"/><circle cx="25" cy="31" r="3" fill="#FF9900"/><circle cx="35" cy="31" r="3" fill="#FF9900"/><circle cx="45" cy="31" r="3" fill="#FF9900"/></svg>
+            </span>
+            <strong>문의하기</strong>
+            <em>›</em>
+        </a>
+    </section>
 </section>
 {% endblock %}

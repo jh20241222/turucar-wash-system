@@ -7292,3 +7292,18 @@ body.endpoint-dashboard .app-main {
         display: none !important;
     }
 }
+
+
+/* ===== v29 complete page searchbar ===== */
+.turu-status-searchbar-v29 {
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+@media (max-width: 900px), (display-mode: standalone) {
+    .turu-status-page-v24 .turu-stat-strip-v24 {
+        margin-bottom: 14px;
+    }
+    .turu-status-searchbar-v29 {
+        margin-bottom: 14px;
+    }
+}

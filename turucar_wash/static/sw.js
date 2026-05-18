@@ -1,4 +1,4 @@
-const CACHE_NAME = 'turu-home-v15-polish';
+const CACHE_NAME = 'turu-home-v16-fixed';
 const APP_SHELL = [
   '/offline',
   '/static/css/style.css',

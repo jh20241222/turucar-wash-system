@@ -5877,5 +5877,56 @@ body.endpoint-dashboard .app-main {
     .home-support-card-v12 strong { font-size: 14px; }
 }
 
-/* TURU HOME V13 safety cache marker */
-html::before { content: none; }
+
+/* =========================================================
+   Turu home final asset replacement - PNG 3D icon version
+   ========================================================= */
+.turu-home-v12 .notice-visual-v12 img,
+.turu-home-v12 .main-icon-v12 img {
+    mix-blend-mode: normal !important;
+    background: transparent !important;
+}
+.turu-home-v12 .main-icon-v12 img {
+    object-fit: contain !important;
+    object-position: center center !important;
+}
+.turu-home-v12 .notice-visual-v12 img {
+    object-fit: contain !important;
+    object-position: center center !important;
+}
+@media (min-width: 901px) {
+    .turu-home-v12 {
+        width: min(100% - 64px, 1180px) !important;
+    }
+    .turu-home-v12 .main-icon-v12 {
+        width: 230px !important;
+        height: 170px !important;
+        flex-basis: 170px !important;
+        margin-bottom: 16px !important;
+    }
+    .turu-home-v12 .notice-visual-v12 img {
+        width: 250px !important;
+    }
+}
+@media (max-width: 900px) {
+    .turu-home-v12 .main-icon-v12 {
+        width: 118px !important;
+        height: 108px !important;
+        flex-basis: 108px !important;
+        margin-bottom: 18px !important;
+    }
+    .turu-home-v12 .notice-visual-v12 img {
+        width: 128px !important;
+    }
+}
+@media (max-width: 390px) {
+    .turu-home-v12 .main-icon-v12 {
+        width: 104px !important;
+        height: 98px !important;
+        flex-basis: 98px !important;
+        margin-bottom: 14px !important;
+    }
+    .turu-home-v12 .notice-visual-v12 img {
+        width: 116px !important;
+    }
+}

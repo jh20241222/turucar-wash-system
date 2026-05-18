@@ -16,32 +16,50 @@
 
     {% if notice_rows %}
     {% set notice = notice_rows[0] %}
-    <button type="button" class="notice-preview-hero home-visual-notice" data-title="{{ notice.title|e }}" data-body="{{ notice.body|e }}" data-created="{{ notice.created_at|e }}" data-author="{{ notice.author|e }}" onclick="openNoticeViewer(this)">
-        <div class="notice-megaphone-illo" aria-hidden="true">
-            <span class="mega-handle"></span>
-            <span class="mega-body"></span>
-            <span class="mega-mouth"></span>
-            <i></i><b></b>
+    <article class="notice-hero-row" role="button" tabindex="0" data-title="{{ notice.title|e }}" data-body="{{ notice.body|e }}" data-created="{{ notice.created_at|e }}" data-author="{{ notice.author|e }}" onclick="openNoticeViewer(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openNoticeViewer(this);}">
+        <div class="notice-hero-icon">
+            <svg class="notice-hero-mega" viewBox="0 0 140 110" aria-hidden="true" focusable="false">
+            <defs>
+                <linearGradient id="megaOrange" x1="20" y1="30" x2="98" y2="78" gradientUnits="userSpaceOnUse"><stop stop-color="#FF8A00"/><stop offset="1" stop-color="#FF4E00"/></linearGradient>
+                <linearGradient id="megaCream" x1="45" y1="30" x2="96" y2="78" gradientUnits="userSpaceOnUse"><stop stop-color="#FFF7E5"/><stop offset="1" stop-color="#FFD98A"/></linearGradient>
+            </defs>
+            <ellipse cx="67" cy="91" rx="46" ry="8" fill="#FFE6B6" opacity=".72"/>
+            <path d="M23 52c0-10 8-18 18-18h14v36H41c-10 0-18-8-18-18Z" fill="url(#megaOrange)"/>
+            <path d="M49 38 90 22v60L49 66Z" fill="url(#megaCream)"/>
+            <path d="M88 22c12 0 22 13 22 30S100 82 88 82c-7 0-12-13-12-30s5-30 12-30Z" fill="#FFC400"/>
+            <ellipse cx="91" cy="52" rx="10" ry="21" fill="#FFF8DF" opacity=".9"/>
+            <path d="M34 66h18l8 31H42L34 66Z" fill="#FF6B00" opacity=".88"/>
+            <path d="M113 34 128 24M118 52h17M113 70l15 10" stroke="#FF7A00" stroke-width="7" stroke-linecap="round"/>
+        </svg>
         </div>
-        <span class="notice-preview-copy">
+        <div class="notice-hero-copy">
             <strong>{{ notice.title }}</strong>
-            {% if notice.body %}<small>{{ notice.body }}</small>{% else %}<small>공지사항 내용을 확인해 주세요.</small>{% endif %}
-            <span class="notice-preview-meta-inline">
+            {% if notice.body %}<span>{{ notice.body }}</span>{% else %}<span>공지사항 내용을 확인해 주세요.</span>{% endif %}
+            <div class="notice-hero-meta">
                 <b>{{ notice.created_at }}</b>
                 <em>{{ notice.author }}</em>
-            </span>
-        </span>
-        <i aria-hidden="true">›</i>
-    </button>
-    {% else %}
-    <div class="notice-empty home-visual-empty">
-        <div class="notice-megaphone-illo" aria-hidden="true">
-            <span class="mega-handle"></span>
-            <span class="mega-body"></span>
-            <span class="mega-mouth"></span>
-            <i></i><b></b>
+            </div>
         </div>
-        <div class="notice-empty-copy">
+        <i aria-hidden="true">›</i>
+    </article>
+    {% else %}
+    <div class="notice-hero-row notice-empty-row">
+        <div class="notice-hero-icon">
+            <svg class="notice-hero-mega" viewBox="0 0 140 110" aria-hidden="true" focusable="false">
+            <defs>
+                <linearGradient id="megaOrange" x1="20" y1="30" x2="98" y2="78" gradientUnits="userSpaceOnUse"><stop stop-color="#FF8A00"/><stop offset="1" stop-color="#FF4E00"/></linearGradient>
+                <linearGradient id="megaCream" x1="45" y1="30" x2="96" y2="78" gradientUnits="userSpaceOnUse"><stop stop-color="#FFF7E5"/><stop offset="1" stop-color="#FFD98A"/></linearGradient>
+            </defs>
+            <ellipse cx="67" cy="91" rx="46" ry="8" fill="#FFE6B6" opacity=".72"/>
+            <path d="M23 52c0-10 8-18 18-18h14v36H41c-10 0-18-8-18-18Z" fill="url(#megaOrange)"/>
+            <path d="M49 38 90 22v60L49 66Z" fill="url(#megaCream)"/>
+            <path d="M88 22c12 0 22 13 22 30S100 82 88 82c-7 0-12-13-12-30s5-30 12-30Z" fill="#FFC400"/>
+            <ellipse cx="91" cy="52" rx="10" ry="21" fill="#FFF8DF" opacity=".9"/>
+            <path d="M34 66h18l8 31H42L34 66Z" fill="#FF6B00" opacity=".88"/>
+            <path d="M113 34 128 24M118 52h17M113 70l15 10" stroke="#FF7A00" stroke-width="7" stroke-linecap="round"/>
+        </svg>
+        </div>
+        <div class="notice-hero-copy">
             <strong>아직 등록된 공지사항이 없습니다.</strong>
             <span>공지사항을 작성하면<br>이곳에 누적됩니다.</span>
         </div>

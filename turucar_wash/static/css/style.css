@@ -2904,18 +2904,6 @@ body.modal-open {
         letter-spacing: -.04em;
     }
 
-    .turu-mobile-tabbar .tab-item span svg,
-    .mobile-tabbar .tab-item span svg {
-        width: 23px;
-        height: 23px;
-        display: block;
-        stroke: currentColor;
-        stroke-width: 2.1;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        fill: none;
-    }
-
     .turu-mobile-tabbar .tab-item.active,
     .mobile-tabbar .tab-item.active {
         background: rgba(255,111,15,.085);
@@ -5887,4 +5875,463 @@ body.endpoint-dashboard .app-main {
     .home-main-card-v12 small { font-size: 11px; }
     .home-main-card-v12 em { width: 30px; height: 30px; font-size: 23px; }
     .home-support-card-v12 strong { font-size: 14px; }
+}
+
+
+/* ===== TURU home polish v15 ===== */
+.home-brand-logo-v12 { width: 230px; }
+.notice-heading-link-v12, .notice-heading-link-v12:hover { color: inherit; text-decoration: none; }
+.notice-link-v12 { display:block; color: inherit; text-decoration:none; }
+.home-notice-card-v12 { padding: 30px 34px 32px; }
+.notice-head-v12 { margin-bottom: 18px; }
+.notice-head-v12 h2 { font-size: 24px; font-weight: 800; letter-spacing: -.05em; }
+.notice-body-v12 { min-height: 140px; grid-template-columns: 160px minmax(0,1fr); gap: 18px; }
+.notice-visual-v12 { justify-content:flex-start; }
+.notice-visual-v12 img { width: 132px; }
+.notice-copy-v12 strong { font-size: 18px; line-height: 1.45; font-weight: 800; margin-bottom: 8px; }
+.notice-copy-v12 span { font-size: 14px; line-height: 1.65; font-weight: 500; -webkit-line-clamp: 3; }
+.home-main-card-v12 { min-height: 286px; padding: 22px 14px 20px; }
+.main-icon-v12 { width: 122px; height: 120px; flex-basis: 120px; margin-bottom: 18px; }
+.home-main-card-v12 strong { font-size: 18px; font-weight: 800; letter-spacing: -.05em; }
+.home-main-card-v12 small { font-size: 13px; line-height: 1.45; font-weight: 500; margin-top: 8px; white-space: normal; }
+.home-main-card-v12 em { width: 34px; height: 34px; font-size: 24px; }
+.home-support-card-v12 { min-height: 78px; padding: 13px 18px; grid-template-columns: 50px minmax(0,1fr) 16px; gap: 12px; }
+.support-visual-v12 { width: 42px; height: 42px; }
+.support-visual-v12 img { width: 100%; height:100%; object-fit: contain; display:block; }
+.home-support-card-v12 strong { font-size: 15px; font-weight: 750; }
+.notice-more-v12 { font-size: 13px; font-weight: 700; min-width: 72px; height: 42px; }
+.home-tab-v12 { font-size: 11px; font-weight: 600; }
+.home-tab-v12.active { font-weight: 700; }
+@media (min-width: 901px) {
+  .home-brand-v12 { margin-bottom: 22px; }
+  .home-main-card-v12 { min-height: 292px; }
+  .main-icon-v12 { width: 150px; height: 136px; flex-basis: 136px; }
+  .home-main-card-v12 strong { font-size: 22px; }
+  .home-main-card-v12 small { font-size: 16px; }
+  .home-support-card-v12 strong { font-size: 17px; }
+}
+@media (max-width: 900px) {
+  .home-brand-v12 { height: 40px; margin-bottom: 18px; }
+  .home-brand-logo-v12 { width: 172px; }
+  .home-notice-card-v12 { padding: 18px 16px 18px; border-radius: 26px; }
+  .notice-head-v12 { margin-bottom: 12px; }
+  .notice-head-v12 h2 { font-size: 18px; }
+  .notice-body-v12 { min-height: 120px; grid-template-columns: 92px minmax(0,1fr); gap: 12px; }
+  .notice-visual-v12 img { width: 86px; }
+  .notice-copy-v12 strong { font-size: 14px; line-height: 1.45; margin-bottom: 6px; }
+  .notice-copy-v12 span { font-size: 12px; line-height: 1.55; -webkit-line-clamp: 4; }
+  .home-main-card-v12 { min-height: 182px; padding: 14px 8px 14px; }
+  .main-icon-v12 { width: 74px; height: 74px; flex-basis: 74px; margin-bottom: 14px; }
+  .home-main-card-v12 strong { font-size: 12px; white-space: normal; }
+  .home-main-card-v12 small { font-size: 10px; margin-top: 6px; }
+  .home-main-card-v12 em { width: 28px; height: 28px; font-size: 21px; }
+  .home-support-grid-v12 { gap: 12px; }
+  .home-support-card-v12 { min-height: 56px; border-radius: 18px; padding: 10px 12px; grid-template-columns: 34px minmax(0,1fr) 12px; gap: 8px; }
+  .support-visual-v12 { width: 30px; height: 30px; }
+  .home-support-card-v12 strong { font-size: 11px; }
+  .home-support-card-v12 em { font-size: 20px; }
+  .home-tabbar-v12 { bottom: calc(12px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 390px) {
+  .home-brand-logo-v12 { width: 164px; }
+  .notice-body-v12 { grid-template-columns: 86px minmax(0,1fr); gap: 10px; }
+  .notice-visual-v12 img { width: 78px; }
+  .home-main-card-v12 { min-height: 176px; }
+  .main-icon-v12 { width: 68px; height: 68px; flex-basis: 68px; }
+}
+
+
+/* ===== TURU home / notice fixes v16 ===== */
+.home-support-button-v12{border:1px solid rgba(221,229,239,.95);font-family:inherit;cursor:pointer;text-align:left;background:var(--card);box-shadow:var(--shadow);}
+.home-notice-title-button-v12{appearance:none;border:0;background:transparent;padding:0;margin:0;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;display:block;}
+.home-notice-title-button-v12 strong,.home-notice-title-button-v12 span{display:block;}
+.home-dev-toast-v12{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(12px);z-index:9999;background:rgba(17,24,39,.94);color:#fff;border-radius:999px;padding:12px 18px;font-size:14px;font-weight:700;letter-spacing:-.035em;box-shadow:0 14px 32px rgba(0,0,0,.22);opacity:0;transition:.18s ease;white-space:nowrap;}
+.home-dev-toast-v12.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.notice-page-create-form{margin:0 0 22px;padding:20px;border:1px solid rgba(221,229,239,.95);border-radius:24px;background:rgba(255,255,255,.96);box-shadow:0 12px 28px rgba(9,30,63,.06);display:grid;gap:14px;}
+.notice-page-create-form label{display:grid;gap:7px;color:#172436;font-weight:750;letter-spacing:-.035em;}
+.notice-page-create-form label span{font-size:13px;color:#566274;}
+.notice-page-create-form .notice-save-btn{justify-self:end;min-width:128px;}
+
+/* Desktop must stay desktop: restore desktop layout for tablet/PC widths */
+@media (min-width: 641px){
+  .turu-home-v12{width:min(100% - 64px,1120px);padding:54px 0 64px;}
+  .home-brand-v12{height:62px;margin-bottom:24px;}
+  .home-brand-logo-v12{width:236px;}
+  .home-notice-card-v12{border-radius:30px;padding:34px 40px 36px;margin-bottom:26px;}
+  .notice-head-v12{margin-bottom:28px;}
+  .notice-head-v12 h2{font-size:32px;}
+  .notice-body-v12{min-height:182px;grid-template-columns:300px minmax(0,1fr);gap:30px;}
+  .notice-visual-v12{justify-content:center;}
+  .notice-visual-v12 img{width:250px;}
+  .notice-copy-v12 strong{font-size:26px;margin-bottom:14px;}
+  .notice-copy-v12 span{font-size:19px;line-height:1.55;-webkit-line-clamp:2;}
+  .home-main-grid-v12{gap:24px;margin-bottom:24px;}
+  .home-main-card-v12{min-height:304px;border-radius:28px;padding:28px 20px 26px;}
+  .main-icon-v12{width:206px;height:150px;flex-basis:150px;margin-bottom:18px;}
+  .home-main-card-v12 strong{font-size:25px;}
+  .home-main-card-v12 small{font-size:15px;margin-top:9px;white-space:nowrap;}
+  .home-main-card-v12 em{width:36px;height:36px;font-size:28px;}
+  .home-support-grid-v12{gap:24px;margin-bottom:34px;}
+  .home-support-card-v12{min-height:88px;border-radius:24px;padding:16px 28px;grid-template-columns:62px minmax(0,1fr) 18px;gap:16px;}
+  .support-visual-v12{width:56px;height:56px;}
+  .home-support-card-v12 strong{font-size:22px;}
+  .home-support-card-v12 em{font-size:32px;}
+  .home-tabbar-v12{position:static;left:auto;right:auto;bottom:auto;width:min(760px,100%);min-height:82px;border-radius:999px;padding:8px 14px;margin:0 auto;}
+  .home-tab-v12{height:64px;border-radius:24px;font-size:13px;gap:4px;}
+  .home-tab-v12 svg{width:26px;height:26px;}
+}
+
+/* Mobile-only app layout */
+@media (max-width: 640px){
+  .turu-home-v12{width:100%;min-height:100svh;padding:calc(28px + env(safe-area-inset-top)) 14px calc(104px + env(safe-area-inset-bottom));}
+  .home-brand-v12{height:40px;margin-bottom:18px;}
+  .home-brand-logo-v12{width:166px;}
+  .home-notice-card-v12{border-radius:25px;padding:18px 16px;margin-bottom:22px;}
+  .notice-head-v12{margin-bottom:12px;}
+  .notice-head-v12 h2{font-size:18px;}
+  .notice-more-v12{height:36px;min-width:58px;font-size:12px;padding:0 12px;}
+  .notice-body-v12{min-height:112px;grid-template-columns:84px minmax(0,1fr);gap:10px;}
+  .notice-visual-v12 img{width:78px;}
+  .notice-copy-v12 strong{font-size:13px;line-height:1.45;margin-bottom:6px;}
+  .notice-copy-v12 span{font-size:11px;line-height:1.55;-webkit-line-clamp:4;}
+  .home-main-grid-v12{gap:10px;margin-bottom:20px;}
+  .home-main-card-v12{min-height:176px;border-radius:20px;padding:14px 7px 14px;}
+  .main-icon-v12{width:70px;height:70px;flex-basis:70px;margin-bottom:14px;}
+  .home-main-card-v12 strong{font-size:12px;white-space:normal;}
+  .home-main-card-v12 small{font-size:10px;margin-top:6px;white-space:normal;}
+  .home-main-card-v12 em{width:28px;height:28px;font-size:21px;}
+  .home-support-grid-v12{gap:12px;margin-bottom:0;}
+  .home-support-card-v12{min-height:58px;border-radius:18px;padding:10px 12px;grid-template-columns:34px minmax(0,1fr) 12px;gap:8px;}
+  .support-visual-v12{width:32px;height:32px;}
+  .home-support-card-v12 strong{font-size:12px;}
+  .home-support-card-v12 em{font-size:20px;}
+  .home-tabbar-v12{position:fixed;left:14px;right:14px;bottom:calc(12px + env(safe-area-inset-bottom));width:auto;min-height:66px;border-radius:24px;padding:6px;z-index:80;}
+  .home-tab-v12{height:54px;border-radius:19px;font-size:10px;gap:3px;}
+  .home-tab-v12 svg{width:22px;height:22px;}
+}
+
+
+/* ===== TURU home v17 icon size polish ===== */
+/* 기존 900px 모바일 규칙보다 뒤에 두어 실제 앱 화면에서 아이콘이 작아지지 않게 강제 */
+@media (max-width: 640px){
+  .home-main-grid-v12{ gap:12px; margin-bottom:22px; }
+  .home-main-card-v12{ min-height:218px; border-radius:22px; padding:16px 8px 16px; }
+  .main-icon-v12{ width:104px !important; height:100px !important; flex-basis:100px !important; margin-bottom:15px !important; }
+  .main-icon-v12 img{ width:100%; height:100%; object-fit:contain; }
+  .home-main-card-v12 strong{ font-size:16px; line-height:1.16; font-weight:800; }
+  .home-main-card-v12 small{ font-size:11px; line-height:1.35; margin-top:7px; }
+  .home-main-card-v12 em{ width:30px; height:30px; font-size:22px; margin-top:auto; }
+  .home-support-card-v12{ min-height:62px; border-radius:19px; padding:10px 14px; grid-template-columns:42px minmax(0,1fr) 14px; gap:10px; }
+  .support-visual-v12{ width:42px !important; height:42px !important; }
+  .support-visual-v12 img{ width:42px !important; height:42px !important; object-fit:contain; }
+  .home-support-card-v12 strong{ font-size:13px; font-weight:780; }
+}
+@media (max-width:390px){
+  .home-main-card-v12{ min-height:206px; }
+  .main-icon-v12{ width:94px !important; height:92px !important; flex-basis:92px !important; }
+  .home-main-card-v12 strong{ font-size:15px; }
+  .support-visual-v12{ width:38px !important; height:38px !important; }
+  .support-visual-v12 img{ width:38px !important; height:38px !important; }
+}
+/* PC에서는 모바일처럼 붙지 않도록 데스크톱 카드 크기 재확정 */
+@media (min-width:641px){
+  .home-main-card-v12{ min-height:304px; }
+  .main-icon-v12{ width:206px !important; height:150px !important; flex-basis:150px !important; }
+  .support-visual-v12{ width:56px !important; height:56px !important; }
+  .support-visual-v12 img{ width:56px !important; height:56px !important; object-fit:contain; }
+}
+
+
+/* ===== TURU home v18 unified bottom tab SVG icons ===== */
+@media (max-width: 900px) {
+  .turu-mobile-tabbar .tab-item span svg,
+  .mobile-tabbar .tab-item span svg {
+      width: 23px;
+      height: 23px;
+      display: block;
+      stroke: currentColor;
+      stroke-width: 2.1;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+  }
+}
+
+/* ===== TURU home v19 mobile fill-up scaling =====
+   목적: 공지사항/메인카드/지원버튼 전체를 키워 하단 공백을 줄임.
+   PC 레이아웃은 건드리지 않고, 실제 모바일 폭에서만 적용.
+*/
+@media (max-width: 640px){
+  .turu-home-v12{
+    min-height: 100svh;
+    padding: calc(24px + env(safe-area-inset-top)) 14px calc(96px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .home-brand-v12{
+    height: 46px !important;
+    margin-bottom: 20px !important;
+  }
+  .home-brand-logo-v12{
+    width: 190px !important;
+  }
+
+  .home-notice-card-v12{
+    border-radius: 28px !important;
+    padding: 22px 18px 24px !important;
+    margin-bottom: 24px !important;
+  }
+  .notice-head-v12{
+    margin-bottom: 18px !important;
+  }
+  .notice-head-v12 h2{
+    font-size: 24px !important;
+    line-height: 1.1 !important;
+  }
+  .notice-more-v12{
+    height: 46px !important;
+    min-width: 82px !important;
+    font-size: 14px !important;
+    padding: 0 18px !important;
+  }
+  .notice-body-v12{
+    min-height: 158px !important;
+    grid-template-columns: 126px minmax(0, 1fr) !important;
+    gap: 16px !important;
+  }
+  .notice-visual-v12 img{
+    width: 118px !important;
+  }
+  .notice-copy-v12 strong{
+    font-size: 18px !important;
+    line-height: 1.42 !important;
+    margin-bottom: 10px !important;
+  }
+  .notice-copy-v12 span{
+    font-size: 15px !important;
+    line-height: 1.55 !important;
+    -webkit-line-clamp: 3 !important;
+  }
+
+  .home-main-grid-v12{
+    gap: 12px !important;
+    margin-bottom: 24px !important;
+  }
+  .home-main-card-v12{
+    min-height: 268px !important;
+    border-radius: 24px !important;
+    padding: 20px 8px 18px !important;
+  }
+  .main-icon-v12{
+    width: 124px !important;
+    height: 122px !important;
+    flex-basis: 122px !important;
+    margin-bottom: 18px !important;
+  }
+  .home-main-card-v12 strong{
+    font-size: 19px !important;
+    line-height: 1.16 !important;
+    font-weight: 800 !important;
+  }
+  .home-main-card-v12 small{
+    font-size: 13px !important;
+    line-height: 1.35 !important;
+    margin-top: 9px !important;
+  }
+  .home-main-card-v12 em{
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 26px !important;
+  }
+
+  .home-support-grid-v12{
+    gap: 14px !important;
+    margin-bottom: 0 !important;
+  }
+  .home-support-card-v12{
+    min-height: 84px !important;
+    border-radius: 22px !important;
+    padding: 14px 18px !important;
+    grid-template-columns: 52px minmax(0,1fr) 16px !important;
+    gap: 12px !important;
+  }
+  .support-visual-v12{
+    width: 52px !important;
+    height: 52px !important;
+  }
+  .support-visual-v12 img,
+  .support-visual-v12 svg{
+    width: 52px !important;
+    height: 52px !important;
+    object-fit: contain !important;
+  }
+  .home-support-card-v12 strong{
+    font-size: 18px !important;
+    line-height: 1.1 !important;
+    font-weight: 800 !important;
+  }
+  .home-support-card-v12 em{
+    font-size: 28px !important;
+  }
+
+  .home-tabbar-v12{
+    min-height: 76px !important;
+    bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+@media (max-width: 390px){
+  .turu-home-v12{
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+  .home-brand-logo-v12{ width: 184px !important; }
+  .home-notice-card-v12{ padding: 20px 16px 22px !important; }
+  .notice-body-v12{
+    min-height: 150px !important;
+    grid-template-columns: 112px minmax(0,1fr) !important;
+    gap: 14px !important;
+  }
+  .notice-visual-v12 img{ width: 106px !important; }
+  .notice-copy-v12 strong{ font-size: 17px !important; }
+  .notice-copy-v12 span{ font-size: 14px !important; }
+
+  .home-main-card-v12{
+    min-height: 252px !important;
+    padding: 18px 6px 17px !important;
+  }
+  .main-icon-v12{
+    width: 112px !important;
+    height: 110px !important;
+    flex-basis: 110px !important;
+    margin-bottom: 16px !important;
+  }
+  .home-main-card-v12 strong{ font-size: 17px !important; }
+  .home-main-card-v12 small{ font-size: 12px !important; }
+  .home-main-card-v12 em{ width: 34px !important; height: 34px !important; }
+
+  .home-support-card-v12{
+    min-height: 78px !important;
+    grid-template-columns: 46px minmax(0,1fr) 14px !important;
+  }
+  .support-visual-v12,
+  .support-visual-v12 img,
+  .support-visual-v12 svg{
+    width: 46px !important;
+    height: 46px !important;
+  }
+  .home-support-card-v12 strong{ font-size: 16px !important; }
+}
+
+@media (min-width: 641px){
+  .turu-home-v12{ width:min(100% - 40px,1120px); padding:54px 0 64px; }
+  .home-notice-card-v12{ padding:34px 40px 36px; }
+  .notice-body-v12{ min-height:182px; grid-template-columns:300px minmax(0,1fr); gap:30px; }
+  .notice-visual-v12 img{ width:250px; }
+  .home-main-card-v12{ min-height:304px; }
+  .main-icon-v12{ width:206px !important; height:150px !important; flex-basis:150px !important; }
+}
+
+/* ===== TURU home v20 desktop/mobile separation =====
+   PC에서는 기본 웹 레이아웃(사이드바/상단바)을 유지하고,
+   앱형 홈 화면은 모바일에서만 보이도록 분리.
+*/
+@media (min-width: 901px){
+  body.endpoint-dashboard .desktop-sidebar{
+    display: flex !important;
+  }
+  body.endpoint-dashboard .app-topbar{
+    display: flex !important;
+  }
+  body.endpoint-dashboard .mobile-tabbar,
+  body.endpoint-dashboard .floating-turu-home-link{
+    display: none !important;
+  }
+  body.endpoint-dashboard .app-main{
+    margin-left: 280px !important;
+    padding: 92px 44px 54px !important;
+    width: auto !important;
+    max-width: none !important;
+    min-height: 100vh !important;
+    background: transparent !important;
+  }
+  body.endpoint-dashboard{
+    background: #F4F7FB !important;
+  }
+  .turu-home-v12{
+    width: 100% !important;
+    max-width: 1280px !important;
+    min-height: auto !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+  }
+  .home-brand-v12{
+    height: 48px !important;
+    margin-bottom: 24px !important;
+  }
+  .home-brand-logo-v12{
+    width: 230px !important;
+  }
+  .home-notice-card-v12{
+    border-radius: 28px !important;
+    padding: 34px 40px 36px !important;
+    margin-bottom: 28px !important;
+  }
+  .notice-body-v12{
+    min-height: 190px !important;
+    grid-template-columns: 280px minmax(0,1fr) !important;
+    gap: 34px !important;
+  }
+  .notice-visual-v12 img{
+    width: 240px !important;
+  }
+  .notice-copy-v12 strong{
+    font-size: 25px !important;
+  }
+  .notice-copy-v12 span{
+    font-size: 18px !important;
+  }
+  .home-main-grid-v12{
+    gap: 28px !important;
+    margin-bottom: 28px !important;
+  }
+  .home-main-card-v12{
+    min-height: 328px !important;
+    border-radius: 28px !important;
+    padding: 30px 20px 28px !important;
+  }
+  .main-icon-v12{
+    width: 210px !important;
+    height: 160px !important;
+    flex-basis: 160px !important;
+    margin-bottom: 20px !important;
+  }
+  .home-main-card-v12 strong{
+    font-size: 25px !important;
+  }
+  .home-main-card-v12 small{
+    font-size: 16px !important;
+  }
+  .home-support-card-v12{
+    min-height: 92px !important;
+  }
+  .home-tabbar-v12{
+    display: none !important;
+  }
+}
+
+@media (max-width: 900px){
+  body.endpoint-dashboard .desktop-sidebar,
+  body.endpoint-dashboard .app-topbar,
+  body.endpoint-dashboard .mobile-tabbar,
+  body.endpoint-dashboard .floating-turu-home-link{
+    display: none !important;
+  }
+  body.endpoint-dashboard .app-main{
+    margin-left: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 100vh !important;
+    background: transparent !important;
+  }
 }

@@ -7040,3 +7040,142 @@ body.endpoint-dashboard .app-main {
         font-size: 25px;
     }
 }
+
+
+/* ===== v26 order/status app polish ===== */
+.turu-page-brand-v26,
+.turu-page-brand-v24 {
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-start;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+.turu-page-brand-v26 img,
+.turu-page-brand-v24 img {
+    display: block !important;
+    height: auto !important;
+    object-fit: contain;
+}
+.turu-order-page-v24 .turu-delete-item-v24,
+.turu-status-page-v24 .turu-delete-item-v24 {
+    display: block;
+    width: 100%;
+}
+.turu-order-page-v24 .master-delete-form.delete-mode .turu-delete-item-v24,
+.turu-status-page-v24 .master-delete-form.delete-mode .turu-delete-item-v24 {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+}
+.turu-order-page-v24 .turu-order-card-v24,
+.turu-status-page-v24 .turu-order-card-v24 {
+    width: 100%;
+    box-sizing: border-box;
+}
+.turu-date-nav-v26 {
+    position: relative;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) 42px;
+    align-items: center;
+    gap: 10px;
+    min-height: 64px;
+    height: auto;
+    margin: 0 0 16px;
+    padding: 8px 10px;
+    border: 1px solid rgba(223,231,241,.94);
+    border-radius: 22px;
+    background: rgba(255,255,255,.92);
+    box-shadow: 0 12px 30px rgba(15,23,42,.055);
+}
+.turu-date-nav-v26::after {
+    display: none;
+}
+.turu-date-current-v26 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+}
+.turu-date-current-v26 span {
+    color: #8a94a3;
+    font-size: 11px;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+.turu-date-current-v26 strong {
+    color: #111827;
+    font-size: 17px;
+    line-height: 1;
+    font-weight: 850;
+    letter-spacing: -0.03em;
+}
+.turu-date-nav-v26 .turu-date-nav-btn-v25 {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid #e3eaf3;
+    border-radius: 14px;
+    background: #fff;
+    color: #6f7785;
+    font-size: 23px;
+    box-shadow: 0 8px 18px rgba(15,23,42,.045);
+}
+@media (min-width: 901px) {
+    .turu-page-brand-v26 img,
+    .turu-page-brand-v24 img { width: 210px !important; }
+}
+@media (max-width: 900px), (display-mode: standalone) {
+    .endpoint-wash_list .app-main,
+    .endpoint-wash_status .app-main {
+        padding-top: calc(14px + env(safe-area-inset-top)) !important;
+    }
+    .turu-page-brand-v26,
+    .turu-page-brand-v24 {
+        height: 48px !important;
+        margin: 0 0 18px !important;
+    }
+    .turu-page-brand-v26 img,
+    .turu-page-brand-v24 img {
+        width: 178px !important;
+        max-width: 58vw;
+    }
+    .turu-page-head-v24 {
+        margin-bottom: 14px;
+    }
+    .turu-date-nav-v26 {
+        grid-template-columns: 38px minmax(0, 1fr) 38px;
+        min-height: 58px;
+        margin-bottom: 14px;
+        padding: 7px 8px;
+        border-radius: 20px;
+    }
+    .turu-date-current-v26 span { font-size: 10px; }
+    .turu-date-current-v26 strong { font-size: 16px; }
+    .turu-date-nav-v26 .turu-date-nav-btn-v25 {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        font-size: 22px;
+    }
+    .turu-order-page-v24 .turu-card-list-v24,
+    .turu-status-page-v24 .turu-card-list-v24 {
+        gap: 14px;
+    }
+    .turu-order-page-v24 .turu-order-card-v24,
+    .turu-status-page-v24 .turu-order-card-v24 {
+        grid-template-columns: 110px minmax(0, 1fr) 14px;
+        width: 100%;
+        min-height: 130px;
+    }
+}
+@media (max-width: 380px) {
+    .turu-page-brand-v26 img,
+    .turu-page-brand-v24 img { width: 164px !important; }
+    .turu-order-page-v24 .turu-order-card-v24,
+    .turu-status-page-v24 .turu-order-card-v24 { grid-template-columns: 94px minmax(0,1fr) 12px; }
+}

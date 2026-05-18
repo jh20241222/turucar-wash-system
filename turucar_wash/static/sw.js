@@ -1,13 +1,10 @@
-const CACHE_NAME = 'turu-wash-home-icons-v7';
+const CACHE_NAME = 'turu-home-preview-v8';
 const APP_SHELL = [
   '/offline',
   '/static/css/style.css',
   '/static/img/turu_symbol.png',
   '/static/img/turu_wash_lockup_black.png',
   '/static/img/turu_wash_lockup_white.png',
-  '/static/img/icon-complete.svg',
-  '/static/img/icon-control.svg',
-  '/static/img/icon-wash-order.svg',
   '/static/img/icons/favicon-64.png',
   '/static/img/icons/icon-192.png',
   '/static/img/icons/icon-512.png',

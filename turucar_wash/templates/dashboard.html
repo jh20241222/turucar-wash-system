@@ -3,29 +3,30 @@
 {% set latest_notice = notice_rows[0] if notice_rows and notice_rows|length > 0 else none %}
 <div class="turu-home-v12" aria-label="TURU CAR 홈">
     <header class="home-brand-v12">
-        <img src="{{ url_for('static', filename='img/brand_t_mark.png') }}" alt="" class="home-brand-mark-v12">
-        <img src="{{ url_for('static', filename='img/TuruCAR_logo.png') }}" alt="TURU CAR" class="home-brand-logo-v12">
+        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR" class="home-brand-logo-v12">
     </header>
 
     <section class="home-notice-card-v12" aria-labelledby="homeNoticeTitle">
         <div class="notice-head-v12">
-            <h2 id="homeNoticeTitle">공지사항</h2>
+            <h2 id="homeNoticeTitle"><a href="{{ url_for('notices') }}" class="notice-heading-link-v12">공지사항</a></h2>
             <a href="{{ url_for('notices') }}" class="notice-more-v12">더보기</a>
         </div>
-        <div class="notice-body-v12">
-            <div class="notice-visual-v12" aria-hidden="true">
-                <img src="{{ url_for('static', filename='img/icon-megaphone.png') }}" alt="">
+        <a href="{{ url_for('notices') }}" class="notice-link-v12">
+            <div class="notice-body-v12">
+                <div class="notice-visual-v12" aria-hidden="true">
+                    <img src="{{ url_for('static', filename='img/icon-megaphone.png') }}" alt="">
+                </div>
+                <div class="notice-copy-v12">
+                    {% if latest_notice %}
+                        <strong>{{ latest_notice.title }}</strong>
+                        <span>{{ latest_notice.body }}</span>
+                    {% else %}
+                        <strong>아직 등록된 공지사항이 없습니다.</strong>
+                        <span>공지사항을 작성하면 이곳에 누적됩니다.</span>
+                    {% endif %}
+                </div>
             </div>
-            <div class="notice-copy-v12">
-                {% if latest_notice %}
-                    <strong>{{ latest_notice.title }}</strong>
-                    <span>{{ latest_notice.body }}</span>
-                {% else %}
-                    <strong>아직 등록된 공지사항이 없습니다.</strong>
-                    <span>공지사항을 작성하면 이곳에 누적됩니다.</span>
-                {% endif %}
-            </div>
-        </div>
+        </a>
     </section>
 
     <section class="home-main-grid-v12" aria-label="주요 메뉴">
@@ -50,15 +51,9 @@
     </section>
 
     <section class="home-support-grid-v12" aria-label="지원 메뉴">
-        <a href="{{ url_for('support_chat') }}?type=urgent" class="home-support-card-v12">
-            <span class="support-visual-v12 siren-v12" aria-hidden="true">
-                <svg viewBox="0 0 64 64" fill="none">
-                    <path d="M21 35c0-8 5-14 11-14s11 6 11 14v11H21V35Z" fill="url(#sirenGrad)"/>
-                    <path d="M19 48h26" stroke="#172436" stroke-width="5" stroke-linecap="round"/>
-                    <path d="M32 9v7M15 16l5 6M49 16l-5 6M9 33h7M55 33h-7" stroke="#FF5F22" stroke-width="4" stroke-linecap="round"/>
-                    <path d="M27 24c4-5 11-3 13 3" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".45"/>
-                    <defs><linearGradient id="sirenGrad" x1="21" y1="21" x2="45" y2="46"><stop stop-color="#FF8C41"/><stop offset="1" stop-color="#FF2C25"/></linearGradient></defs>
-                </svg>
+        <a href="{{ url_for('support_chat') }}" class="home-support-card-v12">
+            <span class="support-visual-v12" aria-hidden="true">
+                <img src="{{ url_for('static', filename='img/icon-urgent-wash.png') }}" alt="">
             </span>
             <strong>긴급 세차</strong>
             <em>›</em>

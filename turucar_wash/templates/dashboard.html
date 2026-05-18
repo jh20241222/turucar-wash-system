@@ -15,21 +15,24 @@
     </div>
 
     {% if notice_rows %}
-    <div class="notice-preview-feed">
-        {% for notice in notice_rows[:3] %}
-        <button type="button" class="notice-preview-item" data-title="{{ notice.title|e }}" data-body="{{ notice.body|e }}" data-created="{{ notice.created_at|e }}" data-author="{{ notice.author|e }}" onclick="openNoticeViewer(this)">
-            <span class="notice-preview-main">
-                <strong>{{ notice.title }}</strong>
-                {% if notice.body %}<small>{{ notice.body }}</small>{% endif %}
-            </span>
-            <span class="notice-preview-meta">
+    {% set notice = notice_rows[0] %}
+    <button type="button" class="notice-preview-hero home-visual-notice" data-title="{{ notice.title|e }}" data-body="{{ notice.body|e }}" data-created="{{ notice.created_at|e }}" data-author="{{ notice.author|e }}" onclick="openNoticeViewer(this)">
+        <div class="notice-megaphone-illo" aria-hidden="true">
+            <span class="mega-handle"></span>
+            <span class="mega-body"></span>
+            <span class="mega-mouth"></span>
+            <i></i><b></b>
+        </div>
+        <span class="notice-preview-copy">
+            <strong>{{ notice.title }}</strong>
+            {% if notice.body %}<small>{{ notice.body }}</small>{% else %}<small>공지사항 내용을 확인해 주세요.</small>{% endif %}
+            <span class="notice-preview-meta-inline">
                 <b>{{ notice.created_at }}</b>
                 <em>{{ notice.author }}</em>
             </span>
-            <i aria-hidden="true">›</i>
-        </button>
-        {% endfor %}
-    </div>
+        </span>
+        <i aria-hidden="true">›</i>
+    </button>
     {% else %}
     <div class="notice-empty home-visual-empty">
         <div class="notice-megaphone-illo" aria-hidden="true">
@@ -49,7 +52,7 @@
 <section class="quick-actions compact-dashboard-actions home-final-actions brand-action-grid dashboard-main-actions">
     <a class="quick-card brand-action-card action-yellow home-action-card" href="{{ url_for('wash_list') }}">
         <div class="home-icon-wrap">
-            <img src="{{ url_for('static', filename='img/icon-wash-order.png') }}" alt="세차 오더" class="home-action-icon" loading="eager">
+            <img src="{{ url_for('static', filename='img/icon-wash-order.svg') }}" alt="세차 오더" class="home-action-icon" loading="eager">
         </div>
         <strong>세차 오더</strong>
         <small>대상 차량 확인</small>
@@ -58,7 +61,7 @@
 
     <a class="quick-card brand-action-card action-orange home-action-card" href="https://pm.peoplecar.co.kr:8082/#">
         <div class="home-icon-wrap">
-            <img src="{{ url_for('static', filename='img/icon-control.png') }}" alt="예약/문제어" class="home-action-icon" loading="eager">
+            <img src="{{ url_for('static', filename='img/icon-control.svg') }}" alt="예약/문제어" class="home-action-icon" loading="eager">
         </div>
         <strong>예약/문제어</strong>
         <small>예약/제어 관리자앱</small>
@@ -67,7 +70,7 @@
 
     <a class="quick-card brand-action-card action-red home-action-card" href="{{ url_for('wash_status') }}">
         <div class="home-icon-wrap">
-            <img src="{{ url_for('static', filename='img/icon-complete.png') }}" alt="완료 현황" class="home-action-icon" loading="eager">
+            <img src="{{ url_for('static', filename='img/icon-complete.svg') }}" alt="완료 현황" class="home-action-icon" loading="eager">
         </div>
         <strong>완료 현황</strong>
         <small>작업 기록 조회</small>

@@ -7179,3 +7179,75 @@ body.endpoint-dashboard .app-main {
     .turu-order-page-v24 .turu-order-card-v24,
     .turu-status-page-v24 .turu-order-card-v24 { grid-template-columns: 94px minmax(0,1fr) 12px; }
 }
+
+
+/* ===== v27 topbar TURU CAR brand for app sections ===== */
+.topbar-turu-brand-v27 {
+    display: none;
+    align-items: center;
+    height: 42px;
+    text-decoration: none;
+    margin-left: 8px;
+}
+.topbar-turu-brand-v27 img {
+    display: block !important;
+    width: 172px !important;
+    height: auto !important;
+    max-width: 48vw;
+    object-fit: contain;
+}
+@media (max-width: 900px), (display-mode: standalone) {
+    .endpoint-wash_list .app-topbar,
+    .endpoint-wash_status .app-topbar,
+    .endpoint-profile .app-topbar {
+        min-height: 64px;
+        height: 64px;
+        padding: 10px 14px 8px;
+        align-items: center;
+        background: rgba(255,255,255,.96);
+        border-bottom: 1px solid rgba(126,137,151,.12);
+    }
+    .endpoint-wash_list .topbar-left,
+    .endpoint-wash_status .topbar-left,
+    .endpoint-profile .topbar-left {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .endpoint-wash_list .topbar-turu-brand-v27,
+    .endpoint-wash_status .topbar-turu-brand-v27,
+    .endpoint-profile .topbar-turu-brand-v27 {
+        display: inline-flex !important;
+    }
+    .endpoint-wash_list .topbar-actions,
+    .endpoint-wash_status .topbar-actions,
+    .endpoint-profile .topbar-actions {
+        display: none !important;
+    }
+    .endpoint-wash_list .app-main,
+    .endpoint-wash_status .app-main,
+    .endpoint-profile .app-main {
+        padding-top: 18px !important;
+    }
+    .endpoint-wash_list .turu-page-brand-v24,
+    .endpoint-wash_list .turu-page-brand-v26,
+    .endpoint-wash_status .turu-page-brand-v24,
+    .endpoint-wash_status .turu-page-brand-v26,
+    .endpoint-profile .turu-page-brand-v24,
+    .endpoint-profile .turu-page-brand-v26 {
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+    }
+}
+@media (max-width: 380px) {
+    .topbar-turu-brand-v27 img {
+        width: 154px !important;
+    }
+}
+@media (min-width: 901px) {
+    .topbar-turu-brand-v27 { display: none !important; }
+}

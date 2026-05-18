@@ -1,4 +1,4 @@
-const CACHE_NAME = 'turu-wash-home-icons-v8';
+const CACHE_NAME = 'turu-wash-home-icons-v4-img';
 const APP_SHELL = [
   '/offline',
   '/static/css/style.css',

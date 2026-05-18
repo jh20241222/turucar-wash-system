@@ -1,28 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="예약/문제어">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 150" fill="none">
   <defs>
-    <linearGradient id="orange" x1="43" y1="25" x2="135" y2="143" gradientUnits="userSpaceOnUse"><stop stop-color="#FF8C00"/><stop offset="1" stop-color="#FF5100"/></linearGradient>
-    <linearGradient id="glass" x1="61" y1="90" x2="142" y2="119" gradientUnits="userSpaceOnUse"><stop stop-color="#253347"/><stop offset="1" stop-color="#111B2A"/></linearGradient>
+    <linearGradient id="orange" x1="36" y1="9" x2="134" y2="128" gradientUnits="userSpaceOnUse"><stop stop-color="#FF9B20"/><stop offset="1" stop-color="#FF5100"/></linearGradient>
+    <linearGradient id="car" x1="45" y1="82" x2="139" y2="130" gradientUnits="userSpaceOnUse"><stop stop-color="#FFF9EC"/><stop offset="1" stop-color="#FFE2AF"/></linearGradient>
+    <filter id="sh" x="0" y="0" width="180" height="150" filterUnits="userSpaceOnUse"><feDropShadow dx="0" dy="9" stdDeviation="7" flood-color="#172436" flood-opacity=".10"/></filter>
   </defs>
-  <ellipse cx="91" cy="151" rx="66" ry="12" fill="#F9DFA3" opacity=".78"/>
-  <circle cx="82" cy="58" r="36" fill="#FFF7E8" stroke="url(#orange)" stroke-width="8"/>
-  <path d="M82 38v22l18 12" fill="none" stroke="url(#orange)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M82 29v7M82 80v7M55 58h7M102 58h7" stroke="#FF7900" stroke-width="5" stroke-linecap="round"/>
-  <g transform="translate(119 44)">
-    <path d="M8 17V11C8 5 13 0 19 0s11 5 11 11v6" fill="none" stroke="#142033" stroke-width="7" stroke-linecap="round"/>
-    <rect x="2" y="15" width="34" height="29" rx="7" fill="#142033"/>
-    <circle cx="19" cy="27" r="5" fill="#fff"/><path d="M19 31v8" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+  <ellipse cx="90" cy="131" rx="68" ry="9" fill="#FADFA9" opacity=".72"/>
+  <g filter="url(#sh)">
+    <circle cx="70" cy="43" r="34" fill="#fff" stroke="url(#orange)" stroke-width="7"/>
+    <path d="M70 22v22l18 12" stroke="#FF6B00" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M70 14v9M70 64v9M45 43h-9M104 43h-9M52 25l-6-6M94 25l6-6" stroke="#FF8A1F" stroke-width="4" stroke-linecap="round"/>
   </g>
-  <path d="M32 108l-13-9M27 126H14M150 108l13-9M154 126h13" stroke="#FF7900" stroke-width="8" stroke-linecap="round"/>
-  <g transform="translate(45 88)">
-    <path d="M17 23c5-14 15-20 35-20h33c12 0 22 7 28 21l4 15c2 7-3 14-10 14H14C6 53 1 45 4 37l5-11c1-2 4-3 8-3Z" fill="#FFF4DE"/>
-    <path d="M34 8c9-5 18-6 31-5 12 1 20 5 25 14H31c0-4 1-7 3-9Z" fill="url(#glass)"/>
-    <path d="M33 17h60" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".92"/>
-    <path d="M14 27h20c5 0 8 3 8 8v20" fill="none" stroke="#FF6900" stroke-width="8" stroke-linecap="round"/>
-    <path d="M72 35h22" stroke="#162132" stroke-width="5" stroke-linecap="round"/>
-    <path d="M65 46h38" stroke="#162132" stroke-width="6" stroke-linecap="round"/>
-    <ellipse cx="28" cy="53" rx="12" ry="18" fill="#122033"/><ellipse cx="28" cy="53" rx="6" ry="11" fill="#FFF8EA"/>
-    <ellipse cx="59" cy="53" rx="12" ry="18" fill="#122033"/><ellipse cx="59" cy="53" rx="6" ry="11" fill="#FFF8EA"/>
-    <path d="M12 37h15" stroke="#FF7A00" stroke-width="5" stroke-linecap="round"/>
-    <path d="M104 32c6 1 8 4 9 8" stroke="#122033" stroke-width="4" stroke-linecap="round" opacity=".7"/>
+  <g filter="url(#sh)">
+    <rect x="116" y="43" width="30" height="27" rx="7" fill="#172436"/>
+    <path d="M122 43v-8c0-11 18-11 18 0v8" stroke="#172436" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="131" cy="55" r="3.3" fill="#fff"/><rect x="128.8" y="57" width="4.4" height="8" rx="2.2" fill="#fff"/>
+  </g>
+  <path d="M35 91l-12-10M34 108H20M144 91l12-10M146 108h14" stroke="#FF7A00" stroke-width="6" stroke-linecap="round"/>
+  <g filter="url(#sh)">
+    <path d="M49 97c6-19 27-28 52-25 21 2 34 15 39 32l-5 15H50l-8-12 7-10z" fill="url(#car)"/>
+    <path d="M65 81c8-5 27-6 45-2l9 18H59l6-16z" fill="#172436"/>
+    <path d="M49 100h23" stroke="#FF7A00" stroke-width="7" stroke-linecap="round"/>
+    <path d="M105 102h24" stroke="#172436" stroke-width="5" stroke-linecap="round"/>
+    <path d="M122 94c9 1 14 4 15 10-9 0-16-2-20-6" fill="#fff" opacity=".95"/>
+    <circle cx="67" cy="119" r="12" fill="#172436"/><circle cx="67" cy="119" r="5" fill="#FFF7E8"/>
+    <circle cx="122" cy="119" r="12" fill="#172436"/><circle cx="122" cy="119" r="5" fill="#FFF7E8"/>
   </g>
 </svg>

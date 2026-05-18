@@ -1,143 +1,117 @@
 {% extends "base.html" %}
-{% block document_title %}Turu Wash · 세차 오더{% endblock %}
+{% block document_title %}Turu Wash · 오더{% endblock %}
 {% block content %}
-<section class="order-hero app-card elevated brand-line-card screen-hero">
-    <div class="hero-copy-block">
-        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo">
-        <h1>세차 오더</h1>
-        <p class="hero-copy">배정된 차량을 확인하고 세차 기록을 시작하세요.</p>
-    </div>
-    <div class="date-controller">
-        <button type="button" onclick="moveDate(-1)" aria-label="이전 날짜">‹</button>
-        <div><small>작업일</small><strong id="date-display">{{ selected_date }}</strong></div>
-        <button type="button" onclick="moveDate(1)" aria-label="다음 날짜">›</button>
-    </div>
-</section>
+<section class="turu-app-page-v24 turu-order-page-v24">
+    <header class="turu-page-brand-v24">
+        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR">
+    </header>
 
-{% set order_filter_parts = [] %}
-{% if selected_r1 %}{% set _ = order_filter_parts.append(selected_r1) %}{% endif %}
-{% if selected_r2 %}{% set _ = order_filter_parts.append(selected_r2) %}{% endif %}
-{% if selected_org %}{% set _ = order_filter_parts.append(selected_org) %}{% endif %}
-{% if selected_spot %}{% set _ = order_filter_parts.append(selected_spot) %}{% endif %}
-{% if current_user.is_master and selected_vendor %}{% set _ = order_filter_parts.append(selected_vendor) %}{% endif %}
-{% if search_input %}{% set _ = order_filter_parts.append(search_input) %}{% endif %}
-
-<section class="mobile-filter-trigger order-filter-trigger">
-    <button type="button" onclick="openMobileFilter('order-filter-sheet')" class="mobile-filter-open-btn">
-        <span class="filter-trigger-copy">
-            {% if order_filter_parts %}
-            <em class="active-filter-summary">{{ order_filter_parts|join(' · ') }}</em>
-            {% else %}
-            <em>지역·스팟·차량소속 필터</em>
-            {% endif %}
-        </span>
-        <strong>{{ rows|length }}대</strong>
-    </button>
-</section>
-
-<section id="order-filter-sheet" class="filter-card app-card search-panel mobile-filter-sheet">
-    <div class="mobile-filter-sheet-head">
-        <strong>오더 검색</strong>
-        <button type="button" onclick="closeMobileFilter('order-filter-sheet')" aria-label="닫기">×</button>
-    </div>
-    <div class="filter-head">
+    <div class="turu-page-head-v24">
         <div>
+            <h1>오더</h1>
+            <p>배정된 차량을 확인하고 작업을 진행하세요.</p>
+        </div>
+        <button type="button" class="turu-mini-btn-v24" onclick="openMobileFilter('order-filter-sheet')">
+            <span>필터</span>
+        </button>
+    </div>
+
+    <div class="turu-segment-v24" role="tablist" aria-label="오더 상태">
+        <button type="button" class="active">진행 중 오더 <em>{{ rows|length }}</em></button>
+        <button type="button" onclick="openMobileFilter('order-filter-sheet')">예약/대기 오더 <em class="muted">0</em></button>
+    </div>
+
+    {% set order_filter_parts = [] %}
+    {% if selected_r1 %}{% set _ = order_filter_parts.append(selected_r1) %}{% endif %}
+    {% if selected_r2 %}{% set _ = order_filter_parts.append(selected_r2) %}{% endif %}
+    {% if selected_org %}{% set _ = order_filter_parts.append(selected_org) %}{% endif %}
+    {% if selected_spot %}{% set _ = order_filter_parts.append(selected_spot) %}{% endif %}
+    {% if current_user.is_master and selected_vendor %}{% set _ = order_filter_parts.append(selected_vendor) %}{% endif %}
+    {% if search_input %}{% set _ = order_filter_parts.append(search_input) %}{% endif %}
+
+    <div class="turu-searchbar-v24">
+        <input id="quick_search_input" placeholder="차량 번호 / 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">
+        <button type="button" onclick="document.getElementById('search_input').value=document.getElementById('quick_search_input').value;applyFilter();" aria-label="검색">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+        </button>
+        <button type="button" class="filter" onclick="openMobileFilter('order-filter-sheet')">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M7 12h10M10 18h4"/></svg>필터
+        </button>
+    </div>
+
+    <section id="order-filter-sheet" class="filter-card app-card search-panel mobile-filter-sheet turu-filter-sheet-v24">
+        <div class="mobile-filter-sheet-head">
             <strong>오더 검색</strong>
-            <small>차량번호, 스팟, 지역, 업체 기준으로 좁혀보세요.</small>
+            <button type="button" onclick="closeMobileFilter('order-filter-sheet')" aria-label="닫기">×</button>
         </div>
-        <span>{{ rows|length }}대</span>
-    </div>
-    <div class="filter-grid">
-        <input id="search_input" class="app-input" placeholder="차량번호 또는 스팟 검색" value="{{ search_input }}">
-        <select id="region1" class="app-input"><option value="">전체 시/도</option>{% for r in region1 %}<option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
-        <select id="region2" class="app-input"><option value="">전체 구/군</option>{% for r in region2 %}<option value="{{ r }}" {% if selected_r2 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
-        <select id="org" class="app-input"><option value="">전체 차량소속</option>{% for o in car_org_list %}<option value="{{ o }}" {% if selected_org == o %}selected{% endif %}>{{ o }}</option>{% endfor %}</select>
-        <select id="spot" class="app-input"><option value="">전체 스팟</option>{% for s in spot_list %}<option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
-        {% if current_user.is_master %}<select id="vendor" class="app-input"><option value="">전체 업체</option>{% for v in vendor_list %}<option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>{% endif %}
-        <button type="button" onclick="applyFilter()" class="primary-btn">검색</button>
-        <button type="button" onclick="downloadOrderExcel()" class="blue-btn order-excel-btn">엑셀</button>
-    </div>
-</section>
-
-{% if current_user.is_master %}
-<form method="post" action="{{ url_for('wash_list_delete') }}" id="order-delete-form" class="master-delete-form order-delete-form" onsubmit="return confirmSelectedDelete('order-delete-form', '선택한 세차 오더를 삭제할까요?');">
-    <input type="hidden" name="return_query" value="{{ request.query_string.decode() }}">
-    <div class="master-delete-toolbar order-delete-toolbar">
-        <button type="button" class="delete-mode-btn" onclick="toggleDeleteMode('order-delete-form')">삭제</button>
-        <div class="delete-mode-actions">
-            <label><input type="checkbox" onclick="toggleAllDelete(this, 'order-delete-form')"> 전체 선택</label>
-            <button type="submit" class="danger-delete-btn">선택 삭제</button>
-            <button type="button" class="cancel-delete-btn" onclick="toggleDeleteMode('order-delete-form', false)">취소</button>
+        <div class="filter-head">
+            <div>
+                <strong>오더 검색</strong>
+                <small>차량번호, 스팟, 지역, 업체 기준으로 좁혀보세요.</small>
+            </div>
+            <span>{{ rows|length }}대</span>
         </div>
-    </div>
-{% endif %}
+        <div class="filter-grid">
+            <input id="search_input" class="app-input" placeholder="차량번호 또는 스팟 검색" value="{{ search_input }}">
+            <select id="region1" class="app-input"><option value="">전체 시/도</option>{% for r in region1 %}<option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
+            <select id="region2" class="app-input"><option value="">전체 구/군</option>{% for r in region2 %}<option value="{{ r }}" {% if selected_r2 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
+            <select id="org" class="app-input"><option value="">전체 차량소속</option>{% for o in car_org_list %}<option value="{{ o }}" {% if selected_org == o %}selected{% endif %}>{{ o }}</option>{% endfor %}</select>
+            <select id="spot" class="app-input"><option value="">전체 스팟</option>{% for s in spot_list %}<option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+            {% if current_user.is_master %}<select id="vendor" class="app-input"><option value="">전체 업체</option>{% for v in vendor_list %}<option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>{% endif %}
+            <button type="button" onclick="applyFilter()" class="primary-btn">검색</button>
+            <button type="button" onclick="downloadOrderExcel()" class="blue-btn order-excel-btn">엑셀</button>
+        </div>
+    </section>
 
-<section class="desktop-table table-panel app-card">
-    <div class="table-title-row"><h2>대상 차량</h2><span>{{ rows|length }}대</span></div>
-    <div class="table-scroll">
-        <table>
-            <thead>
-                <tr>
-                    {% if current_user.is_master %}<th class="delete-col">선택</th>{% endif %}
-                    <th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th><th>지역</th><th>업체</th><th>세차일</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for r in rows %}
-            <tr>
-                {% if current_user.is_master %}<td class="delete-col"><input type="checkbox" name="ids" value="{{ r['id'] }}"></td>{% endif %}
-                <td><a class="car-link" href="{{ url_for('car_detail', id=r['id']) }}">{{ r['차량번호'] }}</a></td>
-                <td>{{ r['차종명'] or '-' }}</td>
-                <td>{{ r['차량소속'] or '-' }}</td>
-                <td>{{ r['스팟'] or '-' }}</td>
-                <td>{{ r['지역시도'] or '-' }} {{ r['지역구군'] or '' }}</td>
-                <td>{{ r['업체'] or '-' }}</td>
-                <td>{{ r['세차일'] or selected_date }}</td>
-            </tr>
-            {% else %}
-            <tr><td colspan="{% if current_user.is_master %}8{% else %}7{% endif %}" class="empty-cell">해당 날짜에 세차 대상이 없습니다.</td></tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</section>
+    {% if current_user.is_master %}
+    <form method="post" action="{{ url_for('wash_list_delete') }}" id="order-delete-form" class="master-delete-form order-delete-form" onsubmit="return confirmSelectedDelete('order-delete-form', '선택한 세차 오더를 삭제할까요?');">
+        <input type="hidden" name="return_query" value="{{ request.query_string.decode() }}">
+        <div class="master-delete-toolbar order-delete-toolbar turu-delete-toolbar-v24">
+            <button type="button" class="delete-mode-btn" onclick="toggleDeleteMode('order-delete-form')">삭제</button>
+            <div class="delete-mode-actions">
+                <label><input type="checkbox" onclick="toggleAllDelete(this, 'order-delete-form')"> 전체 선택</label>
+                <button type="submit" class="danger-delete-btn">선택 삭제</button>
+                <button type="button" class="cancel-delete-btn" onclick="toggleDeleteMode('order-delete-form', false)">취소</button>
+            </div>
+        </div>
+    {% endif %}
 
-<section class="mobile-order-list app-row-list">
-    <div class="mobile-list-summary">
-        <strong>총 {{ rows|length }}대</strong>
-        <span>최신 등록순</span>
-    </div>
-    {% for r in rows %}
-    <div class="mobile-delete-row">
-        {% if current_user.is_master %}
-        <label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>
-        {% endif %}
-        <a href="{{ url_for('car_detail', id=r['id']) }}" class="app-row-link">
-            <article class="app-order-row">
-                <div class="row-main">
-                    <div class="row-title-line">
-                        <strong>{{ r['차량번호'] }}</strong>
-                        <span class="status-pill waiting">대기</span>
-                    </div>
-                    <p>{{ r['차종명'] or '-' }} · {{ r['차량소속'] or '-' }}</p>
+    <div class="turu-card-list-v24">
+        {% for r in rows %}
+        <div class="turu-delete-item-v24">
+            {% if current_user.is_master %}<label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>{% endif %}
+            <a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-order-card-v24">
+                <div class="turu-car-thumb-v24"><img src="{{ url_for('static', filename='img/icon-wash-order.png') }}" alt=""></div>
+                <div class="turu-card-copy-v24">
+                    <div class="turu-card-title-v24"><strong>{{ r['차량번호'] }}</strong><em class="chip-blue">세차 대기</em></div>
+                    <p><span>📍</span>{{ r['스팟'] or '-' }}</p>
+                    <p><span>🗓</span>{{ r['세차일'] or selected_date }}</p>
+                    <p><span>👤</span>{{ r['업체'] or current_user.vendor or '담당자 미지정' }}</p>
                 </div>
-                <div class="row-meta">
-                    <span class="row-spot">{{ r['스팟'] or '-' }}</span>
-                    <span>{{ r['지역시도'] or '-' }} {{ r['지역구군'] or '' }}</span>
-                    <span>{{ r['세차일'] or selected_date }}</span>
-                </div>
-                <span class="row-arrow">›</span>
-            </article>
-        </a>
+                <span class="turu-row-arrow-v24">›</span>
+            </a>
+        </div>
+        {% else %}
+        <div class="turu-empty-v24"><strong>세차 대상이 없습니다.</strong><span>날짜를 바꾸거나 필터를 초기화해보세요.</span></div>
+        {% endfor %}
     </div>
-    {% else %}
-    <div class="empty-state polished-empty"><strong>세차 대상이 없습니다.</strong><span>날짜를 바꾸거나 필터를 초기화해보세요.</span></div>
-    {% endfor %}
-</section>
 
-{% if current_user.is_master %}
-</form>
-{% endif %}
+    <section class="desktop-table table-panel app-card turu-desktop-table-v24">
+        <div class="table-title-row"><h2>대상 차량</h2><span>{{ rows|length }}대</span></div>
+        <div class="table-scroll">
+            <table>
+                <thead><tr>{% if current_user.is_master %}<th class="delete-col">선택</th>{% endif %}<th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th><th>지역</th><th>업체</th><th>세차일</th></tr></thead>
+                <tbody>
+                {% for r in rows %}
+                <tr>{% if current_user.is_master %}<td class="delete-col"><input type="checkbox" name="ids" value="{{ r['id'] }}"></td>{% endif %}<td><a class="car-link" href="{{ url_for('car_detail', id=r['id']) }}">{{ r['차량번호'] }}</a></td><td>{{ r['차종명'] or '-' }}</td><td>{{ r['차량소속'] or '-' }}</td><td>{{ r['스팟'] or '-' }}</td><td>{{ r['지역시도'] or '-' }} {{ r['지역구군'] or '' }}</td><td>{{ r['업체'] or '-' }}</td><td>{{ r['세차일'] or selected_date }}</td></tr>
+                {% else %}<tr><td colspan="{% if current_user.is_master %}8{% else %}7{% endif %}" class="empty-cell">해당 날짜에 세차 대상이 없습니다.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    {% if current_user.is_master %}</form>{% endif %}
+</section>
 
 <script>
 function moveDate(days){const current=new Date("{{ selected_date }}");current.setDate(current.getDate()+days);const yyyy=current.getFullYear();const mm=String(current.getMonth()+1).padStart(2,'0');const dd=String(current.getDate()).padStart(2,'0');window.location.href=`/wash_list?date=${yyyy}-${mm}-${dd}`;}

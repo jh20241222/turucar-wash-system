@@ -1,98 +1,47 @@
 {% extends "base.html" %}
 {% block document_title %}Turu Wash · 내정보{% endblock %}
 {% block content %}
-<section class="profile-hero app-card elevated brand-line-card screen-hero">
-    <div class="profile-hero-inner">
-        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo">
-        <h1>내정보</h1>
-        <p class="hero-copy">계정과 담당 지역을 확인합니다.</p>
-    </div>
-</section>
+<section class="turu-app-page-v24 turu-profile-page-v24">
+    <header class="turu-page-brand-v24"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
+    <div class="turu-page-head-v24"><div><h1>내정보</h1><p>계정과 설정을 관리합니다.</p></div></div>
 
-<section class="profile-card app-card profile-account-card">
-    <div class="profile-card-head">
-        <div>
-            <p class="eyebrow">Account</p>
-            <h2>내 계정</h2>
+    <section class="turu-profile-main-card-v24">
+        <div class="turu-avatar-v24"><svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="24" r="12" fill="#8D96A3"/><path d="M14 56c4-15 32-15 36 0" fill="#8D96A3"/></svg></div>
+        <div class="turu-profile-copy-v24">
+            <div><strong>{{ current_user.username }}</strong><em>{{ '마스터' if current_user.is_master else ('관리자' if current_user.is_admin else '담당자') }}</em></div>
+            <p>{{ current_user.vendor or '전체 관리' }}</p>
+            <span>{{ current_user.role }}</span>
         </div>
-    </div>
-    <div class="profile-info-grid profile-info-grid-simple">
-        <div><small>아이디</small><strong>{{ current_user.username }}</strong></div>
-        <div><small>업체</small><strong>{{ current_user.vendor or '전체 관리' }}</strong></div>
-    </div>
-</section>
+        <b>›</b>
+    </section>
 
-{% if region_rows %}
-<section class="profile-card app-card">
-    <div class="profile-card-head">
-        <div>
-            <p class="eyebrow">Region</p>
-            <h2>담당 지역</h2>
-        </div>
-        <span class="soft-badge">{{ region_rows|length }}개</span>
-    </div>
-    <div class="region-chip-list">
-        {% for r in region_rows %}
-        <span>{{ r.city }} {{ r.district }}</span>
-        {% endfor %}
-    </div>
-</section>
-{% endif %}
+    {% if region_rows %}
+    <section class="turu-menu-card-v24 turu-region-card-v24">
+        <div class="turu-menu-row-v24 no-arrow"><span class="pin">⌖</span><div><strong>담당 지역</strong><small>{% for r in region_rows %}{% if loop.index <= 3 %}{{ r.city }} {{ r.district }}{% if not loop.last and loop.index < 3 %}, {% endif %}{% endif %}{% endfor %}{% if region_rows|length > 3 %} 외 {{ region_rows|length - 3 }}개{% endif %}</small></div></div>
+    </section>
+    {% endif %}
 
-{% if current_user.is_admin or current_user.is_master %}
-<section class="profile-card app-card">
-    <div class="profile-card-head">
-        <div>
-            <p class="eyebrow">Admin Menu</p>
-            <h2>관리 메뉴</h2>
-        </div>
-    </div>
-    <div class="menu-list">
+    <section class="turu-menu-card-v24">
         {% if current_user.is_admin %}
-        <a href="{{ url_for('account_manage') }}" class="menu-row"><span class="menu-icon">●</span><div><strong>계정/지역 관리</strong><small>작업자 계정과 담당 지역을 설정합니다</small></div><b>›</b></a>
+        <a href="{{ url_for('account_manage') }}" class="turu-menu-row-v24"><span>⌖</span><div><strong>계정/지역 설정</strong><small>소속, 센터, 담당 지역 관리</small></div><b>›</b></a>
         {% endif %}
         {% if current_user.is_master %}
-        <a href="{{ url_for('vendor_manage') }}" class="menu-row"><span class="menu-icon">□</span><div><strong>업체 관리</strong><small>세차 업체 목록을 등록하고 관리합니다</small></div><b>›</b></a>
-        <a href="{{ url_for('upload_wash_list') }}" class="menu-row"><span class="menu-icon">↑</span><div><strong>세차 대상 업로드</strong><small>엑셀 파일로 오늘의 오더를 생성합니다</small></div><b>›</b></a>
+        <a href="{{ url_for('vendor_manage') }}" class="turu-menu-row-v24"><span>□</span><div><strong>업체 관리</strong><small>세차 업체 목록 관리</small></div><b>›</b></a>
+        <a href="{{ url_for('upload_wash_list') }}" class="turu-menu-row-v24"><span>↑</span><div><strong>오더 업로드</strong><small>엑셀 파일로 오늘의 오더 생성</small></div><b>›</b></a>
         {% endif %}
-    </div>
-</section>
-{% endif %}
+        {% if current_user.is_master or current_user.username == 'jeongyeon.kim' %}
+        <a href="{{ url_for('support_manage') }}" class="turu-menu-row-v24"><span>☏</span><div><strong>문의 관리</strong><small>문의 접수 및 답변 관리</small></div><em class="profile-bubble-v24 support-menu-badge{% if not support_badge_count %} is-hidden{% endif %}" data-support-badge>{{ support_badge_count if support_badge_count and support_badge_count < 100 else ('99+' if support_badge_count else '') }}</em><b>›</b></a>
+        {% endif %}
+    </section>
 
-<section class="profile-card app-card">
-    <div class="profile-card-head">
-        <div>
-            <p class="eyebrow">App Setting</p>
-            <h2>앱 설정</h2>
-        </div>
-    </div>
-    <div class="menu-list">
-        <button type="button" class="menu-row button-row pwa-install" hidden><span class="menu-icon">＋</span><div><strong>앱 설치</strong><small>홈 화면에 Turu Wash를 추가합니다</small></div><b>›</b></button>
-        <button type="button" class="menu-row button-row" onclick="clearAppCache()"><span class="menu-icon">↻</span><div><strong>캐시 초기화</strong><small>화면이 갱신되지 않을 때 사용하세요</small></div><b>›</b></button>
-    </div>
+    <section class="turu-menu-card-v24">
+        <button type="button" class="turu-menu-row-v24 button-row pwa-install" hidden><span>＋</span><div><strong>앱 설치</strong><small>홈 화면에 Turu Wash 추가</small></div><b>›</b></button>
+        <button type="button" class="turu-menu-row-v24 button-row" onclick="clearAppCache()"><span>↻</span><div><strong>캐시 초기화</strong><small>화면이 갱신되지 않을 때 사용</small></div><b>›</b></button>
+        <div class="turu-menu-row-v24 no-arrow"><span>ⓘ</span><div><strong>앱 정보</strong><small>버전 1.2.0</small></div></div>
+        <a href="{{ url_for('logout') }}" class="turu-menu-row-v24 logout"><span>↪</span><div><strong>로그아웃</strong><small>안전하게 로그아웃 합니다</small></div><b>›</b></a>
+    </section>
 </section>
-
-<section class="profile-card app-card logout-panel">
-    <div>
-        <p class="eyebrow">Logout</p>
-        <h2>현재 계정에서 나가기</h2>
-        <p>공용 기기에서 사용했다면 작업 후 반드시 로그아웃하세요.</p>
-    </div>
-    <a href="{{ url_for('logout') }}" class="logout-action">로그아웃</a>
-</section>
-
 <script>
-async function clearAppCache(){
-    try{
-        if('caches' in window){
-            const keys = await caches.keys();
-            await Promise.all(keys.map((key)=>caches.delete(key)));
-        }
-        alert('앱 캐시를 초기화했습니다. 새로고침합니다.');
-        location.reload();
-    }catch(error){
-        alert('캐시 초기화 중 오류가 발생했습니다.');
-    }
-}
+async function clearAppCache(){try{if('caches' in window){const keys=await caches.keys();await Promise.all(keys.map((key)=>caches.delete(key)));}alert('앱 캐시를 초기화했습니다. 새로고침합니다.');location.reload();}catch(error){alert('캐시 초기화 중 오류가 발생했습니다.');}}
 </script>
 {% endblock %}

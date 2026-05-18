@@ -2,198 +2,182 @@
 {% block document_title %}Turu Wash · 홈{% endblock %}
 {% block content %}
 
-<style>
-/* v7: dashboard home critical layout - template scoped, avoids cached CSS breakage */
-body.endpoint-dashboard .app-main{background:#F6F8FB!important;}
-body.endpoint-dashboard .dashboard-brand-top{margin:0 0 28px!important;}
-body.endpoint-dashboard .dashboard-brand-logo{display:block;width:176px;max-width:52vw;height:auto;}
-body.endpoint-dashboard .home-notice-card{border-radius:28px!important;background:#fff!important;border:1px solid rgba(216,224,235,.72)!important;box-shadow:0 18px 42px rgba(9,30,63,.08)!important;padding:22px 18px 20px!important;overflow:hidden!important;}
-body.endpoint-dashboard .home-notice-card .notice-list-head{display:flex!important;align-items:center!important;justify-content:space-between!important;margin:0 0 16px!important;padding:0!important;}
-body.endpoint-dashboard .home-notice-card .notice-list-head h2{margin:0!important;font-size:24px!important;font-weight:900!important;line-height:1.1!important;letter-spacing:-.055em!important;color:#151922!important;}
-body.endpoint-dashboard .home-notice-card .notice-more-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:42px!important;padding:0 16px!important;border-radius:999px!important;border:1px solid rgba(216,224,235,.95)!important;background:#fff!important;color:#151922!important;font-size:14px!important;font-weight:850!important;text-decoration:none!important;box-shadow:0 6px 16px rgba(9,30,63,.05)!important;}
-body.endpoint-dashboard .notice-hero-row{display:grid!important;grid-template-columns:112px minmax(0,1fr) 16px!important;align-items:center!important;gap:14px!important;width:100%!important;min-height:132px!important;padding:0 0 4px!important;margin:0!important;border:0!important;background:transparent!important;box-shadow:none!important;outline:0!important;overflow:hidden!important;text-align:left!important;box-sizing:border-box!important;}
-body.endpoint-dashboard .notice-empty-row{cursor:default!important;}
-body.endpoint-dashboard .notice-hero-icon{width:112px!important;height:98px!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:visible!important;}
-body.endpoint-dashboard .notice-hero-mega{display:block!important;width:112px!important;height:98px!important;max-width:112px!important;max-height:98px!important;overflow:visible!important;flex:0 0 auto!important;}
-body.endpoint-dashboard .notice-hero-copy{min-width:0!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;gap:8px!important;overflow:hidden!important;}
-body.endpoint-dashboard .notice-hero-copy strong{display:block!important;width:100%!important;color:#151922!important;font-size:18px!important;font-weight:900!important;line-height:1.3!important;letter-spacing:-.055em!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
-body.endpoint-dashboard .notice-hero-copy>span{display:-webkit-box!important;width:100%!important;color:#6F7785!important;font-size:14px!important;font-weight:650!important;line-height:1.5!important;letter-spacing:-.04em!important;word-break:keep-all!important;overflow:hidden!important;text-overflow:ellipsis!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;}
-body.endpoint-dashboard .notice-hero-meta{display:flex!important;align-items:center!important;gap:9px!important;max-width:100%!important;min-width:0!important;color:#66738A!important;font-size:11px!important;font-weight:800!important;line-height:1.1!important;overflow:hidden!important;}
-body.endpoint-dashboard .notice-hero-meta b,body.endpoint-dashboard .notice-hero-meta em{font:inherit!important;font-style:normal!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
-body.endpoint-dashboard .notice-hero-row>i{display:flex!important;align-items:center!important;justify-content:center!important;color:#9AA4B2!important;font-size:28px!important;line-height:1!important;font-style:normal!important;font-weight:900!important;}
-body.endpoint-dashboard .dashboard-main-actions.home-final-actions.brand-action-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important;width:100%!important;margin-top:28px!important;}
-body.endpoint-dashboard .home-action-card{position:relative!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;min-width:0!important;min-height:220px!important;padding:14px 6px 46px!important;border-radius:24px!important;background:#fff!important;overflow:visible!important;text-decoration:none!important;box-shadow:0 14px 30px rgba(9,30,63,.08)!important;}
-body.endpoint-dashboard .home-action-card::before,body.endpoint-dashboard .home-action-card::after{display:none!important;content:none!important;}
-body.endpoint-dashboard .home-icon-wrap{width:112px!important;height:108px!important;flex:0 0 108px!important;display:flex!important;align-items:center!important;justify-content:center!important;margin:0 auto 8px!important;overflow:visible!important;}
-body.endpoint-dashboard .home-action-icon{display:block!important;width:124px!important;height:124px!important;max-width:none!important;max-height:none!important;object-fit:contain!important;object-position:center!important;border:0!important;background:transparent!important;box-shadow:none!important;}
-body.endpoint-dashboard .home-action-card strong{display:block!important;width:100%!important;margin:0!important;color:#111827!important;font-size:19px!important;font-weight:900!important;line-height:1.2!important;letter-spacing:-.07em!important;text-align:center!important;white-space:nowrap!important;}
-body.endpoint-dashboard .home-action-card small{display:block!important;width:100%!important;margin-top:9px!important;color:#586273!important;font-size:12px!important;font-weight:650!important;line-height:1.35!important;letter-spacing:-.045em!important;text-align:center!important;word-break:keep-all!important;white-space:nowrap!important;}
-body.endpoint-dashboard .home-card-arrow{position:absolute!important;left:50%!important;bottom:16px!important;transform:translateX(-50%)!important;width:31px!important;height:31px!important;border-radius:999px!important;display:flex!important;align-items:center!important;justify-content:center!important;color:#fff!important;font-size:25px!important;font-style:normal!important;font-weight:900!important;line-height:1!important;}
-body.endpoint-dashboard .action-yellow .home-card-arrow{background:linear-gradient(135deg,#FFC400,#FFB000)!important;}
-body.endpoint-dashboard .action-orange .home-card-arrow{background:linear-gradient(135deg,#FF7A00,#FF4E00)!important;}
-body.endpoint-dashboard .action-red .home-card-arrow{background:linear-gradient(135deg,#FF3158,#E91545)!important;}
-@media (min-width:901px){body.endpoint-dashboard .dashboard-brand-logo{width:250px!important;}body.endpoint-dashboard .home-notice-card{padding:34px 38px 32px!important;border-radius:32px!important;}body.endpoint-dashboard .home-notice-card .notice-list-head h2{font-size:32px!important;}body.endpoint-dashboard .notice-hero-row{grid-template-columns:170px minmax(0,1fr) 24px!important;min-height:190px!important;gap:30px!important;padding:4px 14px 14px!important;}body.endpoint-dashboard .notice-hero-icon,body.endpoint-dashboard .notice-hero-mega{width:160px!important;height:132px!important;max-width:160px!important;max-height:132px!important;}body.endpoint-dashboard .notice-hero-copy strong{font-size:27px!important;}body.endpoint-dashboard .notice-hero-copy>span{font-size:20px!important;}body.endpoint-dashboard .dashboard-main-actions.home-final-actions.brand-action-grid{gap:24px!important;margin-top:26px!important;}body.endpoint-dashboard .home-action-card{min-height:280px!important;padding:26px 18px 56px!important;border-radius:30px!important;}body.endpoint-dashboard .home-icon-wrap{width:152px!important;height:148px!important;flex-basis:148px!important;margin-bottom:14px!important;}body.endpoint-dashboard .home-action-icon{width:166px!important;height:166px!important;}body.endpoint-dashboard .home-action-card strong{font-size:25px!important;}body.endpoint-dashboard .home-action-card small{font-size:15px!important;}}
-@media (max-width:390px){body.endpoint-dashboard .home-notice-card{padding:20px 14px 18px!important;}body.endpoint-dashboard .notice-hero-row{grid-template-columns:96px minmax(0,1fr) 14px!important;min-height:116px!important;gap:9px!important;}body.endpoint-dashboard .notice-hero-icon,body.endpoint-dashboard .notice-hero-mega{width:96px!important;height:82px!important;max-width:96px!important;max-height:82px!important;}body.endpoint-dashboard .notice-hero-copy{gap:5px!important;}body.endpoint-dashboard .notice-hero-copy strong{font-size:15.5px!important;}body.endpoint-dashboard .notice-hero-copy>span{font-size:11.5px!important;-webkit-line-clamp:2!important;}body.endpoint-dashboard .notice-hero-meta{font-size:9.5px!important;}body.endpoint-dashboard .dashboard-main-actions.home-final-actions.brand-action-grid{gap:10px!important;}body.endpoint-dashboard .home-action-card{min-height:206px!important;padding:12px 4px 42px!important;border-radius:22px!important;}body.endpoint-dashboard .home-icon-wrap{width:100px!important;height:96px!important;flex-basis:96px!important;margin-bottom:6px!important;}body.endpoint-dashboard .home-action-icon{width:112px!important;height:112px!important;}body.endpoint-dashboard .home-action-card strong{font-size:17px!important;}body.endpoint-dashboard .home-action-card small{font-size:10.8px!important;}body.endpoint-dashboard .home-card-arrow{width:29px!important;height:29px!important;bottom:14px!important;font-size:23px!important;}}
-</style>
+<div class="turu-home-v8">
+    <header class="turu-home-brand">
+        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="turu-home-logo">
+    </header>
 
-
-<header class="dashboard-brand-top">
-    <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="dashboard-brand-logo">
-</header>
-
-<section class="dashboard-notice-list app-card elevated notice-board-final notice-preview-board home-notice-card" id="notice-list">
-    <div class="notice-list-head">
-        <div><h2>공지사항</h2></div>
-        <div class="notice-head-actions">
-            <a href="{{ url_for('notices') }}" class="notice-more-btn">더보기</a>
+    <section class="turu-notice-card" aria-label="공지사항">
+        <div class="turu-notice-head">
+            <h2>공지사항</h2>
+            <a href="{{ url_for('notices') }}" class="turu-notice-more">더보기</a>
         </div>
-    </div>
-
-    {% if notice_rows %}
-    {% set notice = notice_rows[0] %}
-    <article class="notice-hero-row" role="button" tabindex="0" data-title="{{ notice.title|e }}" data-body="{{ notice.body|e }}" data-created="{{ notice.created_at|e }}" data-author="{{ notice.author|e }}" onclick="openNoticeViewer(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openNoticeViewer(this);}">
-        <div class="notice-hero-icon">
-            <svg class="notice-hero-mega" viewBox="0 0 140 110" aria-hidden="true" focusable="false">
-            <defs>
-                <linearGradient id="megaOrange" x1="20" y1="30" x2="98" y2="78" gradientUnits="userSpaceOnUse"><stop stop-color="#FF8A00"/><stop offset="1" stop-color="#FF4E00"/></linearGradient>
-                <linearGradient id="megaCream" x1="45" y1="30" x2="96" y2="78" gradientUnits="userSpaceOnUse"><stop stop-color="#FFF7E5"/><stop offset="1" stop-color="#FFD98A"/></linearGradient>
-            </defs>
-            <ellipse cx="67" cy="91" rx="46" ry="8" fill="#FFE6B6" opacity=".72"/>
-            <path d="M23 52c0-10 8-18 18-18h14v36H41c-10 0-18-8-18-18Z" fill="url(#megaOrange)"/>
-            <path d="M49 38 90 22v60L49 66Z" fill="url(#megaCream)"/>
-            <path d="M88 22c12 0 22 13 22 30S100 82 88 82c-7 0-12-13-12-30s5-30 12-30Z" fill="#FFC400"/>
-            <ellipse cx="91" cy="52" rx="10" ry="21" fill="#FFF8DF" opacity=".9"/>
-            <path d="M34 66h18l8 31H42L34 66Z" fill="#FF6B00" opacity=".88"/>
-            <path d="M113 34 128 24M118 52h17M113 70l15 10" stroke="#FF7A00" stroke-width="7" stroke-linecap="round"/>
-        </svg>
-        </div>
-        <div class="notice-hero-copy">
-            <strong>{{ notice.title }}</strong>
-            {% if notice.body %}<span>{{ notice.body }}</span>{% else %}<span>공지사항 내용을 확인해 주세요.</span>{% endif %}
-            <div class="notice-hero-meta">
-                <b>{{ notice.created_at }}</b>
-                <em>{{ notice.author }}</em>
+        <div class="turu-notice-body">
+            <div class="turu-megaphone" aria-hidden="true">
+                <svg viewBox="0 0 180 130" role="img">
+                    <defs>
+                        <linearGradient id="megaphoneOrange" x1="0" x2="1" y1="0" y2="1">
+                            <stop offset="0" stop-color="#FF9B00"/>
+                            <stop offset="1" stop-color="#FF5A00"/>
+                        </linearGradient>
+                        <linearGradient id="megaphoneYellow" x1="0" x2="1" y1="0" y2="1">
+                            <stop offset="0" stop-color="#FFD43B"/>
+                            <stop offset="1" stop-color="#FFB000"/>
+                        </linearGradient>
+                        <filter id="softMegaShadow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#ff8a00" flood-opacity=".15"/>
+                        </filter>
+                    </defs>
+                    <ellipse cx="80" cy="108" rx="58" ry="10" fill="#FFE9B8" opacity=".85"/>
+                    <path d="M43 69h27v40c0 8-6 13-14 13h-3c-6 0-11-4-12-10l-6-33c-1-5 3-10 8-10z" fill="url(#megaphoneOrange)" filter="url(#softMegaShadow)"/>
+                    <rect x="21" y="48" width="42" height="35" rx="17" fill="url(#megaphoneOrange)"/>
+                    <path d="M57 50l76-35v101L57 82z" fill="#FFF0CA"/>
+                    <path d="M57 50l22-10v52L57 82z" fill="#FFDFA0" opacity=".7"/>
+                    <ellipse cx="132" cy="65" rx="21" ry="49" fill="url(#megaphoneYellow)"/>
+                    <ellipse cx="132" cy="65" rx="12" ry="34" fill="#FFF3CF" opacity=".92"/>
+                    <path d="M154 38l21-17M160 66h25M154 94l21 17" fill="none" stroke="#FF7A00" stroke-width="8" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="turu-notice-copy">
+                <strong>아직 등록된 공지사항이 없습니다.</strong>
+                <span>공지사항을 작성하면</span>
+                <span>이곳에 누적됩니다.</span>
             </div>
         </div>
-        <i aria-hidden="true">›</i>
-    </article>
-    {% else %}
-    <div class="notice-hero-row notice-empty-row">
-        <div class="notice-hero-icon">
-            <svg class="notice-hero-mega" viewBox="0 0 140 110" aria-hidden="true" focusable="false">
-            <defs>
-                <linearGradient id="megaOrange" x1="20" y1="30" x2="98" y2="78" gradientUnits="userSpaceOnUse"><stop stop-color="#FF8A00"/><stop offset="1" stop-color="#FF4E00"/></linearGradient>
-                <linearGradient id="megaCream" x1="45" y1="30" x2="96" y2="78" gradientUnits="userSpaceOnUse"><stop stop-color="#FFF7E5"/><stop offset="1" stop-color="#FFD98A"/></linearGradient>
-            </defs>
-            <ellipse cx="67" cy="91" rx="46" ry="8" fill="#FFE6B6" opacity=".72"/>
-            <path d="M23 52c0-10 8-18 18-18h14v36H41c-10 0-18-8-18-18Z" fill="url(#megaOrange)"/>
-            <path d="M49 38 90 22v60L49 66Z" fill="url(#megaCream)"/>
-            <path d="M88 22c12 0 22 13 22 30S100 82 88 82c-7 0-12-13-12-30s5-30 12-30Z" fill="#FFC400"/>
-            <ellipse cx="91" cy="52" rx="10" ry="21" fill="#FFF8DF" opacity=".9"/>
-            <path d="M34 66h18l8 31H42L34 66Z" fill="#FF6B00" opacity=".88"/>
-            <path d="M113 34 128 24M118 52h17M113 70l15 10" stroke="#FF7A00" stroke-width="7" stroke-linecap="round"/>
-        </svg>
-        </div>
-        <div class="notice-hero-copy">
-            <strong>아직 등록된 공지사항이 없습니다.</strong>
-            <span>공지사항을 작성하면<br>이곳에 누적됩니다.</span>
-        </div>
-    </div>
-    {% endif %}
-</section>
+    </section>
 
-<section class="quick-actions compact-dashboard-actions home-final-actions brand-action-grid dashboard-main-actions">
-    <a class="quick-card brand-action-card action-yellow home-action-card" href="{{ url_for('wash_list') }}">
-        <div class="home-icon-wrap">
-            <img src="{{ url_for('static', filename='img/icon-wash-order.svg') }}" alt="세차 오더" class="home-action-icon" loading="eager">
-        </div>
-        <strong>세차 오더</strong>
-        <small>대상 차량 확인</small>
-        <em class="home-card-arrow">›</em>
-    </a>
+    <section class="turu-home-actions" aria-label="주요 메뉴">
+        <a class="turu-main-card card-yellow" href="{{ url_for('wash_list') }}">
+            <div class="turu-action-illo" aria-hidden="true">
+                <svg viewBox="0 0 190 150" role="img">
+                    <defs>
+                        <linearGradient id="clipY" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#FFC400"/><stop offset="1" stop-color="#FF8A00"/></linearGradient>
+                        <linearGradient id="carCream1" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#FFF7E9"/><stop offset="1" stop-color="#FFE3B7"/></linearGradient>
+                        <linearGradient id="navy1" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#293241"/><stop offset="1" stop-color="#101827"/></linearGradient>
+                    </defs>
+                    <ellipse cx="90" cy="132" rx="72" ry="10" fill="#FFE9B8" opacity=".8"/>
+                    <rect x="34" y="16" width="78" height="112" rx="14" fill="#fff" stroke="url(#clipY)" stroke-width="7"/>
+                    <rect x="58" y="5" width="38" height="22" rx="7" fill="url(#clipY)"/>
+                    <circle cx="77" cy="8" r="9" fill="#FFD77A"/>
+                    <path d="M53 47l7 7 15-17M53 72l7 7 15-17M53 97l7 7 15-17" fill="none" stroke="#FF7A00" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M87 50h29M87 75h25M87 100h20" fill="none" stroke="#D8CFC1" stroke-width="6" stroke-linecap="round"/>
+                    <path d="M132 49l5 12 12 5-12 5-5 12-5-12-12-5 12-5z" fill="#FFD568" opacity=".75"/>
+                    <path d="M153 82l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#FFE09A"/>
+                    <g transform="translate(78 78)">
+                        <path d="M12 31h72c8 0 14-6 14-14v-2c0-6-4-11-10-13L76-2C70-14 62-20 49-20H33c-12 0-20 7-27 20L0 15c-3 8 3 16 12 16z" fill="url(#carCream1)"/>
+                        <path d="M25-4h22c6 0 10 3 13 10l5 11H20z" fill="url(#navy1)"/>
+                        <path d="M67 6h18c5 0 9 4 10 9l.5 2H70z" fill="url(#navy1)"/>
+                        <path d="M6 9h16c6 0 10 4 10 10v12H15c-4 0-8-3-9-7z" fill="#FF7A00"/>
+                        <path d="M32 31h36" stroke="#111827" stroke-width="5" stroke-linecap="round"/>
+                        <path d="M74 19h17" stroke="#111827" stroke-width="5" stroke-linecap="round"/>
+                        <ellipse cx="30" cy="31" rx="9" ry="16" fill="#122033"/><ellipse cx="30" cy="31" rx="4" ry="9" fill="#fff" opacity=".85"/>
+                        <ellipse cx="75" cy="31" rx="9" ry="16" fill="#122033"/><ellipse cx="75" cy="31" rx="4" ry="9" fill="#fff" opacity=".85"/>
+                        <path d="M84 9h11" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".9"/>
+                    </g>
+                </svg>
+            </div>
+            <strong>세차 오더</strong>
+            <small>대상 차량 확인</small>
+            <span class="turu-card-arrow">›</span>
+        </a>
 
-    <a class="quick-card brand-action-card action-orange home-action-card" href="https://pm.peoplecar.co.kr:8082/#">
-        <div class="home-icon-wrap">
-            <img src="{{ url_for('static', filename='img/icon-control.svg') }}" alt="예약/문제어" class="home-action-icon" loading="eager">
-        </div>
-        <strong>예약/문제어</strong>
-        <small>예약/제어 관리자앱</small>
-        <em class="home-card-arrow">›</em>
-    </a>
+        <a class="turu-main-card card-orange" href="https://pm.peoplecar.co.kr:8082/#">
+            <div class="turu-action-illo" aria-hidden="true">
+                <svg viewBox="0 0 190 150" role="img">
+                    <defs>
+                        <linearGradient id="orangeA" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#FF8A00"/><stop offset="1" stop-color="#FF4E00"/></linearGradient>
+                        <linearGradient id="carCream2" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#FFF8EF"/><stop offset="1" stop-color="#FFE5BB"/></linearGradient>
+                        <linearGradient id="navy2" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#293241"/><stop offset="1" stop-color="#101827"/></linearGradient>
+                    </defs>
+                    <ellipse cx="96" cy="132" rx="72" ry="10" fill="#FFE9B8" opacity=".8"/>
+                    <circle cx="76" cy="45" r="35" fill="#fff" stroke="url(#orangeA)" stroke-width="8"/>
+                    <path d="M76 24v22l17 12" stroke="#FF6A00" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <path d="M76 11v8M76 71v8M43 45h8M101 45h8M53 22l6 6M99 22l-6 6M53 68l6-6M99 68l-6-6" stroke="#FF7A00" stroke-width="5" stroke-linecap="round"/>
+                    <rect x="126" y="44" width="34" height="31" rx="8" fill="#172132"/>
+                    <path d="M134 44v-9c0-13 18-13 18 0v9" fill="none" stroke="#172132" stroke-width="7" stroke-linecap="round"/>
+                    <path d="M143 56v9" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+                    <circle cx="143" cy="56" r="5" fill="#fff"/>
+                    <g transform="translate(49 78)">
+                        <path d="M12 31h72c8 0 14-6 14-14v-2c0-6-4-11-10-13L76-2C70-14 62-20 49-20H33c-12 0-20 7-27 20L0 15c-3 8 3 16 12 16z" fill="url(#carCream2)"/>
+                        <path d="M25-4h22c6 0 10 3 13 10l5 11H20z" fill="url(#navy2)"/>
+                        <path d="M67 6h18c5 0 9 4 10 9l.5 2H70z" fill="url(#navy2)"/>
+                        <path d="M6 9h16c6 0 10 4 10 10v12H15c-4 0-8-3-9-7z" fill="#FF7A00"/>
+                        <path d="M32 31h36" stroke="#111827" stroke-width="5" stroke-linecap="round"/>
+                        <path d="M74 19h17" stroke="#111827" stroke-width="5" stroke-linecap="round"/>
+                        <ellipse cx="30" cy="31" rx="9" ry="16" fill="#122033"/><ellipse cx="30" cy="31" rx="4" ry="9" fill="#fff" opacity=".85"/>
+                        <ellipse cx="75" cy="31" rx="9" ry="16" fill="#122033"/><ellipse cx="75" cy="31" rx="4" ry="9" fill="#fff" opacity=".85"/>
+                        <path d="M84 9h11" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".9"/>
+                    </g>
+                    <path d="M39 94l-13-8M37 114l-16 1M153 94l13-8M155 114l16 1" stroke="#FF7A00" stroke-width="7" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <strong>예약/문제어</strong>
+            <small>예약/제어 관리자앱</small>
+            <span class="turu-card-arrow">›</span>
+        </a>
 
-    <a class="quick-card brand-action-card action-red home-action-card" href="{{ url_for('wash_status') }}">
-        <div class="home-icon-wrap">
-            <img src="{{ url_for('static', filename='img/icon-complete.svg') }}" alt="완료 현황" class="home-action-icon" loading="eager">
-        </div>
-        <strong>완료 현황</strong>
-        <small>작업 기록 조회</small>
-        <em class="home-card-arrow">›</em>
-    </a>
-</section>
+        <a class="turu-main-card card-red" href="{{ url_for('wash_status') }}">
+            <div class="turu-action-illo" aria-hidden="true">
+                <svg viewBox="0 0 190 150" role="img">
+                    <defs>
+                        <linearGradient id="redA" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#FF5572"/><stop offset="1" stop-color="#E91E4D"/></linearGradient>
+                        <linearGradient id="carCream3" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#FFF8EF"/><stop offset="1" stop-color="#FFE5BB"/></linearGradient>
+                        <linearGradient id="navy3" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#293241"/><stop offset="1" stop-color="#101827"/></linearGradient>
+                    </defs>
+                    <ellipse cx="95" cy="132" rx="74" ry="10" fill="#FFD9E1" opacity=".9"/>
+                    <path d="M58 14h68l26 26v84H58z" fill="#fff" stroke="url(#redA)" stroke-width="7" stroke-linejoin="round"/>
+                    <path d="M126 14v28h26" fill="#FF9AAA" opacity=".7"/>
+                    <path d="M78 47h35M78 72h48M78 96h37" stroke="#F4B5C0" stroke-width="7" stroke-linecap="round"/>
+                    <path d="M48 48l4 5 10-12M48 73l4 5 10-12M48 98l4 5 10-12" fill="none" stroke="#FF5572" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M32 63l4 9 9 4-9 4-4 9-4-9-9-4 9-4zM166 51l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#FF9AAA" opacity=".8"/>
+                    <g transform="translate(43 88)">
+                        <path d="M12 31h72c8 0 14-6 14-14v-2c0-6-4-11-10-13L76-2C70-14 62-20 49-20H33c-12 0-20 7-27 20L0 15c-3 8 3 16 12 16z" fill="url(#carCream3)"/>
+                        <path d="M25-4h22c6 0 10 3 13 10l5 11H20z" fill="url(#navy3)"/>
+                        <path d="M67 6h18c5 0 9 4 10 9l.5 2H70z" fill="url(#navy3)"/>
+                        <path d="M6 9h16c6 0 10 4 10 10v12H15c-4 0-8-3-9-7z" fill="#FF7A00"/>
+                        <path d="M32 31h36" stroke="#111827" stroke-width="5" stroke-linecap="round"/>
+                        <path d="M74 19h17" stroke="#111827" stroke-width="5" stroke-linecap="round"/>
+                        <ellipse cx="30" cy="31" rx="9" ry="16" fill="#122033"/><ellipse cx="30" cy="31" rx="4" ry="9" fill="#fff" opacity=".85"/>
+                        <ellipse cx="75" cy="31" rx="9" ry="16" fill="#122033"/><ellipse cx="75" cy="31" rx="4" ry="9" fill="#fff" opacity=".85"/>
+                    </g>
+                    <circle cx="136" cy="106" r="30" fill="url(#redA)"/>
+                    <path d="M121 106l10 10 23-26" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <strong>완료 현황</strong>
+            <small>작업 기록 조회</small>
+            <span class="turu-card-arrow">›</span>
+        </a>
+    </section>
 
-<section class="home-support-actions">
-    <a href="javascript:void(0)" onclick="showUrgentWashComingSoon()" class="home-support-card urgent visual-support-card">
-        <span class="support-illo clean-support-illo urgent-siren" aria-hidden="true">
-            <svg viewBox="0 0 56 56" role="img">
-                <path d="M18 36V24c0-7 5-12 10-12s10 5 10 12v12" fill="currentColor" opacity=".16"/>
-                <path d="M18 36V24c0-7 5-12 10-12s10 5 10 12v12" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-                <path d="M14 39h28" fill="none" stroke="#212124" stroke-width="4" stroke-linecap="round"/>
-                <path d="M12 18l-5-5M44 18l5-5M28 7V3" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-            </svg>
-        </span>
-        <strong>긴급 세차</strong>
-        <em>긴급 세차 요청</em>
-    </a>
-    <a href="{{ url_for('support_chat') }}" class="home-support-card chat visual-support-card">
-        <span class="support-illo clean-support-illo chat-bubble" aria-hidden="true">
-            <svg viewBox="0 0 56 56" role="img">
-                <path d="M12 15h32c4 0 7 3 7 7v12c0 4-3 7-7 7H26l-12 8v-8h-2c-4 0-7-3-7-7V22c0-4 3-7 7-7z" fill="currentColor" opacity=".14"/>
-                <path d="M12 15h32c4 0 7 3 7 7v12c0 4-3 7-7 7H26l-12 8v-8h-2c-4 0-7-3-7-7V22c0-4 3-7 7-7z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
-                <path d="M18 28h.1M28 28h.1M38 28h.1" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
-            </svg>
-        </span>
-        <strong>문의하기</strong>
-        <em>문의 및 요청 접수</em>
-    </a>
-</section>
-
-<div class="notice-modal-backdrop" id="notice-viewer-modal" hidden>
-    <section class="notice-modal turu-mini-modal" role="dialog" aria-modal="true" aria-labelledby="notice-viewer-title">
-        <button type="button" class="notice-modal-close" onclick="closeNoticeViewer()" aria-label="닫기">×</button>
-        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="notice-modal-logo">
-        <p class="eyebrow">Notice</p><h2 id="notice-viewer-title"></h2>
-        <div class="notice-modal-meta"><span id="notice-viewer-created"></span><span id="notice-viewer-author"></span></div>
-        <p class="notice-modal-body" id="notice-viewer-body"></p>
+    <section class="turu-support-row" aria-label="빠른 요청">
+        <a href="javascript:void(0)" onclick="showUrgentWashComingSoon()" class="turu-support-card support-urgent">
+            <span class="support-icon" aria-hidden="true">
+                <svg viewBox="0 0 64 64" role="img">
+                    <path d="M20 42V29c0-8 5-14 12-14s12 6 12 14v13" fill="#FFE7E4"/>
+                    <path d="M20 42V29c0-8 5-14 12-14s12 6 12 14v13" fill="none" stroke="#FF3158" stroke-width="4" stroke-linecap="round"/>
+                    <path d="M15 45h34" stroke="#172132" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M11 24l-6-4M53 24l6-4M32 10V4" stroke="#FF4E00" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+            </span>
+            <strong>긴급 세차</strong>
+            <i>›</i>
+        </a>
+        <a href="{{ url_for('support_chat') }}" class="turu-support-card support-chat">
+            <span class="support-icon" aria-hidden="true">
+                <svg viewBox="0 0 64 64" role="img">
+                    <path d="M14 15h36c5 0 8 3 8 8v14c0 5-3 8-8 8H30L16 55V45h-2c-5 0-8-3-8-8V23c0-5 3-8 8-8z" fill="#FFF3D3"/>
+                    <path d="M14 15h36c5 0 8 3 8 8v14c0 5-3 8-8 8H30L16 55V45h-2c-5 0-8-3-8-8V23c0-5 3-8 8-8z" fill="none" stroke="#FF9800" stroke-width="4" stroke-linejoin="round"/>
+                    <path d="M23 30h.1M32 30h.1M41 30h.1" stroke="#FF9800" stroke-width="5" stroke-linecap="round"/>
+                </svg>
+            </span>
+            <strong>문의하기</strong>
+            <i>›</i>
+        </a>
     </section>
 </div>
-
-{% if current_user.is_master %}
-<div class="notice-modal-backdrop" id="notice-edit-modal" hidden>
-    <section class="notice-modal turu-mini-modal notice-edit-modal" role="dialog" aria-modal="true" aria-labelledby="notice-edit-title">
-        <button type="button" class="notice-modal-close" onclick="closeNoticeEdit()" aria-label="닫기">×</button>
-        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="notice-modal-logo">
-        <p class="eyebrow">Edit Notice</p><h2 id="notice-edit-title">공지사항 수정</h2>
-        <form method="post" id="notice-edit-form" class="notice-form notice-edit-form">
-            <input type="hidden" name="notice_page" id="notice-edit-page" value="1">
-            <input type="hidden" name="notice_author" id="notice-edit-author" value="투루카 담당자">
-            <label><span>제목</span><input type="text" name="notice_title" id="notice-edit-title-input" class="app-input" maxlength="80"></label>
-            <label><span>내용</span><textarea name="notice_body" id="notice-edit-body-input" class="app-input notice-textarea" rows="5" maxlength="500"></textarea></label>
-            <button type="submit" class="btn-primary notice-save-btn">수정 저장</button>
-        </form>
-    </section>
-</div>
-{% endif %}
 
 <script>
-function openNoticeEditor(){const editor=document.getElementById('notice-editor');if(editor){editor.open=true;editor.scrollIntoView({behavior:'smooth',block:'center'});const input=editor.querySelector('input[name="notice_title"]');if(input){setTimeout(()=>input.focus(),350);}}}
-function openNoticeViewer(button){document.getElementById('notice-viewer-title').textContent=button.dataset.title||'공지사항';document.getElementById('notice-viewer-body').textContent=button.dataset.body||'공지사항 내용이 없습니다.';document.getElementById('notice-viewer-created').textContent=button.dataset.created||'';document.getElementById('notice-viewer-author').textContent=button.dataset.author||'투루카 담당자';document.getElementById('notice-viewer-modal').hidden=false;document.body.classList.add('modal-open');}
-function closeNoticeViewer(){document.getElementById('notice-viewer-modal').hidden=true;document.body.classList.remove('modal-open');}
-function toggleNoticeMenu(event,button){event.stopPropagation();document.querySelectorAll('.notice-kebab-wrap.open').forEach(function(menu){if(menu!==button.closest('.notice-kebab-wrap')){menu.classList.remove('open');}});button.closest('.notice-kebab-wrap').classList.toggle('open');}
-function openNoticeEdit(button){const form=document.getElementById('notice-edit-form');if(!form){return;}form.action=`/dashboard/notice/${button.dataset.id}/edit`;document.getElementById('notice-edit-title-input').value=button.dataset.title||'';document.getElementById('notice-edit-body-input').value=button.dataset.body||'';document.getElementById('notice-edit-author').value=button.dataset.author||'투루카 담당자';document.getElementById('notice-edit-page').value=button.dataset.page||'1';document.querySelectorAll('.notice-kebab-wrap.open').forEach(function(menu){menu.classList.remove('open');});document.getElementById('notice-edit-modal').hidden=false;document.body.classList.add('modal-open');}
-function closeNoticeEdit(){document.getElementById('notice-edit-modal').hidden=true;document.body.classList.remove('modal-open');}
-document.addEventListener('click',function(event){if(!event.target.closest('.notice-kebab-wrap')){document.querySelectorAll('.notice-kebab-wrap.open').forEach(function(menu){menu.classList.remove('open');});}});
-document.addEventListener('keydown',function(event){if(event.key==='Escape'){if(!document.getElementById('notice-viewer-modal').hidden){closeNoticeViewer();}const editModal=document.getElementById('notice-edit-modal');if(editModal&&!editModal.hidden){closeNoticeEdit();}document.querySelectorAll('.notice-kebab-wrap.open').forEach(function(menu){menu.classList.remove('open');});}});
-
 function showUrgentWashComingSoon(){
     const toast = document.createElement("div");
     toast.className = "urgent-dev-toast";
@@ -205,7 +189,6 @@ function showUrgentWashComingSoon(){
         setTimeout(() => toast.remove(), 250);
     }, 1800);
 }
-
 </script>
 
 {% endblock %}

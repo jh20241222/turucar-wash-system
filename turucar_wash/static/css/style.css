@@ -6128,3 +6128,286 @@ body.modal-open {
         padding-top: 10px !important;
     }
 }
+
+/* =========================================================
+   V6 final override: notice hero + larger clean icons
+   ========================================================= */
+body.endpoint-dashboard .home-notice-card,
+.endpoint-dashboard .home-notice-card {
+    overflow: hidden !important;
+}
+
+body.endpoint-dashboard .home-notice-card .notice-list-head,
+.endpoint-dashboard .home-notice-card .notice-list-head {
+    margin-bottom: 12px !important;
+}
+
+body.endpoint-dashboard .notice-hero-row,
+.endpoint-dashboard .notice-hero-row {
+    width: 100% !important;
+    min-height: 136px !important;
+    padding: 4px 4px 8px !important;
+    display: grid !important;
+    grid-template-columns: 120px minmax(0, 1fr) 18px !important;
+    align-items: center !important;
+    gap: 16px !important;
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-align: left !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+}
+
+body.endpoint-dashboard .notice-empty-row,
+.endpoint-dashboard .notice-empty-row {
+    cursor: default !important;
+}
+
+body.endpoint-dashboard .notice-hero-icon,
+.endpoint-dashboard .notice-hero-icon {
+    width: 116px !important;
+    height: 96px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: visible !important;
+}
+
+body.endpoint-dashboard .notice-hero-mega,
+.endpoint-dashboard .notice-hero-mega {
+    display: block !important;
+    width: 116px !important;
+    height: 96px !important;
+    overflow: visible !important;
+}
+
+body.endpoint-dashboard .notice-hero-copy,
+.endpoint-dashboard .notice-hero-copy {
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    gap: 8px !important;
+}
+
+body.endpoint-dashboard .notice-hero-copy strong,
+.endpoint-dashboard .notice-hero-copy strong {
+    width: 100% !important;
+    color: #151922 !important;
+    font-size: 20px !important;
+    font-weight: 900 !important;
+    line-height: 1.28 !important;
+    letter-spacing: -0.055em !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+body.endpoint-dashboard .notice-hero-copy > span,
+.endpoint-dashboard .notice-hero-copy > span {
+    width: 100% !important;
+    color: #6F7785 !important;
+    font-size: 15px !important;
+    font-weight: 650 !important;
+    line-height: 1.45 !important;
+    letter-spacing: -0.04em !important;
+    word-break: keep-all !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+}
+
+body.endpoint-dashboard .notice-hero-meta,
+.endpoint-dashboard .notice-hero-meta {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    min-width: 0 !important;
+    color: #66738A !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+}
+
+body.endpoint-dashboard .notice-hero-meta b,
+body.endpoint-dashboard .notice-hero-meta em,
+.endpoint-dashboard .notice-hero-meta b,
+.endpoint-dashboard .notice-hero-meta em {
+    font: inherit !important;
+    font-style: normal !important;
+    white-space: nowrap !important;
+}
+
+body.endpoint-dashboard .notice-hero-row > i,
+.endpoint-dashboard .notice-hero-row > i {
+    color: #8C96A6 !important;
+    font-size: 30px !important;
+    line-height: 1 !important;
+    font-style: normal !important;
+    font-weight: 900 !important;
+    justify-self: end !important;
+}
+
+body.endpoint-dashboard .home-action-card,
+.endpoint-dashboard .home-action-card {
+    justify-content: flex-start !important;
+    overflow: hidden !important;
+}
+
+body.endpoint-dashboard .home-icon-wrap,
+.endpoint-dashboard .home-icon-wrap {
+    width: 128px !important;
+    height: 112px !important;
+    flex: 0 0 112px !important;
+    margin: 0 auto 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: visible !important;
+}
+
+body.endpoint-dashboard .home-action-icon,
+.endpoint-dashboard .home-action-icon {
+    display: block !important;
+    width: 128px !important;
+    height: 112px !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+@media (min-width: 901px) {
+    body.endpoint-dashboard .notice-hero-row,
+    .endpoint-dashboard .notice-hero-row {
+        grid-template-columns: 158px minmax(0, 1fr) 24px !important;
+        min-height: 170px !important;
+        gap: 28px !important;
+        padding: 8px 18px 14px !important;
+    }
+    body.endpoint-dashboard .notice-hero-icon,
+    body.endpoint-dashboard .notice-hero-mega,
+    .endpoint-dashboard .notice-hero-icon,
+    .endpoint-dashboard .notice-hero-mega {
+        width: 150px !important;
+        height: 120px !important;
+    }
+    body.endpoint-dashboard .notice-hero-copy strong,
+    .endpoint-dashboard .notice-hero-copy strong { font-size: 24px !important; }
+    body.endpoint-dashboard .notice-hero-copy > span,
+    .endpoint-dashboard .notice-hero-copy > span { font-size: 17px !important; }
+    body.endpoint-dashboard .home-icon-wrap,
+    .endpoint-dashboard .home-icon-wrap {
+        width: 160px !important;
+        height: 140px !important;
+        flex-basis: 140px !important;
+        margin-bottom: 14px !important;
+    }
+    body.endpoint-dashboard .home-action-icon,
+    .endpoint-dashboard .home-action-icon {
+        width: 160px !important;
+        height: 140px !important;
+    }
+}
+
+@media (max-width: 900px) {
+    body.endpoint-dashboard .notice-hero-row,
+    .endpoint-dashboard .notice-hero-row {
+        grid-template-columns: 112px minmax(0, 1fr) 16px !important;
+        min-height: 128px !important;
+        gap: 12px !important;
+        padding: 0 0 6px !important;
+    }
+    body.endpoint-dashboard .notice-hero-icon,
+    body.endpoint-dashboard .notice-hero-mega,
+    .endpoint-dashboard .notice-hero-icon,
+    .endpoint-dashboard .notice-hero-mega {
+        width: 108px !important;
+        height: 88px !important;
+    }
+    body.endpoint-dashboard .notice-hero-copy strong,
+    .endpoint-dashboard .notice-hero-copy strong {
+        font-size: 18px !important;
+    }
+    body.endpoint-dashboard .notice-hero-copy > span,
+    .endpoint-dashboard .notice-hero-copy > span {
+        font-size: 13.5px !important;
+    }
+    body.endpoint-dashboard .notice-hero-meta,
+    .endpoint-dashboard .notice-hero-meta {
+        font-size: 10.5px !important;
+        gap: 8px !important;
+    }
+    body.endpoint-dashboard .home-action-card,
+    .endpoint-dashboard .home-action-card {
+        min-height: 220px !important;
+        padding: 14px 6px 48px !important;
+    }
+    body.endpoint-dashboard .home-icon-wrap,
+    .endpoint-dashboard .home-icon-wrap {
+        width: 118px !important;
+        height: 104px !important;
+        flex-basis: 104px !important;
+        margin-bottom: 8px !important;
+    }
+    body.endpoint-dashboard .home-action-icon,
+    .endpoint-dashboard .home-action-icon {
+        width: 118px !important;
+        height: 104px !important;
+    }
+}
+
+@media (max-width: 390px) {
+    body.endpoint-dashboard .notice-hero-row,
+    .endpoint-dashboard .notice-hero-row {
+        grid-template-columns: 94px minmax(0, 1fr) 14px !important;
+        min-height: 112px !important;
+        gap: 8px !important;
+    }
+    body.endpoint-dashboard .notice-hero-icon,
+    body.endpoint-dashboard .notice-hero-mega,
+    .endpoint-dashboard .notice-hero-icon,
+    .endpoint-dashboard .notice-hero-mega {
+        width: 92px !important;
+        height: 76px !important;
+    }
+    body.endpoint-dashboard .notice-hero-copy {
+        gap: 5px !important;
+    }
+    body.endpoint-dashboard .notice-hero-copy strong,
+    .endpoint-dashboard .notice-hero-copy strong {
+        font-size: 15.5px !important;
+    }
+    body.endpoint-dashboard .notice-hero-copy > span,
+    .endpoint-dashboard .notice-hero-copy > span {
+        font-size: 11px !important;
+        -webkit-line-clamp: 2 !important;
+    }
+    body.endpoint-dashboard .notice-hero-meta,
+    .endpoint-dashboard .notice-hero-meta {
+        font-size: 9.5px !important;
+    }
+    body.endpoint-dashboard .home-action-card,
+    .endpoint-dashboard .home-action-card {
+        min-height: 206px !important;
+        padding-top: 12px !important;
+    }
+    body.endpoint-dashboard .home-icon-wrap,
+    .endpoint-dashboard .home-icon-wrap {
+        width: 104px !important;
+        height: 92px !important;
+        flex-basis: 92px !important;
+        margin-bottom: 6px !important;
+    }
+    body.endpoint-dashboard .home-action-icon,
+    .endpoint-dashboard .home-action-icon {
+        width: 104px !important;
+        height: 92px !important;
+    }
+}

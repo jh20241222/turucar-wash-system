@@ -3,6 +3,7 @@
 {% set latest_notice = notice_rows[0] if notice_rows and notice_rows|length > 0 else none %}
 <div class="turu-home-v12" aria-label="TURU CAR 홈">
     <header class="home-brand-v12">
+        <img src="{{ url_for('static', filename='img/brand_t_mark.png') }}" alt="" class="home-brand-mark-v12">
         <img src="{{ url_for('static', filename='img/TuruCAR_logo.png') }}" alt="TURU CAR" class="home-brand-logo-v12">
     </header>
 

@@ -22,9 +22,9 @@
             {% if request.endpoint != 'dashboard' %}
             <button type="button" class="icon-btn back-btn" onclick="history.length > 1 ? history.back() : location.href='{{ url_for('dashboard') }}'" aria-label="뒤로가기">‹</button>
             {% endif %}
-            {% if request.endpoint in ['wash_list','wash_status','profile'] %}
+            {% if request.endpoint in ['wash_list','wash_status','profile','car_detail'] %}
             <a href="{{ url_for('dashboard') }}" class="topbar-turu-brand-v27" aria-label="TURU CAR 홈">
-                <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=27" alt="TURU CAR">
+                <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=28" alt="TURU CAR">
             </a>
             {% endif %}
         </div>

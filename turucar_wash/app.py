@@ -658,7 +658,7 @@ def delete_dashboard_notice_item(notice_id):
 @app.route("/dashboard/notice", methods=["POST"])
 @login_required
 def update_dashboard_notice():
-    if not current_user.is_master:
+    if not (current_user.is_master or current_user.username == "jeongyeon.kim"):
         flash("❌ 마스터 계정만 공지사항을 수정할 수 있습니다.")
         return redirect(url_for("dashboard"))
 
@@ -678,7 +678,7 @@ def update_dashboard_notice():
 @app.route("/dashboard/notice/<int:notice_id>/edit", methods=["POST"])
 @login_required
 def edit_dashboard_notice(notice_id):
-    if not current_user.is_master:
+    if not (current_user.is_master or current_user.username == "jeongyeon.kim"):
         flash("❌ 마스터 계정만 공지사항을 수정할 수 있습니다.")
         return redirect(url_for("dashboard"))
 
@@ -695,7 +695,7 @@ def edit_dashboard_notice(notice_id):
 @app.route("/dashboard/notice/<int:notice_id>/delete", methods=["POST"])
 @login_required
 def delete_dashboard_notice(notice_id):
-    if not current_user.is_master:
+    if not (current_user.is_master or current_user.username == "jeongyeon.kim"):
         flash("❌ 마스터 계정만 공지사항을 삭제할 수 있습니다.")
         return redirect(url_for("dashboard"))
 

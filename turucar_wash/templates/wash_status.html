@@ -14,6 +14,16 @@
         <div><span>전체 완료</span><strong>{{ rows|length }}</strong><em>건</em></div>
     </div>
 
+    <div class="turu-searchbar-v24 turu-status-searchbar-v29">
+        <input id="quick_status_search_input" placeholder="차량 번호 / 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">
+        <button type="button" onclick="document.getElementById('search_input').value=document.getElementById('quick_status_search_input').value;applyFilter();" aria-label="검색">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+        </button>
+        <button type="button" class="filter" onclick="openMobileFilter('status-filter-sheet')">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M7 12h10M10 18h4"/></svg>필터
+        </button>
+    </div>
+
     <section id="status-filter-sheet" class="filter-card app-card search-panel mobile-filter-sheet turu-filter-sheet-v24">
         <div class="mobile-filter-sheet-head"><strong>완료 이력 검색</strong><button type="button" onclick="closeMobileFilter('status-filter-sheet')" aria-label="닫기">×</button></div>
         <div class="filter-head"><div><strong>완료 이력 검색</strong><small>차량, 지역, 기간으로 조회</small></div><span>{{ rows|length }}건</span></div>

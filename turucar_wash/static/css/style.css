@@ -5930,3 +5930,158 @@ body.endpoint-dashboard .app-main {
         width: 116px !important;
     }
 }
+
+
+/* =========================================================
+   TURU HOME v14 - logo, typography, app polish refinement
+   ========================================================= */
+.turu-home-v12 {
+    --ink: #101826;
+    --muted: #687385;
+    --soft-bg: #F3F6FA;
+    --card: rgba(255,255,255,.985);
+    --shadow: 0 16px 38px rgba(15, 31, 55, .075);
+    letter-spacing: -0.035em;
+}
+.home-brand-v12 {
+    gap: 10px !important;
+    align-items: center !important;
+}
+.home-brand-mark-v12 {
+    display: block !important;
+    width: 42px !important;
+    height: 42px !important;
+    object-fit: contain !important;
+    flex: 0 0 auto !important;
+}
+.home-brand-logo-v12 {
+    width: 202px !important;
+    max-height: 46px !important;
+    object-fit: contain !important;
+    object-position: left center !important;
+}
+.home-notice-card-v12,
+.home-main-card-v12,
+.home-support-card-v12,
+.home-tabbar-v12 {
+    box-shadow: 0 12px 32px rgba(15, 31, 55, .075) !important;
+    border-color: rgba(218, 226, 236, .9) !important;
+}
+.notice-head-v12 h2 {
+    font-weight: 760 !important;
+    letter-spacing: -0.055em !important;
+}
+.notice-more-v12 {
+    font-weight: 650 !important;
+    color: #111827 !important;
+}
+.notice-copy-v12 strong {
+    font-weight: 720 !important;
+    letter-spacing: -0.05em !important;
+}
+.notice-copy-v12 span {
+    font-weight: 430 !important;
+    color: #667085 !important;
+    letter-spacing: -0.035em !important;
+}
+.home-main-card-v12 strong {
+    font-weight: 760 !important;
+    letter-spacing: -0.055em !important;
+}
+.home-main-card-v12 small {
+    font-weight: 430 !important;
+    color: #667085 !important;
+    letter-spacing: -0.035em !important;
+}
+.home-support-card-v12 strong {
+    font-weight: 720 !important;
+    letter-spacing: -0.045em !important;
+}
+.home-tab-v12 {
+    font-weight: 560 !important;
+    letter-spacing: -0.035em !important;
+}
+.home-tab-v12.active {
+    font-weight: 650 !important;
+}
+.main-icon-v12 img,
+.notice-visual-v12 img {
+    filter: drop-shadow(0 10px 18px rgba(15, 31, 55, .06));
+}
+
+@media (min-width: 901px) {
+    .home-brand-mark-v12 { width: 46px !important; height: 46px !important; }
+    .home-brand-logo-v12 { width: 218px !important; max-height: 48px !important; }
+}
+
+@media (max-width: 900px) {
+    .turu-home-v12 {
+        background:
+            radial-gradient(circle at 12% 0%, rgba(255, 144, 31, .055), transparent 34%),
+            linear-gradient(180deg, #F8FAFC 0%, #EFF4F9 100%);
+    }
+    .home-brand-v12 {
+        height: 44px !important;
+        margin-bottom: 28px !important;
+        padding-left: 2px !important;
+    }
+    .home-brand-mark-v12 {
+        width: 34px !important;
+        height: 34px !important;
+    }
+    .home-brand-logo-v12 {
+        width: 156px !important;
+        max-height: 34px !important;
+    }
+    .home-notice-card-v12 {
+        border-radius: 24px !important;
+        padding: 20px 18px 22px !important;
+    }
+    .notice-head-v12 h2 { font-size: 22px !important; }
+    .notice-more-v12 { height: 36px !important; min-width: 62px !important; font-size: 12px !important; }
+    .notice-body-v12 {
+        grid-template-columns: 102px minmax(0, 1fr) !important;
+        gap: 16px !important;
+        min-height: 118px !important;
+    }
+    .notice-visual-v12 img { width: 104px !important; }
+    .notice-copy-v12 strong {
+        font-size: 15px !important;
+        line-height: 1.34 !important;
+        margin-bottom: 8px !important;
+        display: -webkit-box !important;
+        -webkit-box-orient: vertical !important;
+        -webkit-line-clamp: 1 !important;
+        overflow: hidden !important;
+    }
+    .notice-copy-v12 span {
+        font-size: 12px !important;
+        line-height: 1.52 !important;
+        -webkit-line-clamp: 3 !important;
+    }
+    .home-main-card-v12 {
+        min-height: 248px !important;
+        padding-top: 18px !important;
+    }
+    .main-icon-v12 {
+        width: 108px !important;
+        height: 100px !important;
+        flex-basis: 100px !important;
+        margin-bottom: 18px !important;
+    }
+    .home-main-card-v12 strong { font-size: 18px !important; }
+    .home-main-card-v12 small { font-size: 11px !important; }
+    .home-support-card-v12 strong { font-size: 16px !important; }
+}
+
+@media (max-width: 390px) {
+    .home-brand-mark-v12 { width: 30px !important; height: 30px !important; }
+    .home-brand-logo-v12 { width: 144px !important; max-height: 31px !important; }
+    .notice-body-v12 { grid-template-columns: 90px minmax(0,1fr) !important; gap: 12px !important; }
+    .notice-visual-v12 img { width: 92px !important; }
+    .notice-copy-v12 strong { font-size: 14px !important; }
+    .notice-copy-v12 span { font-size: 11px !important; }
+    .main-icon-v12 { width: 94px !important; height: 88px !important; flex-basis: 88px !important; }
+    .home-main-card-v12 { min-height: 226px !important; }
+    .home-main-card-v12 strong { font-size: 16px !important; }
+}

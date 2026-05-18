@@ -358,6 +358,32 @@ def load_user(user_id):
     return None
 
 
+def can_manage_support(user):
+    return bool(user and (getattr(user, 'is_master', False) or getattr(user, 'username', '') == 'jeongyeon.kim'))
+
+
+def get_support_ticket_total_count():
+    if not current_user.is_authenticated or not can_manage_support(current_user):
+        return 0
+    conn = get_user_db()
+    try:
+        row = conn.execute("SELECT COUNT(*) AS cnt FROM support_tickets").fetchone()
+        return int(row["cnt"] if row else 0)
+    except sqlite3.Error:
+        return 0
+    finally:
+        conn.close()
+
+
+@app.context_processor
+def inject_support_badge_count():
+    try:
+        count = get_support_ticket_total_count()
+    except Exception:
+        count = 0
+    return {"support_badge_count": count}
+
+
 # =========================================================
 # 공통 권한 함수
 # =========================================================
@@ -658,7 +684,7 @@ def delete_dashboard_notice_item(notice_id):
 @app.route("/dashboard/notice", methods=["POST"])
 @login_required
 def update_dashboard_notice():
-    if not (current_user.is_master or current_user.username == "jeongyeon.kim"):
+    if not can_manage_support(current_user):
         flash("❌ 마스터 계정만 공지사항을 수정할 수 있습니다.")
         return redirect(url_for("dashboard"))
 
@@ -678,7 +704,7 @@ def update_dashboard_notice():
 @app.route("/dashboard/notice/<int:notice_id>/edit", methods=["POST"])
 @login_required
 def edit_dashboard_notice(notice_id):
-    if not (current_user.is_master or current_user.username == "jeongyeon.kim"):
+    if not can_manage_support(current_user):
         flash("❌ 마스터 계정만 공지사항을 수정할 수 있습니다.")
         return redirect(url_for("dashboard"))
 
@@ -695,7 +721,7 @@ def edit_dashboard_notice(notice_id):
 @app.route("/dashboard/notice/<int:notice_id>/delete", methods=["POST"])
 @login_required
 def delete_dashboard_notice(notice_id):
-    if not (current_user.is_master or current_user.username == "jeongyeon.kim"):
+    if not can_manage_support(current_user):
         flash("❌ 마스터 계정만 공지사항을 삭제할 수 있습니다.")
         return redirect(url_for("dashboard"))
 
@@ -1670,11 +1696,85 @@ def support_chat_submit():
 
 
 
+
+
+@app.route("/support-alerts/poll")
+@login_required
+def support_alerts_poll():
+    """Return newly registered support ticket count for master screen.
+
+    This is intentionally lightweight polling for the case where the web/PWA app
+    is already open. It does not send OS-level push notifications.
+    """
+    if not can_manage_support(current_user):
+        return jsonify({"ok": False, "message": "forbidden"}), 403
+
+    try:
+        since_id = int(request.args.get("since_id", 0) or 0)
+    except (TypeError, ValueError):
+        since_id = 0
+
+    conn = get_user_db()
+    params = []
+    where = "WHERE 1=1"
+
+
+    latest_row = conn.execute(
+        f"SELECT COALESCE(MAX(id), 0) AS max_id FROM support_tickets {where}",
+        params
+    ).fetchone()
+    max_id = int(latest_row["max_id"] if latest_row else 0)
+
+    total_row = conn.execute(
+        f"SELECT COUNT(*) AS cnt FROM support_tickets {where}",
+        params
+    ).fetchone()
+    total_count = int(total_row["cnt"] if total_row else 0)
+
+    count_params = list(params) + [since_id]
+    count_row = conn.execute(
+        f"SELECT COUNT(*) AS cnt FROM support_tickets {where} AND id > ?",
+        count_params
+    ).fetchone()
+    new_count = int(count_row["cnt"] if count_row else 0)
+
+    latest_ticket = None
+    if new_count:
+        ticket = conn.execute(
+            f"""
+            SELECT id, category, requester, car_number, created_at
+            FROM support_tickets
+            {where} AND id > ?
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            count_params
+        ).fetchone()
+        if ticket:
+            latest_ticket = {
+                "id": ticket["id"],
+                "category": ticket["category"],
+                "requester": ticket["requester"],
+                "car_number": ticket["car_number"],
+                "created_at": ticket["created_at"],
+            }
+
+    conn.close()
+    return jsonify({
+        "ok": True,
+        "max_id": max_id,
+        "total_count": total_count,
+        "new_count": new_count,
+        "latest_ticket": latest_ticket,
+        "manage_url": url_for("support_manage"),
+    })
+
+
 @app.route("/support-manage")
 @login_required
 def support_manage():
-    if not current_user.is_admin:
-        flash("❌ 관리자 이상만 문의 관리를 볼 수 있습니다.")
+    if not can_manage_support(current_user):
+        flash("❌ 문의 관리는 마스터 계정만 볼 수 있습니다.")
         return redirect(url_for("dashboard"))
 
     status = request.args.get("status", "")
@@ -1685,9 +1785,6 @@ def support_manage():
         query += " AND status=?"
         params.append(status)
 
-    if not current_user.is_master and getattr(current_user, "vendor", ""):
-        query += " AND vendor=?"
-        params.append(current_user.vendor)
 
     query += " ORDER BY id DESC"
 
@@ -1701,8 +1798,8 @@ def support_manage():
 @app.route("/support-manage/<int:ticket_id>/reply", methods=["POST"])
 @login_required
 def support_reply(ticket_id):
-    if not current_user.is_admin:
-        flash("❌ 관리자 이상만 문의에 답변할 수 있습니다.")
+    if not can_manage_support(current_user):
+        flash("❌ 문의 답변은 마스터 계정만 가능합니다.")
         return redirect(url_for("dashboard"))
 
     status = request.form.get("status", "확인중").strip() or "확인중"
@@ -1711,24 +1808,14 @@ def support_reply(ticket_id):
     conn = get_user_db()
     cur = conn.cursor()
 
-    if not current_user.is_master and getattr(current_user, "vendor", ""):
-        cur.execute(
-            """
-            UPDATE support_tickets
-            SET status=?, admin_reply=?, updated_at=?
-            WHERE id=? AND vendor=?
-            """,
-            (status, admin_reply, datetime.now().strftime("%Y-%m-%d %H:%M"), ticket_id, current_user.vendor)
-        )
-    else:
-        cur.execute(
-            """
-            UPDATE support_tickets
-            SET status=?, admin_reply=?, updated_at=?
-            WHERE id=?
-            """,
-            (status, admin_reply, datetime.now().strftime("%Y-%m-%d %H:%M"), ticket_id)
-        )
+    cur.execute(
+        """
+        UPDATE support_tickets
+        SET status=?, admin_reply=?, updated_at=?
+        WHERE id=?
+        """,
+        (status, admin_reply, datetime.now().strftime("%Y-%m-%d %H:%M"), ticket_id)
+    )
 
     if admin_reply:
         cur.execute(

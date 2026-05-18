@@ -7658,3 +7658,56 @@ body.endpoint-dashboard .app-main {
   }
   .app-main { padding-left: 36px !important; padding-right: 36px !important; }
 }
+
+
+/* ===== v31 mobile/PWA app transition loader ===== */
+.turu-app-loader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+  background: rgba(248, 250, 252, .28);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+}
+.turu-app-loader-overlay.is-visible {
+  display: flex;
+  opacity: 1;
+  pointer-events: auto;
+}
+.turu-app-loader-card {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, .88);
+  box-shadow: 0 18px 50px rgba(17, 24, 39, .13), inset 0 0 0 1px rgba(255, 255, 255, .7);
+  transform: translateY(8px) scale(.96);
+  animation: turuLoaderPop .22s ease forwards;
+}
+.turu-app-loader-spinner {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 3px solid rgba(255, 106, 0, .16);
+  border-top-color: #ff6a00;
+  border-right-color: #ffb300;
+  animation: turuLoaderSpin .72s linear infinite;
+}
+@keyframes turuLoaderSpin { to { transform: rotate(360deg); } }
+@keyframes turuLoaderPop { to { transform: translateY(0) scale(1); } }
+@media (min-width: 901px) and (display-mode: browser) {
+  .turu-app-loader-overlay { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .turu-app-loader-overlay,
+  .turu-app-loader-card,
+  .turu-app-loader-spinner { animation: none !important; transition: none !important; }
+}

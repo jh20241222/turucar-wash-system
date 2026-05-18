@@ -1,13 +1,13 @@
-const CACHE_NAME = 'turu-home-v14-logo-typo4';
+const CACHE_NAME = 'turu-home-v15-polish';
 const APP_SHELL = [
   '/offline',
   '/static/css/style.css',
-  '/static/img/TuruCAR_logo.png',
-  '/static/img/brand_t_mark.png',
+  '/static/img/turucar_logo_brand.png',
   '/static/img/icon-megaphone.png',
   '/static/img/icon-wash-order.png',
   '/static/img/icon-control.png',
   '/static/img/icon-complete.png',
+  '/static/img/icon-urgent-wash.png',
   '/static/img/icons/favicon-64.png',
   '/static/img/icons/icon-192.png',
   '/static/img/icons/icon-512.png',

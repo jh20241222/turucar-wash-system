@@ -12,10 +12,19 @@
         <a href="{{ url_for('dashboard') }}" class="notice-more-btn">홈으로</a>
     </div>
 
+    {% if current_user.is_master or current_user.username == "jeongyeon.kim" %}
+    <form method="post" action="{{ url_for('update_dashboard_notice') }}" class="notice-form notice-create-form notice-page-create-form">
+        <input type="hidden" name="notice_author" value="투루카 담당자">
+        <label><span>제목</span><input type="text" name="notice_title" class="app-input" maxlength="80" placeholder="공지사항 제목을 입력하세요"></label>
+        <label><span>내용</span><textarea name="notice_body" class="app-input notice-textarea" rows="4" maxlength="500" placeholder="공지사항 내용을 입력하세요"></textarea></label>
+        <button type="submit" class="btn-primary notice-save-btn">공지사항 등록</button>
+    </form>
+    {% endif %}
+
     {% if notice_rows %}
     <div class="notice-table-wrap">
         <table class="notice-table notice-board-table">
-            <thead><tr><th>번호</th><th>제목</th><th>작성일</th><th>작성자</th>{% if current_user.is_master %}<th class="notice-manage-head">관리</th>{% endif %}</tr></thead>
+            <thead><tr><th>번호</th><th>제목</th><th>작성일</th><th>작성자</th>{% if current_user.is_master or current_user.username == "jeongyeon.kim" %}<th class="notice-manage-head">관리</th>{% endif %}</tr></thead>
             <tbody>
                 {% for notice in notice_rows %}
                 <tr class="notice-row">
@@ -26,7 +35,7 @@
                         </button>
                     </td>
                     <td>{{ notice.created_at }}</td><td>{{ notice.author }}</td>
-                    {% if current_user.is_master %}
+                    {% if current_user.is_master or current_user.username == "jeongyeon.kim" %}
                     <td class="notice-kebab-cell">
                         <div class="notice-kebab-wrap">
                             <button type="button" class="notice-kebab-btn" onclick="toggleNoticeMenu(event, this)" aria-label="공지사항 관리">⋮</button>
@@ -69,7 +78,7 @@
     </section>
 </div>
 
-{% if current_user.is_master %}
+{% if current_user.is_master or current_user.username == "jeongyeon.kim" %}
 <div class="notice-modal-backdrop" id="notice-edit-modal" hidden>
     <section class="notice-modal turu-mini-modal notice-edit-modal" role="dialog" aria-modal="true" aria-labelledby="notice-edit-title">
         <button type="button" class="notice-modal-close" onclick="closeNoticeEdit()" aria-label="닫기">×</button>

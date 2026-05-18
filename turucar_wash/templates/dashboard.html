@@ -11,22 +11,22 @@
             <h2 id="homeNoticeTitle"><a href="{{ url_for('notices') }}" class="notice-heading-link-v12">공지사항</a></h2>
             <a href="{{ url_for('notices') }}" class="notice-more-v12">더보기</a>
         </div>
-        <a href="{{ url_for('notices') }}" class="notice-link-v12">
-            <div class="notice-body-v12">
-                <div class="notice-visual-v12" aria-hidden="true">
-                    <img src="{{ url_for('static', filename='img/icon-megaphone.png') }}" alt="">
-                </div>
-                <div class="notice-copy-v12">
-                    {% if latest_notice %}
+        <div class="notice-body-v12">
+            <div class="notice-visual-v12" aria-hidden="true">
+                <img src="{{ url_for('static', filename='img/icon-megaphone.png') }}" alt="">
+            </div>
+            <div class="notice-copy-v12">
+                {% if latest_notice %}
+                    <button type="button" class="home-notice-title-button-v12" data-title="{{ latest_notice.title|e }}" data-body="{{ latest_notice.body|e }}" data-created="{{ latest_notice.created_at|e }}" data-author="{{ latest_notice.author|e }}" onclick="openHomeNoticeViewer(this)">
                         <strong>{{ latest_notice.title }}</strong>
                         <span>{{ latest_notice.body }}</span>
-                    {% else %}
-                        <strong>아직 등록된 공지사항이 없습니다.</strong>
-                        <span>공지사항을 작성하면 이곳에 누적됩니다.</span>
-                    {% endif %}
-                </div>
+                    </button>
+                {% else %}
+                    <strong>아직 등록된 공지사항이 없습니다.</strong>
+                    <span>공지사항을 작성하면 이곳에 누적됩니다.</span>
+                {% endif %}
             </div>
-        </a>
+        </div>
     </section>
 
     <section class="home-main-grid-v12" aria-label="주요 메뉴">
@@ -51,13 +51,13 @@
     </section>
 
     <section class="home-support-grid-v12" aria-label="지원 메뉴">
-        <a href="{{ url_for('support_chat') }}" class="home-support-card-v12">
+        <button type="button" class="home-support-card-v12 home-support-button-v12" onclick="showHomeDevToast()">
             <span class="support-visual-v12" aria-hidden="true">
                 <img src="{{ url_for('static', filename='img/icon-urgent-wash.png') }}" alt="">
             </span>
             <strong>긴급 세차</strong>
             <em>›</em>
-        </a>
+        </button>
         <a href="{{ url_for('support_chat') }}" class="home-support-card-v12">
             <span class="support-visual-v12 chat-v12" aria-hidden="true">
                 <svg viewBox="0 0 64 64" fill="none">
@@ -88,4 +88,45 @@
         </a>
     </nav>
 </div>
+
+<div class="notice-modal-backdrop" id="home-notice-viewer-modal" hidden>
+    <section class="notice-modal turu-mini-modal" role="dialog" aria-modal="true" aria-labelledby="home-notice-viewer-title">
+        <button type="button" class="notice-modal-close" onclick="closeHomeNoticeViewer()" aria-label="닫기">×</button>
+        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="notice-modal-logo">
+        <p class="eyebrow">Notice</p>
+        <h2 id="home-notice-viewer-title"></h2>
+        <div class="notice-modal-meta"><span id="home-notice-viewer-created"></span><span id="home-notice-viewer-author"></span></div>
+        <p class="notice-modal-body" id="home-notice-viewer-body"></p>
+    </section>
+</div>
+<div class="home-dev-toast-v12" id="home-dev-toast-v12" hidden>해당 기능은 개발중입니다.</div>
+<script>
+function openHomeNoticeViewer(button){
+  document.getElementById('home-notice-viewer-title').textContent=button.dataset.title||'공지사항';
+  document.getElementById('home-notice-viewer-body').textContent=button.dataset.body||'공지사항 내용이 없습니다.';
+  document.getElementById('home-notice-viewer-created').textContent=button.dataset.created||'';
+  document.getElementById('home-notice-viewer-author').textContent=button.dataset.author||'투루카 담당자';
+  document.getElementById('home-notice-viewer-modal').hidden=false;
+  document.body.classList.add('modal-open');
+}
+function closeHomeNoticeViewer(){
+  document.getElementById('home-notice-viewer-modal').hidden=true;
+  document.body.classList.remove('modal-open');
+}
+let homeDevToastTimer=null;
+function showHomeDevToast(){
+  const toast=document.getElementById('home-dev-toast-v12');
+  toast.hidden=false;
+  toast.classList.add('show');
+  clearTimeout(homeDevToastTimer);
+  homeDevToastTimer=setTimeout(function(){toast.classList.remove('show');toast.hidden=true;},2200);
+}
+document.addEventListener('keydown',function(event){
+  if(event.key==='Escape'){
+    const modal=document.getElementById('home-notice-viewer-modal');
+    if(modal && !modal.hidden){closeHomeNoticeViewer();}
+  }
+});
+</script>
+
 {% endblock %}

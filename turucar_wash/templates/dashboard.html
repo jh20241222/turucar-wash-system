@@ -1,194 +1,480 @@
 {% extends "base.html" %}
-{% block document_title %}Turu Wash · 홈{% endblock %}
 {% block content %}
-
-<div class="turu-home-v8">
-    <header class="turu-home-brand">
-        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="turu-home-logo">
-    </header>
-
-    <section class="turu-notice-card" aria-label="공지사항">
-        <div class="turu-notice-head">
-            <h2>공지사항</h2>
-            <a href="{{ url_for('notices') }}" class="turu-notice-more">더보기</a>
-        </div>
-        <div class="turu-notice-body">
-            <div class="turu-megaphone" aria-hidden="true">
-                <svg viewBox="0 0 180 130" role="img">
-                    <defs>
-                        <linearGradient id="megaphoneOrange" x1="0" x2="1" y1="0" y2="1">
-                            <stop offset="0" stop-color="#FF9B00"/>
-                            <stop offset="1" stop-color="#FF5A00"/>
-                        </linearGradient>
-                        <linearGradient id="megaphoneYellow" x1="0" x2="1" y1="0" y2="1">
-                            <stop offset="0" stop-color="#FFD43B"/>
-                            <stop offset="1" stop-color="#FFB000"/>
-                        </linearGradient>
-                        <filter id="softMegaShadow" x="-20%" y="-20%" width="140%" height="140%">
-                            <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#ff8a00" flood-opacity=".15"/>
-                        </filter>
-                    </defs>
-                    <ellipse cx="80" cy="108" rx="58" ry="10" fill="#FFE9B8" opacity=".85"/>
-                    <path d="M43 69h27v40c0 8-6 13-14 13h-3c-6 0-11-4-12-10l-6-33c-1-5 3-10 8-10z" fill="url(#megaphoneOrange)" filter="url(#softMegaShadow)"/>
-                    <rect x="21" y="48" width="42" height="35" rx="17" fill="url(#megaphoneOrange)"/>
-                    <path d="M57 50l76-35v101L57 82z" fill="#FFF0CA"/>
-                    <path d="M57 50l22-10v52L57 82z" fill="#FFDFA0" opacity=".7"/>
-                    <ellipse cx="132" cy="65" rx="21" ry="49" fill="url(#megaphoneYellow)"/>
-                    <ellipse cx="132" cy="65" rx="12" ry="34" fill="#FFF3CF" opacity=".92"/>
-                    <path d="M154 38l21-17M160 66h25M154 94l21 17" fill="none" stroke="#FF7A00" stroke-width="8" stroke-linecap="round"/>
-                </svg>
-            </div>
-            <div class="turu-notice-copy">
-                <strong>아직 등록된 공지사항이 없습니다.</strong>
-                <span>공지사항을 작성하면</span>
-                <span>이곳에 누적됩니다.</span>
-            </div>
-        </div>
-    </section>
-
-    <section class="turu-home-actions" aria-label="주요 메뉴">
-        <a class="turu-main-card card-yellow" href="{{ url_for('wash_list') }}">
-            <div class="turu-action-illo" aria-hidden="true">
-                <svg viewBox="0 0 190 150" role="img">
-                    <defs>
-                        <linearGradient id="clipY" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#FFC400"/><stop offset="1" stop-color="#FF8A00"/></linearGradient>
-                        <linearGradient id="carCream1" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#FFF7E9"/><stop offset="1" stop-color="#FFE3B7"/></linearGradient>
-                        <linearGradient id="navy1" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#293241"/><stop offset="1" stop-color="#101827"/></linearGradient>
-                    </defs>
-                    <ellipse cx="90" cy="132" rx="72" ry="10" fill="#FFE9B8" opacity=".8"/>
-                    <rect x="34" y="16" width="78" height="112" rx="14" fill="#fff" stroke="url(#clipY)" stroke-width="7"/>
-                    <rect x="58" y="5" width="38" height="22" rx="7" fill="url(#clipY)"/>
-                    <circle cx="77" cy="8" r="9" fill="#FFD77A"/>
-                    <path d="M53 47l7 7 15-17M53 72l7 7 15-17M53 97l7 7 15-17" fill="none" stroke="#FF7A00" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M87 50h29M87 75h25M87 100h20" fill="none" stroke="#D8CFC1" stroke-width="6" stroke-linecap="round"/>
-                    <path d="M132 49l5 12 12 5-12 5-5 12-5-12-12-5 12-5z" fill="#FFD568" opacity=".75"/>
-                    <path d="M153 82l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#FFE09A"/>
-                    <g transform="translate(78 78)">
-                        <path d="M12 31h72c8 0 14-6 14-14v-2c0-6-4-11-10-13L76-2C70-14 62-20 49-20H33c-12 0-20 7-27 20L0 15c-3 8 3 16 12 16z" fill="url(#carCream1)"/>
-                        <path d="M25-4h22c6 0 10 3 13 10l5 11H20z" fill="url(#navy1)"/>
-                        <path d="M67 6h18c5 0 9 4 10 9l.5 2H70z" fill="url(#navy1)"/>
-                        <path d="M6 9h16c6 0 10 4 10 10v12H15c-4 0-8-3-9-7z" fill="#FF7A00"/>
-                        <path d="M32 31h36" stroke="#111827" stroke-width="5" stroke-linecap="round"/>
-                        <path d="M74 19h17" stroke="#111827" stroke-width="5" stroke-linecap="round"/>
-                        <ellipse cx="30" cy="31" rx="9" ry="16" fill="#122033"/><ellipse cx="30" cy="31" rx="4" ry="9" fill="#fff" opacity=".85"/>
-                        <ellipse cx="75" cy="31" rx="9" ry="16" fill="#122033"/><ellipse cx="75" cy="31" rx="4" ry="9" fill="#fff" opacity=".85"/>
-                        <path d="M84 9h11" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".9"/>
-                    </g>
-                </svg>
-            </div>
-            <strong>세차 오더</strong>
-            <small>대상 차량 확인</small>
-            <span class="turu-card-arrow">›</span>
-        </a>
-
-        <a class="turu-main-card card-orange" href="https://pm.peoplecar.co.kr:8082/#">
-            <div class="turu-action-illo" aria-hidden="true">
-                <svg viewBox="0 0 190 150" role="img">
-                    <defs>
-                        <linearGradient id="orangeA" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#FF8A00"/><stop offset="1" stop-color="#FF4E00"/></linearGradient>
-                        <linearGradient id="carCream2" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#FFF8EF"/><stop offset="1" stop-color="#FFE5BB"/></linearGradient>
-                        <linearGradient id="navy2" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#293241"/><stop offset="1" stop-color="#101827"/></linearGradient>
-                    </defs>
-                    <ellipse cx="96" cy="132" rx="72" ry="10" fill="#FFE9B8" opacity=".8"/>
-                    <circle cx="76" cy="45" r="35" fill="#fff" stroke="url(#orangeA)" stroke-width="8"/>
-                    <path d="M76 24v22l17 12" stroke="#FF6A00" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                    <path d="M76 11v8M76 71v8M43 45h8M101 45h8M53 22l6 6M99 22l-6 6M53 68l6-6M99 68l-6-6" stroke="#FF7A00" stroke-width="5" stroke-linecap="round"/>
-                    <rect x="126" y="44" width="34" height="31" rx="8" fill="#172132"/>
-                    <path d="M134 44v-9c0-13 18-13 18 0v9" fill="none" stroke="#172132" stroke-width="7" stroke-linecap="round"/>
-                    <path d="M143 56v9" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
-                    <circle cx="143" cy="56" r="5" fill="#fff"/>
-                    <g transform="translate(49 78)">
-                        <path d="M12 31h72c8 0 14-6 14-14v-2c0-6-4-11-10-13L76-2C70-14 62-20 49-20H33c-12 0-20 7-27 20L0 15c-3 8 3 16 12 16z" fill="url(#carCream2)"/>
-                        <path d="M25-4h22c6 0 10 3 13 10l5 11H20z" fill="url(#navy2)"/>
-                        <path d="M67 6h18c5 0 9 4 10 9l.5 2H70z" fill="url(#navy2)"/>
-                        <path d="M6 9h16c6 0 10 4 10 10v12H15c-4 0-8-3-9-7z" fill="#FF7A00"/>
-                        <path d="M32 31h36" stroke="#111827" stroke-width="5" stroke-linecap="round"/>
-                        <path d="M74 19h17" stroke="#111827" stroke-width="5" stroke-linecap="round"/>
-                        <ellipse cx="30" cy="31" rx="9" ry="16" fill="#122033"/><ellipse cx="30" cy="31" rx="4" ry="9" fill="#fff" opacity=".85"/>
-                        <ellipse cx="75" cy="31" rx="9" ry="16" fill="#122033"/><ellipse cx="75" cy="31" rx="4" ry="9" fill="#fff" opacity=".85"/>
-                        <path d="M84 9h11" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".9"/>
-                    </g>
-                    <path d="M39 94l-13-8M37 114l-16 1M153 94l13-8M155 114l16 1" stroke="#FF7A00" stroke-width="7" stroke-linecap="round"/>
-                </svg>
-            </div>
-            <strong>예약/문제어</strong>
-            <small>예약/제어 관리자앱</small>
-            <span class="turu-card-arrow">›</span>
-        </a>
-
-        <a class="turu-main-card card-red" href="{{ url_for('wash_status') }}">
-            <div class="turu-action-illo" aria-hidden="true">
-                <svg viewBox="0 0 190 150" role="img">
-                    <defs>
-                        <linearGradient id="redA" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#FF5572"/><stop offset="1" stop-color="#E91E4D"/></linearGradient>
-                        <linearGradient id="carCream3" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#FFF8EF"/><stop offset="1" stop-color="#FFE5BB"/></linearGradient>
-                        <linearGradient id="navy3" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#293241"/><stop offset="1" stop-color="#101827"/></linearGradient>
-                    </defs>
-                    <ellipse cx="95" cy="132" rx="74" ry="10" fill="#FFD9E1" opacity=".9"/>
-                    <path d="M58 14h68l26 26v84H58z" fill="#fff" stroke="url(#redA)" stroke-width="7" stroke-linejoin="round"/>
-                    <path d="M126 14v28h26" fill="#FF9AAA" opacity=".7"/>
-                    <path d="M78 47h35M78 72h48M78 96h37" stroke="#F4B5C0" stroke-width="7" stroke-linecap="round"/>
-                    <path d="M48 48l4 5 10-12M48 73l4 5 10-12M48 98l4 5 10-12" fill="none" stroke="#FF5572" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M32 63l4 9 9 4-9 4-4 9-4-9-9-4 9-4zM166 51l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#FF9AAA" opacity=".8"/>
-                    <g transform="translate(43 88)">
-                        <path d="M12 31h72c8 0 14-6 14-14v-2c0-6-4-11-10-13L76-2C70-14 62-20 49-20H33c-12 0-20 7-27 20L0 15c-3 8 3 16 12 16z" fill="url(#carCream3)"/>
-                        <path d="M25-4h22c6 0 10 3 13 10l5 11H20z" fill="url(#navy3)"/>
-                        <path d="M67 6h18c5 0 9 4 10 9l.5 2H70z" fill="url(#navy3)"/>
-                        <path d="M6 9h16c6 0 10 4 10 10v12H15c-4 0-8-3-9-7z" fill="#FF7A00"/>
-                        <path d="M32 31h36" stroke="#111827" stroke-width="5" stroke-linecap="round"/>
-                        <path d="M74 19h17" stroke="#111827" stroke-width="5" stroke-linecap="round"/>
-                        <ellipse cx="30" cy="31" rx="9" ry="16" fill="#122033"/><ellipse cx="30" cy="31" rx="4" ry="9" fill="#fff" opacity=".85"/>
-                        <ellipse cx="75" cy="31" rx="9" ry="16" fill="#122033"/><ellipse cx="75" cy="31" rx="4" ry="9" fill="#fff" opacity=".85"/>
-                    </g>
-                    <circle cx="136" cy="106" r="30" fill="url(#redA)"/>
-                    <path d="M121 106l10 10 23-26" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </div>
-            <strong>완료 현황</strong>
-            <small>작업 기록 조회</small>
-            <span class="turu-card-arrow">›</span>
-        </a>
-    </section>
-
-    <section class="turu-support-row" aria-label="빠른 요청">
-        <a href="javascript:void(0)" onclick="showUrgentWashComingSoon()" class="turu-support-card support-urgent">
-            <span class="support-icon" aria-hidden="true">
-                <svg viewBox="0 0 64 64" role="img">
-                    <path d="M20 42V29c0-8 5-14 12-14s12 6 12 14v13" fill="#FFE7E4"/>
-                    <path d="M20 42V29c0-8 5-14 12-14s12 6 12 14v13" fill="none" stroke="#FF3158" stroke-width="4" stroke-linecap="round"/>
-                    <path d="M15 45h34" stroke="#172132" stroke-width="5" stroke-linecap="round"/>
-                    <path d="M11 24l-6-4M53 24l6-4M32 10V4" stroke="#FF4E00" stroke-width="4" stroke-linecap="round"/>
-                </svg>
-            </span>
-            <strong>긴급 세차</strong>
-            <i>›</i>
-        </a>
-        <a href="{{ url_for('support_chat') }}" class="turu-support-card support-chat">
-            <span class="support-icon" aria-hidden="true">
-                <svg viewBox="0 0 64 64" role="img">
-                    <path d="M14 15h36c5 0 8 3 8 8v14c0 5-3 8-8 8H30L16 55V45h-2c-5 0-8-3-8-8V23c0-5 3-8 8-8z" fill="#FFF3D3"/>
-                    <path d="M14 15h36c5 0 8 3 8 8v14c0 5-3 8-8 8H30L16 55V45h-2c-5 0-8-3-8-8V23c0-5 3-8 8-8z" fill="none" stroke="#FF9800" stroke-width="4" stroke-linejoin="round"/>
-                    <path d="M23 30h.1M32 30h.1M41 30h.1" stroke="#FF9800" stroke-width="5" stroke-linecap="round"/>
-                </svg>
-            </span>
-            <strong>문의하기</strong>
-            <i>›</i>
-        </a>
-    </section>
-</div>
-
-<script>
-function showUrgentWashComingSoon(){
-    const toast = document.createElement("div");
-    toast.className = "urgent-dev-toast";
-    toast.textContent = "긴급세차 요청 기능은 개발중입니다.";
-    document.body.appendChild(toast);
-    setTimeout(() => toast.classList.add("show"), 10);
-    setTimeout(() => {
-        toast.classList.remove("show");
-        setTimeout(() => toast.remove(), 250);
-    }, 1800);
+<style>
+/* ===== TURU HOME V9: preview-matched, dashboard-only ===== */
+html, body { min-height: 100%; }
+body {
+  margin: 0 !important;
+  background:
+    radial-gradient(circle at 88% -10%, rgba(255,128,33,.08), transparent 30%),
+    linear-gradient(180deg,#fbfcfe 0%,#f4f7fb 56%,#edf2f8 100%) !important;
+  font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  color: #111827 !important;
 }
-</script>
+.layout { display: block !important; min-height: 100vh !important; }
+.sidebar, .desktop-sidebar, .app-topbar { display: none !important; }
+.content, .app-main {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100vh !important;
+  background: transparent !important;
+}
 
+.turu-home-v9 {
+  --orange: #ff6b00;
+  --yellow: #fbc400;
+  --red: #eb2451;
+  --ink: #111827;
+  --muted: #687385;
+  --line: #e3e9f1;
+  --shadow: 0 16px 38px rgba(9,30,63,.075);
+  width: min(100%, 430px);
+  margin: 0 auto;
+  min-height: 100svh;
+  padding: calc(32px + env(safe-area-inset-top)) 18px calc(104px + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.turu-home-logo { margin: 0 0 28px; display: flex; align-items: center; }
+.turu-home-logo img { width: 176px; height: auto; display: block; object-fit: contain; }
+
+.turu-card {
+  background: rgba(255,255,255,.97);
+  border: 1px solid rgba(221,228,237,.9);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+}
+
+.notice-card-v9 {
+  padding: 22px 22px 24px;
+  margin-bottom: 26px;
+}
+.notice-head-v9 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.notice-head-v9 h2 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.15;
+  letter-spacing: -.055em;
+  font-weight: 800;
+  color: var(--ink);
+}
+.notice-more-v9 {
+  min-width: 64px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 15px;
+  border-radius: 999px;
+  border: 1px solid #dfe6f0;
+  background: #fff;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 5px 14px rgba(9,30,63,.045);
+}
+.notice-body-v9 {
+  min-height: 138px;
+  display: grid;
+  grid-template-columns: 126px minmax(0,1fr);
+  align-items: center;
+  gap: 18px;
+}
+.notice-mega-v9 {
+  width: 126px;
+  height: 112px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.notice-mega-v9 svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.notice-copy-v9 strong {
+  display: block;
+  margin: 0 0 12px;
+  color: var(--ink);
+  font-size: 19px;
+  line-height: 1.34;
+  letter-spacing: -.055em;
+  font-weight: 800;
+  word-break: keep-all;
+}
+.notice-copy-v9 span {
+  display: block;
+  color: #6f7785;
+  font-size: 16px;
+  line-height: 1.55;
+  letter-spacing: -.04em;
+  font-weight: 500;
+  word-break: keep-all;
+}
+
+.action-grid-v9 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.action-card-v9 {
+  min-width: 0;
+  min-height: 248px;
+  padding: 18px 9px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+}
+.action-icon-v9 {
+  width: 118px;
+  height: 108px;
+  flex: 0 0 108px;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.action-icon-v9 svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.action-card-v9 strong {
+  display: block;
+  width: 100%;
+  margin: 0;
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1.15;
+  letter-spacing: -.065em;
+  font-weight: 780;
+  white-space: nowrap;
+}
+.action-card-v9 small {
+  display: block;
+  width: 100%;
+  margin: 9px 0 0;
+  color: #687385;
+  font-size: 13px;
+  line-height: 1.3;
+  letter-spacing: -.045em;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.arrow-v9 {
+  margin-top: auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 800;
+  font-style: normal;
+  box-shadow: 0 8px 18px rgba(255,107,0,.22);
+}
+.arrow-yellow { background: linear-gradient(135deg,#ffc400,#ffad00); }
+.arrow-orange { background: linear-gradient(135deg,#ff7a00,#ff4d00); }
+.arrow-red { background: linear-gradient(135deg,#ff335f,#e91647); }
+
+.support-row-v9 {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 14px;
+  margin-bottom: 26px;
+}
+.support-card-v9 {
+  min-height: 72px;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: 48px minmax(0,1fr) 16px;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 22px;
+}
+.support-icon-v9 { width: 44px; height: 44px; display:flex; align-items:center; justify-content:center; }
+.support-icon-v9 svg { width: 100%; height: 100%; display:block; overflow:visible; }
+.support-card-v9 strong {
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1;
+  font-weight: 760;
+  letter-spacing: -.045em;
+  white-space: nowrap;
+}
+.support-card-v9 em {
+  color: #687385;
+  font-size: 30px;
+  line-height: 1;
+  font-style: normal;
+  font-weight: 500;
+}
+
+.tabbar-v9 {
+  position: fixed;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(calc(100% - 32px), 398px);
+  min-height: 74px;
+  padding: 8px 8px;
+  display: grid;
+  grid-template-columns: repeat(5,1fr);
+  align-items: center;
+  gap: 2px;
+  background: rgba(255,255,255,.96);
+  border: 1px solid rgba(221,228,237,.82);
+  border-radius: 27px;
+  box-shadow: 0 18px 45px rgba(9,30,63,.12);
+  z-index: 30;
+  backdrop-filter: blur(16px);
+}
+.tabitem-v9 {
+  height: 58px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #6b7481;
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -.035em;
+}
+.tabitem-v9.active { color: var(--orange); background: rgba(255,107,0,.095); }
+.tabitem-v9 svg { width: 25px; height: 25px; display:block; stroke: currentColor; }
+
+/* icon details */
+.car-body { fill:#fff2d7; }
+.car-line { fill:#ff7a00; }
+.car-window { fill:#172436; }
+.car-dark { fill:#172436; }
+.car-light { fill:#fffefa; }
+.soft-shadow { fill:rgba(248,179,50,.22); }
+
+@media (min-width: 901px) {
+  .turu-home-v9 { width: min(100%, 940px); padding-top: 60px; padding-bottom: 46px; }
+  .turu-home-logo img { width: 250px; }
+  .notice-card-v9 { padding: 34px 40px 34px; border-radius: 34px; }
+  .notice-body-v9 { grid-template-columns: 210px minmax(0,1fr); min-height: 192px; gap: 32px; }
+  .notice-mega-v9 { width: 190px; height: 156px; }
+  .notice-head-v9 h2 { font-size: 32px; }
+  .notice-copy-v9 strong { font-size: 26px; }
+  .notice-copy-v9 span { font-size: 21px; }
+  .action-grid-v9 { gap: 24px; margin-top: 28px; }
+  .action-card-v9 { min-height: 336px; border-radius: 32px; padding: 28px 20px 26px; }
+  .action-icon-v9 { width: 184px; height: 158px; flex-basis:158px; margin-bottom: 22px; }
+  .action-card-v9 strong { font-size: 28px; }
+  .action-card-v9 small { font-size: 17px; }
+  .support-row-v9 { gap: 24px; }
+  .support-card-v9 { min-height: 98px; border-radius: 29px; padding: 18px 28px; grid-template-columns: 64px minmax(0,1fr) 20px; }
+  .support-icon-v9 { width: 58px; height: 58px; }
+  .support-card-v9 strong { font-size: 24px; }
+  .tabbar-v9 { position: static; transform:none; width:100%; margin: 34px auto 0; min-height: 96px; border-radius: 34px; }
+  .tabitem-v9 { height: 76px; font-size: 15px; gap: 7px; }
+  .tabitem-v9 svg { width: 32px; height: 32px; }
+}
+
+@media (max-width: 390px) {
+  .turu-home-v9 { padding-left: 14px; padding-right: 14px; }
+  .turu-home-logo { margin-bottom: 24px; }
+  .turu-home-logo img { width: 158px; }
+  .notice-card-v9 { padding: 19px 18px 22px; border-radius: 24px; }
+  .notice-body-v9 { grid-template-columns: 108px minmax(0,1fr); gap: 14px; min-height: 124px; }
+  .notice-mega-v9 { width: 108px; height: 96px; }
+  .notice-head-v9 h2 { font-size: 22px; }
+  .notice-copy-v9 strong { font-size: 17px; }
+  .notice-copy-v9 span { font-size: 14px; }
+  .action-grid-v9 { gap: 10px; }
+  .action-card-v9 { min-height: 226px; padding: 15px 6px 16px; border-radius: 22px; }
+  .action-icon-v9 { width: 96px; height: 91px; flex-basis:91px; margin-bottom: 17px; }
+  .action-card-v9 strong { font-size: 17px; }
+  .action-card-v9 small { font-size: 11px; }
+  .arrow-v9 { width: 30px; height: 30px; font-size: 23px; }
+  .support-row-v9 { gap: 10px; }
+  .support-card-v9 { min-height: 62px; border-radius: 18px; padding: 10px 11px; grid-template-columns: 40px minmax(0,1fr) 13px; }
+  .support-icon-v9 { width: 38px; height: 38px; }
+  .support-card-v9 strong { font-size: 14px; }
+  .tabbar-v9 { width: calc(100% - 24px); min-height: 66px; border-radius: 23px; }
+  .tabitem-v9 { height: 52px; font-size: 10px; border-radius: 16px; }
+}
+</style>
+
+<main class="turu-home-v9" aria-label="TURU CAR 홈">
+  <div class="turu-home-logo">
+    <img src="{{ url_for('static', filename='img/turu_logo.png') }}" alt="TURU CAR">
+  </div>
+
+  <section class="turu-card notice-card-v9">
+    <div class="notice-head-v9">
+      <h2>공지사항</h2>
+      <a href="{{ url_for('notices') }}" class="notice-more-v9">더보기</a>
+    </div>
+    <div class="notice-body-v9">
+      <div class="notice-mega-v9" aria-hidden="true">
+        <svg viewBox="0 0 180 140" role="img">
+          <ellipse cx="76" cy="117" rx="60" ry="11" fill="#FFE7B7"/>
+          <path d="M58 71 L122 42 L122 98 L58 82 Z" fill="#FFEFC9"/>
+          <path d="M58 71 L78 62 L78 91 L58 82 Z" fill="#FFDDA3" opacity=".72"/>
+          <rect x="24" y="62" width="42" height="34" rx="15" fill="#FF7A00"/>
+          <path d="M45 90 L63 90 L73 121 L50 121 Z" fill="#FF7A00"/>
+          <ellipse cx="124" cy="70" rx="20" ry="42" fill="#FFC400"/>
+          <ellipse cx="124" cy="70" rx="12" ry="27" fill="#FFF2C6"/>
+          <path d="M144 50 L166 35" stroke="#FF7A00" stroke-width="9" stroke-linecap="round"/>
+          <path d="M150 70 L173 70" stroke="#FF7A00" stroke-width="9" stroke-linecap="round"/>
+          <path d="M144 90 L166 105" stroke="#FF7A00" stroke-width="9" stroke-linecap="round"/>
+          <circle cx="137" cy="68" r="8" fill="#fff" opacity=".28"/>
+        </svg>
+      </div>
+      <div class="notice-copy-v9">
+        <strong>아직 등록된 공지사항이 없습니다.</strong>
+        <span>공지사항을 작성하면<br>이곳에 누적됩니다.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="action-grid-v9" aria-label="주요 메뉴">
+    <a class="turu-card action-card-v9" href="{{ url_for('wash_list') }}">
+      <div class="action-icon-v9" aria-hidden="true">
+        <svg viewBox="0 0 150 135">
+          <ellipse class="soft-shadow" cx="74" cy="114" rx="58" ry="9"/>
+          <rect x="20" y="21" width="70" height="92" rx="12" fill="#fff" stroke="#F6B900" stroke-width="6"/>
+          <rect x="42" y="12" width="35" height="22" rx="8" fill="#FBC400"/>
+          <circle cx="60" cy="16" r="8" fill="#fff6d8"/>
+          <path d="M35 48 l8 8 l15 -18" fill="none" stroke="#ff7a00" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M35 70 l8 8 l15 -18" fill="none" stroke="#ff7a00" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M35 92 l8 8 l15 -18" fill="none" stroke="#ff7a00" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M68 47 h22" stroke="#d6cfc1" stroke-width="5" stroke-linecap="round"/>
+          <path d="M68 70 h22" stroke="#d6cfc1" stroke-width="5" stroke-linecap="round"/>
+          <path d="M68 92 h15" stroke="#d6cfc1" stroke-width="5" stroke-linecap="round"/>
+          <path d="M123 47 l4 10 l10 4 l-10 4 l-4 10 l-4-10 l-10-4 l10-4z" fill="#FFD66B"/>
+          <path d="M111 76 l3 7 l7 3 l-7 3 l-3 7 l-3-7 l-7-3 l7-3z" fill="#FFE08A"/>
+          <path class="car-body" d="M62 88 C68 72 86 67 105 69 C122 71 133 83 136 97 L133 107 L63 107 L57 99 Z"/>
+          <path class="car-window" d="M76 78 C83 73 97 73 111 76 L116 88 L72 88 Z"/>
+          <rect class="car-line" x="61" y="92" width="19" height="5" rx="2"/>
+          <rect class="car-dark" x="109" y="94" width="20" height="4" rx="2"/>
+          <circle class="car-dark" cx="75" cy="107" r="9"/><circle fill="#fff6e3" cx="75" cy="107" r="4"/>
+          <circle class="car-dark" cx="121" cy="107" r="9"/><circle fill="#fff6e3" cx="121" cy="107" r="4"/>
+          <path class="car-light" d="M125 88 q8 2 8 8 q-8 0-13-4z"/>
+        </svg>
+      </div>
+      <strong>세차 오더</strong>
+      <small>대상 차량 확인</small>
+      <em class="arrow-v9 arrow-yellow">›</em>
+    </a>
+
+    <a class="turu-card action-card-v9" href="https://pm.peoplecar.co.kr:8082/#" target="_blank" rel="noopener">
+      <div class="action-icon-v9" aria-hidden="true">
+        <svg viewBox="0 0 150 135">
+          <ellipse class="soft-shadow" cx="76" cy="114" rx="58" ry="9"/>
+          <circle cx="62" cy="40" r="31" fill="#fff" stroke="#ff6b00" stroke-width="6"/>
+          <path d="M62 22 v18 l16 11" stroke="#ff6b00" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <path d="M62 13 v8 M62 59 v8 M39 40 h-8 M93 40 h-8" stroke="#ff8a1f" stroke-width="4" stroke-linecap="round"/>
+          <rect x="100" y="42" width="28" height="24" rx="6" fill="#172436"/>
+          <path d="M106 42 v-8 c0-9 16-9 16 0 v8" fill="none" stroke="#172436" stroke-width="6" stroke-linecap="round"/>
+          <circle cx="114" cy="53" r="3" fill="#fff"/><rect x="112" y="54" width="4" height="8" rx="2" fill="#fff"/>
+          <path d="M23 83 l-9 -8 M28 94 h-13 M122 83 l9 -8 M118 94 h13" stroke="#ff7a00" stroke-width="5" stroke-linecap="round"/>
+          <path class="car-body" d="M39 88 C45 72 63 67 82 69 C99 71 110 83 113 97 L110 107 L40 107 L34 99 Z"/>
+          <path class="car-window" d="M53 78 C60 73 74 73 88 76 L93 88 L49 88 Z"/>
+          <rect class="car-line" x="38" y="92" width="19" height="5" rx="2"/>
+          <rect class="car-dark" x="86" y="94" width="20" height="4" rx="2"/>
+          <circle class="car-dark" cx="52" cy="107" r="9"/><circle fill="#fff6e3" cx="52" cy="107" r="4"/>
+          <circle class="car-dark" cx="98" cy="107" r="9"/><circle fill="#fff6e3" cx="98" cy="107" r="4"/>
+          <path class="car-light" d="M102 88 q8 2 8 8 q-8 0-13-4z"/>
+        </svg>
+      </div>
+      <strong>예약/문제어</strong>
+      <small>예약/제어 관리자앱</small>
+      <em class="arrow-v9 arrow-orange">›</em>
+    </a>
+
+    <a class="turu-card action-card-v9" href="{{ url_for('wash_status') }}">
+      <div class="action-icon-v9" aria-hidden="true">
+        <svg viewBox="0 0 150 135">
+          <ellipse cx="78" cy="114" rx="58" ry="9" fill="rgba(235,36,81,.16)"/>
+          <path d="M41 18 h50 l22 22 v66 h-72 z" fill="#fff" stroke="#F03A62" stroke-width="6" stroke-linejoin="round"/>
+          <path d="M91 18 v22 h22" fill="#ffd5df" stroke="#F03A62" stroke-width="6" stroke-linejoin="round"/>
+          <path d="M58 49 h22 M58 68 h36 M58 86 h28" stroke="#f4b1bf" stroke-width="5" stroke-linecap="round"/>
+          <path d="M120 54 l4 9 l9 4 l-9 4 l-4 9 l-4-9 l-9-4 l9-4z" fill="#ff8aa3" opacity=".75"/>
+          <path d="M32 61 l3 7 l7 3 l-7 3 l-3 7 l-3-7 l-7-3 l7-3z" fill="#ffb3c1"/>
+          <circle cx="101" cy="88" r="27" fill="#EA2451"/>
+          <path d="M88 87 l10 10 l18 -22" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path class="car-body" d="M25 88 C31 72 49 67 68 69 C85 71 96 83 99 97 L96 107 L26 107 L20 99 Z"/>
+          <path class="car-window" d="M39 78 C46 73 60 73 74 76 L79 88 L35 88 Z"/>
+          <rect class="car-line" x="24" y="92" width="19" height="5" rx="2"/>
+          <rect class="car-dark" x="72" y="94" width="20" height="4" rx="2"/>
+          <circle class="car-dark" cx="38" cy="107" r="9"/><circle fill="#fff6e3" cx="38" cy="107" r="4"/>
+          <circle class="car-dark" cx="84" cy="107" r="9"/><circle fill="#fff6e3" cx="84" cy="107" r="4"/>
+          <path class="car-light" d="M88 88 q8 2 8 8 q-8 0-13-4z"/>
+        </svg>
+      </div>
+      <strong>완료 현황</strong>
+      <small>작업 기록 조회</small>
+      <em class="arrow-v9 arrow-red">›</em>
+    </a>
+  </section>
+
+  <section class="support-row-v9" aria-label="지원 메뉴">
+    <a class="turu-card support-card-v9" href="{{ url_for('support_chat') }}?type=urgent">
+      <span class="support-icon-v9" aria-hidden="true">
+        <svg viewBox="0 0 60 60">
+          <rect x="18" y="24" width="24" height="20" rx="9" fill="#ff6740"/>
+          <path d="M21 43 h18" stroke="#172436" stroke-width="5" stroke-linecap="round"/>
+          <path d="M30 10 v7 M15 16 l5 5 M45 16 l-5 5 M10 31 h6 M50 31 h-6" stroke="#ff4d25" stroke-width="4" stroke-linecap="round"/>
+          <rect x="15" y="43" width="30" height="6" rx="3" fill="#172436"/>
+          <path d="M24 25 c3-8 16-7 16 5" stroke="#fff" stroke-width="3" opacity=".36" fill="none"/>
+        </svg>
+      </span>
+      <strong>긴급 세차</strong>
+      <em>›</em>
+    </a>
+    <a class="turu-card support-card-v9" href="{{ url_for('support_chat') }}">
+      <span class="support-icon-v9" aria-hidden="true">
+        <svg viewBox="0 0 60 60">
+          <path d="M13 15 h34 a8 8 0 0 1 8 8 v16 a8 8 0 0 1-8 8 H28 l-13 8 v-8 h-2 a8 8 0 0 1-8-8 V23 a8 8 0 0 1 8-8z" fill="#fff8e9" stroke="#ff9900" stroke-width="4" stroke-linejoin="round"/>
+          <circle cx="24" cy="31" r="3" fill="#ff9900"/><circle cx="34" cy="31" r="3" fill="#ff9900"/><circle cx="44" cy="31" r="3" fill="#ff9900"/>
+        </svg>
+      </span>
+      <strong>문의하기</strong>
+      <em>›</em>
+    </a>
+  </section>
+
+  <nav class="tabbar-v9" aria-label="하단 메뉴">
+    <a class="tabitem-v9 active" href="{{ url_for('dashboard') }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M6.5 10.5V20h11v-9.5"/></svg>
+      <span>홈</span>
+    </a>
+    <a class="tabitem-v9" href="{{ url_for('wash_list') }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8l1 3H7z"/><rect x="5" y="6" width="14" height="15" rx="2"/><path d="M8 11h8M8 15h6"/></svg>
+      <span>오더</span>
+    </a>
+    <a class="tabitem-v9" href="https://pm.peoplecar.co.kr:8082/#">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2"/><circle cx="15" cy="17" r="2"/></svg>
+      <span>제어</span>
+    </a>
+    <a class="tabitem-v9" href="{{ url_for('wash_status') }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h3M10 17l2 2 4-5"/></svg>
+      <span>완료</span>
+    </a>
+    <a class="tabitem-v9" href="{{ url_for('profile') }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.8-5 14.2-5 16 0"/></svg>
+      <span>내정보</span>
+    </a>
+  </nav>
+</main>
 {% endblock %}

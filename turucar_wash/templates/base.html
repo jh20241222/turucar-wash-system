@@ -138,6 +138,12 @@
     </script>
     <script src="{{ url_for('static', filename='js/support_alerts.js') }}?v=23"></script>
     {% endif %}
-    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+    <div class="turu-app-loader-overlay" id="turuAppLoader" aria-hidden="true">
+        <div class="turu-app-loader-card" role="status" aria-live="polite">
+            <span class="turu-app-loader-spinner" aria-hidden="true"></span>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}?v=31"></script>
+    <script src="{{ url_for('static', filename='js/app_loader.js') }}?v=31"></script>
 </body>
 </html>

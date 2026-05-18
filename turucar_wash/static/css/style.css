@@ -7218,7 +7218,8 @@ body.endpoint-dashboard .app-main {
     }
     .endpoint-wash_list .topbar-turu-brand-v27,
     .endpoint-wash_status .topbar-turu-brand-v27,
-    .endpoint-profile .topbar-turu-brand-v27 {
+    .endpoint-profile .topbar-turu-brand-v27,
+    .endpoint-car_detail .topbar-turu-brand-v27 {
         display: inline-flex !important;
     }
     .endpoint-wash_list .topbar-actions,
@@ -7250,4 +7251,44 @@ body.endpoint-dashboard .app-main {
 }
 @media (min-width: 901px) {
     .topbar-turu-brand-v27 { display: none !important; }
+}
+
+
+/* ===== v28 car detail top logo alignment ===== */
+@media (max-width: 900px), (display-mode: standalone) {
+    .endpoint-car_detail .topbar-turu-brand-v27 {
+        display: inline-flex !important;
+    }
+    .endpoint-car_detail .detail-hero-clean .page-hero-logo {
+        display: none !important;
+    }
+    .endpoint-car_detail .detail-hero-clean {
+        margin-top: 4px !important;
+        padding-top: 22px !important;
+    }
+    .endpoint-car_detail .detail-hero-clean h1 {
+        text-align: left !important;
+        font-size: 26px !important;
+        line-height: 1.12 !important;
+        margin-bottom: 8px !important;
+    }
+    .endpoint-car_detail .detail-hero-clean .hero-copy {
+        text-align: left !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        max-width: none !important;
+    }
+    .endpoint-car_detail .plate-display {
+        width: 100% !important;
+        justify-content: center !important;
+        border-radius: 20px !important;
+        background: rgba(255,255,255,.86) !important;
+        border: 1px solid #dfe7f1 !important;
+        color: #111827 !important;
+    }
+}
+@media (min-width: 901px) {
+    .endpoint-car_detail .topbar-turu-brand-v27 {
+        display: none !important;
+    }
 }

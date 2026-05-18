@@ -7307,3 +7307,354 @@ body.endpoint-dashboard .app-main {
         margin-bottom: 14px;
     }
 }
+
+/* ===== v30 desktop web layout reset: do not affect mobile app ===== */
+@media (min-width: 901px) {
+  html, body {
+    min-width: 1180px;
+    background: #f4f7fb !important;
+  }
+
+  body.app-shell {
+    color: #111827 !important;
+    background:
+      radial-gradient(circle at 85% -10%, rgba(255, 122, 0, .08), transparent 30%),
+      linear-gradient(180deg, #f8fafc 0%, #f2f5f9 100%) !important;
+  }
+
+  /* top bar: desktop header, not mobile app header */
+  .app-topbar {
+    left: 264px !important;
+    right: 0 !important;
+    top: 0 !important;
+    min-height: 72px !important;
+    height: 72px !important;
+    padding: 14px 36px !important;
+    background: rgba(255,255,255,.86) !important;
+    border-bottom: 1px solid #dfe7f1 !important;
+    box-shadow: 0 8px 28px rgba(15,23,42,.035) !important;
+    backdrop-filter: blur(18px) !important;
+  }
+  .app-topbar .back-btn { display: none !important; }
+  .topbar-left { min-width: 1px; }
+  .topbar-actions { margin-left: auto; display: flex !important; }
+  .user-chip, .logout-chip, .install-chip {
+    height: 38px !important;
+    padding: 0 16px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    border-radius: 999px !important;
+    font-size: 13px !important;
+    box-shadow: none !important;
+  }
+
+  /* sidebar: clean web menu */
+  .desktop-sidebar {
+    width: 264px !important;
+    padding: 30px 18px 22px !important;
+    background: rgba(255,255,255,.98) !important;
+    color: #111827 !important;
+    border-right: 1px solid #dfe7f1 !important;
+    box-shadow: 16px 0 40px rgba(15,23,42,.035) !important;
+  }
+  .desktop-sidebar::before,
+  .desktop-sidebar::after { display: none !important; }
+  .sidebar-brand {
+    padding: 0 8px 26px !important;
+    gap: 8px !important;
+    color: #111827 !important;
+  }
+  .sidebar-logo,
+  .brand-combo-logo {
+    width: 178px !important;
+    max-width: 178px !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+  .sidebar-subtitle {
+    display: block !important;
+    margin-top: 8px !important;
+    color: #111827 !important;
+    font-size: 14px !important;
+    font-weight: 850 !important;
+  }
+  .sidebar-brand small {
+    color: #6f7785 !important;
+    font-size: 12px !important;
+    font-weight: 650 !important;
+  }
+  .side-nav { gap: 6px !important; }
+  .side-link {
+    min-height: 46px !important;
+    padding: 0 14px !important;
+    border-radius: 14px !important;
+    color: #667085 !important;
+    font-size: 14px !important;
+    font-weight: 760 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .side-link span {
+    width: 24px !important;
+    color: #8a94a3 !important;
+    font-size: 15px !important;
+  }
+  .side-link:hover {
+    background: #f4f7fb !important;
+    color: #111827 !important;
+  }
+  .side-link.active {
+    color: #ff6a00 !important;
+    background: #fff1e8 !important;
+    box-shadow: none !important;
+  }
+  .side-link.active span { color: #ff6a00 !important; }
+  .sidebar-profile {
+    background: #f8fafc !important;
+    border: 1px solid #dfe7f1 !important;
+    border-radius: 18px !important;
+    padding: 16px !important;
+    color: #111827 !important;
+  }
+  .sidebar-profile small,
+  .sidebar-profile em { color: #7a8492 !important; }
+  .sidebar-profile strong { color: #111827 !important; }
+  .sidebar-profile a {
+    background: #fff !important;
+    border: 1px solid #dfe7f1 !important;
+    color: #111827 !important;
+    border-radius: 13px !important;
+  }
+
+  /* main layout: page-like, not phone mockup */
+  .app-main {
+    margin-left: 264px !important;
+    padding: 104px 48px 56px !important;
+    min-height: 100vh !important;
+    width: calc(100vw - 264px) !important;
+  }
+  .mobile-tabbar,
+  .floating-turu-home-link { display: none !important; }
+
+  .turu-app-page-v24,
+  .turu-home-v12,
+  .notice-page-shell,
+  .detail-page,
+  .profile-page,
+  .upload-page,
+  .admin-page,
+  .account-page,
+  .vendor-page,
+  .support-page,
+  .app-page {
+    width: 100% !important;
+    max-width: 1440px !important;
+    margin: 0 !important;
+  }
+
+  .turu-app-page-v24 {
+    padding: 0 0 48px !important;
+  }
+  .turu-page-brand-v24,
+  .turu-page-brand-v26 {
+    display: flex !important;
+    height: 44px !important;
+    margin: 0 0 18px !important;
+  }
+  .turu-page-brand-v24 img,
+  .turu-page-brand-v26 img {
+    width: 178px !important;
+  }
+  .turu-page-head-v24 {
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin: 0 0 22px !important;
+  }
+  .turu-page-head-v24 h1 {
+    font-size: 34px !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.06em !important;
+  }
+  .turu-page-head-v24 p {
+    display: block !important;
+    font-size: 15px !important;
+    margin-top: 6px !important;
+    color: #7a8492 !important;
+  }
+
+  /* filters / search: web width */
+  .turu-date-nav-v26,
+  .turu-date-nav-v25,
+  .turu-stat-strip-v24,
+  .turu-searchbar-v24,
+  .turu-status-searchbar-v29,
+  .turu-filter-sheet-v24,
+  .filter-card,
+  .search-panel,
+  .table-panel,
+  .turu-desktop-table-v24 {
+    max-width: none !important;
+    width: 100% !important;
+  }
+  .turu-date-nav-v26,
+  .turu-date-nav-v25 {
+    grid-template-columns: 46px minmax(0,1fr) 46px !important;
+    max-width: 520px !important;
+    margin: 0 0 20px !important;
+  }
+  .turu-searchbar-v24 {
+    grid-template-columns: minmax(360px, 1fr) 54px auto !important;
+    margin-bottom: 18px !important;
+  }
+  .turu-searchbar-v24 input,
+  .turu-searchbar-v24 button {
+    height: 52px !important;
+    border-radius: 15px !important;
+  }
+
+  .turu-filter-sheet-v24,
+  .mobile-filter-sheet,
+  .filter-card.search-panel {
+    position: static !important;
+    display: block !important;
+    transform: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    margin: 0 0 22px !important;
+    padding: 22px !important;
+    border-radius: 24px !important;
+    background: #fff !important;
+    border: 1px solid #dfe7f1 !important;
+    box-shadow: 0 12px 30px rgba(15,23,42,.055) !important;
+  }
+  .mobile-filter-sheet-head { display: none !important; }
+  .filter-head {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 16px !important;
+  }
+  .filter-head strong { font-size: 18px !important; }
+  .filter-head small { color: #7a8492 !important; }
+  .filter-grid,
+  .status-filter-grid {
+    display: grid !important;
+    grid-template-columns: minmax(220px, 1.3fr) repeat(5, minmax(150px, .8fr)) auto auto !important;
+    gap: 12px !important;
+    align-items: center !important;
+  }
+  .filter-grid .app-input,
+  .status-filter-grid .app-input,
+  .filter-grid input,
+  .filter-grid select {
+    min-width: 0 !important;
+    height: 46px !important;
+    border-radius: 13px !important;
+  }
+  .filter-grid .primary-btn,
+  .filter-grid .blue-btn,
+  .status-filter-grid .primary-btn,
+  .status-filter-grid .blue-btn {
+    height: 46px !important;
+    min-width: 86px !important;
+    border-radius: 13px !important;
+    white-space: nowrap !important;
+  }
+
+  /* desktop data display */
+  .endpoint-wash_list .turu-card-list-v24,
+  .endpoint-wash_status .turu-card-list-v24 {
+    display: none !important;
+  }
+  .turu-desktop-table-v24,
+  .desktop-table {
+    display: block !important;
+    margin-top: 0 !important;
+    padding: 24px !important;
+    border-radius: 24px !important;
+    background: #fff !important;
+    border: 1px solid #dfe7f1 !important;
+    box-shadow: 0 16px 36px rgba(15,23,42,.055) !important;
+  }
+  .table-title-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 18px !important;
+  }
+  .table-title-row h2 {
+    font-size: 22px !important;
+    letter-spacing: -0.045em !important;
+    margin: 0 !important;
+  }
+  .table-title-row span {
+    color: #667085 !important;
+    font-weight: 800 !important;
+  }
+  .table-scroll {
+    width: 100% !important;
+    overflow-x: auto !important;
+    border-radius: 16px !important;
+  }
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: auto !important;
+  }
+  th, td {
+    padding: 14px 16px !important;
+    border-bottom: 1px solid #edf1f6 !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+    font-size: 14px !important;
+  }
+  th {
+    color: #667085 !important;
+    background: #f8fafc !important;
+    font-weight: 850 !important;
+  }
+  td { color: #111827 !important; }
+  .empty-cell {
+    height: 120px !important;
+    text-align: center !important;
+    color: #8a94a3 !important;
+  }
+
+  /* status page stats */
+  .turu-stat-strip-v24 {
+    grid-template-columns: repeat(3, minmax(0,1fr)) !important;
+    max-width: 720px !important;
+    margin: 0 0 18px !important;
+    border-radius: 20px !important;
+  }
+  .turu-stat-strip-v24 div {
+    min-height: 86px !important;
+  }
+
+  /* dashboard desktop: use the available width */
+  .turu-home-v12 {
+    max-width: 1320px !important;
+    padding: 0 0 56px !important;
+  }
+  .home-tabbar-v12 { display: none !important; }
+  .home-main-grid-v12 { grid-template-columns: repeat(3, minmax(0,1fr)) !important; }
+  .home-support-grid-v12 { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+
+  /* profile desktop */
+  .turu-profile-page-v24 {
+    max-width: 980px !important;
+  }
+  .turu-profile-main-card-v24,
+  .turu-menu-card-v24 {
+    border-radius: 24px !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1400px) {
+  .filter-grid,
+  .status-filter-grid {
+    grid-template-columns: repeat(4, minmax(150px, 1fr)) !important;
+  }
+  .app-main { padding-left: 36px !important; padding-right: 36px !important; }
+}

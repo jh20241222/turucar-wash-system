@@ -6980,3 +6980,63 @@ body.endpoint-dashboard .app-main {
     .turu-card-title-v24 strong { font-size: 16px; }
     .turu-card-copy-v24 p { font-size: 12px; }
 }
+
+
+/* ===== v25 order/status refinement ===== */
+.turu-page-head--single-v25 {
+    justify-content: flex-start;
+}
+.turu-date-nav-v25 {
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    align-items: center;
+    gap: 12px;
+    height: 58px;
+    margin: 0 0 18px;
+    padding: 0 10px;
+    border-bottom: 1px solid rgba(126, 137, 151, .20);
+}
+.turu-date-nav-v25 strong {
+    text-align: center;
+    color: #ff6a00;
+    font-size: 16px;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+.turu-date-nav-btn-v25 {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    background: transparent;
+    color: #8a94a3;
+    font-size: 28px;
+    line-height: 1;
+    font-weight: 500;
+    border-radius: 50%;
+    cursor: pointer;
+}
+.turu-date-nav-btn-v25:active {
+    background: rgba(17,24,39,.05);
+}
+@media (max-width: 900px), (display-mode: standalone) {
+    .turu-page-brand-v25,
+    .turu-page-brand-v24 {
+        padding-left: 2px;
+    }
+    .turu-date-nav-v25 {
+        grid-template-columns: 40px 1fr 40px;
+        height: 54px;
+        gap: 8px;
+        margin-bottom: 14px;
+        padding: 0 4px;
+    }
+    .turu-date-nav-v25 strong {
+        font-size: 15px;
+    }
+    .turu-date-nav-btn-v25 {
+        width: 40px;
+        height: 40px;
+        font-size: 25px;
+    }
+}

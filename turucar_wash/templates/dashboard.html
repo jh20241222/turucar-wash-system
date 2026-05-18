@@ -1,69 +1,95 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="turu-dashboard-v11" aria-label="TURU CAR 홈">
-    <header class="td-home-header">
-        <img src="{{ url_for('static', filename='img/TuruCAR_logo.png') }}" alt="TURU CAR" class="td-logo">
+{% set latest_notice = notice_rows[0] if notice_rows and notice_rows|length > 0 else none %}
+<div class="turu-home-v12" aria-label="TURU CAR 홈">
+    <header class="home-brand-v12">
+        <img src="{{ url_for('static', filename='img/TuruCAR_logo.png') }}" alt="TURU CAR" class="home-brand-logo-v12">
     </header>
 
-    <section class="td-notice-card" aria-label="공지사항">
-        <div class="td-notice-head">
-            <h2>공지사항</h2>
-            <a href="{{ url_for('notices') }}" class="td-more-btn">더보기</a>
+    <section class="home-notice-card-v12" aria-labelledby="homeNoticeTitle">
+        <div class="notice-head-v12">
+            <h2 id="homeNoticeTitle">공지사항</h2>
+            <a href="{{ url_for('notices') }}" class="notice-more-v12">더보기</a>
         </div>
-        <div class="td-notice-body">
-            <div class="td-notice-icon" aria-hidden="true">
+        <div class="notice-body-v12">
+            <div class="notice-visual-v12" aria-hidden="true">
                 <img src="{{ url_for('static', filename='img/icon-megaphone.svg') }}" alt="">
             </div>
-            <div class="td-notice-copy">
-                {% if notice_rows and notice_rows|length > 0 %}
-                    <strong>{{ notice_rows[0]['title'] }}</strong>
-                    <span>{{ notice_rows[0]['body'] if notice_rows[0]['body'] else '공지사항 내용을 확인해 주세요.' }}</span>
+            <div class="notice-copy-v12">
+                {% if latest_notice %}
+                    <strong>{{ latest_notice.title }}</strong>
+                    <span>{{ latest_notice.body }}</span>
                 {% else %}
                     <strong>아직 등록된 공지사항이 없습니다.</strong>
-                    <span>공지사항을 작성하면<br>이곳에 누적됩니다.</span>
+                    <span>공지사항을 작성하면 이곳에 누적됩니다.</span>
                 {% endif %}
             </div>
         </div>
     </section>
 
-    <section class="td-main-grid" aria-label="주요 메뉴">
-        <a class="td-action-card td-yellow" href="{{ url_for('wash_list') }}">
-            <span class="td-action-icon"><img src="{{ url_for('static', filename='img/icon-wash-order.svg') }}" alt=""></span>
+    <section class="home-main-grid-v12" aria-label="주요 메뉴">
+        <a href="{{ url_for('wash_list') }}" class="home-main-card-v12 card-wash-v12">
+            <span class="main-icon-v12"><img src="{{ url_for('static', filename='img/icon-wash-order.svg') }}" alt=""></span>
             <strong>세차 오더</strong>
             <small>대상 차량 확인</small>
             <em>›</em>
         </a>
-
-        <a class="td-action-card td-orange" href="https://pm.peoplecar.co.kr:8082/#" target="_blank" rel="noopener">
-            <span class="td-action-icon"><img src="{{ url_for('static', filename='img/icon-control.svg') }}" alt=""></span>
+        <a href="https://pm.peoplecar.co.kr:8082/#" target="_blank" rel="noopener" class="home-main-card-v12 card-control-v12">
+            <span class="main-icon-v12"><img src="{{ url_for('static', filename='img/icon-control.svg') }}" alt=""></span>
             <strong>예약/문제어</strong>
-            <small>예약/제어 관리자앱</small>
+            <small>예약/제어 관리</small>
             <em>›</em>
         </a>
-
-        <a class="td-action-card td-red" href="{{ url_for('wash_status') }}">
-            <span class="td-action-icon"><img src="{{ url_for('static', filename='img/icon-complete.svg') }}" alt=""></span>
+        <a href="{{ url_for('wash_status') }}" class="home-main-card-v12 card-complete-v12">
+            <span class="main-icon-v12"><img src="{{ url_for('static', filename='img/icon-complete.svg') }}" alt=""></span>
             <strong>완료 현황</strong>
             <small>작업 기록 조회</small>
             <em>›</em>
         </a>
     </section>
 
-    <section class="td-support-grid" aria-label="지원 메뉴">
-        <a class="td-support-card" href="{{ url_for('support_chat') }}?type=urgent">
-            <span class="td-support-icon td-siren" aria-hidden="true">
-                <svg viewBox="0 0 64 64" fill="none"><path d="M17 47h30" stroke="#152033" stroke-width="5" stroke-linecap="round"/><rect x="20" y="25" width="24" height="20" rx="9" fill="#FF5B35"/><path d="M24 28c3-9 15-8 17 2" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".45"/><rect x="16" y="45" width="32" height="7" rx="3.5" fill="#152033"/><path d="M32 10v8M15 18l6 6M49 18l-6 6M9 34h8M55 34h-8" stroke="#FF5B35" stroke-width="4" stroke-linecap="round"/></svg>
+    <section class="home-support-grid-v12" aria-label="지원 메뉴">
+        <a href="{{ url_for('support_chat') }}?type=urgent" class="home-support-card-v12">
+            <span class="support-visual-v12 siren-v12" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none">
+                    <path d="M21 35c0-8 5-14 11-14s11 6 11 14v11H21V35Z" fill="url(#sirenGrad)"/>
+                    <path d="M19 48h26" stroke="#172436" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M32 9v7M15 16l5 6M49 16l-5 6M9 33h7M55 33h-7" stroke="#FF5F22" stroke-width="4" stroke-linecap="round"/>
+                    <path d="M27 24c4-5 11-3 13 3" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+                    <defs><linearGradient id="sirenGrad" x1="21" y1="21" x2="45" y2="46"><stop stop-color="#FF8C41"/><stop offset="1" stop-color="#FF2C25"/></linearGradient></defs>
+                </svg>
             </span>
             <strong>긴급 세차</strong>
             <em>›</em>
         </a>
-        <a class="td-support-card" href="{{ url_for('support_chat') }}">
-            <span class="td-support-icon td-chat" aria-hidden="true">
-                <svg viewBox="0 0 64 64" fill="none"><path d="M15 15h34a8 8 0 0 1 8 8v16a8 8 0 0 1-8 8H30l-14 8v-8h-1a8 8 0 0 1-8-8V23a8 8 0 0 1 8-8Z" fill="#FFF8EA" stroke="#FF9900" stroke-width="4" stroke-linejoin="round"/><circle cx="25" cy="31" r="3" fill="#FF9900"/><circle cx="35" cy="31" r="3" fill="#FF9900"/><circle cx="45" cy="31" r="3" fill="#FF9900"/></svg>
+        <a href="{{ url_for('support_chat') }}" class="home-support-card-v12">
+            <span class="support-visual-v12 chat-v12" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none">
+                    <path d="M15 14h34c5 0 9 4 9 9v17c0 5-4 9-9 9H31L16 57v-8h-1c-5 0-9-4-9-9V23c0-5 4-9 9-9Z" fill="#FFF7E8" stroke="#FF9900" stroke-width="4" stroke-linejoin="round"/>
+                    <circle cx="25" cy="32" r="3" fill="#FF9900"/><circle cx="36" cy="32" r="3" fill="#FF9900"/><circle cx="47" cy="32" r="3" fill="#FF9900"/>
+                </svg>
             </span>
             <strong>문의하기</strong>
             <em>›</em>
         </a>
     </section>
-</section>
+
+    <nav class="home-tabbar-v12" aria-label="하단 메뉴">
+        <a href="{{ url_for('dashboard') }}" class="home-tab-v12 active">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M3.5 11.2 12 4.3l8.5 6.9"/><path d="M6.5 10.3v9.4h11v-9.4"/><path d="M10 19.7v-5h4v5"/></svg><span>홈</span>
+        </a>
+        <a href="{{ url_for('wash_list') }}" class="home-tab-v12">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M8 5h8l1 3H7l1-3Z"/><rect x="5.5" y="7" width="13" height="14" rx="2"/><path d="M8.5 12h7M8.5 16h5"/></svg><span>오더</span>
+        </a>
+        <a href="https://pm.peoplecar.co.kr:8082/#" class="home-tab-v12">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2"/><circle cx="15" cy="17" r="2"/></svg><span>제어</span>
+        </a>
+        <a href="{{ url_for('wash_status') }}" class="home-tab-v12">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="5.5" y="4.5" width="13" height="16" rx="2"/><path d="M9 9h6M9 13h4M9.5 17l2 2 4-5"/></svg><span>완료</span>
+        </a>
+        <a href="{{ url_for('profile') }}" class="home-tab-v12">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1.5-5 13.5-5 15 0"/></svg><span>내정보</span>
+        </a>
+    </nav>
+</div>
 {% endblock %}

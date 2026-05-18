@@ -1,10 +1,12 @@
-const CACHE_NAME = 'turu-dashboard-v11-fixed';
+const CACHE_NAME = 'turu-home-v12-preview-match';
 const APP_SHELL = [
   '/offline',
   '/static/css/style.css',
-  '/static/img/turu_symbol.png',
-  '/static/img/turu_wash_lockup_black.png',
-  '/static/img/turu_wash_lockup_white.png',
+  '/static/img/TuruCAR_logo.png',
+  '/static/img/icon-megaphone.svg',
+  '/static/img/icon-wash-order.svg',
+  '/static/img/icon-control.svg',
+  '/static/img/icon-complete.svg',
   '/static/img/icons/favicon-64.png',
   '/static/img/icons/icon-192.png',
   '/static/img/icons/icon-512.png',
@@ -12,44 +14,30 @@ const APP_SHELL = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) => Promise.all(
-      keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-    ))
-  );
+  event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))));
   self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   const url = new URL(request.url);
-
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
-
   if (request.mode === 'navigate') {
     event.respondWith(fetch(request).catch(() => caches.match('/offline')));
     return;
   }
-
   if (url.pathname.startsWith('/static/')) {
-    event.respondWith(
-      caches.match(request).then((cached) => {
-        const fresh = fetch(request).then((response) => {
-          if (response && response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          }
-          return response;
-        }).catch(() => cached);
-        return cached || fresh;
-      })
-    );
+    event.respondWith(caches.match(request).then((cached) => {
+      const fresh = fetch(request).then((response) => {
+        if (response && response.ok) caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
+        return response;
+      }).catch(() => cached);
+      return cached || fresh;
+    }));
   }
 });

@@ -1166,6 +1166,14 @@ def wash_list():
     spot_list = filter_distinct_values(cur, "wash_list", "스팟", filter_scope_sql, filter_scope_params)
     vendor_list = filter_distinct_values(cur, "wash_list", "업체", filter_scope_sql, filter_scope_params)
 
+    order_count = len(rows)
+    history_scope_sql, history_scope_params = scoped_condition("wash_history", current_user)
+    completed_count = cur.execute(
+        "SELECT COUNT(*) AS c FROM wash_history WHERE 세차완료일 = ?" + history_scope_sql,
+        [selected_date] + history_scope_params
+    ).fetchone()["c"]
+    total_target_count = order_count + completed_count
+
     conn.close()
 
     return render_template(
@@ -1182,7 +1190,10 @@ def wash_list():
         selected_r2=r2,
         selected_org=org,
         selected_spot=spot,
-        selected_vendor=vendor
+        selected_vendor=vendor,
+        order_count=order_count,
+        completed_count=completed_count,
+        total_target_count=total_target_count
     )
 
 
@@ -1427,6 +1438,17 @@ def wash_status():
     spot_list = filter_distinct_values(cur, "wash_history", "스팟", scope_sql, scope_params)
     vendor_list = filter_distinct_values(cur, "wash_history", "업체", scope_sql, scope_params)
 
+    today = datetime.today().strftime("%Y-%m-%d")
+    today_completed_count = cur.execute(
+        "SELECT COUNT(*) AS c FROM wash_history WHERE 세차완료일 = ?" + scope_sql,
+        [today] + scope_params
+    ).fetchone()["c"]
+    total_completed_count = cur.execute(
+        "SELECT COUNT(*) AS c FROM wash_history WHERE 1=1" + scope_sql,
+        scope_params
+    ).fetchone()["c"]
+    filtered_count = len(rows)
+
     conn.close()
 
     return render_template(
@@ -1444,7 +1466,10 @@ def wash_status():
         selected_spot=sp,
         selected_vendor=vendor,
         start=start,
-        end=end
+        end=end,
+        today_completed_count=today_completed_count,
+        total_completed_count=total_completed_count,
+        filtered_count=filtered_count
     )
 
 

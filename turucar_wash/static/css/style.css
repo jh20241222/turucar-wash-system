@@ -7937,3 +7937,66 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 
   .turu-status-page-v37 .turu-stat-strip-v37{margin-bottom:14px !important;}
 }
+
+/* ===== v39 fixed top logo clipping on mobile app pages ===== */
+@media (max-width:900px){
+  .endpoint-wash_list .turu-page-brand-v24,
+  .endpoint-wash_list .turu-page-brand-v26,
+  .endpoint-wash_status .turu-page-brand-v24,
+  .endpoint-wash_status .turu-page-brand-v26,
+  .endpoint-profile .turu-page-brand-v24,
+  .endpoint-profile .turu-page-brand-v26,
+  .endpoint-control .turu-page-brand-v24,
+  .endpoint-control .turu-page-brand-v26,
+  .endpoint-reservation .turu-page-brand-v24,
+  .endpoint-reservation .turu-page-brand-v26,
+  .endpoint-support_chat .turu-page-brand-v24,
+  .endpoint-support_chat .turu-page-brand-v26,
+  .endpoint-car_detail .detail-page-brand-v36 {
+    display:flex !important;
+    align-items:center !important;
+    justify-content:flex-start !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    height:auto !important;
+    min-height:36px !important;
+    overflow:visible !important;
+    padding-top:18px !important;
+    padding-bottom:0 !important;
+    margin:0 0 16px !important;
+  }
+
+  .endpoint-wash_list .turu-page-brand-v24 img,
+  .endpoint-wash_list .turu-page-brand-v26 img,
+  .endpoint-wash_status .turu-page-brand-v24 img,
+  .endpoint-wash_status .turu-page-brand-v26 img,
+  .endpoint-profile .turu-page-brand-v24 img,
+  .endpoint-profile .turu-page-brand-v26 img,
+  .endpoint-control .turu-page-brand-v24 img,
+  .endpoint-control .turu-page-brand-v26 img,
+  .endpoint-reservation .turu-page-brand-v24 img,
+  .endpoint-reservation .turu-page-brand-v26 img,
+  .endpoint-support_chat .turu-page-brand-v24 img,
+  .endpoint-support_chat .turu-page-brand-v26 img,
+  .endpoint-car_detail .detail-page-brand-v36 img {
+    display:block !important;
+    width:168px !important;
+    max-width:100% !important;
+    height:auto !important;
+    max-height:none !important;
+    object-fit:contain !important;
+    object-position:left center !important;
+    overflow:visible !important;
+    clip-path:none !important;
+  }
+
+  .endpoint-wash_list .app-main,
+  .endpoint-wash_status .app-main,
+  .endpoint-profile .app-main,
+  .endpoint-control .app-main,
+  .endpoint-reservation .app-main,
+  .endpoint-support_chat .app-main,
+  .endpoint-car_detail .app-main {
+    padding-top:0 !important;
+  }
+}

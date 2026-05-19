@@ -7886,3 +7886,54 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   .turu-mobile-tabbar .tab-item.active{background:var(--turu-orange-soft) !important;color:var(--turu-orange) !important;}
   .turu-mobile-tabbar .tab-item.active::before,.turu-mobile-tabbar .admin-app-tab::after{display:none !important;}
 }
+
+/* ===== v37 order/status refinements ===== */
+.mobile-filter-backdrop{display:none;}
+.mobile-filter-backdrop.open{display:block;position:fixed;inset:0;background:rgba(17,24,39,.34);backdrop-filter:blur(7px);z-index:320;}
+
+@media (max-width:900px){
+  .endpoint-wash_list .turu-page-brand-v24,
+  .endpoint-wash_status .turu-page-brand-v24{display:flex !important;align-items:center !important;justify-content:flex-start !important;padding-top:20px !important;margin-bottom:18px !important;}
+  .endpoint-wash_list .turu-page-brand-v24 img,
+  .endpoint-wash_status .turu-page-brand-v24 img{display:block !important;width:170px !important;height:auto !important;}
+
+  .turu-order-page-v37 .turu-date-summary-card-v37{display:grid;grid-template-columns:38px minmax(0,1fr) 38px;gap:8px;align-items:stretch;background:rgba(255,255,255,.97);border:1px solid var(--turu-line);border-radius:24px;padding:8px;box-shadow:none;margin:0 0 14px;}
+  .turu-order-page-v37 .turu-date-summary-main-v37{display:grid;grid-template-columns:minmax(0,1fr) 1fr;gap:10px;align-items:stretch;}
+  .turu-order-page-v37 .turu-date-summary-copy-v37,
+  .turu-order-page-v37 .turu-date-summary-stats-v37{background:#fff;border:1px solid var(--turu-line-soft);border-radius:18px;min-height:74px;}
+  .turu-order-page-v37 .turu-date-summary-copy-v37{display:flex;flex-direction:column;justify-content:center;padding:12px 14px;}
+  .turu-order-page-v37 .turu-date-summary-copy-v37 span{font-size:12px;font-weight:700;color:#8492a5;margin-bottom:6px;}
+  .turu-order-page-v37 .turu-date-summary-copy-v37 strong{font-size:20px;line-height:1.1;font-weight:800;color:var(--turu-text);letter-spacing:-.03em;}
+  .turu-order-page-v37 .turu-date-summary-stats-v37{display:grid;grid-template-columns:1fr 1fr;overflow:hidden;}
+  .turu-order-page-v37 .turu-date-summary-stats-v37 > div{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:10px 8px;}
+  .turu-order-page-v37 .turu-date-summary-stats-v37 > div + div{border-left:1px solid var(--turu-line-soft);}
+  .turu-order-page-v37 .turu-date-summary-stats-v37 span{font-size:11px;font-weight:700;color:#8492a5;margin-bottom:6px;text-align:center;}
+  .turu-order-page-v37 .turu-date-summary-stats-v37 strong{font-size:20px;font-weight:800;color:var(--turu-text);line-height:1;}
+  .turu-order-page-v37 .turu-date-summary-card-v37 .turu-date-nav-btn-v25{align-self:center;}
+
+  .turu-order-page-v37 .turu-order-searchbar-v37,
+  .turu-status-page-v37 .turu-status-searchbar-v37{display:grid;gap:8px;margin-bottom:12px;}
+  .turu-order-page-v37 .turu-order-searchbar-v37{grid-template-columns:1fr 44px 74px !important;}
+  .turu-status-page-v37 .turu-status-searchbar-v37{grid-template-columns:1fr 44px 86px 74px !important;}
+  .turu-status-page-v37 .turu-status-searchbar-v37 .period,
+  .turu-status-page-v37 .turu-status-searchbar-v37 .filter{justify-content:center !important;white-space:nowrap;}
+  .turu-status-page-v37 .turu-status-searchbar-v37 .period{height:46px;border-radius:16px;border:1px solid var(--turu-line);background:#fff;color:var(--turu-text);font-size:13px;font-weight:700;padding:0 10px;}
+
+  .turu-order-page-v37 .mobile-filter-sheet,
+  .turu-status-page-v37 .mobile-filter-sheet{left:16px !important;right:16px !important;bottom:calc(16px + env(safe-area-inset-bottom)) !important;z-index:330 !important;display:none;max-height:min(78vh,720px) !important;overflow-y:auto !important;padding:18px !important;border-radius:26px !important;background:#fff !important;border:1px solid var(--turu-line) !important;box-shadow:0 24px 60px rgba(15,28,51,.16) !important;}
+  .turu-order-page-v37 .mobile-filter-sheet.open,
+  .turu-status-page-v37 .mobile-filter-sheet.open{display:block !important;visibility:visible !important;opacity:1 !important;}
+  .turu-order-page-v37 .mobile-filter-sheet .filter-grid,
+  .turu-status-page-v37 .mobile-filter-sheet .filter-grid,
+  .turu-status-page-v37 .mobile-filter-sheet .status-filter-grid{display:grid !important;grid-template-columns:1fr !important;gap:10px !important;}
+  .turu-order-page-v37 .mobile-filter-sheet .blue-btn,
+  .turu-status-page-v37 .mobile-filter-sheet .blue-btn,
+  .turu-order-page-v37 .mobile-filter-sheet .primary-btn,
+  .turu-status-page-v37 .mobile-filter-sheet .primary-btn{height:48px !important;}
+  .turu-order-page-v37 .mobile-filter-sheet-head,
+  .turu-status-page-v37 .mobile-filter-sheet-head{display:flex !important;align-items:center !important;justify-content:space-between !important;gap:12px !important;margin-bottom:14px !important;}
+  .turu-order-page-v37 .mobile-filter-sheet-head button,
+  .turu-status-page-v37 .mobile-filter-sheet-head button{width:36px;height:36px;border:none;border-radius:999px;background:#f5f7fb;color:var(--turu-text);font-size:24px;line-height:1;}
+
+  .turu-status-page-v37 .turu-stat-strip-v37{margin-bottom:14px !important;}
+}

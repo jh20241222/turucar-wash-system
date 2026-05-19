@@ -55,7 +55,7 @@
             <select id="spot" class="app-input"><option value="">전체 스팟</option>{% for s in spot_list %}<option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
             {% if current_user.is_master %}<select id="vendor" class="app-input"><option value="">전체 업체</option>{% for v in vendor_list %}<option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>{% endif %}
             <button type="button" onclick="applyFilter()" class="primary-btn">검색</button>
-            <button type="button" onclick="downloadOrderExcel()" class="blue-btn order-excel-btn">엑셀</button>
+            <button type="button" onclick="downloadOrderExcel()" class="blue-btn excel-btn order-excel-btn"><span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 3.5h7l3 3v13A1.5 1.5 0 0 1 15.5 21h-9A1.5 1.5 0 0 1 5 19.5v-14A2 2 0 0 1 7 3.5Z"/><path d="M14 3.5v4h4"/><path d="M8.5 13h5M8.5 16h7M8.5 10h2.5"/></svg></span><span>엑셀 저장</span></button>
         </div>
     </section>
 

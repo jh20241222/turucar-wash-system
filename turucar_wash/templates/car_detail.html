@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block document_title %}Turu Wash · {{ car['차량번호'] }}{% endblock %}
 {% block content %}
+<section class="detail-page-brand-v36"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></section>
+
 <section class="detail-hero app-card elevated brand-line-card detail-hero-clean">
     <div class="hero-copy-block">
         <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo">

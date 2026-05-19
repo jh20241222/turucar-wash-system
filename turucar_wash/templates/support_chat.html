@@ -3,37 +3,41 @@
 {% block content %}
 <section class="chatbot-screen free-chatbot-screen">
     <header class="chatbot-header">
-        <div class="chatbot-brand">
-            <span class="chatbot-logo wordmark-logo">
-                <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar">
-            </span>
-            <div>
-                <h1>투루카 담당자</h1>
-                <p>세차 작업 중 문의사항을 남겨주세요.</p>
-            </div>
+        <div class="support-topbar-v36">
+            <a href="{{ url_for('dashboard') }}" class="support-back-btn-v36" aria-label="뒤로가기">‹</a>
+            <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR" class="support-top-logo-v36">
         </div>
-        <a href="{{ url_for('dashboard') }}" class="chatbot-close" aria-label="닫기">×</a>
-        <div class="chatbot-notice-strip">현장 문의는 담당자가 확인 후 답변드립니다.</div>
+        <div class="chatbot-intro-card-v36">
+            <div class="chatbot-brand">
+                <div class="support-agent-avatar-v36" aria-hidden="true">🎧</div>
+                <div>
+                    <h1>투루카 담당자</h1>
+                    <p>세차 작업 중 문의사항을 남겨주세요.</p>
+                </div>
+            </div>
+            <div class="chatbot-notice-strip">현장 문의는 담당자가 확인 후 답변드립니다.</div>
+        </div>
     </header>
 
     <main class="chatbot-body" id="chatbot-body">
         <div class="chat-date" id="chat-date"></div>
 
+        <div class="issue-options" id="issue-options">
+            <button type="button" data-category="문 안 잠김"><span class="issue-icon">🔒</span><span>문 안 잠김</span></button>
+            <button type="button" data-category="문 안 열림"><span class="issue-icon">🔓</span><span>문 안 열림</span></button>
+            <button type="button" data-category="시동 불가"><span class="issue-icon">⏻</span><span>시동 불가</span></button>
+            <button type="button" data-category="반납 불가"><span class="issue-icon">↻</span><span>반납 불가</span></button>
+            <button type="button" data-category="차량 훼손 발견"><span class="issue-icon">🚗</span><span>차량 훼손 발견</span></button>
+            <button type="button" data-category="기타 문의"><span class="issue-icon">💬</span><span>기타 문의</span></button>
+        </div>
+
         <div class="bot-row">
             <span class="bot-avatar wordmark-avatar">
-                <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar">
+                <img src="{{ url_for('static', filename='img/brand_t_mark.png') }}" alt="TuruCar">
             </span>
             <div class="bot-message">
-                <strong>투루카 담당자</strong>
-                <p>작업 중 문제가 있다면 먼저 유형을 선택해주세요.<br>유형 선택 후에는 자유롭게 대화하듯 메시지를 입력하면 됩니다.</p>
-                <div class="issue-options" id="issue-options">
-                    <button type="button" data-category="문 안 잠김">문 안 잠김</button>
-                    <button type="button" data-category="문 안 열림">문 안 열림</button>
-                    <button type="button" data-category="시동 불가">시동 불가</button>
-                    <button type="button" data-category="반납 불가">반납 불가</button>
-                    <button type="button" data-category="차량 훼손 발견">차량 훼손 발견</button>
-                    <button type="button" data-category="기타 문의">기타 문의</button>
-                </div>
+                <strong>안녕하세요! 투루카 담당자입니다.</strong>
+                <p>위의 항목을 선택하시거나,<br>아래에 직접 내용을 입력해 주세요.</p>
             </div>
         </div>
 
@@ -54,19 +58,14 @@
     </main>
 
     <footer class="chatbot-inputbar">
-        <button type="button" class="attach-btn" aria-label="첨부">＋</button>
-        <input id="chat-input" type="text" placeholder="먼저 문의 유형을 선택해주세요." autocomplete="off">
+        <button type="button" class="attach-btn" aria-label="첨부">⌁</button>
+        <input id="chat-input" type="text" placeholder="메시지를 입력해주세요." autocomplete="off">
         <button type="button" id="chat-send" class="send-btn" aria-label="전송">➤</button>
     </footer>
 </section>
 
 <script>
-const chatState = {
-    category: "",
-    ticketId: null,
-    started: false
-};
-
+const chatState = { category: "", ticketId: null, started: false };
 const body = document.getElementById("chatbot-body");
 const input = document.getElementById("chat-input");
 const sendBtn = document.getElementById("chat-send");
@@ -74,103 +73,43 @@ const options = document.getElementById("issue-options");
 const dateBox = document.getElementById("chat-date");
 
 dateBox.textContent = new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
-
-function scrollChat(){
-    body.scrollTop = body.scrollHeight;
-}
-
-function escapeHtml(text){
-    const div = document.createElement("div");
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function appendUser(text){
-    const row = document.createElement("div");
-    row.className = "user-row";
-    row.innerHTML = `<div class="user-message">${escapeHtml(text)}</div>`;
-    body.appendChild(row);
-    scrollChat();
-}
-
-function appendBot(html){
-    const row = document.createElement("div");
-    row.className = "bot-row";
-    row.innerHTML = `
-        <span class="bot-avatar wordmark-avatar"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar"></span>
-        <div class="bot-message"><strong>투루카 담당자</strong>${html}</div>
-    `;
-    body.appendChild(row);
-    scrollChat();
-}
-
+function scrollChat(){ body.scrollTop = body.scrollHeight; }
+function escapeHtml(text){ const div = document.createElement("div"); div.textContent = text; return div.innerHTML; }
+function appendUser(text){ const row = document.createElement("div"); row.className = "user-row"; row.innerHTML = `<div class="user-message">${escapeHtml(text)}</div>`; body.appendChild(row); scrollChat(); }
+function appendBot(html){ const row = document.createElement("div"); row.className = "bot-row"; row.innerHTML = `<span class="bot-avatar wordmark-avatar"><img src="{{ url_for('static', filename='img/brand_t_mark.png') }}" alt="TuruCar"></span><div class="bot-message">${html}</div>`; body.appendChild(row); scrollChat(); }
 function selectCategory(category){
-    chatState.category = category;
-    chatState.started = true;
-
-    document.querySelectorAll("#issue-options button").forEach(btn => {
-        btn.classList.toggle("selected", btn.dataset.category === category);
-    });
-
-    appendUser(category);
-    appendBot(`<p>${escapeHtml(category)} 문의를 선택했어요.<br>이제 상황을 자유롭게 입력해주세요.</p>`);
-    input.placeholder = "메시지를 입력해주세요.";
-    input.focus();
+  chatState.category = category;
+  chatState.started = true;
+  document.querySelectorAll("#issue-options button").forEach(btn => btn.classList.toggle("selected", btn.dataset.category === category));
+  appendUser(category);
+  appendBot(`<strong>문의 항목이 선택되었습니다.</strong><p><b>${escapeHtml(category)}</b> 문의를 선택했어요.<br>이제 상황을 자유롭게 입력해주세요.</p>`);
+  input.placeholder = "메시지를 입력해주세요.";
+  input.focus();
 }
-
 async function sendMessage(){
-    const value = input.value.trim();
-    if(!value){ return; }
-
-    if(!chatState.category){
-        appendBot("<p>먼저 문의 유형을 선택해주세요.</p>");
-        return;
+  const value = input.value.trim();
+  if(!value){ return; }
+  if(!chatState.category){ appendBot("<strong>문의 유형 선택</strong><p>먼저 문의 유형을 선택해주세요.</p>"); return; }
+  appendUser(value); input.value = "";
+  try {
+    const response = await fetch("{{ url_for('support_chat_submit') }}", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ category: chatState.category, message: value, ticket_id: chatState.ticketId })
+    });
+    const data = await response.json();
+    if(!response.ok || !data.ok){ appendBot(`<strong>전송 실패</strong><p>${escapeHtml(data.message || "문의 전송 중 오류가 발생했습니다.")}</p>`); return; }
+    if(!chatState.ticketId){
+      chatState.ticketId = data.ticket_id;
+      appendBot(`<strong>문의가 접수되었습니다.</strong><p>담당자가 확인 후 답변드리겠습니다.</p><p class="ticket-number">접수번호 #${data.ticket_id}</p>`);
+    } else {
+      appendBot("<strong>메시지 전달 완료</strong><p>추가 내용이 있으면 계속 입력해주세요.</p>");
     }
-
-    appendUser(value);
-    input.value = "";
-
-    try {
-        const response = await fetch("{{ url_for('support_chat_submit') }}", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-                category: chatState.category,
-                message: value,
-                ticket_id: chatState.ticketId
-            })
-        });
-
-        const data = await response.json();
-
-        if(!response.ok || !data.ok){
-            appendBot(`<p>${escapeHtml(data.message || "문의 전송 중 오류가 발생했습니다.")}</p>`);
-            return;
-        }
-
-        if(!chatState.ticketId){
-            chatState.ticketId = data.ticket_id;
-            appendBot(`<p>문의가 접수되었습니다.<br>담당자가 확인 후 답변드리겠습니다.</p><p class="ticket-number">접수번호 #${data.ticket_id}</p>`);
-        } else {
-            appendBot("<p>메시지가 전달되었습니다.<br>추가 내용이 있으면 계속 입력해주세요.</p>");
-        }
-    } catch(error) {
-        appendBot("<p>네트워크 오류로 메시지를 전송하지 못했습니다.</p>");
-    }
+  } catch(error) {
+    appendBot("<strong>네트워크 오류</strong><p>메시지를 전송하지 못했습니다.</p>");
+  }
 }
-
-options.addEventListener("click", function(event){
-    const button = event.target.closest("button[data-category]");
-    if(!button){ return; }
-    selectCategory(button.dataset.category);
-});
-
+options.addEventListener("click", function(event){ const button = event.target.closest("button[data-category]"); if(!button){ return; } selectCategory(button.dataset.category); });
 sendBtn.addEventListener("click", sendMessage);
-input.addEventListener("keydown", function(event){
-    if(event.key === "Enter"){
-        event.preventDefault();
-        sendMessage();
-    }
-});
+input.addEventListener("keydown", function(event){ if(event.key === "Enter"){ event.preventDefault(); sendMessage(); } });
 </script>
 {% endblock %}

@@ -1,31 +1,33 @@
 {% extends "base.html" %}
 {% block document_title %}Turu Wash · 완료 현황{% endblock %}
 {% block content %}
-<section class="turu-app-page-v24 turu-status-page-v24">
-    <header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=26" alt="TURU CAR"></header>
+<section class="turu-app-page-v24 turu-status-page-v24 turu-status-page-v37">
+    <header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=37" alt="TURU CAR"></header>
+
     <div class="turu-page-head-v24 turu-page-head--single-v25">
         <div><h1>완료 현황</h1><p>완료된 세차 기록을 확인합니다.</p></div>
-        <button type="button" class="turu-mini-btn-v24" onclick="openMobileFilter('status-filter-sheet')"><span>기간 선택</span></button>
     </div>
 
-    <div class="turu-stat-strip-v24">
-        <div><span>오늘 완료</span><strong>{{ rows|length }}</strong><em>건</em></div>
-        <div><span>조회 건수</span><strong>{{ rows|length }}</strong><em>건</em></div>
-        <div><span>전체 완료</span><strong>{{ rows|length }}</strong><em>건</em></div>
+    <div class="turu-stat-strip-v24 turu-stat-strip-v37">
+        <div><span>오늘 완료</span><strong>{{ today_completed_count }}</strong><em>건</em></div>
+        <div><span>조회 건수</span><strong>{{ filtered_count }}</strong><em>건</em></div>
+        <div><span>전체 완료</span><strong>{{ total_completed_count }}</strong><em>건</em></div>
     </div>
 
-    <div class="turu-searchbar-v24 turu-status-searchbar-v29">
+    <div class="turu-searchbar-v24 turu-status-searchbar-v29 turu-status-searchbar-v37">
         <input id="quick_status_search_input" placeholder="차량 번호 / 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">
         <button type="button" onclick="document.getElementById('search_input').value=document.getElementById('quick_status_search_input').value;applyFilter();" aria-label="검색">
             <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
         </button>
+        <button type="button" class="period" onclick="openMobileFilter('status-filter-sheet');focusPeriodRange();">기간 선택</button>
         <button type="button" class="filter" onclick="openMobileFilter('status-filter-sheet')">
             <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M7 12h10M10 18h4"/></svg>필터
         </button>
     </div>
 
+    <div id="mobile-filter-backdrop" class="mobile-filter-backdrop" onclick="closeAnyMobileFilter()"></div>
     <section id="status-filter-sheet" class="filter-card app-card search-panel mobile-filter-sheet turu-filter-sheet-v24">
-        <div class="mobile-filter-sheet-head"><strong>완료 이력 검색</strong><button type="button" onclick="closeMobileFilter('status-filter-sheet')" aria-label="닫기">×</button></div>
+        <div class="mobile-filter-sheet-head"><strong>완료 이력 필터</strong><button type="button" onclick="closeMobileFilter('status-filter-sheet')" aria-label="닫기">×</button></div>
         <div class="filter-head"><div><strong>완료 이력 검색</strong><small>차량, 지역, 기간으로 조회</small></div><span>{{ rows|length }}건</span></div>
         <div class="filter-grid status-filter-grid">
             <input type="text" id="search_input" class="app-input" placeholder="차량번호 또는 스팟 검색" value="{{ search_input }}">
@@ -35,7 +37,7 @@
             <select id="spot" class="app-input"><option value="">전체 스팟</option>{% for s in spot_list %}<option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
             {% if current_user.is_master %}<select id="vendor" class="app-input"><option value="">전체 업체</option>{% for v in vendor_list %}<option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>{% endif %}
             <input type="date" id="start" class="app-input" value="{{ start }}"><input type="date" id="end" class="app-input" value="{{ end }}">
-            <button type="button" onclick="applyFilter()" class="primary-btn">검색</button><button type="button" onclick="downloadExcel()" class="blue-btn excel-btn"><span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 3.5h7l3 3v13A1.5 1.5 0 0 1 15.5 21h-9A1.5 1.5 0 0 1 5 19.5v-14A2 2 0 0 1 7 3.5Z"/><path d="M14 3.5v4h4"/><path d="M8.5 13h5M8.5 16h7M8.5 10h2.5"/></svg></span><span>엑셀 저장</span></button>
+            <button type="button" onclick="applyFilter()" class="primary-btn">검색</button><button type="button" onclick="downloadExcel()" class="blue-btn">엑셀 저장</button>
         </div>
     </section>
 
@@ -75,9 +77,11 @@
 function buildStatusParams(){return new URLSearchParams({s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("car_org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:"",start:document.getElementById("start").value,end:document.getElementById("end").value});}
 function applyFilter(){window.location.href=`/wash_status?${buildStatusParams().toString()}`;}
 function downloadExcel(){window.location.href=`/wash_status_excel?${buildStatusParams().toString()}`;}
-function openMobileFilter(id){const el=document.getElementById(id);if(el){el.classList.add("open");document.body.classList.add("filter-sheet-open");}}
-function closeMobileFilter(id){const el=document.getElementById(id);if(el){el.classList.remove("open");document.body.classList.remove("filter-sheet-open");}}
-document.addEventListener("keydown",function(e){if(e.key==="Escape"){document.querySelectorAll(".mobile-filter-sheet.open").forEach(function(el){el.classList.remove("open");});document.body.classList.remove("filter-sheet-open");}});
+function focusPeriodRange(){setTimeout(function(){const start=document.getElementById('start'); if(start){start.focus();}},120);}
+function openMobileFilter(id){const el=document.getElementById(id);const backdrop=document.getElementById('mobile-filter-backdrop');if(el){el.classList.add('open');el.style.display='block';el.style.visibility='visible';el.style.opacity='1';}if(backdrop){backdrop.classList.add('open');}document.body.classList.add('filter-sheet-open');}
+function closeMobileFilter(id){const el=document.getElementById(id);const backdrop=document.getElementById('mobile-filter-backdrop');if(el){el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';}if(backdrop){backdrop.classList.remove('open');}document.body.classList.remove('filter-sheet-open');}
+function closeAnyMobileFilter(){document.querySelectorAll('.mobile-filter-sheet.open').forEach(el=>{el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';});const backdrop=document.getElementById('mobile-filter-backdrop');if(backdrop){backdrop.classList.remove('open');}document.body.classList.remove('filter-sheet-open');}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAnyMobileFilter();}});
 function toggleDeleteMode(formId, force){const form=document.getElementById(formId);if(!form){return;}const next=typeof force==="boolean"?force:!form.classList.contains("delete-mode");form.classList.toggle("delete-mode",next);if(!next){form.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);}}
 function toggleAllDelete(master, formId){const form=document.getElementById(formId);if(!form){return;}form.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=master.checked);}
 function confirmSelectedDelete(formId,message){const form=document.getElementById(formId);const count=form?form.querySelectorAll('input[name="ids"]:checked').length:0;if(count<1){alert("삭제할 항목을 선택해주세요.");return false;}return confirm(message||"선택한 항목을 삭제할까요?");}

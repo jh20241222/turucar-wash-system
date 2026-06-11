@@ -163,8 +163,7 @@
                     <button type="button" onclick="moveDate(-1)">‹</button>
                     <span>{{ selected_date }}</span>
                     <button type="button" onclick="moveDate(1)">›</button>
-                </div>
-                <div class="dt-stats">
+                </div>                <div class="dt-stats">
                     <div class="dt-stat"><span>세차 대상</span><strong>{{ total_target_count }}</strong></div>
                     <div class="dt-stat dt-stat--urgent"><span>장기 미세차</span><strong>{{ long_wash_count }}</strong></div>
                     <div class="dt-stat"><span>정기세차</span><strong>{{ regular_count }}</strong></div>
@@ -319,67 +318,60 @@
 
     .turu-desktop-table-v24 { display: block !important; padding: 0 !important; border-radius: var(--border-radius-lg) !important; overflow: hidden; margin: 0 !important; }
 
-    .dt-toolbar { display: flex; flex-direction: column; align-items: center; padding: 24px 24px 18px; border-bottom: 0.5px solid var(--color-border-tertiary); gap: 14px; position: relative; }
-    .dt-toolbar-left { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
-    .dt-toolbar-right { position: absolute; top: 20px; right: 24px; display: flex; align-items: center; gap: 8px; }
+    .dt-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 0.5px solid var(--color-border-tertiary); gap: 20px; }
+    .dt-toolbar-left { display: flex; align-items: center; gap: 20px; }
+    .dt-toolbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
     .turu-desktop-table-v24 { position: relative; }
-    .dt-date-nav { display: flex; align-items: center; gap: 16px; font-size: 22px; font-weight: 900; color: var(--color-text-primary); letter-spacing: -.03em; }
-    .dt-date-nav button { background: #FFF2E9; border: none; border-radius: 12px; cursor: pointer; color: #D85A30; font-size: 20px; font-weight: 900; padding: 6px 16px; }
+    .dt-date-nav { display: flex; align-items: center; gap: 10px; }
+    .dt-date-nav button { background: #FFF2E9; border: none; border-radius: 10px; cursor: pointer; color: #FF5F00; font-size: 18px; font-weight: 900; padding: 5px 14px; line-height: 1; }
     .dt-date-nav button:hover { background: #F0997B; color: #fff; }
-    .dt-stats { display: flex; align-items: center; gap: 32px; }
-    .dt-stat { text-align: center; }
-    .dt-stat span { font-size: 12px; color: var(--color-text-secondary); display: block; margin-bottom: 3px; font-weight: 900; }
-    .dt-stat strong { font-size: 28px; font-weight: 950; color: var(--color-text-primary); letter-spacing: -.045em; line-height: 1; }
-    .dt-stat--urgent strong { color: #D85A30; }
+    .dt-date-nav span { font-size: 22px; font-weight: 950; color: var(--color-text-primary); letter-spacing: -.03em; min-width: 130px; text-align: center; }
+    .dt-stats { display: flex; align-items: center; }
+    .dt-stat { text-align: center; padding: 0 18px; border-right: 0.5px solid var(--color-border-tertiary); }
+    .dt-stat:last-child { border-right: none; }
+    .dt-stat span { font-size: 11px; color: var(--color-text-secondary); display: block; margin-bottom: 3px; font-weight: 800; letter-spacing: .05em; }
+    .dt-stat strong { font-size: 26px; font-weight: 950; color: var(--color-text-primary); letter-spacing: -.045em; line-height: 1; }
+    .dt-stat--urgent strong { color: #FF5F00; }
 
-    .dt-btn { display: flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: var(--border-radius-md); font-size: 12px; cursor: pointer; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); color: var(--color-text-secondary); }
+    .dt-btn { display: flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); color: var(--color-text-secondary); font-weight: 800; }
     .dt-btn:hover { background: var(--color-background-secondary); }
-    .dt-btn--primary { background: #D85A30; color: #fff; border-color: #D85A30; }
-    .dt-btn--primary:hover { background: #c24f28; }
+    .dt-btn--primary { background: #FF5F00; color: #fff; border-color: #FF5F00; }
+    .dt-btn--primary:hover { background: #e05500; }
     .dt-btn--danger { color: #993C1D; border-color: #F0997B; }
     .dt-btn--danger:hover { background: #FAECE7; }
 
     .dt-filterbar { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-secondary); }
-    .dt-filterbar input { flex: 1; min-width: 160px; border: none; background: none; font-size: 12px; color: var(--color-text-primary); outline: none; }
-    .dt-filterbar input::placeholder { color: var(--color-text-tertiary); }
-    .dt-filterbar select { border: none; background: none; font-size: 12px; color: var(--color-text-secondary); outline: none; cursor: pointer; }
+    .dt-filterbar input { flex: 1; min-width: 160px; border: none; background: none; font-size: 14px; color: var(--color-text-primary); outline: none; font-weight: 800; }
+    .dt-filterbar input::placeholder { color: var(--color-text-tertiary); font-weight: 400; }
+    .dt-filterbar select { border: none; background: none; font-size: 13px; color: var(--color-text-secondary); outline: none; cursor: pointer; font-weight: 800; }
     .dt-filter-divider { width: 0.5px; height: 16px; background: var(--color-border-tertiary); flex-shrink: 0; }
 
     .dt-tab-bar { display: flex; border-bottom: 0.5px solid var(--color-border-tertiary); padding: 0 20px; background: var(--color-background-primary); }
-    .dt-tab { padding: 9px 14px; font-size: 12px; color: var(--color-text-secondary); cursor: pointer; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -0.5px; }
-    .dt-tab.active { color: #D85A30; border-bottom-color: #D85A30; font-weight: 500; }
-    .dt-tab-badge { display: inline-block; background: #FAECE7; color: #993C1D; font-size: 10px; padding: 1px 6px; border-radius: 20px; margin-left: 4px; font-weight: 500; }
+    .dt-tab { padding: 10px 16px; font-size: 14px; color: var(--color-text-secondary); cursor: pointer; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -0.5px; font-weight: 800; }
+    .dt-tab.active { color: #FF5F00; border-bottom-color: #FF5F00; font-weight: 950; }
+    .dt-tab-badge { display: inline-block; background: #FFF2E9; color: #FF5F00; font-size: 11px; padding: 1px 7px; border-radius: 20px; margin-left: 4px; font-weight: 900; }
 
     .dt-table-scroll { overflow-x: auto; }
-    .dt-table { width: 100%; border-collapse: collapse; font-size: 13px; font-weight: 700; }
+    .dt-table { width: 100%; border-collapse: collapse; }
     .dt-table thead tr { background: var(--color-background-secondary); }
-    .dt-table th { padding: 10px 14px; text-align: left; font-weight: 900; color: var(--color-text-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; font-size: 12px; }
-    .dt-table td { padding: 10px 14px; color: var(--color-text-primary); border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; font-size: 13px; font-weight: 700; }
+    .dt-table th { padding: 10px 14px; text-align: left; font-weight: 950; color: var(--color-text-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; font-size: 12px; letter-spacing: .03em; }
+    .dt-table td { padding: 10px 14px; color: var(--color-text-primary); border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; font-size: 14px; font-weight: 800; }
     .dt-table tr:last-child td { border-bottom: none; }
     .dt-row--urgent td { background: #fff8f6; }
     .dt-row:hover td { background: var(--color-background-secondary); }
     .dt-check-col { width: 36px; }
-    .dt-car-link { color: #D85A30; font-weight: 500; text-decoration: none; }
+    .dt-car-link { color: #FF5F00; font-weight: 950; text-decoration: none; }
     .dt-car-link:hover { text-decoration: underline; }
-    .dt-badge { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 20px; font-weight: 500; }
-    .dt-badge--urgent { background: #FAECE7; color: #993C1D; }
+    .dt-badge { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 20px; font-weight: 900; }
+    .dt-badge--urgent { background: #FFF2E9; color: #FF5F00; }
     .dt-badge--regular { background: #EAF3DE; color: #3B6D11; }
     .dt-badge--new { background: #E6F1FB; color: #185FA5; }
-    .dt-elapsed--urgent { color: #D85A30; font-weight: 500; }
-    .dt-empty { text-align: center; padding: 32px; color: var(--color-text-secondary); font-size: 13px; }
+    .dt-elapsed--urgent { color: #FF5F00; font-weight: 950; }
+    .dt-empty { text-align: center; padding: 32px; color: var(--color-text-secondary); font-size: 14px; font-weight: 800; }
 }
 </style>
 
 <script>
-function setWashFilter(type){
-    document.querySelectorAll('.wash-type-btn').forEach(btn=>btn.classList.remove('active'));
-    document.querySelector('.wash-type-btn--'+type).classList.add('active');
-    const u=document.getElementById('section-urgent');
-    const r=document.getElementById('section-regular');
-    if(type==='all'){if(u)u.style.display='';if(r)r.style.display='';}
-    else if(type==='urgent'){if(u)u.style.display='';if(r)r.style.display='none';}
-    else{if(u)u.style.display='none';if(r)r.style.display='';}
-}
 function setWashFilter(type) {
     document.querySelectorAll('.wash-type-btn').forEach(btn=>btn.classList.remove('active'));
     document.querySelector('.wash-type-btn--'+type).classList.add('active');

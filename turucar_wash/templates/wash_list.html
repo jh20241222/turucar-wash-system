@@ -319,16 +319,17 @@
 
     .turu-desktop-table-v24 { display: block !important; padding: 0 !important; border-radius: var(--border-radius-lg) !important; overflow: hidden; margin: 0 !important; }
 
-    .dt-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 0.5px solid var(--color-border-tertiary); gap: 16px; }
-    .dt-toolbar-left { display: flex; align-items: center; gap: 16px; }
-    .dt-toolbar-right { display: flex; align-items: center; gap: 8px; }
-    .dt-date-nav { display: flex; align-items: center; gap: 8px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 5px 10px; font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
-    .dt-date-nav button { background: none; border: none; cursor: pointer; color: var(--color-text-secondary); font-size: 16px; line-height: 1; padding: 0 2px; }
-    .dt-stats { display: flex; align-items: center; gap: 0; }
-    .dt-stat { padding: 4px 14px; border-right: 0.5px solid var(--color-border-tertiary); }
-    .dt-stat:last-child { border-right: none; }
-    .dt-stat span { font-size: 11px; color: var(--color-text-secondary); display: block; }
-    .dt-stat strong { font-size: 16px; font-weight: 500; color: var(--color-text-primary); }
+    .dt-toolbar { display: flex; flex-direction: column; align-items: center; padding: 20px 24px 16px; border-bottom: 0.5px solid var(--color-border-tertiary); gap: 14px; }
+    .dt-toolbar-left { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+    .dt-toolbar-right { position: absolute; top: 20px; right: 24px; display: flex; align-items: center; gap: 8px; }
+    .turu-desktop-table-v24 { position: relative; }
+    .dt-date-nav { display: flex; align-items: center; gap: 16px; padding: 8px 20px; font-size: 18px; font-weight: 500; color: var(--color-text-primary); }
+    .dt-date-nav button { background: none; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); cursor: pointer; color: var(--color-text-secondary); font-size: 18px; line-height: 1; padding: 4px 12px; }
+    .dt-date-nav button:hover { background: var(--color-background-secondary); }
+    .dt-stats { display: flex; align-items: center; gap: 24px; }
+    .dt-stat { text-align: center; }
+    .dt-stat span { font-size: 11px; color: var(--color-text-secondary); display: block; margin-bottom: 2px; }
+    .dt-stat strong { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
     .dt-stat--urgent strong { color: #D85A30; }
 
     .dt-btn { display: flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: var(--border-radius-md); font-size: 12px; cursor: pointer; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); color: var(--color-text-secondary); }

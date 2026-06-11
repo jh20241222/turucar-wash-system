@@ -319,17 +319,17 @@
 
     .turu-desktop-table-v24 { display: block !important; padding: 0 !important; border-radius: var(--border-radius-lg) !important; overflow: hidden; margin: 0 !important; }
 
-    .dt-toolbar { display: flex; flex-direction: column; align-items: center; padding: 20px 24px 16px; border-bottom: 0.5px solid var(--color-border-tertiary); gap: 14px; }
+    .dt-toolbar { display: flex; flex-direction: column; align-items: center; padding: 24px 24px 18px; border-bottom: 0.5px solid var(--color-border-tertiary); gap: 14px; position: relative; }
     .dt-toolbar-left { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
     .dt-toolbar-right { position: absolute; top: 20px; right: 24px; display: flex; align-items: center; gap: 8px; }
     .turu-desktop-table-v24 { position: relative; }
-    .dt-date-nav { display: flex; align-items: center; gap: 16px; padding: 8px 20px; font-size: 18px; font-weight: 500; color: var(--color-text-primary); }
-    .dt-date-nav button { background: none; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); cursor: pointer; color: var(--color-text-secondary); font-size: 18px; line-height: 1; padding: 4px 12px; }
-    .dt-date-nav button:hover { background: var(--color-background-secondary); }
-    .dt-stats { display: flex; align-items: center; gap: 24px; }
+    .dt-date-nav { display: flex; align-items: center; gap: 16px; font-size: 22px; font-weight: 900; color: var(--color-text-primary); letter-spacing: -.03em; }
+    .dt-date-nav button { background: #FFF2E9; border: none; border-radius: 12px; cursor: pointer; color: #D85A30; font-size: 20px; font-weight: 900; padding: 6px 16px; }
+    .dt-date-nav button:hover { background: #F0997B; color: #fff; }
+    .dt-stats { display: flex; align-items: center; gap: 32px; }
     .dt-stat { text-align: center; }
-    .dt-stat span { font-size: 11px; color: var(--color-text-secondary); display: block; margin-bottom: 2px; }
-    .dt-stat strong { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+    .dt-stat span { font-size: 12px; color: var(--color-text-secondary); display: block; margin-bottom: 3px; font-weight: 900; }
+    .dt-stat strong { font-size: 28px; font-weight: 950; color: var(--color-text-primary); letter-spacing: -.045em; line-height: 1; }
     .dt-stat--urgent strong { color: #D85A30; }
 
     .dt-btn { display: flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: var(--border-radius-md); font-size: 12px; cursor: pointer; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); color: var(--color-text-secondary); }
@@ -351,10 +351,10 @@
     .dt-tab-badge { display: inline-block; background: #FAECE7; color: #993C1D; font-size: 10px; padding: 1px 6px; border-radius: 20px; margin-left: 4px; font-weight: 500; }
 
     .dt-table-scroll { overflow-x: auto; }
-    .dt-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .dt-table { width: 100%; border-collapse: collapse; font-size: 13px; font-weight: 700; }
     .dt-table thead tr { background: var(--color-background-secondary); }
-    .dt-table th { padding: 8px 12px; text-align: left; font-weight: 500; color: var(--color-text-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; font-size: 11px; }
-    .dt-table td { padding: 8px 12px; color: var(--color-text-primary); border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; }
+    .dt-table th { padding: 10px 14px; text-align: left; font-weight: 900; color: var(--color-text-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; font-size: 12px; }
+    .dt-table td { padding: 10px 14px; color: var(--color-text-primary); border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; font-size: 13px; font-weight: 700; }
     .dt-table tr:last-child td { border-bottom: none; }
     .dt-row--urgent td { background: #fff8f6; }
     .dt-row:hover td { background: var(--color-background-secondary); }

@@ -27,8 +27,26 @@
     </section>
 
     {# ── 커스텀 달력 팝업 ── #}
-    <div id="cal-backdrop" onclick="closeCalendar()" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.3);"></div>
-    <div id="cal-popup" style="display:none;position:fixed;left:50%;transform:translateX(-50%);z-index:1000;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:16px;padding:16px;width:300px;box-shadow:0 8px 32px rgba(0,0,0,0.12);">
+    <div class="notice-modal-backdrop" id="cal-backdrop" hidden onclick="closeCalendar()">
+        <div class="turu-mini-modal" style="padding:24px;max-width:320px;" onclick="event.stopPropagation()">
+            <button type="button" class="notice-modal-close" onclick="closeCalendar()" aria-label="닫기">×</button>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                <button onclick="calChangeMonth(-1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 14px;cursor:pointer;">‹</button>
+                <strong id="cal-title" style="font-size:15px;font-weight:950;color:var(--color-text-primary);"></strong>
+                <button onclick="calChangeMonth(1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 14px;cursor:pointer;">›</button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px;">
+                <span style="text-align:center;font-size:11px;font-weight:900;color:#E24B4A;padding:4px 0;">일</span>
+                <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">월</span>
+                <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">화</span>
+                <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">수</span>
+                <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">목</span>
+                <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">금</span>
+                <span style="text-align:center;font-size:11px;font-weight:900;color:#185FA5;padding:4px 0;">토</span>
+            </div>
+            <div id="cal-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
+        </div>
+    </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
             <button onclick="calChangeMonth(-1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 12px;cursor:pointer;">‹</button>
             <strong id="cal-title" style="font-size:15px;font-weight:950;color:var(--color-text-primary);"></strong>
@@ -436,24 +454,17 @@ function _initCal(){
     _calYear = parseInt(p[0]); _calMonth = parseInt(p[1]) - 1;
 }
 function toggleCalendar(){
-    const pop = document.getElementById('cal-popup');
     const bd = document.getElementById('cal-backdrop');
-    if(pop.style.display === 'none'){
+    if(bd.hidden){
         _initCal();
-        pop.style.display = 'block';
-        bd.style.display = 'block';
+        bd.hidden = false;
         _renderCal();
-        const popH = pop.offsetHeight || 320;
-        const winH = window.innerHeight;
-        const top = Math.min((winH - popH) / 2, winH * 0.25);
-        pop.style.top = Math.max(60, top) + 'px';
     } else {
         closeCalendar();
     }
 }
 function closeCalendar(){
-    document.getElementById('cal-popup').style.display = 'none';
-    document.getElementById('cal-backdrop').style.display = 'none';
+    document.getElementById('cal-backdrop').hidden = true;
 }
 function calChangeMonth(dir){
     _calMonth += dir;

@@ -144,6 +144,9 @@ def bootstrap_storage():
 
 bootstrap_storage()
 
+print(f"[TuruWash] DATA_DIR = {DATA_DIR}")
+print(f"[TuruWash] WASH_DB  = {WASH_DB_PATH}")
+
 
 def load_band_mapping():
     if not os.path.exists(BAND_MATCHING_PATH):
@@ -268,7 +271,8 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             차량번호 TEXT, 차종명 TEXT, 차량소속 TEXT,
             스팟 TEXT, 주소 TEXT, 지역시도 TEXT, 지역구군 TEXT,
-            세차일 TEXT, 업체 TEXT, 밴드링크 TEXT, 작업자 TEXT, 완료 INTEGER DEFAULT 0
+            세차일 TEXT, 업체 TEXT, 밴드링크 TEXT, 작업자 TEXT, 완료 INTEGER DEFAULT 0,
+            등록일 TEXT, 이월횟수 INTEGER DEFAULT 0, 세차경과일 INTEGER DEFAULT 0
         )
     """)
     cur.execute("""
@@ -277,7 +281,8 @@ def init_db():
             차량번호 TEXT, 차종명 TEXT, 차량소속 TEXT,
             스팟 TEXT, 주소 TEXT, 지역시도 TEXT, 지역구군 TEXT,
             업체 TEXT, 세차완료일 TEXT, 주행거리 TEXT,
-            훼손 TEXT, 경고등 TEXT, 특이사항 TEXT, 작업자 TEXT, 원본ID INTEGER
+            훼손 TEXT, 경고등 TEXT, 특이사항 TEXT, 작업자 TEXT, 원본ID INTEGER,
+            상태 TEXT DEFAULT '완료'
         )
     """)
     conn.commit()
@@ -310,6 +315,77 @@ def ensure_user_schema():
 
 
 ensure_user_schema()
+
+
+# =========================================================
+# 세차 오더 스키마 보정
+# =========================================================
+def ensure_wash_schema():
+    conn = get_wash_db()
+    cur = conn.cursor()
+    wash_cols = [row[1] for row in cur.execute("PRAGMA table_info(wash_list)").fetchall()]
+    if "등록일" not in wash_cols:
+        cur.execute("ALTER TABLE wash_list ADD COLUMN 등록일 TEXT")
+        cur.execute("UPDATE wash_list SET 등록일 = 세차일 WHERE 등록일 IS NULL")
+    if "이월횟수" not in wash_cols:
+        cur.execute("ALTER TABLE wash_list ADD COLUMN 이월횟수 INTEGER DEFAULT 0")
+        cur.execute("UPDATE wash_list SET 이월횟수 = 0 WHERE 이월횟수 IS NULL")
+    if "세차경과일" not in wash_cols:
+        cur.execute("ALTER TABLE wash_list ADD COLUMN 세차경과일 INTEGER DEFAULT 0")
+        cur.execute("UPDATE wash_list SET 세차경과일 = 0 WHERE 세차경과일 IS NULL")
+
+    hist_cols = [row[1] for row in cur.execute("PRAGMA table_info(wash_history)").fetchall()]
+    if "상태" not in hist_cols:
+        cur.execute("ALTER TABLE wash_history ADD COLUMN 상태 TEXT DEFAULT '완료'")
+
+    conn.commit()
+    conn.close()
+
+
+ensure_wash_schema()
+
+
+# =========================================================
+# 미완료 오더 이월 처리 (월~금: 세차일 < 오늘 → 오늘로 이월)
+# =========================================================
+def rollover_wash_orders():
+    """세차일이 오늘보다 과거인 미완료 오더를 오늘 날짜로 이월. 토요일은 이월 없음(리셋에서 처리)."""
+    today = datetime.today()
+    # 토요일(weekday=5)은 이월 안 함 — saturday_reset이 처리
+    if today.weekday() == 5:
+        return
+    today_str = today.strftime("%Y-%m-%d")
+    conn = get_wash_db()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE wash_list
+        SET 세차일 = ?,
+            이월횟수 = COALESCE(이월횟수, 0) + 1
+        WHERE 세차일 < ? AND 완료 = 0
+    """, (today_str, today_str))
+    conn.commit()
+    conn.close()
+
+
+# =========================================================
+# 토요일 자정 리셋 (미완료 오더 전체 삭제)
+# =========================================================
+def saturday_reset():
+    """토요일에 앱 시작 시 실행. 세차일이 오늘(토) 이전인 미완료 오더를 전부 삭제한다."""
+    today = datetime.today()
+    if today.weekday() != 5:  # 토요일만
+        return
+    today_str = today.strftime("%Y-%m-%d")
+    conn = get_wash_db()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM wash_list WHERE 세차일 < ? AND 완료 = 0", (today_str,))
+    conn.commit()
+    conn.close()
+    print(f"[TuruWash] 토요일 리셋 완료 — 미완료 오더 삭제됨")
+
+
+saturday_reset()
+rollover_wash_orders()
 
 
 # =========================================================
@@ -565,13 +641,109 @@ def profile():
             "SELECT COUNT(*) AS c FROM accounts WHERE parent_id=?",
             (current_user.id,)
         ).fetchone()["c"]
+
+    # 비밀번호 초기화 대상 계정 (admin: 본인 소속 staff, master: 모든 계정)
+    reset_targets = []
+    if current_user.is_master:
+        reset_targets = cur.execute(
+            "SELECT username, role, vendor FROM accounts WHERE username != ? ORDER BY role, username",
+            (current_user.username,)
+        ).fetchall()
+    elif current_user.is_admin:
+        reset_targets = cur.execute(
+            "SELECT username, role, vendor FROM accounts WHERE parent_id=? ORDER BY username",
+            (current_user.id,)
+        ).fetchall()
+
     conn.close()
 
     return render_template(
         "profile.html",
         region_rows=region_rows,
         child_count=child_count,
+        reset_targets=reset_targets,
     )
+
+
+# =========================================================
+# 본인 비밀번호 변경
+# =========================================================
+@app.route("/profile/change_password", methods=["POST"])
+@login_required
+def change_password():
+    current_pw = request.form.get("current_password", "")
+    new_pw = request.form.get("new_password", "").strip()
+    confirm_pw = request.form.get("confirm_password", "").strip()
+
+    conn = get_user_db()
+    cur = conn.cursor()
+    user = cur.execute("SELECT * FROM accounts WHERE id=?", (current_user.id,)).fetchone()
+
+    if not check_password_hash(user["password"], current_pw):
+        flash("❌ 현재 비밀번호가 일치하지 않습니다.")
+        conn.close()
+        return redirect(url_for("profile"))
+
+    if not new_pw:
+        flash("❌ 새 비밀번호를 입력하세요.")
+        conn.close()
+        return redirect(url_for("profile"))
+
+    if new_pw != confirm_pw:
+        flash("❌ 새 비밀번호가 일치하지 않습니다.")
+        conn.close()
+        return redirect(url_for("profile"))
+
+    cur.execute("UPDATE accounts SET password=? WHERE id=?", (generate_password_hash(new_pw), current_user.id))
+    conn.commit()
+    conn.close()
+    flash("✔ 비밀번호가 변경되었습니다.")
+    return redirect(url_for("profile"))
+
+
+# =========================================================
+# 계정 비밀번호 초기화 (admin: 소속 staff, master: 모든 계정)
+# =========================================================
+@app.route("/profile/reset_password", methods=["POST"])
+@login_required
+def reset_password():
+    if not current_user.is_admin:
+        flash("❌ 접근 권한이 없습니다.")
+        return redirect(url_for("profile"))
+
+    target_username = request.form.get("target_username", "").strip()
+    if not target_username:
+        flash("❌ 초기화할 계정을 선택하세요.")
+        return redirect(url_for("profile"))
+
+    RESET_PW = "0325"
+
+    conn = get_user_db()
+    cur = conn.cursor()
+    target = cur.execute("SELECT * FROM accounts WHERE username=?", (target_username,)).fetchone()
+
+    if not target:
+        flash("❌ 계정을 찾을 수 없습니다.")
+        conn.close()
+        return redirect(url_for("profile"))
+
+    # master는 모든 계정 초기화 가능, admin은 본인 소속 staff만
+    if not current_user.is_master:
+        if target["role"] != "staff" or target["parent_id"] != current_user.id:
+            flash("❌ 해당 계정의 비밀번호를 초기화할 권한이 없습니다.")
+            conn.close()
+            return redirect(url_for("profile"))
+
+    if target["role"] == "master":
+        flash("❌ 마스터 계정은 초기화할 수 없습니다.")
+        conn.close()
+        return redirect(url_for("profile"))
+
+    cur.execute("UPDATE accounts SET password=? WHERE username=?", (generate_password_hash(RESET_PW), target_username))
+    conn.commit()
+    conn.close()
+    flash(f"✔ {target_username} 비밀번호가 {RESET_PW}(으)로 초기화되었습니다.")
+    return redirect(url_for("profile"))
 
 
 # =========================================================
@@ -739,15 +911,22 @@ def delete_dashboard_notice(notice_id):
 @app.route("/dashboard")
 @login_required
 def dashboard():
+    today = datetime.today().strftime("%Y-%m-%d")
     conn = get_wash_db()
     cur = conn.cursor()
 
     scope_sql, scope_params = scoped_condition("wash_list", current_user)
-    total_count = cur.execute(f"SELECT COUNT(*) AS c FROM wash_list WHERE 1=1{scope_sql}", scope_params).fetchone()["c"]
-    done_count = cur.execute("SELECT COUNT(*) AS c FROM wash_history WHERE 1=1" + scoped_condition("wash_history", current_user)[0], scoped_condition("wash_history", current_user)[1]).fetchone()["c"]
+    total_count = cur.execute(
+        f"SELECT COUNT(*) AS c FROM wash_list WHERE 세차일 = ?{scope_sql}",
+        [today] + scope_params
+    ).fetchone()["c"]
+    done_count = cur.execute(
+        "SELECT COUNT(*) AS c FROM wash_history WHERE 세차완료일 = ?" + scoped_condition("wash_history", current_user)[0],
+        [today] + scoped_condition("wash_history", current_user)[1]
+    ).fetchone()["c"]
     vendor_counts = cur.execute(
-        f"SELECT 업체, COUNT(*) AS c FROM wash_list WHERE 1=1{scope_sql} GROUP BY 업체 ORDER BY 업체",
-        scope_params
+        f"SELECT 업체, COUNT(*) AS c FROM wash_list WHERE 세차일 = ?{scope_sql} GROUP BY 업체 ORDER BY 업체",
+        [today] + scope_params
     ).fetchall()
     conn.close()
 
@@ -1078,28 +1257,49 @@ def upload_wash_list():
                 flash(f"❌ '{col}' 컬럼이 없습니다.")
                 return redirect(url_for("upload_wash_list"))
 
-        try:
-            band_dict = load_band_mapping()
-        except Exception as e:
-            flash(f"❌ 밴드매칭 파일 오류: {e}")
-            return redirect(url_for("upload_wash_list"))
+        # 밴드링크: 엑셀 컬럼 우선, 없으면 밴드매칭 파일에서 조회
+        has_band_col = "밴드링크" in df.columns
+        band_dict = {}
+        if not has_band_col:
+            try:
+                band_dict = load_band_mapping()
+            except Exception as e:
+                flash(f"❌ 밴드매칭 파일 오류: {e}")
+                return redirect(url_for("upload_wash_list"))
 
+        has_elapsed_col = "세차경과일" in df.columns
+        today_str = datetime.today().strftime("%Y-%m-%d")
         conn = get_wash_db()
         cur = conn.cursor()
         for _, r in df.iterrows():
-            band = band_dict.get(r["차량소속"], None)
+            # 밴드링크 결정
+            if has_band_col:
+                band_val = str(r["밴드링크"]).strip()
+                band = band_val if band_val and band_val.lower() not in ("nan", "") else None
+            else:
+                band = band_dict.get(r["차량소속"], None)
+
+            # 세차경과일 저장
+            if has_elapsed_col:
+                try:
+                    elapsed_days = int(r["세차경과일"])
+                except (ValueError, TypeError):
+                    elapsed_days = 0
+            else:
+                elapsed_days = 0
+
             cur.execute(
                 """
                 INSERT INTO wash_list
                 (차량번호, 차종명, 차량소속, 스팟, 주소,
                  지역시도, 지역구군, 세차일,
-                 업체, 밴드링크, 작업자, 완료)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+                 업체, 밴드링크, 작업자, 완료, 등록일, 이월횟수, 세차경과일)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?)
                 """,
                 (
                     r["차량번호"], r["차종명"], r["차량소속"], r["현재스팟명"],
                     r["현재스팟주소"], r["지역(시/도)"], r["지역(구/군)"],
-                    wash_date, r["담당업체"], band, None
+                    wash_date, r["담당업체"], band, None, today_str, elapsed_days
                 )
             )
         conn.commit()
@@ -1108,7 +1308,50 @@ def upload_wash_list():
         flash("✔ 업로드 완료")
         return redirect(url_for("upload_wash_list"))
 
-    return render_template("upload_wash_list.html")
+    # 날짜 목록 조회 (삭제 UI용)
+    conn = get_wash_db()
+    date_list = conn.execute(
+        "SELECT 세차일, COUNT(*) AS cnt FROM wash_list GROUP BY 세차일 ORDER BY 세차일 DESC"
+    ).fetchall()
+    total_count = conn.execute("SELECT COUNT(*) AS c FROM wash_list").fetchone()["c"]
+    conn.close()
+
+    return render_template("upload_wash_list.html", date_list=date_list, total_count=total_count)
+
+
+# =========================================================
+# 세차 스케줄 삭제 (날짜별 or 전체)
+# =========================================================
+@app.route("/wash_schedule_delete", methods=["POST"])
+@login_required
+def wash_schedule_delete():
+    if not current_user.is_master:
+        flash("❌ 마스터 계정만 삭제할 수 있습니다.")
+        return redirect(url_for("upload_wash_list"))
+
+    delete_type = request.form.get("delete_type")
+    conn = get_wash_db()
+
+    if delete_type == "all":
+        conn.execute("DELETE FROM wash_list")
+        conn.commit()
+        conn.close()
+        flash("✔ 전체 세차 오더가 삭제되었습니다.")
+    elif delete_type == "date":
+        target_date = request.form.get("target_date", "").strip()
+        if not target_date:
+            flash("❌ 삭제할 날짜를 선택하세요.")
+            conn.close()
+            return redirect(url_for("upload_wash_list"))
+        conn.execute("DELETE FROM wash_list WHERE 세차일 = ?", (target_date,))
+        conn.commit()
+        conn.close()
+        flash(f"✔ {target_date} 오더가 삭제되었습니다.")
+    else:
+        conn.close()
+        flash("❌ 올바른 삭제 방식을 선택하세요.")
+
+    return redirect(url_for("upload_wash_list"))
 
 
 # =========================================================
@@ -1156,8 +1399,19 @@ def wash_list():
         query += " AND 업체 = ?"
         params.append(vendor)
 
-    query += " ORDER BY id DESC"
+    query += " ORDER BY 세차경과일 DESC, 이월횟수 DESC, id DESC"
     rows = cur.execute(query, params).fetchall()
+
+    # 세차경과일 컬럼 기준으로 장기/정기 분류
+    LONG_WASH_DAYS = 14
+
+    rows_with_days = []
+    for r in rows:
+        elapsed = r["세차경과일"] or 0
+        rows_with_days.append({"row": r, "elapsed": elapsed})
+
+    long_wash_rows = [x for x in rows_with_days if x["elapsed"] >= LONG_WASH_DAYS]
+    regular_rows = [x for x in rows_with_days if x["elapsed"] < LONG_WASH_DAYS]
 
     filter_scope_sql, filter_scope_params = scoped_condition("wash_list", current_user)
     region1 = filter_distinct_values(cur, "wash_list", "지역시도", filter_scope_sql, filter_scope_params)
@@ -1179,6 +1433,10 @@ def wash_list():
     return render_template(
         "wash_list.html",
         rows=rows,
+        long_wash_rows=long_wash_rows,
+        regular_rows=regular_rows,
+        long_wash_count=len(long_wash_rows),
+        regular_count=len(regular_rows),
         selected_date=selected_date,
         search_input=search,
         region1=region1,
@@ -1302,7 +1560,10 @@ def car_detail(id):
     if not car:
         return "❌ 차량 정보를 찾을 수 없습니다.", 404
 
-    return render_template("car_detail.html", car=car)
+    elapsed = car["세차경과일"] or 0
+    is_long_wash = elapsed >= 14
+
+    return render_template("car_detail.html", car=car, elapsed=elapsed, is_long_wash=is_long_wash)
 
 
 # =========================================================

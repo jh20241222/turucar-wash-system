@@ -155,28 +155,112 @@
     </div>
 
     <section class="desktop-table table-panel app-card turu-desktop-table-v24">
-        <div class="table-title-row"><h2>대상 차량</h2><span>{{ rows|length }}대</span></div>
-        <div class="table-scroll">
-            <table>
-                <thead><tr>{% if current_user.is_master %}<th class="delete-col">선택</th>{% endif %}<th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th><th>지역</th><th>업체</th><th>세차일</th><th>구분</th><th>경과일</th><th>이월</th></tr></thead>
-                <tbody>
+
+        {# ── 데스크탑 전용 상단 툴바 ── #}
+        <div class="dt-toolbar">
+            <div class="dt-toolbar-left">
+                <div class="dt-date-nav">
+                    <button type="button" onclick="moveDate(-1)">‹</button>
+                    <span>{{ selected_date }}</span>
+                    <button type="button" onclick="moveDate(1)">›</button>
+                </div>
+                <div class="dt-stats">
+                    <div class="dt-stat"><span>세차 대상</span><strong>{{ total_target_count }}</strong></div>
+                    <div class="dt-stat dt-stat--urgent"><span>장기 미세차</span><strong>{{ long_wash_count }}</strong></div>
+                    <div class="dt-stat"><span>정기세차</span><strong>{{ regular_count }}</strong></div>
+                    <div class="dt-stat"><span>완료 현황</span><strong>{{ completed_count }}</strong></div>
+                </div>
+            </div>
+            <div class="dt-toolbar-right">
+                <button type="button" class="dt-btn" onclick="downloadOrderExcel()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>엑셀
+                </button>
+                {% if current_user.is_master %}
+                <button type="button" class="dt-btn dt-btn--danger" onclick="toggleDeleteMode('order-delete-form')">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>삭제
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        {# ── 데스크탑 필터바 ── #}
+        <div class="dt-filterbar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-text-tertiary);flex-shrink:0"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+            <input id="dt_search" placeholder="차량번호, 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">
+            <div class="dt-filter-divider"></div>
+            <select id="dt_region1" onchange="syncAndFilter('region1','dt_region1')">
+                <option value="">전체 시/도</option>{% for r in region1 %}<option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
+            </select>
+            <select id="dt_region2" onchange="syncAndFilter('region2','dt_region2')">
+                <option value="">전체 구/군</option>{% for r in region2 %}<option value="{{ r }}" {% if selected_r2 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
+            </select>
+            <select id="dt_org" onchange="syncAndFilter('org','dt_org')">
+                <option value="">전체 차량소속</option>{% for o in car_org_list %}<option value="{{ o }}" {% if selected_org == o %}selected{% endif %}>{{ o }}</option>{% endfor %}
+            </select>
+            <select id="dt_spot" onchange="syncAndFilter('spot','dt_spot')">
+                <option value="">전체 스팟</option>{% for s in spot_list %}<option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+            </select>
+            {% if current_user.is_master %}
+            <select id="dt_vendor" onchange="syncAndFilter('vendor','dt_vendor')">
+                <option value="">전체 업체</option>{% for v in vendor_list %}<option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>{% endfor %}
+            </select>
+            {% endif %}
+            <button type="button" class="dt-btn dt-btn--primary" onclick="dtApplyFilter()">검색</button>
+        </div>
+
+        {# ── 탭 ── #}
+        <div class="dt-tab-bar">
+            <button type="button" class="dt-tab active" onclick="dtSetTab('all', this)">전체 <span>{{ total_target_count }}</span></button>
+            <button type="button" class="dt-tab" onclick="dtSetTab('urgent', this)">장기 미세차 <span class="dt-tab-badge">{{ long_wash_count }}</span></button>
+            <button type="button" class="dt-tab" onclick="dtSetTab('regular', this)">정기세차 <span>{{ regular_count }}</span></button>
+        </div>
+
+        {# ── 테이블 ── #}
+        <div class="dt-table-scroll">
+            <table class="dt-table">
+                <thead>
+                    <tr>
+                        {% if current_user.is_master %}<th class="dt-check-col"><input type="checkbox" onclick="toggleAllDelete(this, 'order-delete-form')"></th>{% endif %}
+                        <th>차량번호</th>
+                        <th>차종</th>
+                        <th>차량소속</th>
+                        <th>스팟</th>
+                        <th>지역</th>
+                        <th>업체</th>
+                        <th>세차일</th>
+                        <th>구분</th>
+                        <th>경과일</th>
+                        <th>이월</th>
+                    </tr>
+                </thead>
+                <tbody id="dt-tbody">
                 {% for item in long_wash_rows + regular_rows %}
                 {% set r = item.row %}
                 {% set elapsed = item.elapsed %}
-                <tr class="{% if elapsed >= 14 %}tr-urgent{% endif %}">
-                    {% if current_user.is_master %}<td class="delete-col"><input type="checkbox" name="ids" value="{{ r['id'] }}"></td>{% endif %}
-                    <td><a class="car-link" href="{{ url_for('car_detail', id=r['id']) }}">{{ r['차량번호'] }}</a></td>
+                <tr class="dt-row {% if elapsed >= 14 %}dt-row--urgent{% endif %}" data-type="{% if elapsed >= 14 %}urgent{% else %}regular{% endif %}">
+                    {% if current_user.is_master %}<td class="dt-check-col"><input type="checkbox" name="ids" value="{{ r['id'] }}"></td>{% endif %}
+                    <td><a class="dt-car-link" href="{{ url_for('car_detail', id=r['id']) }}">{{ r['차량번호'] }}</a></td>
                     <td>{{ r['차종명'] or '-' }}</td>
                     <td>{{ r['차량소속'] or '-' }}</td>
                     <td>{{ r['스팟'] or '-' }}</td>
-                    <td>{{ r['지역시도'] or '-' }} {{ r['지역구군'] or '' }}</td>
+                    <td>{{ r['지역시도'] or '' }} {{ r['지역구군'] or '' }}</td>
                     <td>{{ r['업체'] or '-' }}</td>
                     <td>{{ r['세차일'] or selected_date }}</td>
-                    <td>{% if elapsed >= 14 %}<span style="color:#993C1D;font-weight:500;">장기 미세차</span>{% else %}정기세차{% endif %}</td>
-                    <td>D+{{ elapsed }}</td>
+                    <td>
+                        {% if elapsed >= 14 %}
+                        <span class="dt-badge dt-badge--urgent">장기 미세차</span>
+                        {% elif elapsed == 0 %}
+                        <span class="dt-badge dt-badge--new">신규</span>
+                        {% else %}
+                        <span class="dt-badge dt-badge--regular">정기세차</span>
+                        {% endif %}
+                    </td>
+                    <td class="{% if elapsed >= 14 %}dt-elapsed--urgent{% endif %}">D+{{ elapsed }}</td>
                     <td>{{ r['이월횟수'] or 0 }}회</td>
                 </tr>
-                {% else %}<tr><td colspan="{% if current_user.is_master %}11{% else %}10{% endif %}" class="empty-cell">해당 날짜에 세차 대상이 없습니다.</td></tr>{% endfor %}
+                {% else %}
+                <tr><td colspan="{% if current_user.is_master %}11{% else %}10{% endif %}" class="dt-empty">해당 날짜에 세차 대상이 없습니다.</td></tr>
+                {% endfor %}
                 </tbody>
             </table>
         </div>
@@ -222,6 +306,65 @@
 .chip-day--new { background: #E6F1FB; color: #185FA5; font-weight: 500; }
 .wash-urgent-warn { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #993C1D; background: #FAECE7; border-radius: 6px; padding: 5px 9px; margin: 4px 0 5px; }
 .tr-urgent td { background: #fff8f6; }
+
+@media (min-width: 901px) {
+    .turu-app-page-v24 > .turu-page-head-v24,
+    .turu-date-summary-card-v37,
+    .turu-searchbar-v24,
+    .wash-type-filter-bar,
+    .turu-card-list-v24,
+    .master-delete-toolbar { display: none !important; }
+
+    .turu-desktop-table-v24 { display: block !important; padding: 0 !important; border-radius: var(--border-radius-lg) !important; overflow: hidden; }
+
+    .dt-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 0.5px solid var(--color-border-tertiary); gap: 16px; }
+    .dt-toolbar-left { display: flex; align-items: center; gap: 16px; }
+    .dt-toolbar-right { display: flex; align-items: center; gap: 8px; }
+    .dt-date-nav { display: flex; align-items: center; gap: 8px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 5px 10px; font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+    .dt-date-nav button { background: none; border: none; cursor: pointer; color: var(--color-text-secondary); font-size: 16px; line-height: 1; padding: 0 2px; }
+    .dt-stats { display: flex; align-items: center; gap: 0; }
+    .dt-stat { padding: 4px 14px; border-right: 0.5px solid var(--color-border-tertiary); }
+    .dt-stat:last-child { border-right: none; }
+    .dt-stat span { font-size: 11px; color: var(--color-text-secondary); display: block; }
+    .dt-stat strong { font-size: 16px; font-weight: 500; color: var(--color-text-primary); }
+    .dt-stat--urgent strong { color: #D85A30; }
+
+    .dt-btn { display: flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: var(--border-radius-md); font-size: 12px; cursor: pointer; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); color: var(--color-text-secondary); }
+    .dt-btn:hover { background: var(--color-background-secondary); }
+    .dt-btn--primary { background: #D85A30; color: #fff; border-color: #D85A30; }
+    .dt-btn--primary:hover { background: #c24f28; }
+    .dt-btn--danger { color: #993C1D; border-color: #F0997B; }
+    .dt-btn--danger:hover { background: #FAECE7; }
+
+    .dt-filterbar { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-secondary); }
+    .dt-filterbar input { flex: 1; min-width: 160px; border: none; background: none; font-size: 12px; color: var(--color-text-primary); outline: none; }
+    .dt-filterbar input::placeholder { color: var(--color-text-tertiary); }
+    .dt-filterbar select { border: none; background: none; font-size: 12px; color: var(--color-text-secondary); outline: none; cursor: pointer; }
+    .dt-filter-divider { width: 0.5px; height: 16px; background: var(--color-border-tertiary); flex-shrink: 0; }
+
+    .dt-tab-bar { display: flex; border-bottom: 0.5px solid var(--color-border-tertiary); padding: 0 20px; background: var(--color-background-primary); }
+    .dt-tab { padding: 9px 14px; font-size: 12px; color: var(--color-text-secondary); cursor: pointer; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -0.5px; }
+    .dt-tab.active { color: #D85A30; border-bottom-color: #D85A30; font-weight: 500; }
+    .dt-tab-badge { display: inline-block; background: #FAECE7; color: #993C1D; font-size: 10px; padding: 1px 6px; border-radius: 20px; margin-left: 4px; font-weight: 500; }
+
+    .dt-table-scroll { overflow-x: auto; }
+    .dt-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .dt-table thead tr { background: var(--color-background-secondary); }
+    .dt-table th { padding: 8px 12px; text-align: left; font-weight: 500; color: var(--color-text-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; font-size: 11px; }
+    .dt-table td { padding: 8px 12px; color: var(--color-text-primary); border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; }
+    .dt-table tr:last-child td { border-bottom: none; }
+    .dt-row--urgent td { background: #fff8f6; }
+    .dt-row:hover td { background: var(--color-background-secondary); }
+    .dt-check-col { width: 36px; }
+    .dt-car-link { color: #D85A30; font-weight: 500; text-decoration: none; }
+    .dt-car-link:hover { text-decoration: underline; }
+    .dt-badge { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 20px; font-weight: 500; }
+    .dt-badge--urgent { background: #FAECE7; color: #993C1D; }
+    .dt-badge--regular { background: #EAF3DE; color: #3B6D11; }
+    .dt-badge--new { background: #E6F1FB; color: #185FA5; }
+    .dt-elapsed--urgent { color: #D85A30; font-weight: 500; }
+    .dt-empty { text-align: center; padding: 32px; color: var(--color-text-secondary); font-size: 13px; }
+}
 </style>
 
 <script>
@@ -233,6 +376,40 @@ function setWashFilter(type){
     if(type==='all'){if(u)u.style.display='';if(r)r.style.display='';}
     else if(type==='urgent'){if(u)u.style.display='';if(r)r.style.display='none';}
     else{if(u)u.style.display='none';if(r)r.style.display='';}
+}
+function setWashFilter(type) {
+    document.querySelectorAll('.wash-type-btn').forEach(btn=>btn.classList.remove('active'));
+    document.querySelector('.wash-type-btn--'+type).classList.add('active');
+    const u=document.getElementById('section-urgent');
+    const r=document.getElementById('section-regular');
+    if(type==='all'){if(u)u.style.display='';if(r)r.style.display='';}
+    else if(type==='urgent'){if(u)u.style.display='';if(r)r.style.display='none';}
+    else{if(u)u.style.display='none';if(r)r.style.display='';}
+}
+function dtSetTab(type, el) {
+    document.querySelectorAll('.dt-tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('#dt-tbody .dt-row').forEach(row=>{
+        if(type==='all') row.style.display='';
+        else if(type==='urgent') row.style.display=row.dataset.type==='urgent'?'':'none';
+        else row.style.display=row.dataset.type==='regular'?'':'none';
+    });
+}
+function syncAndFilter(targetId, sourceId) {
+    const val = document.getElementById(sourceId).value;
+    const el = document.getElementById(targetId);
+    if(el) el.value = val;
+}
+function dtApplyFilter() {
+    document.getElementById('search_input').value = document.getElementById('dt_search').value;
+    document.getElementById('region1').value = document.getElementById('dt_region1').value;
+    document.getElementById('region2').value = document.getElementById('dt_region2').value;
+    document.getElementById('org').value = document.getElementById('dt_org').value;
+    document.getElementById('spot').value = document.getElementById('dt_spot').value;
+    const dtv = document.getElementById('dt_vendor');
+    const v = document.getElementById('vendor');
+    if(dtv && v) v.value = dtv.value;
+    applyFilter();
 }
 function moveDate(days){const current=new Date("{{ selected_date }}T00:00:00");current.setDate(current.getDate()+days);const yyyy=current.getFullYear();const mm=String(current.getMonth()+1).padStart(2,'0');const dd=String(current.getDate()).padStart(2,'0');window.location.href=`/wash_list?date=${yyyy}-${mm}-${dd}`;}
 function buildOrderParams(){return new URLSearchParams({date:"{{ selected_date }}",s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:""});}

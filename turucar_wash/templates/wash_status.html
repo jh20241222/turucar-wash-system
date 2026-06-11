@@ -37,7 +37,8 @@
             <select id="spot" class="app-input"><option value="">전체 스팟</option>{% for s in spot_list %}<option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
             {% if current_user.is_master %}<select id="vendor" class="app-input"><option value="">전체 업체</option>{% for v in vendor_list %}<option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>{% endif %}
             <input type="date" id="start" class="app-input" value="{{ start }}"><input type="date" id="end" class="app-input" value="{{ end }}">
-            <button type="button" onclick="applyFilter()" class="primary-btn">검색</button><button type="button" onclick="downloadExcel()" class="blue-btn">엑셀 저장</button>
+            <button type="button" onclick="applyFilter()" class="primary-btn">검색</button>
+            <button type="button" onclick="downloadExcel()" class="blue-btn">엑셀 저장</button>
         </div>
     </section>
 
@@ -67,23 +68,148 @@
         {% endfor %}
     </div>
 
-    <section class="desktop-table table-panel app-card turu-desktop-table-v24">
-        <div class="table-title-row"><h2>완료 기록</h2><span>{{ rows|length }}건</span></div>
-        <div class="table-scroll"><table><thead><tr>{% if current_user.is_master %}<th class="delete-col">선택</th>{% endif %}<th>완료일</th><th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th><th>작업자</th><th>업체</th></tr></thead><tbody>{% for r in rows %}<tr>{% if current_user.is_master %}<td class="delete-col"><input type="checkbox" name="ids" value="{{ r['id'] }}"></td>{% endif %}<td>{{ r['세차완료일'] or '-' }}</td><td>{{ r['차량번호'] }}</td><td>{{ r['차종명'] or '-' }}</td><td>{{ r['차량소속'] or '-' }}</td><td>{{ r['스팟'] or '-' }}</td><td>{{ r['작업자'] or '-' }}</td><td>{{ r['업체'] or '-' }}</td></tr>{% else %}<tr><td colspan="{% if current_user.is_master %}8{% else %}7{% endif %}" class="empty-cell">완료 내역이 없습니다.</td></tr>{% endfor %}</tbody></table></div>
+    {# ── 데스크탑 전용 ── #}
+    <section class="desktop-table table-panel app-card turu-desktop-table-v24 turu-status-desktop">
+
+        <div class="dt-toolbar">
+            <div class="dt-toolbar-left"></div>
+            <div class="dt-toolbar-center">
+                <div class="dt-status-stats">
+                    <div class="dt-stat"><span>오늘 완료</span><strong>{{ today_completed_count }}</strong></div>
+                    <div class="dt-stat"><span>조회 건수</span><strong>{{ filtered_count }}</strong></div>
+                    <div class="dt-stat"><span>전체 완료</span><strong>{{ total_completed_count }}</strong></div>
+                </div>
+            </div>
+            <div class="dt-toolbar-right">
+                <button type="button" class="dt-btn" onclick="downloadExcel()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>엑셀
+                </button>
+                {% if current_user.is_master %}
+                <button type="button" class="dt-btn dt-btn--danger" onclick="toggleDeleteMode('status-delete-form')">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>삭제
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="dt-filterbar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-text-tertiary);flex-shrink:0"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+            <input id="dt_search_s" placeholder="차량번호, 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter')dtApplyStatusFilter();">
+            <div class="dt-filter-divider"></div>
+            <select id="dt_region1_s"><option value="">전체 시/도</option>{% for r in region1 %}<option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
+            <select id="dt_region2_s"><option value="">전체 구/군</option>{% for r in region2 %}<option value="{{ r }}" {% if selected_r2 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
+            <select id="dt_org_s"><option value="">전체 차량소속</option>{% for o in car_org_list %}<option value="{{ o }}" {% if selected_org == o %}selected{% endif %}>{{ o }}</option>{% endfor %}</select>
+            <select id="dt_spot_s"><option value="">전체 스팟</option>{% for s in spot_list %}<option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+            {% if current_user.is_master %}<select id="dt_vendor_s"><option value="">전체 업체</option>{% for v in vendor_list %}<option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>{% endif %}
+            <div class="dt-filter-divider"></div>
+            <input type="date" id="dt_start_s" value="{{ start }}" style="border:none;background:none;font-size:13px;color:var(--color-text-secondary);outline:none;font-weight:800;">
+            <span style="font-size:12px;color:var(--color-text-tertiary)">~</span>
+            <input type="date" id="dt_end_s" value="{{ end }}" style="border:none;background:none;font-size:13px;color:var(--color-text-secondary);outline:none;font-weight:800;">
+            <button type="button" class="dt-btn dt-btn--primary" onclick="dtApplyStatusFilter()">검색</button>
+        </div>
+
+        <div class="dt-table-scroll">
+            <table class="dt-table">
+                <thead>
+                    <tr>
+                        {% if current_user.is_master %}<th class="dt-check-col"><input type="checkbox" onclick="toggleAllDelete(this, 'status-delete-form')"></th>{% endif %}
+                        <th>완료일</th><th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th><th>지역</th><th>작업자</th><th>업체</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for r in rows %}
+                <tr class="dt-row">
+                    {% if current_user.is_master %}<td class="dt-check-col"><input type="checkbox" name="ids" value="{{ r['id'] }}"></td>{% endif %}
+                    <td>{{ r['세차완료일'] or '-' }}</td>
+                    <td class="dt-car-num">{{ r['차량번호'] }}</td>
+                    <td>{{ r['차종명'] or '-' }}</td>
+                    <td>{{ r['차량소속'] or '-' }}</td>
+                    <td>{{ r['스팟'] or '-' }}</td>
+                    <td>{{ r['지역시도'] or '' }} {{ r['지역구군'] or '' }}</td>
+                    <td>{{ r['작업자'] or '-' }}</td>
+                    <td>{{ r['업체'] or '-' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="{% if current_user.is_master %}9{% else %}8{% endif %}" class="dt-empty">완료 내역이 없습니다.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </section>
+
     {% if current_user.is_master %}</form>{% endif %}
 </section>
+
+<style>
+@media (min-width: 901px) {
+    .turu-status-page-v24 > .turu-page-head-v24,
+    .turu-stat-strip-v24,
+    .turu-status-searchbar-v29,
+    .turu-card-list-v24,
+    .master-delete-toolbar,
+    #status-filter-sheet,
+    .mobile-filter-backdrop { display: none !important; }
+
+    .turu-status-desktop { display: block !important; padding: 0 !important; border-radius: var(--border-radius-lg) !important; overflow: hidden; margin: 0 !important; position: relative; }
+
+    .dt-toolbar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 32px 28px 24px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+    .dt-toolbar-left { display: flex; align-items: flex-start; }
+    .dt-toolbar-center { display: flex; justify-content: center; }
+    .dt-toolbar-right { display: flex; align-items: flex-start; justify-content: flex-end; gap: 8px; }
+
+    .dt-status-stats { display: flex; align-items: center; }
+    .dt-stat { text-align: center; padding: 0 24px; border-right: 0.5px solid var(--color-border-tertiary); }
+    .dt-stat:last-child { border-right: none; }
+    .dt-stat span { font-size: 11px; color: var(--color-text-secondary); display: block; margin-bottom: 4px; font-weight: 800; letter-spacing: .05em; }
+    .dt-stat strong { font-size: 28px; font-weight: 950; color: var(--color-text-primary); letter-spacing: -.045em; line-height: 1; }
+
+    .dt-btn { display: flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); color: var(--color-text-secondary); font-weight: 800; }
+    .dt-btn:hover { background: var(--color-background-secondary); }
+    .dt-btn--primary { background: #FF5F00; color: #fff; border-color: #FF5F00; }
+    .dt-btn--danger { color: #993C1D; border-color: #F0997B; }
+    .dt-btn--danger:hover { background: #FAECE7; }
+
+    .dt-filterbar { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-secondary); }
+    .dt-filterbar input[type="text"] { flex: 1; border: none; background: none; font-size: 14px; color: var(--color-text-primary); outline: none; font-weight: 800; }
+    .dt-filterbar input[type="text"]::placeholder { color: var(--color-text-tertiary); font-weight: 400; }
+    .dt-filterbar select { border: none; background: none; font-size: 13px; color: var(--color-text-secondary); outline: none; cursor: pointer; font-weight: 800; }
+    .dt-filter-divider { width: 0.5px; height: 16px; background: var(--color-border-tertiary); flex-shrink: 0; }
+
+    .dt-table-scroll { overflow-x: auto; }
+    .dt-table { width: 100%; border-collapse: collapse; }
+    .dt-table thead tr { background: var(--color-background-secondary); }
+    .dt-table th { padding: 10px 14px; text-align: left; font-weight: 950; color: var(--color-text-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; font-size: 12px; letter-spacing: .03em; }
+    .dt-table td { padding: 10px 14px; color: var(--color-text-primary); border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; font-size: 14px; font-weight: 800; }
+    .dt-table tr:last-child td { border-bottom: none; }
+    .dt-row:hover td { background: var(--color-background-secondary); }
+    .dt-check-col { width: 36px; }
+    .dt-car-num { font-weight: 950; color: var(--color-text-primary); }
+    .dt-empty { text-align: center; padding: 32px; color: var(--color-text-secondary); font-size: 14px; font-weight: 800; }
+}
+</style>
+
 <script>
 function buildStatusParams(){return new URLSearchParams({s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("car_org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:"",start:document.getElementById("start").value,end:document.getElementById("end").value});}
 function applyFilter(){window.location.href=`/wash_status?${buildStatusParams().toString()}`;}
 function downloadExcel(){window.location.href=`/wash_status_excel?${buildStatusParams().toString()}`;}
-function focusPeriodRange(){setTimeout(function(){const start=document.getElementById('start'); if(start){start.focus();}},120);}
+function dtApplyStatusFilter(){
+    document.getElementById('search_input').value = document.getElementById('dt_search_s').value;
+    document.getElementById('region1').value = document.getElementById('dt_region1_s').value;
+    document.getElementById('region2').value = document.getElementById('dt_region2_s').value;
+    document.getElementById('car_org').value = document.getElementById('dt_org_s').value;
+    document.getElementById('spot').value = document.getElementById('dt_spot_s').value;
+    const dv=document.getElementById('dt_vendor_s'); const v=document.getElementById('vendor'); if(dv&&v) v.value=dv.value;
+    document.getElementById('start').value = document.getElementById('dt_start_s').value;
+    document.getElementById('end').value = document.getElementById('dt_end_s').value;
+    applyFilter();
+}
+function focusPeriodRange(){setTimeout(function(){const start=document.getElementById('start');if(start){start.focus();}},120);}
 function openMobileFilter(id){const el=document.getElementById(id);const backdrop=document.getElementById('mobile-filter-backdrop');if(el){el.classList.add('open');el.style.display='block';el.style.visibility='visible';el.style.opacity='1';}if(backdrop){backdrop.classList.add('open');}document.body.classList.add('filter-sheet-open');}
 function closeMobileFilter(id){const el=document.getElementById(id);const backdrop=document.getElementById('mobile-filter-backdrop');if(el){el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';}if(backdrop){backdrop.classList.remove('open');}document.body.classList.remove('filter-sheet-open');}
 function closeAnyMobileFilter(){document.querySelectorAll('.mobile-filter-sheet.open').forEach(el=>{el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';});const backdrop=document.getElementById('mobile-filter-backdrop');if(backdrop){backdrop.classList.remove('open');}document.body.classList.remove('filter-sheet-open');}
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAnyMobileFilter();}});
-function toggleDeleteMode(formId, force){const form=document.getElementById(formId);if(!form){return;}const next=typeof force==="boolean"?force:!form.classList.contains("delete-mode");form.classList.toggle("delete-mode",next);if(!next){form.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);}}
-function toggleAllDelete(master, formId){const form=document.getElementById(formId);if(!form){return;}form.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=master.checked);}
+function toggleDeleteMode(formId,force){const form=document.getElementById(formId);if(!form){return;}const next=typeof force==="boolean"?force:!form.classList.contains("delete-mode");form.classList.toggle("delete-mode",next);if(!next){form.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);}}
+function toggleAllDelete(master,formId){const form=document.getElementById(formId);if(!form){return;}form.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=master.checked);}
 function confirmSelectedDelete(formId,message){const form=document.getElementById(formId);const count=form?form.querySelectorAll('input[name="ids"]:checked').length:0;if(count<1){alert("삭제할 항목을 선택해주세요.");return false;}return confirm(message||"선택한 항목을 삭제할까요?");}
 </script>
 {% endblock %}

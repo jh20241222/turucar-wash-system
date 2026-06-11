@@ -27,12 +27,59 @@
         {% endif %}
         {% if current_user.is_master %}
         <a href="{{ url_for('vendor_manage') }}" class="turu-menu-row-v24"><span>□</span><div><strong>업체 관리</strong><small>세차 업체 목록 관리</small></div><b>›</b></a>
-        <a href="{{ url_for('upload_wash_list') }}" class="turu-menu-row-v24"><span>↑</span><div><strong>오더 업로드</strong><small>엑셀 파일로 오늘의 오더 생성</small></div><b>›</b></a>
+        <a href="{{ url_for('upload_wash_list') }}" class="turu-menu-row-v24"><span>↑</span><div><strong>세차 스케줄 관리</strong><small>오더 업로드 및 스케줄 삭제</small></div><b>›</b></a>
         {% endif %}
         {% if current_user.is_master or current_user.username == 'jeongyeon.kim' %}
         <a href="{{ url_for('support_manage') }}" class="turu-menu-row-v24"><span>☏</span><div><strong>문의 관리</strong><small>문의 접수 및 답변 관리</small></div><em class="profile-bubble-v24 support-menu-badge{% if not support_badge_count %} is-hidden{% endif %}" data-support-badge>{{ support_badge_count if support_badge_count and support_badge_count < 100 else ('99+' if support_badge_count else '') }}</em><b>›</b></a>
         {% endif %}
     </section>
+
+    {# ── 비밀번호 변경 ── #}
+    <section class="turu-menu-card-v24">
+        <button type="button" class="turu-menu-row-v24 button-row" onclick="toggleSection('pw-change-form')">
+            <span>🔑</span><div><strong>비밀번호 변경</strong><small>현재 비밀번호 확인 후 변경</small></div><b>›</b>
+        </button>
+        <div id="pw-change-form" style="display:none; padding: 0 16px 16px;">
+            <form method="POST" action="{{ url_for('change_password') }}">
+                <div style="margin-bottom:10px;">
+                    <label class="field-label" style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;">현재 비밀번호</label>
+                    <input type="password" name="current_password" class="app-input" placeholder="현재 비밀번호" required>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <label class="field-label" style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;">새 비밀번호</label>
+                    <input type="password" name="new_password" class="app-input" placeholder="새 비밀번호" required>
+                </div>
+                <div style="margin-bottom:14px;">
+                    <label class="field-label" style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;">새 비밀번호 확인</label>
+                    <input type="password" name="confirm_password" class="app-input" placeholder="새 비밀번호 재입력" required>
+                </div>
+                <button type="submit" class="primary-btn" style="width:100%;">변경하기</button>
+            </form>
+        </div>
+    </section>
+
+    {# ── 비밀번호 초기화 (admin/master) ── #}
+    {% if current_user.is_admin and reset_targets %}
+    <section class="turu-menu-card-v24">
+        <button type="button" class="turu-menu-row-v24 button-row" onclick="toggleSection('pw-reset-form')">
+            <span>🔓</span><div><strong>비밀번호 초기화</strong><small>소속 계정을 0325로 초기화</small></div><b>›</b>
+        </button>
+        <div id="pw-reset-form" style="display:none; padding: 0 16px 16px;">
+            <form method="POST" action="{{ url_for('reset_password') }}" onsubmit="return confirm('선택한 계정의 비밀번호를 0325로 초기화할까요?');">
+                <div style="margin-bottom:14px;">
+                    <label class="field-label" style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;">초기화할 계정</label>
+                    <select name="target_username" class="app-input" required>
+                        <option value="">계정 선택</option>
+                        {% for t in reset_targets %}
+                        <option value="{{ t.username }}">{{ t.username }}{% if t.vendor %} · {{ t.vendor }}{% endif %} ({{ t.role }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="blue-btn" style="width:100%;">0325로 초기화</button>
+            </form>
+        </div>
+    </section>
+    {% endif %}
 
     <section class="turu-menu-card-v24">
         <button type="button" class="turu-menu-row-v24 button-row pwa-install" hidden><span>＋</span><div><strong>앱 설치</strong><small>홈 화면에 Turu Wash 추가</small></div><b>›</b></button>
@@ -43,5 +90,6 @@
 </section>
 <script>
 async function clearAppCache(){try{if('caches' in window){const keys=await caches.keys();await Promise.all(keys.map((key)=>caches.delete(key)));}alert('앱 캐시를 초기화했습니다. 새로고침합니다.');location.reload();}catch(error){alert('캐시 초기화 중 오류가 발생했습니다.');}}
+function toggleSection(id){const el=document.getElementById(id);if(!el)return;const open=el.style.display==='none';el.style.display=open?'block':'none';}
 </script>
 {% endblock %}

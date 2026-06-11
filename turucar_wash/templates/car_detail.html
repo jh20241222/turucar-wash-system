@@ -20,11 +20,28 @@
         </div>
         <h2>{{ car['차량번호'] }}</h2>
         <p>{{ car['차종명'] or '-' }} · {{ car['차량소속'] or '-' }}</p>
+
+        {% if is_long_wash %}
+        <div style="background:#FAECE7;border-radius:8px;padding:8px 12px;margin:10px 0;display:flex;align-items:center;gap:7px;font-size:13px;color:#993C1D;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <strong>장기 미세차</strong> — {{ elapsed }}일째 미완료, 우선 처리 필요
+        </div>
+        {% else %}
+        <div style="background:#EAF3DE;border-radius:8px;padding:8px 12px;margin:10px 0;display:flex;align-items:center;gap:7px;font-size:13px;color:#3B6D11;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#639922" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            <strong>정기세차</strong>{% if elapsed > 0 %} — D+{{ elapsed }}{% else %} — 오늘 등록{% endif %}
+        </div>
+        {% endif %}
+
         <div class="info-list">
             <div><small>스팟</small><strong>{{ car['스팟'] or '-' }}</strong></div>
             <div><small>주소</small><strong>{{ car['주소'] or '-' }}</strong></div>
             <div><small>지역</small><strong>{{ car['지역시도'] or '-' }} {{ car['지역구군'] or '' }}</strong></div>
+            <div><small>등록일</small><strong>{{ car['등록일'] or car['세차일'] or '-' }}</strong></div>
             <div><small>세차일</small><strong>{{ car['세차일'] or '-' }}</strong></div>
+            {% if car['이월횟수'] and car['이월횟수'] > 0 %}
+            <div><small>이월 횟수</small><strong>{{ car['이월횟수'] }}회</strong></div>
+            {% endif %}
         </div>
     </article>
 

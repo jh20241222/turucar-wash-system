@@ -7,7 +7,7 @@
     <div class="turu-page-head-v24 turu-page-head--single-v25">
         <div>
             <h1>세차 대상 차량</h1>
-            <p>선택한 날짜 기준 세차 대상 차량을 확인하세요.</p>
+            <p>미완료 차량은 다음날로 자동 이월됩니다.</p>
         </div>
     </div>
 
@@ -19,14 +19,8 @@
                 <strong>{{ selected_date }}</strong>
             </div>
             <div class="turu-date-summary-stats-v37">
-                <div>
-                    <span>세차 대상</span>
-                    <strong>{{ total_target_count }}</strong>
-                </div>
-                <div>
-                    <span>완료 현황</span>
-                    <strong>{{ completed_count }}</strong>
-                </div>
+                <div><span>세차 대상</span><strong>{{ total_target_count }}</strong></div>
+                <div><span>완료 현황</span><strong>{{ completed_count }}</strong></div>
             </div>
         </div>
         <button type="button" class="turu-date-nav-btn-v25" onclick="moveDate(1)" aria-label="다음 날짜">›</button>
@@ -49,10 +43,7 @@
             <button type="button" onclick="closeMobileFilter('order-filter-sheet')" aria-label="닫기">×</button>
         </div>
         <div class="filter-head">
-            <div>
-                <strong>세차 대상 검색</strong>
-                <small>차량번호, 스팟, 지역, 업체 기준으로 세차 대상을 찾아보세요.</small>
-            </div>
+            <div><strong>세차 대상 검색</strong><small>차량번호, 스팟, 지역, 업체 기준으로 세차 대상을 찾아보세요.</small></div>
             <span>{{ rows|length }}대</span>
         </div>
         <div class="filter-grid">
@@ -80,35 +71,112 @@
         </div>
     {% endif %}
 
+    <div class="wash-type-filter-bar">
+        <button type="button" class="wash-type-btn wash-type-btn--all active" onclick="setWashFilter('all')">전체</button>
+        <button type="button" class="wash-type-btn wash-type-btn--urgent" onclick="setWashFilter('urgent')">🔴 장기 미세차</button>
+        <button type="button" class="wash-type-btn wash-type-btn--regular" onclick="setWashFilter('regular')">🟢 정기세차</button>
+    </div>
+
     <div class="turu-card-list-v24">
-        {% for r in rows %}
+
+        {# ── 장기 미세차 섹션 ── #}
+        {% if long_wash_rows %}
+        <div id="section-urgent">
+        <div class="wash-section-label wash-section-label--urgent">
+            <span class="wash-section-dot wash-section-dot--urgent"></span>
+            장기 미세차 (14일+) · {{ long_wash_count }}대
+        </div>
+        {% for item in long_wash_rows %}
+        {% set r = item.row %}
+        {% set elapsed = item.elapsed %}
         <div class="turu-delete-item-v24">
             {% if current_user.is_master %}<label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>{% endif %}
-            <a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-order-card-v24">
-                <div class="turu-car-thumb-v24"><img src="{{ url_for('static', filename='img/icon-wash-order.png') }}" alt=""></div>
+            <a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-order-card-v24 turu-order-card--urgent">
+                <div class="turu-car-thumb-v24 turu-car-thumb--urgent">
+                    <img src="{{ url_for('static', filename='img/icon-wash-order.png') }}" alt="">
+                </div>
                 <div class="turu-card-copy-v24">
-                    <div class="turu-card-title-v24"><strong>{{ r['차량번호'] }}</strong><em class="chip-blue">세차 대기</em></div>
+                    <div class="turu-card-title-v24">
+                        <strong>{{ r['차량번호'] }}</strong>
+                        <em class="chip-urgent">장기 미세차</em>
+                        <em class="chip-day chip-day--urgent">D+{{ elapsed }}</em>
+                    </div>
+                    <div class="wash-urgent-warn">
+                        {{ elapsed }}일째 미완료 — 우선 처리 필요
+                    </div>
                     <p><span>📍</span>{{ r['스팟'] or '-' }}</p>
-                    <p><span>🗓</span>{{ r['세차일'] or selected_date }}</p>
                     <p><span>👤</span>{{ r['업체'] or current_user.vendor or '담당자 미지정' }}</p>
+                    {% if r['이월횟수'] and r['이월횟수'] > 0 %}<p><span>🔄</span>{{ r['이월횟수'] }}회 이월</p>{% endif %}
                 </div>
                 <span class="turu-row-arrow-v24">›</span>
             </a>
         </div>
-        {% else %}
-        <div class="turu-empty-v24"><strong>세차 대상이 없습니다.</strong><span>날짜를 바꾸거나 필터를 초기화해보세요.</span></div>
         {% endfor %}
+        </div>
+        {% endif %}
+
+        {# ── 정기세차 섹션 ── #}
+        {% if regular_rows %}
+        <div id="section-regular">
+        <div class="wash-section-label wash-section-label--regular {% if long_wash_rows %}wash-section-label--mt{% endif %}">
+            <span class="wash-section-dot wash-section-dot--regular"></span>
+            정기세차 · {{ regular_count }}대
+        </div>
+        {% for item in regular_rows %}
+        {% set r = item.row %}
+        {% set elapsed = item.elapsed %}
+        <div class="turu-delete-item-v24">
+            {% if current_user.is_master %}<label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>{% endif %}
+            <a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-order-card-v24 turu-order-card--regular">
+                <div class="turu-car-thumb-v24 turu-car-thumb--regular">
+                    <img src="{{ url_for('static', filename='img/icon-wash-order.png') }}" alt="">
+                </div>
+                <div class="turu-card-copy-v24">
+                    <div class="turu-card-title-v24">
+                        <strong>{{ r['차량번호'] }}</strong>
+                        <em class="chip-regular">정기세차</em>
+                        {% if elapsed > 0 %}<em class="chip-day">D+{{ elapsed }}</em>{% else %}<em class="chip-day chip-day--new">신규</em>{% endif %}
+                    </div>
+                    <p><span>📍</span>{{ r['스팟'] or '-' }}</p>
+                    <p><span>🗓</span>{{ r['세차일'] or selected_date }}</p>
+                    <p><span>👤</span>{{ r['업체'] or current_user.vendor or '담당자 미지정' }}</p>
+                    {% if r['이월횟수'] and r['이월횟수'] > 0 %}<p><span>🔄</span>{{ r['이월횟수'] }}회 이월</p>{% endif %}
+                </div>
+                <span class="turu-row-arrow-v24">›</span>
+            </a>
+        </div>
+        {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if not long_wash_rows and not regular_rows %}
+        <div class="turu-empty-v24"><strong>세차 대상이 없습니다.</strong><span>날짜를 바꾸거나 필터를 초기화해보세요.</span></div>
+        {% endif %}
     </div>
 
     <section class="desktop-table table-panel app-card turu-desktop-table-v24">
         <div class="table-title-row"><h2>대상 차량</h2><span>{{ rows|length }}대</span></div>
         <div class="table-scroll">
             <table>
-                <thead><tr>{% if current_user.is_master %}<th class="delete-col">선택</th>{% endif %}<th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th><th>지역</th><th>업체</th><th>세차일</th></tr></thead>
+                <thead><tr>{% if current_user.is_master %}<th class="delete-col">선택</th>{% endif %}<th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th><th>지역</th><th>업체</th><th>세차일</th><th>구분</th><th>경과일</th><th>이월</th></tr></thead>
                 <tbody>
-                {% for r in rows %}
-                <tr>{% if current_user.is_master %}<td class="delete-col"><input type="checkbox" name="ids" value="{{ r['id'] }}"></td>{% endif %}<td><a class="car-link" href="{{ url_for('car_detail', id=r['id']) }}">{{ r['차량번호'] }}</a></td><td>{{ r['차종명'] or '-' }}</td><td>{{ r['차량소속'] or '-' }}</td><td>{{ r['스팟'] or '-' }}</td><td>{{ r['지역시도'] or '-' }} {{ r['지역구군'] or '' }}</td><td>{{ r['업체'] or '-' }}</td><td>{{ r['세차일'] or selected_date }}</td></tr>
-                {% else %}<tr><td colspan="{% if current_user.is_master %}8{% else %}7{% endif %}" class="empty-cell">해당 날짜에 세차 대상이 없습니다.</td></tr>{% endfor %}
+                {% for item in long_wash_rows + regular_rows %}
+                {% set r = item.row %}
+                {% set elapsed = item.elapsed %}
+                <tr class="{% if elapsed >= 14 %}tr-urgent{% endif %}">
+                    {% if current_user.is_master %}<td class="delete-col"><input type="checkbox" name="ids" value="{{ r['id'] }}"></td>{% endif %}
+                    <td><a class="car-link" href="{{ url_for('car_detail', id=r['id']) }}">{{ r['차량번호'] }}</a></td>
+                    <td>{{ r['차종명'] or '-' }}</td>
+                    <td>{{ r['차량소속'] or '-' }}</td>
+                    <td>{{ r['스팟'] or '-' }}</td>
+                    <td>{{ r['지역시도'] or '-' }} {{ r['지역구군'] or '' }}</td>
+                    <td>{{ r['업체'] or '-' }}</td>
+                    <td>{{ r['세차일'] or selected_date }}</td>
+                    <td>{% if elapsed >= 14 %}<span style="color:#993C1D;font-weight:500;">장기 미세차</span>{% else %}정기세차{% endif %}</td>
+                    <td>D+{{ elapsed }}</td>
+                    <td>{{ r['이월횟수'] or 0 }}회</td>
+                </tr>
+                {% else %}<tr><td colspan="{% if current_user.is_master %}11{% else %}10{% endif %}" class="empty-cell">해당 날짜에 세차 대상이 없습니다.</td></tr>{% endfor %}
                 </tbody>
             </table>
         </div>
@@ -117,7 +185,55 @@
     {% if current_user.is_master %}</form>{% endif %}
 </section>
 
+<style>
+.wash-type-filter-bar {
+    display: flex;
+    gap: 8px;
+    padding: 4px 0 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.wash-type-btn {
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--color-border-tertiary);
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+.wash-type-btn.active { color: var(--color-text-primary); border-color: var(--color-border-primary); background: var(--color-background-secondary); }
+.wash-type-btn--urgent.active { background: #FAECE7; border-color: #D85A30; color: #993C1D; }
+.wash-type-btn--regular.active { background: #EAF3DE; border-color: #639922; color: #3B6D11; }
+.wash-section-label { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 500; color: var(--color-text-secondary); padding: 10px 2px 6px; }
+.wash-section-label--mt { margin-top: 6px; }
+.wash-section-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.wash-section-dot--urgent { background: #D85A30; }
+.wash-section-dot--regular { background: #639922; }
+.turu-order-card--urgent { border-left: 3px solid #D85A30 !important; }
+.turu-car-thumb--urgent { background: #FAECE7 !important; }
+.turu-car-thumb--regular { background: #EAF3DE !important; }
+.chip-urgent { background: #FAECE7; color: #993C1D; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; font-style: normal; }
+.chip-regular { background: #EAF3DE; color: #3B6D11; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; font-style: normal; }
+.chip-day { background: var(--color-background-secondary, #f5f5f5); color: var(--color-text-secondary); font-size: 11px; padding: 2px 7px; border-radius: 20px; font-style: normal; }
+.chip-day--urgent { background: #FAECE7; color: #993C1D; font-weight: 500; }
+.chip-day--new { background: #E6F1FB; color: #185FA5; font-weight: 500; }
+.wash-urgent-warn { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #993C1D; background: #FAECE7; border-radius: 6px; padding: 5px 9px; margin: 4px 0 5px; }
+.tr-urgent td { background: #fff8f6; }
+</style>
+
 <script>
+function setWashFilter(type){
+    document.querySelectorAll('.wash-type-btn').forEach(btn=>btn.classList.remove('active'));
+    document.querySelector('.wash-type-btn--'+type).classList.add('active');
+    const u=document.getElementById('section-urgent');
+    const r=document.getElementById('section-regular');
+    if(type==='all'){if(u)u.style.display='';if(r)r.style.display='';}
+    else if(type==='urgent'){if(u)u.style.display='';if(r)r.style.display='none';}
+    else{if(u)u.style.display='none';if(r)r.style.display='';}
+}
 function moveDate(days){const current=new Date("{{ selected_date }}T00:00:00");current.setDate(current.getDate()+days);const yyyy=current.getFullYear();const mm=String(current.getMonth()+1).padStart(2,'0');const dd=String(current.getDate()).padStart(2,'0');window.location.href=`/wash_list?date=${yyyy}-${mm}-${dd}`;}
 function buildOrderParams(){return new URLSearchParams({date:"{{ selected_date }}",s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:""});}
 function applyFilter(){window.location.href=`/wash_list?${buildOrderParams().toString()}`;}
@@ -126,8 +242,8 @@ function openMobileFilter(id){const el=document.getElementById(id);const backdro
 function closeMobileFilter(id){const el=document.getElementById(id);const backdrop=document.getElementById('mobile-filter-backdrop');if(el){el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';}if(backdrop){backdrop.classList.remove('open');}document.body.classList.remove('filter-sheet-open');}
 function closeAnyMobileFilter(){document.querySelectorAll('.mobile-filter-sheet.open').forEach(el=>{el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';});const backdrop=document.getElementById('mobile-filter-backdrop');if(backdrop){backdrop.classList.remove('open');}document.body.classList.remove('filter-sheet-open');}
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAnyMobileFilter();}});
-function toggleDeleteMode(formId, force){const form=document.getElementById(formId);if(!form){return;}const next=typeof force==="boolean"?force:!form.classList.contains("delete-mode");form.classList.toggle("delete-mode",next);if(!next){form.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);}}
-function toggleAllDelete(master, formId){const form=document.getElementById(formId);if(!form){return;}form.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=master.checked);}
+function toggleDeleteMode(formId,force){const form=document.getElementById(formId);if(!form){return;}const next=typeof force==="boolean"?force:!form.classList.contains("delete-mode");form.classList.toggle("delete-mode",next);if(!next){form.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);}}
+function toggleAllDelete(master,formId){const form=document.getElementById(formId);if(!form){return;}form.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=master.checked);}
 function confirmSelectedDelete(formId,message){const form=document.getElementById(formId);const count=form?form.querySelectorAll('input[name="ids"]:checked').length:0;if(count<1){alert("삭제할 항목을 선택해주세요.");return false;}return confirm(message||"선택한 항목을 삭제할까요?");}
 </script>
 {% endblock %}

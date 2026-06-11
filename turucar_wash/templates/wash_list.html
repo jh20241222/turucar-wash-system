@@ -47,22 +47,6 @@
             <div id="cal-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
         </div>
     </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-            <button onclick="calChangeMonth(-1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 12px;cursor:pointer;">‹</button>
-            <strong id="cal-title" style="font-size:15px;font-weight:950;color:var(--color-text-primary);"></strong>
-            <button onclick="calChangeMonth(1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 12px;cursor:pointer;">›</button>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px;">
-            <span style="text-align:center;font-size:11px;font-weight:900;color:#E24B4A;padding:4px 0;">일</span>
-            <span style="text-align:center;font-size:11px;font-weight:900;color:var(--color-text-tertiary);padding:4px 0;">월</span>
-            <span style="text-align:center;font-size:11px;font-weight:900;color:var(--color-text-tertiary);padding:4px 0;">화</span>
-            <span style="text-align:center;font-size:11px;font-weight:900;color:var(--color-text-tertiary);padding:4px 0;">수</span>
-            <span style="text-align:center;font-size:11px;font-weight:900;color:var(--color-text-tertiary);padding:4px 0;">목</span>
-            <span style="text-align:center;font-size:11px;font-weight:900;color:var(--color-text-tertiary);padding:4px 0;">금</span>
-            <span style="text-align:center;font-size:11px;font-weight:900;color:#185FA5;padding:4px 0;">토</span>
-        </div>
-        <div id="cal-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
-    </div>
 
     <div class="turu-searchbar-v24 turu-order-searchbar-v37">
         <input id="quick_search_input" placeholder="차량 번호 / 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">

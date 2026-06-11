@@ -13,9 +13,9 @@
 
     <section class="turu-date-summary-card-v37">
         <button type="button" class="turu-date-nav-btn-v25" onclick="moveDate(-1)" aria-label="이전 날짜">‹</button>
-        <div class="turu-date-summary-main-v37">
+        <div class="turu-date-summary-main-v37" onclick="document.getElementById('mobile-date-picker').showPicker ? document.getElementById('mobile-date-picker').showPicker() : document.getElementById('mobile-date-picker').click()" style="cursor:pointer;">
             <div class="turu-date-summary-copy-v37">
-                <span>세차일</span>
+                <span>세차일 <small style="font-size:10px;color:var(--color-text-tertiary);">탭하여 날짜 선택</small></span>
                 <strong>{{ selected_date }}</strong>
             </div>
             <div class="turu-date-summary-stats-v37">
@@ -23,6 +23,7 @@
                 <div><span>완료 현황</span><strong>{{ completed_count }}</strong></div>
             </div>
         </div>
+        <input type="date" id="mobile-date-picker" value="{{ selected_date }}" onchange="moveToDate(this.value)" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
         <button type="button" class="turu-date-nav-btn-v25" onclick="moveDate(1)" aria-label="다음 날짜">›</button>
     </section>
 
@@ -162,7 +163,10 @@
             <div class="dt-toolbar-center">
                 <div class="dt-date-nav">
                     <button type="button" onclick="moveDate(-1)">‹</button>
-                    <span>{{ selected_date }}</span>
+                    <span onclick="document.getElementById('dt-date-picker').showPicker ? document.getElementById('dt-date-picker').showPicker() : document.getElementById('dt-date-picker').click()" style="cursor:pointer;position:relative;">
+                        {{ selected_date }}
+                        <input type="date" id="dt-date-picker" value="{{ selected_date }}" onchange="moveToDate(this.value)" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;top:0;left:50%;">
+                    </span>
                     <button type="button" onclick="moveDate(1)">›</button>
                 </div>
                 <div class="dt-stats">
@@ -409,6 +413,7 @@ function dtApplyFilter() {
     if(dtv && v) v.value = dtv.value;
     applyFilter();
 }
+function moveToDate(dateStr){ if(dateStr) window.location.href=`/wash_list?date=${dateStr}`; }
 function moveDate(days){const current=new Date("{{ selected_date }}T00:00:00");current.setDate(current.getDate()+days);const yyyy=current.getFullYear();const mm=String(current.getMonth()+1).padStart(2,'0');const dd=String(current.getDate()).padStart(2,'0');window.location.href=`/wash_list?date=${yyyy}-${mm}-${dd}`;}
 function buildOrderParams(){return new URLSearchParams({date:"{{ selected_date }}",s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:""});}
 function applyFilter(){window.location.href=`/wash_list?${buildOrderParams().toString()}`;}

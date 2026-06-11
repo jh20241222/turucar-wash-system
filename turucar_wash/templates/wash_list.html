@@ -13,7 +13,7 @@
 
     <section class="turu-date-summary-card-v37">
         <button type="button" class="turu-date-nav-btn-v25" onclick="moveDate(-1)" aria-label="이전 날짜">‹</button>
-        <div class="turu-date-summary-main-v37" onclick="document.getElementById('mobile-date-picker').showPicker ? document.getElementById('mobile-date-picker').showPicker() : document.getElementById('mobile-date-picker').click()" style="cursor:pointer;">
+        <div class="turu-date-summary-main-v37" onclick="toggleCalendar()" style="cursor:pointer;">
             <div class="turu-date-summary-copy-v37">
                 <span>세차일 <small style="font-size:10px;color:var(--color-text-tertiary);">탭하여 날짜 선택</small></span>
                 <strong>{{ selected_date }}</strong>
@@ -23,9 +23,28 @@
                 <div><span>완료 현황</span><strong>{{ completed_count }}</strong></div>
             </div>
         </div>
-        <input type="date" id="mobile-date-picker" value="{{ selected_date }}" onchange="moveToDate(this.value)" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
         <button type="button" class="turu-date-nav-btn-v25" onclick="moveDate(1)" aria-label="다음 날짜">›</button>
     </section>
+
+    {# ── 커스텀 달력 팝업 ── #}
+    <div id="cal-backdrop" onclick="closeCalendar()" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.3);"></div>
+    <div id="cal-popup" style="display:none;position:fixed;left:50%;transform:translateX(-50%);z-index:1000;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:16px;padding:16px;width:300px;box-shadow:0 8px 32px rgba(0,0,0,0.12);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <button onclick="calChangeMonth(-1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 12px;cursor:pointer;">‹</button>
+            <strong id="cal-title" style="font-size:15px;font-weight:950;color:var(--color-text-primary);"></strong>
+            <button onclick="calChangeMonth(1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 12px;cursor:pointer;">›</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px;">
+            <span style="text-align:center;font-size:11px;font-weight:900;color:#E24B4A;padding:4px 0;">일</span>
+            <span style="text-align:center;font-size:11px;font-weight:900;color:var(--color-text-tertiary);padding:4px 0;">월</span>
+            <span style="text-align:center;font-size:11px;font-weight:900;color:var(--color-text-tertiary);padding:4px 0;">화</span>
+            <span style="text-align:center;font-size:11px;font-weight:900;color:var(--color-text-tertiary);padding:4px 0;">수</span>
+            <span style="text-align:center;font-size:11px;font-weight:900;color:var(--color-text-tertiary);padding:4px 0;">목</span>
+            <span style="text-align:center;font-size:11px;font-weight:900;color:var(--color-text-tertiary);padding:4px 0;">금</span>
+            <span style="text-align:center;font-size:11px;font-weight:900;color:#185FA5;padding:4px 0;">토</span>
+        </div>
+        <div id="cal-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
+    </div>
 
     <div class="turu-searchbar-v24 turu-order-searchbar-v37">
         <input id="quick_search_input" placeholder="차량 번호 / 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">
@@ -163,10 +182,7 @@
             <div class="dt-toolbar-center">
                 <div class="dt-date-nav">
                     <button type="button" onclick="moveDate(-1)">‹</button>
-                    <span onclick="document.getElementById('dt-date-picker').showPicker ? document.getElementById('dt-date-picker').showPicker() : document.getElementById('dt-date-picker').click()" style="cursor:pointer;position:relative;">
-                        {{ selected_date }}
-                        <input type="date" id="dt-date-picker" value="{{ selected_date }}" onchange="moveToDate(this.value)" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;top:0;left:50%;">
-                    </span>
+                    <span onclick="toggleCalendar()" style="cursor:pointer;">{{ selected_date }}</span>
                     <button type="button" onclick="moveDate(1)">›</button>
                 </div>
                 <div class="dt-stats">
@@ -412,6 +428,61 @@ function dtApplyFilter() {
     const v = document.getElementById('vendor');
     if(dtv && v) v.value = dtv.value;
     applyFilter();
+}
+let _calYear, _calMonth;
+const _selDate = "{{ selected_date }}";
+function _initCal(){
+    const p = _selDate.split('-');
+    _calYear = parseInt(p[0]); _calMonth = parseInt(p[1]) - 1;
+}
+function toggleCalendar(){
+    const pop = document.getElementById('cal-popup');
+    const bd = document.getElementById('cal-backdrop');
+    if(pop.style.display === 'none'){
+        _initCal();
+        _renderCal();
+        pop.style.display = 'block';
+        bd.style.display = 'block';
+        const rect = pop.getBoundingClientRect();
+        const top = Math.min(window.innerHeight * 0.3, window.innerHeight - rect.height - 20);
+        pop.style.top = Math.max(20, top) + 'px';
+    } else {
+        closeCalendar();
+    }
+}
+function closeCalendar(){
+    document.getElementById('cal-popup').style.display = 'none';
+    document.getElementById('cal-backdrop').style.display = 'none';
+}
+function calChangeMonth(dir){
+    _calMonth += dir;
+    if(_calMonth < 0){_calMonth = 11; _calYear--;}
+    if(_calMonth > 11){_calMonth = 0; _calYear++;}
+    _renderCal();
+}
+function _renderCal(){
+    document.getElementById('cal-title').textContent = `${_calYear}년 ${_calMonth + 1}월`;
+    const first = new Date(_calYear, _calMonth, 1).getDay();
+    const last = new Date(_calYear, _calMonth + 1, 0).getDate();
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    let html = '';
+    for(let i = 0; i < first; i++) html += `<div></div>`;
+    for(let d = 1; d <= last; d++){
+        const ds = `${_calYear}-${String(_calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const isSel = ds === _selDate;
+        const isToday = ds === todayStr;
+        const isSun = (first + d - 1) % 7 === 0;
+        const isSat = (first + d - 1) % 7 === 6;
+        let style = `text-align:center;padding:7px 2px;font-size:13px;font-weight:800;border-radius:8px;cursor:pointer;border:none;`;
+        if(isSel) style += `background:#FF5F00;color:#fff;font-weight:950;`;
+        else if(isToday) style += `border:1.5px solid #FF5F00;color:#FF5F00;background:none;`;
+        else if(isSun) style += `color:#E24B4A;background:none;`;
+        else if(isSat) style += `color:#185FA5;background:none;`;
+        else style += `color:var(--color-text-primary);background:none;`;
+        html += `<button style="${style}" onclick="moveToDate('${ds}')">${d}</button>`;
+    }
+    document.getElementById('cal-days').innerHTML = html;
 }
 function moveToDate(dateStr){ if(dateStr) window.location.href=`/wash_list?date=${dateStr}`; }
 function moveDate(days){const current=new Date("{{ selected_date }}T00:00:00");current.setDate(current.getDate()+days);const yyyy=current.getFullYear();const mm=String(current.getMonth()+1).padStart(2,'0');const dd=String(current.getDate()).padStart(2,'0');window.location.href=`/wash_list?date=${yyyy}-${mm}-${dd}`;}

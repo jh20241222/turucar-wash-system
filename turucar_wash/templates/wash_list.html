@@ -440,12 +440,13 @@ function toggleCalendar(){
     const bd = document.getElementById('cal-backdrop');
     if(pop.style.display === 'none'){
         _initCal();
-        _renderCal();
         pop.style.display = 'block';
         bd.style.display = 'block';
-        const rect = pop.getBoundingClientRect();
-        const top = Math.min(window.innerHeight * 0.3, window.innerHeight - rect.height - 20);
-        pop.style.top = Math.max(20, top) + 'px';
+        _renderCal();
+        const popH = pop.offsetHeight || 320;
+        const winH = window.innerHeight;
+        const top = Math.min((winH - popH) / 2, winH * 0.25);
+        pop.style.top = Math.max(60, top) + 'px';
     } else {
         closeCalendar();
     }

@@ -158,12 +158,14 @@
 
         {# ── 데스크탑 전용 상단 툴바 ── #}
         <div class="dt-toolbar">
-            <div class="dt-toolbar-left">
+            <div class="dt-toolbar-left"></div>
+            <div class="dt-toolbar-center">
                 <div class="dt-date-nav">
                     <button type="button" onclick="moveDate(-1)">‹</button>
                     <span>{{ selected_date }}</span>
                     <button type="button" onclick="moveDate(1)">›</button>
-                </div>                <div class="dt-stats">
+                </div>
+                <div class="dt-stats">
                     <div class="dt-stat"><span>세차 대상</span><strong>{{ total_target_count }}</strong></div>
                     <div class="dt-stat dt-stat--urgent"><span>장기 미세차</span><strong>{{ long_wash_count }}</strong></div>
                     <div class="dt-stat"><span>정기세차</span><strong>{{ regular_count }}</strong></div>
@@ -318,19 +320,20 @@
 
     .turu-desktop-table-v24 { display: block !important; padding: 0 !important; border-radius: var(--border-radius-lg) !important; overflow: hidden; margin: 0 !important; }
 
-    .dt-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 0.5px solid var(--color-border-tertiary); gap: 20px; }
-    .dt-toolbar-left { display: flex; align-items: center; gap: 20px; }
-    .dt-toolbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .dt-toolbar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; padding: 32px 28px 24px; border-bottom: 0.5px solid var(--color-border-tertiary); gap: 0; }
+    .dt-toolbar-left { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+    .dt-toolbar-center { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .dt-toolbar-right { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
     .turu-desktop-table-v24 { position: relative; }
-    .dt-date-nav { display: flex; align-items: center; gap: 10px; }
-    .dt-date-nav button { background: #FFF2E9; border: none; border-radius: 10px; cursor: pointer; color: #FF5F00; font-size: 18px; font-weight: 900; padding: 5px 14px; line-height: 1; }
+    .dt-date-nav { display: flex; align-items: center; gap: 14px; }
+    .dt-date-nav button { background: #FFF2E9; border: none; border-radius: 10px; cursor: pointer; color: #FF5F00; font-size: 18px; font-weight: 900; padding: 6px 16px; line-height: 1; }
     .dt-date-nav button:hover { background: #F0997B; color: #fff; }
-    .dt-date-nav span { font-size: 22px; font-weight: 950; color: var(--color-text-primary); letter-spacing: -.03em; min-width: 130px; text-align: center; }
+    .dt-date-nav span { font-size: 26px; font-weight: 950; color: var(--color-text-primary); letter-spacing: -.03em; min-width: 150px; text-align: center; }
     .dt-stats { display: flex; align-items: center; }
-    .dt-stat { text-align: center; padding: 0 18px; border-right: 0.5px solid var(--color-border-tertiary); }
+    .dt-stat { text-align: center; padding: 0 20px; border-right: 0.5px solid var(--color-border-tertiary); }
     .dt-stat:last-child { border-right: none; }
-    .dt-stat span { font-size: 11px; color: var(--color-text-secondary); display: block; margin-bottom: 3px; font-weight: 800; letter-spacing: .05em; }
-    .dt-stat strong { font-size: 26px; font-weight: 950; color: var(--color-text-primary); letter-spacing: -.045em; line-height: 1; }
+    .dt-stat span { font-size: 11px; color: var(--color-text-secondary); display: block; margin-bottom: 4px; font-weight: 800; letter-spacing: .05em; }
+    .dt-stat strong { font-size: 28px; font-weight: 950; color: var(--color-text-primary); letter-spacing: -.045em; line-height: 1; }
     .dt-stat--urgent strong { color: #FF5F00; }
 
     .dt-btn { display: flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); color: var(--color-text-secondary); font-weight: 800; }

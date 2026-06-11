@@ -103,8 +103,8 @@ def _backup_sqlite_file(path, label, keep=30):
     shutil.copy2(path, backup_path)
 
     backups = sorted(
-        [os.path.join(BACKUP_DIR, name) for name in os.listdir(BACKUP_DIR) if name.startswith(f"{label}-")],
-        key=os.path.getmtime,
+        [os.path.join(BACKUP_DIR, name) for name in os.listdir(BACKUP_DIR) if name.startswith(f"{label}-") and os.path.exists(os.path.join(BACKUP_DIR, name))],
+        key=lambda p: os.path.getmtime(p) if os.path.exists(p) else 0,
         reverse=True,
     )
     for old_backup in backups[keep:]:

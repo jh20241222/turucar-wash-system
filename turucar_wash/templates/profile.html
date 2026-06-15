@@ -21,6 +21,16 @@
     </section>
     {% endif %}
 
+    {% if not current_user.is_master %}
+    <section class="turu-menu-card-v24">
+        <a href="{{ url_for('my_vehicles') }}" class="turu-menu-row-v24">
+            <span>🚗</span>
+            <div><strong>내 담당 차량</strong><small>배정 지역 기준 전체 차량 현황</small></div>
+            <b>›</b>
+        </a>
+    </section>
+    {% endif %}
+
     <section class="turu-menu-card-v24">
         {% if current_user.is_admin %}
         <a href="{{ url_for('account_manage') }}" class="turu-menu-row-v24"><span>⌖</span><div><strong>계정/지역 설정</strong><small>소속, 센터, 담당 지역 관리</small></div><b>›</b></a>

@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block document_title %}Turu Wash · 내 담당 차량{% endblock %}
+{% block content %}
+<section class="turu-app-page-v24">
+    <header class="turu-page-brand-v24"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
+    <div class="turu-page-head-v24"><div><h1>내 담당 차량</h1><p>배정 지역 기준 차량 현황입니다.</p></div></div>
+
+    <div class="mv-summary-grid">
+        <div class="mv-stat"><span>총 차량</span><strong>{{ total }}</strong></div>
+        <div class="mv-stat mv-stat--urgent"><span>장기미세차</span><strong>{{ urgent_count }}</strong></div>
+        <div class="mv-stat mv-stat--regular"><span>정기세차</span><strong>{{ regular_count }}</strong></div>
+    </div>
+
+    {% if region_stats %}
+    <section class="app-card mv-region-card">
+        <p class="mv-section-label">지역별 현황</p>
+        {% for r in region_stats %}
+        <div class="mv-region-row" onclick="filterByRegion('{{ r.city }} {{ r.district }}', this)">
+            <div class="mv-region-info">
+                <strong>{{ r.city }} {{ r.district }}</strong>
+                <span>총 {{ r.total }}대</span>
+            </div>
+            <div class="mv-region-badges">
+                {% if r.urgent > 0 %}<span class="badge-urgent">장기 {{ r.urgent }}</span>{% endif %}
+                {% if r.regular > 0 %}<span class="badge-regular">정기 {{ r.regular }}</span>{% endif %}
+            </div>
+            <span class="mv-row-arrow">›</span>
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
+
+    <div class="turu-searchbar-v24" style="margin-top:8px;">
+        <input id="mv-search" placeholder="차량번호, 스팟, 차량소속 검색" oninput="filterVehicles()">
+        <button type="button" onclick="filterVehicles()" aria-label="검색">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+        </button>
+    </div>
+
+    <div class="mv-tab-bar">
+        <button class="mv-tab active" onclick="setTab('all', this)">전체 <span>{{ total }}</span></button>
+        <button class="mv-tab" onclick="setTab('urgent', this)">장기 미세차 <span class="mv-tab-badge">{{ urgent_count }}</span></button>
+        <button class="mv-tab" onclick="setTab('regular', this)">정기세차 <span>{{ regular_count }}</span></button>
+    </div>
+
+    <div class="turu-card-list-v24" id="mv-list">
+        {% if vehicles %}
+            {% for v in vehicles %}
+            {% set elapsed = v["세차경과일"] or 0 %}
+            <div class="mv-item turu-delete-item-v24 {% if elapsed >= 14 %}mv-item--urgent{% endif %}"
+                 data-type="{% if elapsed >= 14 %}urgent{% else %}regular{% endif %}"
+                 data-search="{{ v['차량번호'] }} {{ v['스팟'] }} {{ v['차량소속'] }}"
+                 data-region="{{ v['지역시도'] }} {{ v['지역구군'] }}">
+                <a href="{{ url_for('wash_list') }}?s={{ v['차량번호'] }}" class="turu-order-card-v24 {% if elapsed >= 14 %}turu-order-card--urgent{% endif %}">
+                    <div class="turu-car-thumb-v24 {% if elapsed >= 14 %}turu-car-thumb--urgent{% else %}turu-car-thumb--regular{% endif %}">
+                        <img src="{{ url_for('static', filename='img/icon-wash-order.png') }}" alt="">
+                    </div>
+                    <div class="turu-card-copy-v24">
+                        <div class="turu-card-title-v24">
+                            <strong>{{ v['차량번호'] }}</strong>
+                            {% if elapsed >= 14 %}
+                            <em class="chip-urgent">장기 미세차</em>
+                            <em class="chip-day chip-day--urgent">D+{{ elapsed }}</em>
+                            {% elif elapsed > 0 %}
+                            <em class="chip-regular">정기세차</em>
+                            <em class="chip-day">D+{{ elapsed }}</em>
+                            {% else %}
+                            <em class="chip-regular">정기세차</em>
+                            <em class="chip-day chip-day--new">신규</em>
+                            {% endif %}
+                        </div>
+                        {% if elapsed >= 14 %}
+                        <div class="wash-urgent-warn">{{ elapsed }}일째 미완료 — 우선 처리 필요</div>
+                        {% endif %}
+                        <p><span>🚗</span>{{ v['차종명'] or '-' }} · {{ v['차량소속'] or '-' }}</p>
+                        <p><span>📍</span>{{ v['스팟'] or '-' }}</p>
+                        <p><span>📌</span>{{ v['지역시도'] }} {{ v['지역구군'] }}</p>
+                    </div>
+                    <span class="turu-row-arrow-v24">›</span>
+                </a>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="turu-empty-v24">
+            <strong>담당 차량이 없습니다.</strong>
+            <span>배정 지역에 등록된 차량이 없어요.</span>
+        </div>
+        {% endif %}
+    </div>
+    <p id="mv-empty" style="display:none;text-align:center;color:var(--color-text-tertiary);font-size:13px;padding:24px 0;">검색 결과가 없습니다.</p>
+</section>
+
+<style>
+.mv-summary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:8px 16px; }
+.mv-stat { background:var(--color-background-primary); border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-md); padding:12px 8px; text-align:center; }
+.mv-stat span { display:block; font-size:10px; font-weight:800; color:var(--color-text-secondary); letter-spacing:.04em; margin-bottom:4px; }
+.mv-stat strong { font-size:26px; font-weight:950; color:var(--color-text-primary); letter-spacing:-.03em; line-height:1; }
+.mv-stat--urgent strong { color:#FF5F00; }
+.mv-stat--regular strong { color:#3B6D11; }
+.mv-region-card { margin:4px 16px; padding:0; }
+.mv-section-label { font-size:11px; font-weight:800; color:var(--color-text-tertiary); letter-spacing:.05em; padding:12px 16px 4px; margin:0; }
+.mv-region-row { display:flex; align-items:center; gap:10px; padding:12px 16px; border-top:0.5px solid var(--color-border-tertiary); cursor:pointer; }
+.mv-region-row:first-of-type { border-top:none; }
+.mv-region-row:active, .mv-region-row.selected { background:var(--color-background-secondary); }
+.mv-region-info { flex:1; }
+.mv-region-info strong { display:block; font-size:13px; font-weight:950; color:var(--color-text-primary); }
+.mv-region-info span { font-size:11px; color:var(--color-text-secondary); }
+.mv-region-badges { display:flex; gap:4px; flex-shrink:0; }
+.badge-urgent { font-size:11px; font-weight:900; padding:2px 8px; border-radius:20px; background:#FAECE7; color:#993C1D; }
+.badge-regular { font-size:11px; font-weight:900; padding:2px 8px; border-radius:20px; background:#EAF3DE; color:#3B6D11; }
+.mv-row-arrow { color:var(--color-text-tertiary); font-size:16px; }
+.mv-tab-bar { display:flex; gap:8px; padding:8px 16px 4px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.mv-tab { flex-shrink:0; font-size:13px; font-weight:800; padding:6px 14px; border-radius:20px; border:1.5px solid var(--color-border-tertiary); background:var(--color-background-primary); color:var(--color-text-secondary); cursor:pointer; }
+.mv-tab span { margin-left:4px; }
+.mv-tab.active { color:var(--color-text-primary); border-color:var(--color-border-primary); background:var(--color-background-secondary); }
+.mv-tab-badge { display:inline-block; background:#FFF2E9; color:#FF5F00; font-size:10px; padding:1px 6px; border-radius:20px; margin-left:4px; font-weight:900; }
+.mv-item--urgent .turu-order-card-v24 { border-left:3px solid #D85A30 !important; }
+.chip-urgent { background:#FAECE7; color:#993C1D; font-size:11px; padding:2px 8px; border-radius:20px; font-weight:500; font-style:normal; }
+.chip-regular { background:#EAF3DE; color:#3B6D11; font-size:11px; padding:2px 8px; border-radius:20px; font-weight:500; font-style:normal; }
+.chip-day { background:var(--color-background-secondary); color:var(--color-text-secondary); font-size:11px; padding:2px 7px; border-radius:20px; font-style:normal; }
+.chip-day--urgent { background:#FAECE7; color:#993C1D; font-weight:500; }
+.chip-day--new { background:#E6F1FB; color:#185FA5; font-weight:500; }
+.wash-urgent-warn { display:flex; align-items:center; gap:5px; font-size:11px; color:#993C1D; background:#FAECE7; border-radius:6px; padding:5px 9px; margin:4px 0 5px; }
+</style>
+
+<script>
+let curTab = 'all';
+let curRegion = '';
+function setTab(type, el) {
+    curTab = type;
+    document.querySelectorAll('.mv-tab').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    filterVehicles();
+}
+function filterByRegion(region, el) {
+    if (curRegion === region) {
+        curRegion = '';
+        document.querySelectorAll('.mv-region-row').forEach(r => r.classList.remove('selected'));
+    } else {
+        curRegion = region;
+        document.querySelectorAll('.mv-region-row').forEach(r => r.classList.remove('selected'));
+        el.classList.add('selected');
+    }
+    filterVehicles();
+}
+function filterVehicles() {
+    const q = (document.getElementById('mv-search').value || '').toLowerCase();
+    const items = document.querySelectorAll('.mv-item');
+    let visible = 0;
+    items.forEach(item => {
+        const matchTab = curTab === 'all' || item.dataset.type === curTab;
+        const matchQ = !q || item.dataset.search.toLowerCase().includes(q);
+        const matchR = !curRegion || item.dataset.region === curRegion;
+        const show = matchTab && matchQ && matchR;
+        item.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+    document.getElementById('mv-empty').style.display = visible === 0 ? 'block' : 'none';
+}
+</script>
+{% endblock %}

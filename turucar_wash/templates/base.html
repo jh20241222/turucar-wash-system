@@ -42,12 +42,8 @@
     <!-- ══ 데스크탑 사이드바 ══ -->
     <aside class="desktop-sidebar">
         <a href="{{ url_for('dashboard') }}" class="sidebar-brand" aria-label="Turu Wash 홈">
-            <div class="brand-logo-box"><span>T</span></div>
-            <div class="brand-text">
-                <img src="{{ url_for('static', filename='img/turu_wordmark_white.png') }}" alt="Turu CAR" class="sb-logo-img-dark">
-                <img src="{{ url_for('static', filename='img/turu_wordmark_black.png') }}" alt="Turu CAR" class="sb-logo-img-light">
-                <small>Wash Manager</small>
-            </div>
+            <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="Turu CAR" class="sb-main-logo">
+            <span class="sb-sub-label">Wash Manager</span>
         </a>
 
         <nav class="side-nav">
@@ -65,10 +61,6 @@
             <a href="{{ url_for('wash_status') }}" class="side-link {% if request.endpoint == 'wash_status' %}active{% endif %}">
                 <i class="ti ti-check" aria-hidden="true"></i><b>완료 현황</b>
             </a>
-            <a href="{{ url_for('upload_wash_list') }}" class="side-link {% if request.endpoint == 'upload_wash_list' %}active{% endif %}">
-                <i class="ti ti-clock" aria-hidden="true"></i><b>스케줄 관리</b>
-            </a>
-
             {% if current_user.is_master %}
             <!-- 데이터 관리 -->
             <p class="side-nav-group" style="margin-top:4px;">데이터 관리</p>
@@ -78,10 +70,6 @@
             <a href="{{ url_for('upload_wash_list') }}" class="side-link {% if request.endpoint == 'upload_wash_list' %}active{% endif %}">
                 <i class="ti ti-upload" aria-hidden="true"></i><b>오더 업로드</b>
             </a>
-            <a href="{{ url_for('upload_wash_list') }}" class="side-link {% if request.endpoint == 'order_generate' %}active{% endif %}">
-                <i class="ti ti-settings-automation" aria-hidden="true"></i><b>오더 자동생성</b>
-            </a>
-
             <!-- 계정 관리 -->
             <p class="side-nav-group" style="margin-top:4px;">계정 관리</p>
             <a href="{{ url_for('account_manage') }}" class="side-link {% if request.endpoint == 'account_manage' %}active{% endif %}">

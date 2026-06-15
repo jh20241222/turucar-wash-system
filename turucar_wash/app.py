@@ -150,19 +150,48 @@ print(f"[TuruWash] WASH_DB  = {WASH_DB_PATH}")
 
 
 def load_band_mapping():
+    """차량소속별_밴드매칭.xlsx를 읽어 (차량소속, 담당업체) 복합키 딕셔너리로 반환."""
     if not os.path.exists(BAND_MATCHING_PATH):
         return {}
 
     df = pd.read_excel(BAND_MATCHING_PATH)
-    required_cols = {"차량소속", "밴드링크"}
-    if not required_cols.issubset(df.columns):
+    if "차량소속" not in df.columns or "밴드링크" not in df.columns:
         raise ValueError("차량소속별_밴드매칭.xlsx 파일에 '차량소속', '밴드링크' 컬럼이 필요합니다.")
 
-    clean_df = df[["차량소속", "밴드링크"]].copy()
-    clean_df["차량소속"] = clean_df["차량소속"].astype(str).str.strip()
-    clean_df["밴드링크"] = clean_df["밴드링크"].astype(str).str.strip()
-    clean_df = clean_df[(clean_df["차량소속"] != "") & (clean_df["밴드링크"] != "") & (clean_df["밴드링크"].str.lower() != "nan")]
-    return dict(zip(clean_df["차량소속"], clean_df["밴드링크"]))
+    has_vendor_col = "담당업체" in df.columns
+    df["차량소속"] = df["차량소속"].astype(str).str.strip()
+    df["밴드링크"] = df["밴드링크"].astype(str).str.strip()
+    if has_vendor_col:
+        df["담당업체"] = df["담당업체"].astype(str).str.strip().replace("nan", "")
+    else:
+        df["담당업체"] = ""
+
+    df = df[(df["차량소속"] != "") & (df["밴드링크"] != "") & (df["밴드링크"].str.lower() != "nan")]
+
+    mapping = {}
+    for _, row in df.iterrows():
+        vendor = row["담당업체"] if row["담당업체"].lower() != "nan" else ""
+        mapping[(row["차량소속"], vendor)] = row["밴드링크"]
+    return mapping
+
+
+def find_band_link(band_dict, car_org, vendor=""):
+    """복합키(차량소속+담당업체) 우선, 없으면 차량소속 단독으로 폴백."""
+    car_org = (car_org or "").strip()
+    vendor = (vendor or "").strip()
+    # 1순위: 차량소속 + 담당업체 정확히 일치
+    link = band_dict.get((car_org, vendor))
+    if link:
+        return link
+    # 2순위: 담당업체 없는 단순 키
+    link = band_dict.get((car_org, ""))
+    if link:
+        return link
+    # 3순위: 차량소속만 일치하는 첫 번째 항목
+    for (org, _), url in band_dict.items():
+        if org == car_org:
+            return url
+    return None
 
 
 # =========================================================
@@ -1288,6 +1317,35 @@ def account_manage():
 
 
 # =========================================================
+# 밴드매칭 파일 업로드 (마스터 전용)
+# =========================================================
+@app.route("/upload_band_matching", methods=["POST"])
+@login_required
+def upload_band_matching():
+    if not current_user.is_master:
+        return jsonify({"ok": False, "message": "마스터 계정만 업로드할 수 있습니다."}), 403
+
+    file = request.files.get("file")
+    if not file or not file.filename.endswith(".xlsx"):
+        flash("❌ .xlsx 파일을 선택하세요.")
+        return redirect(url_for("upload_wash_list"))
+
+    try:
+        df = pd.read_excel(file)
+        if "차량소속" not in df.columns or "밴드링크" not in df.columns:
+            flash("❌ '차량소속', '밴드링크' 컬럼이 필요합니다.")
+            return redirect(url_for("upload_wash_list"))
+        os.makedirs(DATA_DIR, exist_ok=True)
+        file.seek(0)
+        file.save(BAND_MATCHING_PATH)
+        flash(f"✔ 밴드매칭 파일이 업데이트되었습니다. ({len(df)}개 항목)")
+    except Exception as e:
+        flash(f"❌ 업로드 실패: {e}")
+
+    return redirect(url_for("upload_wash_list"))
+
+
+# =========================================================
 # 세차 대상 업로드
 # =========================================================
 @app.route("/upload_wash_list", methods=["GET", "POST"])
@@ -1343,7 +1401,7 @@ def upload_wash_list():
                 band_val = str(r["밴드링크"]).strip()
                 band = band_val if band_val and band_val.lower() not in ("nan", "") else None
             else:
-                band = band_dict.get(r["차량소속"], None)
+                band = find_band_link(band_dict, r["차량소속"], r.get("담당업체", ""))
 
             # 세차경과일 저장
             if has_elapsed_col:
@@ -1659,7 +1717,8 @@ def band_link(id):
         return jsonify({"ok": False, "message": f"밴드매칭 파일 오류: {e}"}), 500
 
     car_org = str(car["차량소속"]).strip()
-    band = band_dict.get(car_org)
+    vendor = str(car["업체"] or "").strip()
+    band = find_band_link(band_dict, car_org, vendor)
     if not band:
         return jsonify({"ok": False, "message": f"'{car_org}' 차량소속의 밴드 링크가 없습니다."}), 404
 

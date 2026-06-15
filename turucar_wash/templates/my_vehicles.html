@@ -158,4 +158,50 @@ function filterVehicles() {
     document.getElementById('mv-empty').style.display = visible === 0 ? 'block' : 'none';
 }
 </script>
+
+{# ── 데스크탑 전용 ── #}
+<div id="d-mv" style="display:none">
+<div class="d-wrap">
+    <div class="d-mv-grid">
+        <div class="d-mv-stat"><span>총 차량</span><strong>{{ total }}</strong></div>
+        <div class="d-mv-stat urgent"><span>장기미세차</span><strong>{{ urgent_count }}</strong></div>
+        <div class="d-mv-stat regular"><span>정기세차</span><strong>{{ regular_count }}</strong></div>
+    </div>
+    {% if region_stats %}
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">지역별 현황</span><h2>담당 지역</h2></div></div>
+        <div class="d-table-wrap">
+            <table class="d-table"><thead><tr><th>지역</th><th>총 대수</th><th>장기미세차</th><th>정기세차</th></tr></thead>
+            <tbody>{% for r in region_stats %}<tr><td>{{ r.city }} {{ r.district }}</td><td>{{ r.total }}</td><td style="color:#FF5F00;font-weight:700;">{{ r.urgent }}</td><td style="color:#3B6D11;">{{ r.regular }}</td></tr>{% endfor %}</tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">차량 목록</span><h2>전체 차량</h2></div><span class="d-badge-pill">{{ total }}대</span></div>
+        <div class="d-table-wrap">
+            <table class="d-table"><thead><tr><th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th><th>지역</th><th>경과일</th></tr></thead>
+            <tbody>
+            {% for v in vehicles %}
+            {% set elapsed = v["세차경과일"] or 0 %}
+            <tr style="cursor:pointer;" onclick="location.href='{{ url_for('wash_list') }}?s={{ v['차량번호'] }}'">
+                <td style="color:#FF5F00;font-weight:700;">{{ v['차량번호'] }}</td>
+                <td>{{ v['차종명'] or '-' }}</td>
+                <td>{{ v['차량소속'] or '-' }}</td>
+                <td>{{ v['스팟'] or '-' }}</td>
+                <td>{{ v['지역시도'] }} {{ v['지역구군'] }}</td>
+                <td {% if elapsed >= 14 %}style="color:#FF5F00;font-weight:700;"{% endif %}>D+{{ elapsed }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="d-empty-cell">담당 차량이 없습니다.</td></tr>
+            {% endfor %}
+            </tbody></table>
+        </div>
+    </div>
+</div>
+</div>
+<style>
+#desktop-mode #d-mv { display: block !important; }
+#desktop-mode .turu-app-page-v24 { display: none !important; }
+</style>
 {% endblock %}

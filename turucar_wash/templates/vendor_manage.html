@@ -7,23 +7,23 @@
     <aside class="guide-card app-card"><p class="eyebrow">Guide</p><h3>운영 팁</h3><ul class="check-list"><li>담당업체 값과 같은 이름으로 등록하세요.</li><li>계정 생성 시 업체 선택지로 사용됩니다.</li></ul></aside>
 </section>
 <section class="app-section app-card vendor-list"><div class="section-title-row" style="padding:16px 16px 4px;"><h2>등록 업체</h2><span class="soft-badge">{{ vendors|length }}개</span></div>{% for v in vendors %}<div class="vendor-row"><div><strong>{{ v.name }}</strong><small>#{{ loop.index }}</small></div><form method="POST" class="inline-form" onsubmit="return confirm('정말 이 업체를 삭제할까요?');"><input type="hidden" name="action" value="delete_vendor"><input type="hidden" name="vendor_id" value="{{ v.id }}"><button type="submit" class="danger-btn">삭제</button></form></div>{% else %}<div class="empty-state compact"><strong>등록된 업체가 없습니다.</strong><span>위 입력창에서 업체를 등록하세요.</span></div>{% endfor %}</section>
-{% endblock %}
 
 {# ── 데스크탑 전용 ── #}
-<div class="d-admin-wrap" id="dt-vendor-wrap" style="display:none">
-    <div class="d-admin-grid">
+<div id="d-vendor" style="display:none">
+<div class="d-wrap">
+    <div class="d-grid-2">
         <div class="d-card">
-            <div class="d-card-head"><div><p class="d-eyebrow">Create</p><h2>업체 등록</h2></div></div>
+            <div class="d-card-head"><div><span class="d-eyebrow">Create</span><h2>업체 등록</h2></div></div>
             <div class="d-card-body">
                 <form method="POST">
                     <input type="hidden" name="action" value="create_vendor">
-                    <div class="d-form-group"><label class="d-label">업체명</label><input type="text" name="name" class="d-input" placeholder="업체명 입력" required></div>
-                    <button type="submit" class="d-btn-primary">등록</button>
+                    <div class="d-fg"><label class="d-label">업체명</label><input type="text" name="name" class="d-input" placeholder="업체명 입력" required></div>
+                    <button type="submit" class="d-btn d-btn-orange">등록</button>
                 </form>
             </div>
         </div>
         <div class="d-card">
-            <div class="d-card-head"><div><p class="d-eyebrow">Guide</p><h2>운영 팁</h2></div></div>
+            <div class="d-card-head"><div><span class="d-eyebrow">Guide</span><h2>운영 팁</h2></div></div>
             <div class="d-card-body">
                 <ul class="d-checklist">
                     <li>담당업체 값과 같은 이름으로 등록하세요.</li>
@@ -33,17 +33,20 @@
         </div>
     </div>
     <div class="d-card">
-        <div class="d-card-head"><div><p class="d-eyebrow">List</p><h2>등록 업체</h2></div><span class="d-badge">{{ vendors|length }}개</span></div>
+        <div class="d-card-head"><div><span class="d-eyebrow">List</span><h2>등록 업체</h2></div><span class="d-badge-pill">{{ vendors|length }}개</span></div>
         <div class="d-table-wrap">
             <table class="d-table"><thead><tr><th>#</th><th>업체명</th><th>관리</th></tr></thead>
-            <tbody>{% for v in vendors %}<tr><td>{{ loop.index }}</td><td>{{ v.name }}</td><td><form method="POST" class="inline-form" onsubmit="return confirm('정말 이 업체를 삭제할까요?');"><input type="hidden" name="action" value="delete_vendor"><input type="hidden" name="vendor_id" value="{{ v.id }}"><button type="submit" class="d-btn-danger">삭제</button></form></td></tr>{% else %}<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--d-muted);">등록된 업체가 없습니다.</td></tr>{% endfor %}</tbody>
+            <tbody>{% for v in vendors %}<tr><td>{{ loop.index }}</td><td>{{ v.name }}</td><td><form method="POST" style="display:inline" onsubmit="return confirm('업체를 삭제할까요?');"><input type="hidden" name="action" value="delete_vendor"><input type="hidden" name="vendor_id" value="{{ v.id }}"><button type="submit" class="d-btn-danger-sm">삭제</button></form></td></tr>{% else %}<tr><td colspan="3" class="d-empty-cell">등록된 업체가 없습니다.</td></tr>{% endfor %}</tbody>
             </table>
         </div>
     </div>
 </div>
+</div>
 <style>
-@media (min-width: 901px) {
-    #dt-vendor-wrap { display: block !important; }
-    .page-hero, .admin-layout, .admin-layout.single, .app-section.app-card { display: none !important; }
-}
+#desktop-mode #d-vendor { display: block !important; }
+#desktop-mode .page-hero,
+#desktop-mode .admin-layout,
+#desktop-mode .admin-layout.single,
+#desktop-mode .app-section.app-card { display: none !important; }
 </style>
+{% endblock %}

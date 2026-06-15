@@ -91,103 +91,88 @@ document.getElementById('file')?.addEventListener('change',e=>{const f=e.target.
 document.getElementById('band_file')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)document.getElementById('band-file-name').textContent=f.name;});
 </script>
 {# ── 데스크탑 전용 ── #}
-<div class="d-admin-wrap" style="display:none" id="dt-upload-wrap">
-    <div class="d-admin-grid-3">
+<div id="d-upload" style="display:none">
+<div class="d-wrap">
+<div class="d-grid-3">
 
-        <div class="d-card">
-            <div class="d-card-head">
-                <div><p class="d-eyebrow">01 Upload</p><h2>오더 업로드</h2></div>
-                <span class="d-badge">.xlsx</span>
-            </div>
-            <div class="d-card-body">
-                <form method="POST" enctype="multipart/form-data">
-                    <div class="d-form-group">
-                        <label class="d-label">세차일자</label>
-                        <input type="date" name="wash_date" class="d-input" required>
-                    </div>
-                    <div class="d-form-group">
-                        <label class="d-label" for="dt-file">엑셀 파일</label>
-                        <label class="d-file-drop" for="dt-file">
-                            <span class="d-file-drop-icon">↑</span>
-                            <strong>파일 선택</strong>
-                            <small id="dt-file-name">필수 컬럼이 있는 .xlsx</small>
-                            <input id="dt-file" type="file" name="file" accept=".xlsx" required>
-                        </label>
-                    </div>
-                    <button type="submit" class="d-btn-primary">업로드 시작</button>
-                </form>
-            </div>
-        </div>
-
-        <div class="d-card">
-            <div class="d-card-head">
-                <div><p class="d-eyebrow">02 Band</p><h2>밴드매칭 업데이트</h2></div>
-                <span class="d-badge">.xlsx</span>
-            </div>
-            <div class="d-card-body">
-                <form method="POST" action="{{ url_for('upload_band_matching') }}" enctype="multipart/form-data">
-                    <div class="d-form-group">
-                        <label class="d-label" for="dt-band-file">밴드매칭 파일</label>
-                        <label class="d-file-drop" for="dt-band-file">
-                            <span class="d-file-drop-icon">↑</span>
-                            <strong>파일 선택</strong>
-                            <small id="dt-band-file-name">차량소속 / 담당업체 / 밴드링크</small>
-                            <input id="dt-band-file" type="file" name="file" accept=".xlsx" required>
-                        </label>
-                    </div>
-                    <button type="submit" class="d-btn-primary" style="background:#333;" onclick="return confirm('밴드매칭 파일을 교체할까요?')">업데이트</button>
-                </form>
-            </div>
-        </div>
-
-        <div class="d-card">
-            <div class="d-card-head">
-                <div><p class="d-eyebrow">03 Delete</p><h2>스케줄 삭제</h2></div>
-                <span class="d-badge" style="background:#FAECE7;color:#993C1D;">총 {{ total_count }}대</span>
-            </div>
-            <div class="d-card-body">
-                <form method="POST" action="{{ url_for('wash_schedule_delete') }}" onsubmit="return confirm('선택한 날짜의 오더를 전부 삭제할까요?');" style="margin-bottom:16px;">
-                    <input type="hidden" name="delete_type" value="date">
-                    <div class="d-form-group">
-                        <label class="d-label">날짜별 삭제</label>
-                        <div class="d-inline-form">
-                            <select name="target_date" class="d-input d-select" required>
-                                <option value="">날짜 선택</option>
-                                {% for d in date_list %}<option value="{{ d['세차일'] }}">{{ d['세차일'] }} ({{ d['cnt'] }}대)</option>{% endfor %}
-                            </select>
-                            <button type="submit" class="d-btn-danger">삭제</button>
-                        </div>
-                    </div>
-                </form>
-                <form method="POST" action="{{ url_for('wash_schedule_delete') }}" onsubmit="return confirm('전체 세차 오더를 삭제할까요?');">
-                    <input type="hidden" name="delete_type" value="all">
-                    <div class="d-form-group">
-                        <label class="d-label">전체 삭제</label>
-                        <button type="submit" class="d-btn-danger" style="width:100%;padding:8px;">전체 오더 삭제 ({{ total_count }}대)</button>
-                    </div>
-                </form>
-                {% if date_list %}
-                <div style="margin-top:16px;border-top:1px solid var(--d-border);padding-top:12px;">
-                    {% for d in date_list %}
-                    <div class="d-schedule-item"><span>{{ d['세차일'] }}</span><span style="color:var(--d-muted);">{{ d['cnt'] }}대</span></div>
-                    {% endfor %}
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">01 Upload</span><h2>오더 업로드</h2></div><span class="d-badge-pill">.xlsx</span></div>
+        <div class="d-card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="d-fg"><label class="d-label">세차일자</label><input type="date" name="wash_date" class="d-input" required></div>
+                <div class="d-fg">
+                    <label class="d-label" for="d-file">엑셀 파일</label>
+                    <label class="d-file-zone" for="d-file">
+                        <span class="d-file-zone-icon">↑</span>
+                        <strong>파일 선택</strong>
+                        <small id="d-file-name">필수 컬럼이 있는 .xlsx</small>
+                        <input id="d-file" type="file" name="file" accept=".xlsx" required>
+                    </label>
                 </div>
-                {% endif %}
-            </div>
+                <button type="submit" class="d-btn d-btn-orange">업로드 시작</button>
+            </form>
         </div>
-
     </div>
-</div>
 
-<style>
-@media (min-width: 901px) {
-    #dt-upload-wrap { display: block !important; }
-    .page-hero, .admin-layout, .admin-layout.single { display: none !important; }
-}
-</style>
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">02 Band</span><h2>밴드매칭 업데이트</h2></div><span class="d-badge-pill">.xlsx</span></div>
+        <div class="d-card-body">
+            <form method="POST" action="{{ url_for('upload_band_matching') }}" enctype="multipart/form-data">
+                <div class="d-fg">
+                    <label class="d-label" for="d-band-file">밴드매칭 파일</label>
+                    <label class="d-file-zone" for="d-band-file">
+                        <span class="d-file-zone-icon">↑</span>
+                        <strong>파일 선택</strong>
+                        <small id="d-band-file-name">차량소속 / 담당업체 / 밴드링크</small>
+                        <input id="d-band-file" type="file" name="file" accept=".xlsx" required>
+                    </label>
+                </div>
+                <button type="submit" class="d-btn d-btn-gray" onclick="return confirm('밴드매칭 파일을 교체할까요?')">업데이트</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">03 Delete</span><h2>스케줄 삭제</h2></div><span class="d-badge-pill" style="background:#FAECE7;color:#993C1D;">총 {{ total_count }}대</span></div>
+        <div class="d-card-body">
+            <form method="POST" action="{{ url_for('wash_schedule_delete') }}" onsubmit="return confirm('선택한 날짜의 오더를 삭제할까요?');" style="margin-bottom:16px;">
+                <input type="hidden" name="delete_type" value="date">
+                <div class="d-fg"><label class="d-label">날짜별 삭제</label>
+                    <div class="d-inline-row">
+                        <select name="target_date" class="d-input" required>
+                            <option value="">날짜 선택</option>
+                            {% for d in date_list %}<option value="{{ d['세차일'] }}">{{ d['세차일'] }} ({{ d['cnt'] }}대)</option>{% endfor %}
+                        </select>
+                        <button type="submit" class="d-btn-danger-sm">삭제</button>
+                    </div>
+                </div>
+            </form>
+            <hr class="d-divider">
+            <form method="POST" action="{{ url_for('wash_schedule_delete') }}" onsubmit="return confirm('전체 세차 오더를 삭제할까요? 되돌릴 수 없습니다.');">
+                <input type="hidden" name="delete_type" value="all">
+                <div class="d-fg"><label class="d-label">전체 삭제</label>
+                    <button type="submit" class="d-btn-danger-sm" style="width:100%;padding:8px;">전체 오더 삭제 ({{ total_count }}대)</button>
+                </div>
+            </form>
+            {% if date_list %}
+            <hr class="d-divider">
+            {% for d in date_list %}<div class="d-sched-item"><span>{{ d['세차일'] }}</span><span style="color:var(--d-muted)">{{ d['cnt'] }}대</span></div>{% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+</div>
+</div>
 <script>
-document.getElementById('dt-file')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)document.getElementById('dt-file-name').textContent=f.name;});
-document.getElementById('dt-band-file')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)document.getElementById('dt-band-file-name').textContent=f.name;});
+document.getElementById('d-file')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)document.getElementById('d-file-name').textContent=f.name;});
+document.getElementById('d-band-file')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)document.getElementById('d-band-file-name').textContent=f.name;});
 </script>
+<style>
+#desktop-mode #d-upload { display: block !important; }
+#desktop-mode .page-hero,
+#desktop-mode .admin-layout,
+#desktop-mode .admin-layout.single { display: none !important; }
+</style>
 
 {% endblock %}

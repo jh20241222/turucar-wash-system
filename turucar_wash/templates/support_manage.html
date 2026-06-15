@@ -56,3 +56,55 @@
     </div>
 </section>
 {% endblock %}
+
+{# ── 데스크탑 전용 ── #}
+<div class="d-admin-wrap" id="dt-support-wrap" style="display:none">
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <a class="dt-btn {% if not selected_status %}dt-btn--primary{% endif %}" href="{{ url_for('support_manage') }}">전체</a>
+        <a class="dt-btn {% if selected_status == '접수' %}dt-btn--primary{% endif %}" href="{{ url_for('support_manage', status='접수') }}">접수</a>
+        <a class="dt-btn {% if selected_status == '확인중' %}dt-btn--primary{% endif %}" href="{{ url_for('support_manage', status='확인중') }}">확인중</a>
+        <a class="dt-btn {% if selected_status == '완료' %}dt-btn--primary{% endif %}" href="{{ url_for('support_manage', status='완료') }}">완료</a>
+    </div>
+    {% for t in rows %}
+    <div class="d-ticket">
+        <div class="d-ticket-head">
+            <span class="d-ticket-status">{{ t.status }}</span>
+            <span class="d-ticket-title">{{ t.category }}</span>
+            <span class="d-ticket-time">{{ t.created_at }}</span>
+        </div>
+        <div class="d-ticket-meta">
+            <span>차량번호 {{ t.car_number }}</span>
+            <span>작업자 {{ t.requester }}</span>
+            {% if t.vendor %}<span>업체 {{ t.vendor }}</span>{% endif %}
+        </div>
+        <p class="d-ticket-msg">{{ t.message }}</p>
+        {% if t.admin_reply %}
+        <div class="d-ticket-reply"><strong>답변</strong><p>{{ t.admin_reply }}</p></div>
+        {% endif %}
+        <div class="d-ticket-form">
+            <form method="post" action="{{ url_for('support_reply', ticket_id=t.id) }}" style="display:flex;gap:8px;flex:1;align-items:center;">
+                <select name="status" class="d-input d-select" style="width:100px;flex-shrink:0;">
+                    <option value="접수" {% if t.status == '접수' %}selected{% endif %}>접수</option>
+                    <option value="확인중" {% if t.status == '확인중' %}selected{% endif %}>확인중</option>
+                    <option value="완료" {% if t.status == '완료' %}selected{% endif %}>완료</option>
+                </select>
+                <input name="admin_reply" class="d-input" placeholder="답변 입력" value="{{ t.admin_reply or '' }}" style="flex:1;">
+                <button class="d-btn-primary" type="submit" style="width:auto;margin:0;padding:7px 14px;">저장</button>
+            </form>
+            {% if current_user.is_master %}
+            <form method="post" action="{{ url_for('support_delete', ticket_id=t.id) }}" onsubmit="return confirm('이 문의 내역을 삭제할까요?');">
+                <button type="submit" class="d-btn-danger">삭제</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:48px;color:var(--d-muted);font-size:14px;">접수된 문의가 없습니다.</div>
+    {% endfor %}
+</div>
+<style>
+@media (min-width: 901px) {
+    #dt-support-wrap { display: block !important; }
+    .app-card.elevated.support-manage-page { display: none !important; }
+}
+</style>

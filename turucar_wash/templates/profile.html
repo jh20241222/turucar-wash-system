@@ -24,9 +24,7 @@
     {% if not current_user.is_master %}
     <section class="turu-menu-card-v24">
         <a href="{{ url_for('my_vehicles') }}" class="turu-menu-row-v24">
-            <span>🚗</span>
-            <div><strong>내 담당 차량</strong><small>배정 지역 기준 전체 차량 현황</small></div>
-            <b>›</b>
+            <span>🚗</span><div><strong>내 담당 차량</strong><small>배정 지역 기준 전체 차량 현황</small></div><b>›</b>
         </a>
     </section>
     {% endif %}
@@ -102,4 +100,64 @@
 async function clearAppCache(){try{if('caches' in window){const keys=await caches.keys();await Promise.all(keys.map((key)=>caches.delete(key)));}alert('앱 캐시를 초기화했습니다. 새로고침합니다.');location.reload();}catch(error){alert('캐시 초기화 중 오류가 발생했습니다.');}}
 function toggleSection(id){const el=document.getElementById(id);if(!el)return;const open=el.style.display==='none';el.style.display=open?'block':'none';}
 </script>
+{# ── 데스크탑 전용 ── #}
+<div class="d-admin-wrap" id="dt-profile-wrap" style="display:none">
+    <div class="d-profile-grid">
+        <div class="d-card">
+            <div class="d-card-head"><div><p class="d-eyebrow">Account</p><h2>계정 정보</h2></div></div>
+            <div class="d-card-body d-profile-info">
+                <div class="d-profile-avatar">👤</div>
+                <h2 class="d-profile-name">{{ current_user.username }}</h2>
+                <p class="d-profile-role">{{ '마스터' if current_user.is_master else ('관리자' if current_user.is_admin else '담당자') }}</p>
+                <p class="d-profile-vendor">{{ current_user.vendor or '전체 관리' }}</p>
+                {% if region_rows %}
+                <div style="margin-top:8px;">
+                    {% for r in region_rows %}<span class="d-region-tag">{{ r.city }} {{ r.district }}</span>{% endfor %}
+                </div>
+                {% endif %}
+                {% if not current_user.is_master %}
+                <a href="{{ url_for('my_vehicles') }}" class="d-btn-secondary" style="margin-top:12px;">내 담당 차량 →</a>
+                {% endif %}
+            </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+            <div class="d-card">
+                <div class="d-card-head"><div><p class="d-eyebrow">Security</p><h2>비밀번호 변경</h2></div></div>
+                <div class="d-card-body">
+                    <form method="POST" action="{{ url_for('change_password') }}">
+                        <div class="d-form-row">
+                            <div class="d-form-group"><label class="d-label">현재 비밀번호</label><input type="password" name="current_password" class="d-input" placeholder="현재 비밀번호" required></div>
+                            <div class="d-form-group"><label class="d-label">새 비밀번호</label><input type="password" name="new_password" class="d-input" placeholder="새 비밀번호" required></div>
+                        </div>
+                        <div class="d-form-group"><label class="d-label">새 비밀번호 확인</label><input type="password" name="confirm_password" class="d-input" placeholder="새 비밀번호 재입력" required></div>
+                        <button type="submit" class="d-btn-primary">변경하기</button>
+                    </form>
+                </div>
+            </div>
+            {% if current_user.is_admin and reset_targets %}
+            <div class="d-card">
+                <div class="d-card-head"><div><p class="d-eyebrow">Reset</p><h2>비밀번호 초기화</h2></div></div>
+                <div class="d-card-body">
+                    <form method="POST" action="{{ url_for('reset_password') }}" onsubmit="return confirm('선택한 계정의 비밀번호를 0325로 초기화할까요?');">
+                        <div class="d-inline-form">
+                            <select name="target_username" class="d-input d-select" required>
+                                <option value="">계정 선택</option>
+                                {% for t in reset_targets %}<option value="{{ t.username }}">{{ t.username }}{% if t.vendor %} · {{ t.vendor }}{% endif %} ({{ t.role }})</option>{% endfor %}
+                            </select>
+                            <button type="submit" class="d-btn-danger">초기화</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<style>
+@media (min-width: 901px) {
+    #dt-profile-wrap { display: block !important; }
+    .turu-app-page-v24.turu-profile-page-v24 { display: none !important; }
+}
+</style>
+
 {% endblock %}

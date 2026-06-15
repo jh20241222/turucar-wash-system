@@ -17,15 +17,15 @@
     --d-input:     #ffffff;
     --d-topbar:    #ffffff;
 
-    --d-sb-bg:     #1a1a2e;
-    --d-sb-border: #2a2a3e;
-    --d-sb-text:   #9090a8;
-    --d-sb-group:  #55556a;
-    --d-sb-hover:  rgba(255,255,255,0.05);
+    --d-sb-bg:     #ffffff;
+    --d-sb-border: #e5e5e5;
+    --d-sb-text:   #555555;
+    --d-sb-group:  #aaaaaa;
+    --d-sb-hover:  #f5f5f5;
     --d-sb-active: #FF5F00;
-    --d-sb-logo:   #ffffff;
-    --d-sb-sub:    #606075;
-    --d-sb-foot:   #3a3a50;
+    --d-sb-logo:   #111111;
+    --d-sb-sub:    #888888;
+    --d-sb-foot:   #f0f0f0;
 }
 
 /* ── 다크 모드 변수 ── */
@@ -146,6 +146,24 @@
 #desktop-mode .daangn-sidebar-brand > strong,
 #desktop-mode .daangn-sidebar-brand .turu-wordmark,
 #desktop-mode .sidebar-brand img { display: none !important; }
+
+/* 로고 이미지 */
+#desktop-mode .sb-logo-img-dark,
+#desktop-mode .sb-logo-img-light {
+    display: none !important;
+}
+[data-theme="dark"] #desktop-mode .sb-logo-img-dark {
+    display: block !important;
+    height: 18px !important;
+    width: auto !important;
+    object-fit: contain !important;
+}
+[data-theme="light"] #desktop-mode .sb-logo-img-light {
+    display: block !important;
+    height: 18px !important;
+    width: auto !important;
+    object-fit: contain !important;
+}
 
 #desktop-mode .brand-logo-box {
     width: 32px !important;

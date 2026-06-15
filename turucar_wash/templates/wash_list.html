@@ -49,7 +49,7 @@
     </div>
 
     <div class="turu-searchbar-v24 turu-order-searchbar-v37">
-        <input id="quick_search_input" placeholder="차량 번호 / 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">
+        <input id="quick_search_input" placeholder="차량번호, 스팟, 차량소속 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">
         <button type="button" onclick="document.getElementById('search_input').value=document.getElementById('quick_search_input').value;applyFilter();" aria-label="검색">
             <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
         </button>
@@ -69,12 +69,12 @@
             <span>{{ rows|length }}대</span>
         </div>
         <div class="filter-grid">
-            <input id="search_input" class="app-input" placeholder="차량번호 또는 스팟 검색" value="{{ search_input }}">
-            <select id="region1" class="app-input"><option value="">전체 시/도</option>{% for r in region1 %}<option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
+            <select id="region1" class="app-input" onchange="filterRegion2(this.value,'region2')"><option value="">전체 시/도</option>{% for r in region1 %}<option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
             <select id="region2" class="app-input"><option value="">전체 구/군</option>{% for r in region2 %}<option value="{{ r }}" {% if selected_r2 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
             <select id="org" class="app-input"><option value="">전체 차량소속</option>{% for o in car_org_list %}<option value="{{ o }}" {% if selected_org == o %}selected{% endif %}>{{ o }}</option>{% endfor %}</select>
             <select id="spot" class="app-input"><option value="">전체 스팟</option>{% for s in spot_list %}<option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
             {% if current_user.is_master %}<select id="vendor" class="app-input"><option value="">전체 업체</option>{% for v in vendor_list %}<option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>{% endif %}
+            <input id="search_input" class="app-input" placeholder="차량번호, 스팟, 차량소속 검색" value="{{ search_input }}">
             <button type="button" onclick="applyFilter()" class="primary-btn">검색</button>
             <button type="button" onclick="downloadOrderExcel()" class="blue-btn order-excel-btn">엑셀 저장</button>
         </div>
@@ -208,10 +208,7 @@
 
         {# ── 데스크탑 필터바 ── #}
         <div class="dt-filterbar">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-text-tertiary);flex-shrink:0"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
-            <input id="dt_search" placeholder="차량번호, 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">
-            <div class="dt-filter-divider"></div>
-            <select id="dt_region1" onchange="syncAndFilter('region1','dt_region1')">
+            <select id="dt_region1" onchange="filterRegion2(this.value,'dt_region2');syncAndFilter('region1','dt_region1')">
                 <option value="">전체 시/도</option>{% for r in region1 %}<option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
             </select>
             <select id="dt_region2" onchange="syncAndFilter('region2','dt_region2')">
@@ -228,6 +225,9 @@
                 <option value="">전체 업체</option>{% for v in vendor_list %}<option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>{% endfor %}
             </select>
             {% endif %}
+            <div class="dt-filter-divider"></div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-text-tertiary);flex-shrink:0"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+            <input id="dt_search" placeholder="차량번호, 스팟, 차량소속 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">
             <button type="button" class="dt-btn dt-btn--primary" onclick="dtApplyFilter()">검색</button>
         </div>
 
@@ -289,8 +289,8 @@
         </div>
     </section>
 
-    {% if current_user.is_master %}</form>{% endif %}
 </section>
+{% if current_user.is_master %}</form>{% endif %}
 
 <style>
 .wash-type-filter-bar {
@@ -397,6 +397,49 @@
 </style>
 
 <script>
+const REGION_MAP = {{ region_map | tojson }};
+
+function filterRegion2(city, targetId) {
+    const sel = document.getElementById(targetId);
+    if (!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">전체 구/군</option>';
+    if (city && REGION_MAP[city]) {
+        REGION_MAP[city].forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d; opt.textContent = d;
+            if (d === prev) opt.selected = true;
+            sel.appendChild(opt);
+        });
+    }
+    // 모바일↔데스크탑 동기화
+    const pairs = [['region2','dt_region2'],['dt_region2','region2']];
+    pairs.forEach(([src,dst]) => {
+        if(targetId === src) {
+            const other = document.getElementById(dst);
+            if(other) {
+                other.innerHTML = sel.innerHTML;
+                other.value = sel.value;
+            }
+        }
+    });
+}
+
+// 페이지 로드 시 선택된 시/도 있으면 구/군 목록 복원
+window.addEventListener('DOMContentLoaded', () => {
+    const r1 = document.getElementById('region1');
+    if (r1 && r1.value) {
+        filterRegion2(r1.value, 'region2');
+        filterRegion2(r1.value, 'dt_region2');
+        // 선택값 복원
+        const r2val = "{{ selected_r2 }}";
+        ['region2','dt_region2'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el && r2val) el.value = r2val;
+        });
+    }
+});
+
 function setWashFilter(type) {
     document.querySelectorAll('.wash-type-btn').forEach(btn=>btn.classList.remove('active'));
     document.querySelector('.wash-type-btn--'+type).classList.add('active');

@@ -672,3 +672,21 @@
 }
 #desktop-mode .d-mv-stat.urgent strong { color: #FF5F00 !important; }
 #desktop-mode .d-mv-stat.regular strong { color: #16a34a !important; }
+
+
+/* ===== GPT UI REFRESH ===== */
+#desktop-mode .desktop-sidebar{width:240px!important;min-width:240px!important;}
+#desktop-mode .sidebar-brand,#desktop-mode a.sidebar-brand{padding:24px 20px 20px!important;min-height:84px!important;}
+#desktop-mode .sb-main-logo{height:42px!important;width:auto!important;}
+#desktop-mode .sb-sub-label{font-size:12px!important;margin-top:6px!important;}
+#desktop-mode .side-link{font-size:15px!important;padding:11px 18px!important;}
+#desktop-mode .side-link i{font-size:18px!important;}
+#desktop-mode .side-nav-group{font-size:12px!important;letter-spacing:.8px!important;}
+#desktop-mode .dt-topnav-title{font-size:26px!important;}
+#desktop-mode .dt-topnav-crumb{font-size:13px!important;font-weight:700!important;}
+#desktop-mode .dt-topnav{min-height:84px!important;border-bottom:1px solid var(--d-border)!important;}
+#desktop-mode .app-main{margin-left:0!important;}
+#desktop-mode .d-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
+#desktop-mode .d-kpi-card{background:var(--d-surface);border:1px solid var(--d-border);border-radius:16px;padding:22px;}
+#desktop-mode .d-kpi-card span{display:block;font-size:13px;opacity:.7;margin-bottom:8px;}
+#desktop-mode .d-kpi-card strong{font-size:30px;font-weight:800;}

@@ -1,53 +1,59 @@
 /* ═══════════════════════════════════════════════════
-   Turu Wash — 데스크탑 전용 오버라이드
-   (style.css 뒤에 로드해서 덮어씌움)
+   Turu Wash — desktop.css
+   style.css 뒤에 로드. 901px 이상 전용.
 ═══════════════════════════════════════════════════ */
-@media (min-width: 769px) {
 
 /* ── 테마 변수 ── */
 [data-theme="light"] {
-    --dt-bg:        #f5f5f5;
-    --dt-surface:   #ffffff;
-    --dt-border:    #e8e8e8;
-    --dt-text:      #212121;
-    --dt-muted:     #888888;
-    --dt-hover:     #f0f0f0;
-    --dt-urgent:    #fffaf8;
+    --dt-bg:      #f5f5f5;
+    --dt-surface: #ffffff;
+    --dt-border:  #e8e8e8;
+    --dt-text:    #212121;
+    --dt-muted:   #888888;
+    --dt-hover:   #f0f0f0;
 }
 [data-theme="dark"] {
-    --dt-bg:        #111111;
-    --dt-surface:   #1a1a1a;
-    --dt-border:    #2a2a2a;
-    --dt-text:      #f0f0f0;
-    --dt-muted:     #666666;
-    --dt-hover:     #222222;
-    --dt-urgent:    #1e1510;
+    --dt-bg:      #111111;
+    --dt-surface: #1a1a1a;
+    --dt-border:  #2a2a2a;
+    --dt-text:    #f0f0f0;
+    --dt-muted:   #666666;
+    --dt-hover:   #222222;
 }
 
-/* ── 전체 레이아웃 ── */
-body {
-    display: flex !important;
-    height: 100vh !important;
+@media (min-width: 901px) {
+
+/* ── 전체 레이아웃 리셋 ── */
+html, body {
+    height: 100% !important;
     overflow: hidden !important;
     background: var(--dt-bg) !important;
+    color: var(--dt-text) !important;
+}
+body {
+    display: flex !important;
+    flex-direction: row !important;
     padding: 0 !important;
     margin: 0 !important;
+    background: var(--dt-bg) !important;
 }
 
 /* ── 모바일 요소 완전 숨김 ── */
-.app-topbar,
+.app-topbar { display: none !important; }
 .mobile-tabbar,
-.turu-mobile-tabbar,
-.floating-turu-home-link,
+.turu-mobile-tabbar { display: none !important; }
+.floating-turu-home-link { display: none !important; }
 .pwa-install { display: none !important; }
+.turu-page-brand-v24,
+.detail-page-brand-v36 { display: none !important; }
 
 /* ── 사이드바 ── */
 .desktop-sidebar {
     display: flex !important;
     flex-direction: column !important;
-    width: 200px !important;
-    min-width: 200px !important;
-    max-width: 200px !important;
+    width: 196px !important;
+    min-width: 196px !important;
+    max-width: 196px !important;
     height: 100vh !important;
     background: #171717 !important;
     border-right: none !important;
@@ -58,8 +64,10 @@ body {
     padding: 0 !important;
 }
 [data-theme="dark"] .desktop-sidebar { background: #0d0d0d !important; }
+.desktop-sidebar::before,
+.desktop-sidebar::after { display: none !important; }
 
-/* 사이드바 상단 브랜드 */
+/* 브랜드 영역 */
 .sidebar-brand,
 .sidebar-brand.daangn-sidebar-brand {
     display: flex !important;
@@ -70,17 +78,18 @@ body {
     text-decoration: none !important;
     background: transparent !important;
     color: inherit !important;
+    box-shadow: none !important;
 }
-/* 기존 로고/텍스트 숨기기 */
+/* 기존 로고 이미지/텍스트 숨기기 */
 .sidebar-logo,
 .turu-wordmark,
 .brand-combo-logo,
 .sidebar-subtitle,
-.daangn-sidebar-brand strong,
-.daangn-sidebar-brand small,
-.daangn-sidebar-brand .turu-wordmark { display: none !important; }
+.daangn-sidebar-brand > strong,
+.daangn-sidebar-brand .turu-wordmark,
+.daangn-sidebar-brand .sidebar-subtitle { display: none !important; }
 
-/* 새 브랜드 요소 */
+/* 새 브랜드 박스 */
 .brand-logo-box {
     width: 28px !important;
     height: 28px !important;
@@ -95,23 +104,27 @@ body {
     color: #fff !important;
     font-size: 13px !important;
     font-weight: 900 !important;
+    line-height: 1 !important;
 }
-.brand-text strong {
+.brand-text { display: flex !important; flex-direction: column !important; }
+.brand-text > strong {
     display: block !important;
     font-size: 13px !important;
     font-weight: 900 !important;
     line-height: 1.2 !important;
     color: #fff !important;
+    letter-spacing: normal !important;
 }
-.brand-text strong em {
+.brand-text > strong em {
     color: #FF5F00 !important;
     font-style: normal !important;
 }
-.brand-text small {
+.brand-text > small {
     display: block !important;
     font-size: 10px !important;
     color: #555 !important;
     font-weight: 400 !important;
+    margin: 0 !important;
 }
 
 /* 사이드 nav */
@@ -120,6 +133,8 @@ body {
     padding: 6px 0 !important;
     display: flex !important;
     flex-direction: column !important;
+    gap: 0 !important;
+    overflow-y: auto !important;
 }
 .side-nav-group {
     font-size: 10px !important;
@@ -128,6 +143,7 @@ body {
     color: #4a4a4a !important;
     padding: 10px 14px 3px !important;
     margin: 0 !important;
+    display: block !important;
 }
 .side-link {
     display: flex !important;
@@ -140,13 +156,15 @@ body {
     font-weight: 500 !important;
     border-radius: 0 !important;
     min-height: unset !important;
+    height: auto !important;
     background: transparent !important;
     box-shadow: none !important;
     transition: background .15s !important;
 }
-.side-link > span:first-child { display: none !important; }
-.side-link i { font-size: 15px !important; color: #555 !important; }
-.side-link b { font-weight: 500 !important; color: inherit !important; }
+/* 기존 span 아이콘 숨기고 i 아이콘 사용 */
+.side-link > span { display: none !important; }
+.side-link i { font-size: 15px !important; color: #555 !important; flex-shrink: 0 !important; }
+.side-link b { font-weight: 500 !important; color: inherit !important; font-size: 12px !important; }
 .side-link:hover {
     background: #1f1f1f !important;
     color: #ccc !important;
@@ -158,6 +176,7 @@ body {
 }
 .side-link.active i { color: #fff !important; }
 .side-link.active span { color: #fff !important; }
+.side-link.active b { color: #fff !important; }
 
 /* 문의 뱃지 */
 .side-menu-bubble {
@@ -168,17 +187,23 @@ body {
     font-weight: 700 !important;
     padding: 1px 6px !important;
     border-radius: 20px !important;
+    min-width: 18px !important;
+    text-align: center !important;
 }
 .side-menu-bubble.is-hidden { display: none !important; }
 
-/* 사이드바 하단 프로필 */
+/* 사이드바 하단 */
 .sidebar-profile {
     padding: 10px 14px !important;
+    border-top: 0.5px solid #2a2a2a !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    border: none !important;
     border-top: 0.5px solid #2a2a2a !important;
     display: flex !important;
     align-items: center !important;
     gap: 8px !important;
-    background: transparent !important;
+    margin: 0 !important;
 }
 .sidebar-profile > div {
     flex: 1 !important;
@@ -186,9 +211,9 @@ body {
     flex-direction: column !important;
     gap: 1px !important;
 }
-.sidebar-profile small { font-size: 9px !important; color: #444 !important; }
-.sidebar-profile strong { font-size: 11px !important; font-weight: 700 !important; color: #ccc !important; }
-.sidebar-profile em { font-size: 10px !important; color: #555 !important; font-style: normal !important; }
+.sidebar-profile small { font-size: 9px !important; color: #444 !important; display: block !important; }
+.sidebar-profile strong { font-size: 11px !important; font-weight: 700 !important; color: #ccc !important; display: block !important; }
+.sidebar-profile em { font-size: 10px !important; color: #555 !important; font-style: normal !important; display: block !important; }
 .sidebar-profile a {
     font-size: 11px !important;
     color: #555 !important;
@@ -197,6 +222,7 @@ body {
     border-radius: 6px !important;
     border: 0.5px solid #2a2a2a !important;
     white-space: nowrap !important;
+    background: transparent !important;
 }
 .sidebar-profile a:hover { color: #ccc !important; border-color: #444 !important; }
 
@@ -204,12 +230,31 @@ body {
 .app-main {
     flex: 1 !important;
     height: 100vh !important;
+    min-height: 0 !important;
     overflow-y: auto !important;
+    overflow-x: hidden !important;
     background: var(--dt-bg) !important;
     display: flex !important;
     flex-direction: column !important;
     padding: 0 !important;
+    padding-bottom: 0 !important;
 }
+
+/* 콘텐츠 너비 제한 해제 */
+.turu-home-v12,
+.turu-app-page-v24,
+.admin-layout,
+.admin-layout.single {
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+    padding-bottom: 32px !important;
+}
+
+/* 배경 그라디언트 제거 */
+body { background: var(--dt-bg) !important; }
 
 /* ── 데스크탑 상단바 ── */
 .dt-topnav {
@@ -222,11 +267,24 @@ body {
     flex-shrink: 0 !important;
     position: sticky !important;
     top: 0 !important;
-    z-index: 10 !important;
+    z-index: 100 !important;
 }
-.dt-topnav-crumb { font-size: 11px !important; color: var(--dt-muted) !important; margin: 0 0 2px !important; }
-.dt-topnav-title { font-size: 17px !important; font-weight: 500 !important; color: var(--dt-text) !important; margin: 0 !important; }
-.dt-topnav-right { display: flex !important; align-items: center !important; gap: 8px !important; }
+.dt-topnav-crumb {
+    font-size: 11px !important;
+    color: var(--dt-muted) !important;
+    margin: 0 0 2px !important;
+}
+.dt-topnav-title {
+    font-size: 17px !important;
+    font-weight: 500 !important;
+    color: var(--dt-text) !important;
+    margin: 0 !important;
+}
+.dt-topnav-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
 .dt-theme-btn {
     display: flex !important;
     align-items: center !important;
@@ -238,6 +296,7 @@ body {
     color: var(--dt-muted) !important;
     font-size: 11px !important;
     cursor: pointer !important;
+    font-family: inherit !important;
 }
 .dt-theme-btn i { font-size: 14px !important; }
 .dt-btn {
@@ -249,6 +308,7 @@ body {
     color: var(--dt-text) !important;
     cursor: pointer !important;
     text-decoration: none !important;
+    font-family: inherit !important;
 }
 
 /* ── 플래시 메시지 ── */
@@ -263,8 +323,11 @@ body {
     margin-bottom: 6px !important;
 }
 
-} /* end @media (min-width: 769px) */
+} /* end @media (min-width: 901px) */
 
-@media (max-width: 768px) {
+/* 모바일에서 데스크탑 전용 요소 숨기기 */
+@media (max-width: 900px) {
     .dt-topnav { display: none !important; }
+    .side-nav-group { display: none !important; }
+    .side-link i { display: none !important; }
 }

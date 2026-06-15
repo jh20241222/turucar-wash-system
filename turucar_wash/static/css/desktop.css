@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════
-   Turu Wash — desktop.css
-   style.css 뒤에 로드. 901px 이상 전용.
+   Turu Wash — desktop_final.css  (v9)
+   style.css 뒤에 로드. 901px 이상 전용 오버라이드.
 ═══════════════════════════════════════════════════ */
 
-/* ── 테마 변수 ── */
+/* ── 테마 변수 (미디어쿼리 밖 — 항상 적용) ── */
 [data-theme="light"] {
     --dt-bg:      #f5f5f5;
     --dt-surface: #ffffff;
@@ -23,38 +23,44 @@
 
 @media (min-width: 901px) {
 
-/* ── 전체 레이아웃 리셋 ── */
-html, body {
-    height: 100% !important;
-    overflow: hidden !important;
+/* ── 최우선 리셋 — body/html 배경 완전 제압 ── */
+html body,
+html body.app-shell,
+html body[class] {
     background: var(--dt-bg) !important;
     color: var(--dt-text) !important;
-}
-body {
     display: flex !important;
     flex-direction: row !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
     padding: 0 !important;
     margin: 0 !important;
-    background: var(--dt-bg) !important;
 }
 
 /* ── 모바일 요소 완전 숨김 ── */
-.app-topbar { display: none !important; }
-.mobile-tabbar,
-.turu-mobile-tabbar { display: none !important; }
-.floating-turu-home-link { display: none !important; }
-.pwa-install { display: none !important; }
-.turu-page-brand-v24,
-.detail-page-brand-v36 { display: none !important; }
+html body .app-topbar,
+html body header.app-topbar { display: none !important; }
+html body .mobile-tabbar,
+html body nav.turu-mobile-tabbar { display: none !important; }
+html body .floating-turu-home-link { display: none !important; }
+html body .pwa-install { display: none !important; }
+html body .turu-page-brand-v24,
+html body header.turu-page-brand-v24 { display: none !important; }
+html body .detail-page-brand-v36 { display: none !important; }
+html body .home-brand-v12 { display: none !important; }
+html body .home-tabbar-v12 { display: none !important; }
 
 /* ── 사이드바 ── */
-.desktop-sidebar {
+html body .desktop-sidebar,
+html body aside.desktop-sidebar {
     display: flex !important;
     flex-direction: column !important;
     width: 196px !important;
     min-width: 196px !important;
     max-width: 196px !important;
     height: 100vh !important;
+    max-height: 100vh !important;
     background: #171717 !important;
     border-right: none !important;
     box-shadow: none !important;
@@ -63,13 +69,13 @@ body {
     flex-shrink: 0 !important;
     padding: 0 !important;
 }
-[data-theme="dark"] .desktop-sidebar { background: #0d0d0d !important; }
-.desktop-sidebar::before,
-.desktop-sidebar::after { display: none !important; }
+[data-theme="dark"] html body .desktop-sidebar { background: #0d0d0d !important; }
+html body .desktop-sidebar::before,
+html body .desktop-sidebar::after { display: none !important; }
 
-/* 브랜드 영역 */
-.sidebar-brand,
-.sidebar-brand.daangn-sidebar-brand {
+/* 브랜드 */
+html body .sidebar-brand,
+html body a.sidebar-brand {
     display: flex !important;
     align-items: center !important;
     gap: 9px !important;
@@ -80,247 +86,145 @@ body {
     color: inherit !important;
     box-shadow: none !important;
 }
-/* 기존 로고 이미지/텍스트 숨기기 */
-.sidebar-logo,
-.turu-wordmark,
-.brand-combo-logo,
-.sidebar-subtitle,
-.daangn-sidebar-brand > strong,
-.daangn-sidebar-brand .turu-wordmark,
-.daangn-sidebar-brand .sidebar-subtitle { display: none !important; }
+/* 기존 로고들 전부 숨기기 */
+html body .sidebar-logo,
+html body .turu-wordmark,
+html body .brand-combo-logo,
+html body .sidebar-subtitle,
+html body .daangn-sidebar-brand > strong,
+html body .daangn-sidebar-brand .turu-wordmark,
+html body .daangn-sidebar-brand .sidebar-subtitle { display: none !important; }
 
-/* 새 브랜드 박스 */
-.brand-logo-box {
-    width: 28px !important;
-    height: 28px !important;
+/* 새 브랜드 요소 */
+html body .brand-logo-box {
+    width: 28px !important; height: 28px !important;
     background: #FF5F00 !important;
     border-radius: 7px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    display: flex !important; align-items: center !important; justify-content: center !important;
     flex-shrink: 0 !important;
 }
-.brand-logo-box span {
-    color: #fff !important;
-    font-size: 13px !important;
-    font-weight: 900 !important;
-    line-height: 1 !important;
-}
-.brand-text { display: flex !important; flex-direction: column !important; }
-.brand-text > strong {
-    display: block !important;
-    font-size: 13px !important;
-    font-weight: 900 !important;
-    line-height: 1.2 !important;
-    color: #fff !important;
-    letter-spacing: normal !important;
-}
-.brand-text > strong em {
-    color: #FF5F00 !important;
-    font-style: normal !important;
-}
-.brand-text > small {
-    display: block !important;
-    font-size: 10px !important;
-    color: #555 !important;
-    font-weight: 400 !important;
-    margin: 0 !important;
-}
+html body .brand-logo-box span { color: #fff !important; font-size: 13px !important; font-weight: 900 !important; line-height: 1 !important; }
+html body .brand-text { display: flex !important; flex-direction: column !important; }
+html body .brand-text > strong { display: block !important; font-size: 13px !important; font-weight: 900 !important; line-height: 1.2 !important; color: #fff !important; letter-spacing: normal !important; }
+html body .brand-text > strong em { color: #FF5F00 !important; font-style: normal !important; }
+html body .brand-text > small { display: block !important; font-size: 10px !important; color: #555 !important; font-weight: 400 !important; margin: 0 !important; }
 
 /* 사이드 nav */
-.side-nav {
-    flex: 1 !important;
-    padding: 6px 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 0 !important;
-    overflow-y: auto !important;
+html body .side-nav {
+    flex: 1 !important; padding: 6px 0 !important;
+    display: flex !important; flex-direction: column !important;
+    gap: 0 !important; overflow-y: auto !important;
 }
-.side-nav-group {
-    font-size: 10px !important;
-    font-weight: 700 !important;
-    letter-spacing: .06em !important;
-    color: #4a4a4a !important;
-    padding: 10px 14px 3px !important;
-    margin: 0 !important;
+html body .side-nav-group {
     display: block !important;
+    font-size: 10px !important; font-weight: 700 !important;
+    letter-spacing: .06em !important; color: #4a4a4a !important;
+    padding: 10px 14px 3px !important; margin: 0 !important;
 }
-.side-link {
-    display: flex !important;
-    align-items: center !important;
-    gap: 9px !important;
-    padding: 7px 14px !important;
-    text-decoration: none !important;
-    color: #888 !important;
-    font-size: 12px !important;
-    font-weight: 500 !important;
-    border-radius: 0 !important;
-    min-height: unset !important;
-    height: auto !important;
-    background: transparent !important;
-    box-shadow: none !important;
+html body .side-link {
+    display: flex !important; align-items: center !important; gap: 9px !important;
+    padding: 7px 14px !important; text-decoration: none !important;
+    color: #888 !important; font-size: 12px !important; font-weight: 500 !important;
+    border-radius: 0 !important; min-height: unset !important; height: auto !important;
+    background: transparent !important; box-shadow: none !important;
     transition: background .15s !important;
 }
-/* 기존 span 아이콘 숨기고 i 아이콘 사용 */
-.side-link > span { display: none !important; }
-.side-link i { font-size: 15px !important; color: #555 !important; flex-shrink: 0 !important; }
-.side-link b { font-weight: 500 !important; color: inherit !important; font-size: 12px !important; }
-.side-link:hover {
-    background: #1f1f1f !important;
-    color: #ccc !important;
-}
-.side-link:hover i { color: #aaa !important; }
-.side-link.active {
-    background: #FF5F00 !important;
-    color: #fff !important;
-}
-.side-link.active i { color: #fff !important; }
-.side-link.active span { color: #fff !important; }
-.side-link.active b { color: #fff !important; }
+html body .side-link > span { display: none !important; }
+html body .side-link i { font-size: 15px !important; color: #555 !important; flex-shrink: 0 !important; }
+html body .side-link b { font-weight: 500 !important; color: inherit !important; font-size: 12px !important; }
+html body .side-link:hover { background: #1f1f1f !important; color: #ccc !important; }
+html body .side-link:hover i { color: #aaa !important; }
+html body .side-link.active { background: #FF5F00 !important; color: #fff !important; }
+html body .side-link.active i,
+html body .side-link.active b,
+html body .side-link.active span { color: #fff !important; }
 
 /* 문의 뱃지 */
-.side-menu-bubble {
-    margin-left: auto !important;
-    background: #FF5F00 !important;
-    color: #fff !important;
-    font-size: 10px !important;
-    font-weight: 700 !important;
-    padding: 1px 6px !important;
-    border-radius: 20px !important;
-    min-width: 18px !important;
-    text-align: center !important;
+html body .side-menu-bubble {
+    margin-left: auto !important; background: #FF5F00 !important; color: #fff !important;
+    font-size: 10px !important; font-weight: 700 !important; padding: 1px 6px !important;
+    border-radius: 20px !important; min-width: 18px !important; text-align: center !important;
 }
-.side-menu-bubble.is-hidden { display: none !important; }
+html body .side-menu-bubble.is-hidden { display: none !important; }
 
 /* 사이드바 하단 */
-.sidebar-profile {
-    padding: 10px 14px !important;
-    border-top: 0.5px solid #2a2a2a !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    border: none !important;
-    border-top: 0.5px solid #2a2a2a !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    margin: 0 !important;
+html body .sidebar-profile {
+    padding: 10px 14px !important; border-top: 0.5px solid #2a2a2a !important;
+    background: transparent !important; border-radius: 0 !important;
+    display: flex !important; align-items: center !important; gap: 8px !important; margin: 0 !important;
+    border-left: none !important; border-right: none !important; border-bottom: none !important;
 }
-.sidebar-profile > div {
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 1px !important;
+html body .sidebar-profile > div { flex: 1 !important; display: flex !important; flex-direction: column !important; gap: 1px !important; }
+html body .sidebar-profile small { font-size: 9px !important; color: #444 !important; display: block !important; }
+html body .sidebar-profile strong { font-size: 11px !important; font-weight: 700 !important; color: #ccc !important; display: block !important; }
+html body .sidebar-profile em { font-size: 10px !important; color: #555 !important; font-style: normal !important; display: block !important; }
+html body .sidebar-profile a {
+    font-size: 11px !important; color: #555 !important; text-decoration: none !important;
+    padding: 4px 8px !important; border-radius: 6px !important;
+    border: 0.5px solid #2a2a2a !important; white-space: nowrap !important; background: transparent !important;
 }
-.sidebar-profile small { font-size: 9px !important; color: #444 !important; display: block !important; }
-.sidebar-profile strong { font-size: 11px !important; font-weight: 700 !important; color: #ccc !important; display: block !important; }
-.sidebar-profile em { font-size: 10px !important; color: #555 !important; font-style: normal !important; display: block !important; }
-.sidebar-profile a {
-    font-size: 11px !important;
-    color: #555 !important;
-    text-decoration: none !important;
-    padding: 4px 8px !important;
-    border-radius: 6px !important;
-    border: 0.5px solid #2a2a2a !important;
-    white-space: nowrap !important;
-    background: transparent !important;
-}
-.sidebar-profile a:hover { color: #ccc !important; border-color: #444 !important; }
+html body .sidebar-profile a:hover { color: #ccc !important; border-color: #444 !important; }
 
 /* ── 메인 영역 ── */
-.app-main {
-    flex: 1 !important;
-    height: 100vh !important;
-    min-height: 0 !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
+html body .app-main,
+html body main.app-main {
+    flex: 1 !important; height: 100vh !important; max-height: 100vh !important;
+    overflow-y: auto !important; overflow-x: hidden !important;
     background: var(--dt-bg) !important;
-    display: flex !important;
-    flex-direction: column !important;
-    padding: 0 !important;
-    padding-bottom: 0 !important;
+    display: flex !important; flex-direction: column !important;
+    padding: 0 !important; margin: 0 !important;
 }
 
-/* 콘텐츠 너비 제한 해제 */
-.turu-home-v12,
-.turu-app-page-v24,
-.admin-layout,
-.admin-layout.single {
-    max-width: 100% !important;
-    width: 100% !important;
+/* ── 콘텐츠 배경/너비 ── */
+html body .app-card {
+    background: var(--dt-surface) !important;
+    color: var(--dt-text) !important;
+    border-color: var(--dt-border) !important;
+}
+html body .turu-home-v12,
+html body .turu-app-page-v24,
+html body .admin-layout,
+html body .admin-layout.single {
+    max-width: 100% !important; width: 100% !important;
     box-sizing: border-box !important;
-    padding-left: 20px !important;
-    padding-right: 20px !important;
+    padding-left: 20px !important; padding-right: 20px !important;
     padding-bottom: 32px !important;
+    background: transparent !important;
 }
-
-/* 배경 그라디언트 제거 */
-body { background: var(--dt-bg) !important; }
 
 /* ── 데스크탑 상단바 ── */
-.dt-topnav {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    padding: 11px 20px !important;
+html body .dt-topnav {
+    display: flex !important; align-items: center !important;
+    justify-content: space-between !important; padding: 11px 20px !important;
     border-bottom: 0.5px solid var(--dt-border) !important;
     background: var(--dt-surface) !important;
-    flex-shrink: 0 !important;
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 100 !important;
+    flex-shrink: 0 !important; position: sticky !important;
+    top: 0 !important; z-index: 100 !important;
 }
-.dt-topnav-crumb {
-    font-size: 11px !important;
-    color: var(--dt-muted) !important;
-    margin: 0 0 2px !important;
-}
-.dt-topnav-title {
-    font-size: 17px !important;
-    font-weight: 500 !important;
-    color: var(--dt-text) !important;
-    margin: 0 !important;
-}
-.dt-topnav-right {
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-}
-.dt-theme-btn {
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    padding: 5px 10px !important;
-    border-radius: 8px !important;
+html body .dt-topnav-crumb { font-size: 11px !important; color: var(--dt-muted) !important; margin: 0 0 2px !important; }
+html body .dt-topnav-title { font-size: 17px !important; font-weight: 500 !important; color: var(--dt-text) !important; margin: 0 !important; }
+html body .dt-topnav-right { display: flex !important; align-items: center !important; gap: 8px !important; }
+html body .dt-theme-btn {
+    display: flex !important; align-items: center !important; gap: 6px !important;
+    padding: 5px 10px !important; border-radius: 8px !important;
     border: 0.5px solid var(--dt-border) !important;
-    background: var(--dt-bg) !important;
-    color: var(--dt-muted) !important;
-    font-size: 11px !important;
-    cursor: pointer !important;
-    font-family: inherit !important;
+    background: var(--dt-bg) !important; color: var(--dt-muted) !important;
+    font-size: 11px !important; cursor: pointer !important; font-family: inherit !important;
 }
-.dt-theme-btn i { font-size: 14px !important; }
-.dt-btn {
-    font-size: 11px !important;
-    padding: 5px 12px !important;
-    border-radius: 8px !important;
-    border: 0.5px solid var(--dt-border) !important;
-    background: var(--dt-bg) !important;
-    color: var(--dt-text) !important;
-    cursor: pointer !important;
-    text-decoration: none !important;
-    font-family: inherit !important;
+html body .dt-theme-btn i { font-size: 14px !important; }
+html body .dt-btn {
+    font-size: 11px !important; padding: 5px 12px !important;
+    border-radius: 8px !important; border: 0.5px solid var(--dt-border) !important;
+    background: var(--dt-bg) !important; color: var(--dt-text) !important;
+    cursor: pointer !important; text-decoration: none !important; font-family: inherit !important;
 }
 
-/* ── 플래시 메시지 ── */
-.flash-stack { margin: 12px 20px 0 !important; }
-.flash-card {
-    background: var(--dt-surface) !important;
-    border: 0.5px solid var(--dt-border) !important;
-    border-radius: 8px !important;
-    padding: 10px 14px !important;
-    font-size: 13px !important;
-    color: var(--dt-text) !important;
-    margin-bottom: 6px !important;
+/* ── 플래시 ── */
+html body .flash-stack { margin: 12px 20px 0 !important; }
+html body .flash-card {
+    background: var(--dt-surface) !important; border: 0.5px solid var(--dt-border) !important;
+    border-radius: 8px !important; padding: 10px 14px !important;
+    font-size: 13px !important; color: var(--dt-text) !important; margin-bottom: 6px !important;
 }
 
 } /* end @media (min-width: 901px) */
@@ -330,4 +234,6 @@ body { background: var(--dt-bg) !important; }
     .dt-topnav { display: none !important; }
     .side-nav-group { display: none !important; }
     .side-link i { display: none !important; }
+    .brand-logo-box { display: none !important; }
+    .brand-text { display: none !important; }
 }

@@ -25,6 +25,25 @@
 
 <section class="admin-layout single" style="margin-top: 0;">
     <article class="admin-card app-card">
+        <div class="admin-card-head"><div><p class="eyebrow">02 Band</p><h2>밴드매칭 업데이트</h2></div><span class="badge">.xlsx</span></div>
+        <form method="POST" action="{{ url_for('upload_band_matching') }}" enctype="multipart/form-data" class="stack-form">
+            <label class="field-label" for="band_file">차량소속별_밴드매칭.xlsx</label>
+            <label class="file-drop" for="band_file"><span class="file-drop-icon">↑</span><strong>파일을 여기에 선택하세요</strong><small id="band-file-name">차량소속 / 담당업체 / 밴드링크 컬럼 포함 파일</small><input id="band_file" type="file" name="file" accept=".xlsx" required></label>
+            <button type="submit" class="primary-btn tall full" style="background:#333;" onclick="return confirm('밴드매칭 파일을 교체할까요? 기존 파일은 덮어씌워집니다.')">매칭 파일 업데이트</button>
+        </form>
+    </article>
+    <aside class="guide-card app-card">
+        <p class="eyebrow">Band Checklist</p><h3>필수 컬럼</h3>
+        <ul class="check-list">
+            <li>차량소속</li>
+            <li>밴드링크</li>
+            <li>담당업체 (선택 — 동일 차량소속에 업체별 링크가 다를 때)</li>
+        </ul>
+    </aside>
+</section>
+
+<section class="admin-layout single" style="margin-top: 0;">
+    <article class="admin-card app-card">
         <div class="admin-card-head"><div><p class="eyebrow">03 Delete</p><h2>스케줄 삭제</h2></div><span class="badge" style="background:#FAECE7;color:#993C1D;">총 {{ total_count }}대</span></div>
 
         <div class="stack-form">
@@ -57,7 +76,7 @@
     {# 현재 스케줄 현황 #}
     {% if date_list %}
     <aside class="guide-card app-card">
-        <p class="eyebrow">04 Schedule</p><h3>현재 등록 현황</h3>
+        <p class="eyebrow">05 Schedule</p><h3>현재 등록 현황</h3>
         <ul class="check-list">
             {% for d in date_list %}
             <li>{{ d['세차일'] }} — {{ d['cnt'] }}대</li>
@@ -67,5 +86,8 @@
     {% endif %}
 </section>
 
-<script>document.getElementById('file')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)document.getElementById('file-name').textContent=f.name;});</script>
+<script>
+document.getElementById('file')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)document.getElementById('file-name').textContent=f.name;});
+document.getElementById('band_file')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)document.getElementById('band-file-name').textContent=f.name;});
+</script>
 {% endblock %}

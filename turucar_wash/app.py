@@ -170,7 +170,7 @@ def load_band_mapping():
 
     mapping = {}
     for _, row in df.iterrows():
-        vendor = row["담당업체"] if row["담당업체"].lower() != "nan" else ""
+        vendor = str(row["담당업체"]).strip() if str(row["담당업체"]).strip().lower() not in ("nan", "") else ""
         mapping[(row["차량소속"], vendor)] = row["밴드링크"]
     return mapping
 

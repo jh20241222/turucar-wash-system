@@ -130,3 +130,32 @@ document.addEventListener('keydown',function(event){
 </script>
 
 {% endblock %}
+
+{# ── 데스크탑 전용 홈 ── #}
+<div id="dt-home-wrap">
+    <div class="dt-notice-section">
+        <div class="dt-notice-card">
+            <div class="dt-notice-head">
+                <h2>공지사항</h2>
+                <a href="{{ url_for('notices') }}" class="dt-notice-more">전체보기</a>
+            </div>
+            {% if notice_rows %}
+                {% for n in notice_rows %}
+                <div class="dt-notice-row" onclick="openHomeNoticeViewer({dataset:{title:'{{ n.title|e }}',body:'{{ n.body|e }}',created:'{{ n.created_at|e }}',author:'{{ n.author|e }}'}})">
+                    <span class="dt-notice-title">{{ n.title }}</span>
+                    <span class="dt-notice-body">{{ n.body }}</span>
+                    <span class="dt-notice-date">{{ n.created_at }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="dt-notice-empty">등록된 공지사항이 없습니다.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<style>
+@media (min-width: 901px) {
+    #dt-home-wrap { display: block !important; }
+    .turu-home-v12 { display: none !important; }
+}
+</style>

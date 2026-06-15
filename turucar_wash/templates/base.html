@@ -42,7 +42,7 @@
     <!-- ══ 데스크탑 사이드바 ══ -->
     <aside class="desktop-sidebar">
         <a href="{{ url_for('dashboard') }}" class="sidebar-brand" aria-label="Turu Wash 홈">
-            <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="Turu CAR" class="sb-main-logo">
+            <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="Turu CAR" class="sb-main-logo" id="sidebarLogo">
             <span class="sb-sub-label">Wash Manager</span>
         </a>
 
@@ -253,5 +253,14 @@
         if (label) label.textContent = next === 'dark' ? '다크' : '라이트';
     }
     </script>
-</body>
+<script>
+function updateSidebarLogo(){
+ const logo=document.getElementById('sidebarLogo');
+ if(!logo) return;
+ const dark=document.documentElement.getAttribute('data-theme')==='dark';
+ logo.style.filter=dark?'brightness(0) invert(1)':'none';
+}
+document.addEventListener('DOMContentLoaded',updateSidebarLogo);
+setInterval(updateSidebarLogo,1000);
+</script></body>
 </html>

@@ -132,7 +132,14 @@ document.addEventListener('keydown',function(event){
 
 {# ── 데스크탑 전용 ── #}
 <div id="d-home">
-    <div class="d-notice-section">
+    
+<div class="d-kpi-grid">
+<div class="d-kpi-card"><span>세차 오더</span><strong>{{ wash_rows|length if wash_rows else 0 }}</strong></div>
+<div class="d-kpi-card"><span>공지사항</span><strong>{{ notice_rows|length if notice_rows else 0 }}</strong></div>
+<div class="d-kpi-card"><span>예약/제어</span><strong>관리</strong></div>
+<div class="d-kpi-card"><span>문의 관리</span><strong>확인</strong></div>
+</div>
+<div class="d-notice-section">
         <div class="d-notice-card">
             <div class="d-notice-head">
                 <h2>공지사항</h2>

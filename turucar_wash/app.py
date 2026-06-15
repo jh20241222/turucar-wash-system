@@ -315,6 +315,23 @@ def init_db():
             상태 TEXT DEFAULT '완료'
         )
     """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS vehicle_master (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            차량번호 TEXT UNIQUE NOT NULL,
+            차대번호 TEXT,
+            차종명 TEXT,
+            차량소속 TEXT,
+            스팟 TEXT,
+            주소 TEXT,
+            지역시도 TEXT,
+            지역구군 TEXT,
+            담당업체 TEXT,
+            최근세차일 TEXT,
+            세차경과일 INTEGER DEFAULT 0,
+            updated_at TEXT
+        )
+    """)
     conn.commit()
     conn.close()
 
@@ -703,11 +720,103 @@ def profile():
 
     conn.close()
 
+    # 담당 지역 기준 차량 리스트 (staff/admin 모두)
+    assigned_vehicles = []
+    if region_rows and not current_user.is_master:
+        wash_conn = get_wash_db()
+        wash_cur = wash_conn.cursor()
+        region_clauses = " OR ".join(
+            ["(지역시도 = ? AND 지역구군 = ?)"] * len(region_rows)
+        )
+        region_params = []
+        for r in region_rows:
+            region_params.extend([r["city"], r["district"]])
+        vendor_param = [current_user.vendor] if current_user.vendor else []
+        vendor_clause = " AND 업체 = ?" if current_user.vendor else ""
+        query = f"""
+            SELECT 차량번호, 차종명, 차량소속, 스팟, 지역시도, 지역구군, 업체, 세차일, 세차경과일
+            FROM wash_list
+            WHERE ({region_clauses}){vendor_clause}
+            GROUP BY 차량번호
+            ORDER BY 세차경과일 DESC, 차량번호
+        """
+        assigned_vehicles = wash_cur.execute(query, region_params + vendor_param).fetchall()
+        wash_conn.close()
+
     return render_template(
         "profile.html",
         region_rows=region_rows,
         child_count=child_count,
         reset_targets=reset_targets,
+        assigned_vehicles=assigned_vehicles,
+    )
+
+
+# =========================================================
+# 내 담당 차량 현황
+# =========================================================
+@app.route("/my_vehicles")
+@login_required
+def my_vehicles():
+    if current_user.is_master:
+        flash("❌ 담당자/관리자 계정만 접근할 수 있습니다.")
+        return redirect(url_for("dashboard"))
+
+    conn = get_user_db()
+    cur = conn.cursor()
+    region_rows = cur.execute(
+        "SELECT city, district FROM account_region WHERE username=? ORDER BY city, district",
+        (current_user.username,)
+    ).fetchall()
+    conn.close()
+
+    vehicles = []
+    region_stats = []
+
+    if region_rows:
+        wash_conn = get_wash_db()
+        wash_cur = wash_conn.cursor()
+
+        region_clauses = " OR ".join(["(지역시도 = ? AND 지역구군 = ?)"] * len(region_rows))
+        region_params = []
+        for r in region_rows:
+            region_params.extend([r["city"], r["district"]])
+
+        vendor_clause = " AND 담당업체 = ?" if current_user.vendor else ""
+        vendor_param = [current_user.vendor] if current_user.vendor else []
+
+        vehicles = wash_cur.execute(f"""
+            SELECT 차량번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 담당업체, 최근세차일, 세차경과일
+            FROM vehicle_master
+            WHERE ({region_clauses}){vendor_clause}
+            ORDER BY 세차경과일 DESC, 차량번호
+        """, region_params + vendor_param).fetchall()
+
+        for r in region_rows:
+            rows = [v for v in vehicles if v["지역시도"] == r["city"] and v["지역구군"] == r["district"]]
+            urgent = [v for v in rows if (v["세차경과일"] or 0) >= 14]
+            region_stats.append({
+                "city": r["city"],
+                "district": r["district"],
+                "total": len(rows),
+                "urgent": len(urgent),
+                "regular": len(rows) - len(urgent),
+            })
+
+        wash_conn.close()
+
+    total = len(vehicles)
+    urgent_count = sum(1 for v in vehicles if (v["세차경과일"] or 0) >= 14)
+    regular_count = total - urgent_count
+
+    return render_template(
+        "my_vehicles.html",
+        region_rows=region_rows,
+        vehicles=vehicles,
+        region_stats=region_stats,
+        total=total,
+        urgent_count=urgent_count,
+        regular_count=regular_count,
     )
 
 
@@ -1314,6 +1423,88 @@ def account_manage():
         city_options=city_options,
         region_map=region_map
     )
+
+
+# =========================================================
+# 차량 마스터 업로드 (마스터 전용)
+# =========================================================
+@app.route("/upload_vehicle_master", methods=["POST"])
+@login_required
+def upload_vehicle_master():
+    if not current_user.is_master:
+        flash("❌ 마스터 계정만 업로드할 수 있습니다.")
+        return redirect(url_for("upload_wash_list"))
+
+    file = request.files.get("vehicle_file")
+    if not file or not file.filename.endswith(".xlsx"):
+        flash("❌ .xlsx 파일을 선택하세요.")
+        return redirect(url_for("upload_wash_list"))
+
+    try:
+        df = pd.read_excel(file)
+        df.columns = df.columns.str.strip()
+
+        required = ["차량번호", "차종명", "차량소속", "현재스팟명", "현재스팟주소", "지역(시/도)", "지역(구/군)", "담당업체"]
+        for col in required:
+            if col not in df.columns:
+                flash(f"❌ '{col}' 컬럼이 없습니다.")
+                return redirect(url_for("upload_wash_list"))
+
+        today_str = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+        conn = get_wash_db()
+        cur = conn.cursor()
+
+        inserted = 0
+        updated = 0
+        for _, r in df.iterrows():
+            차량번호 = str(r["차량번호"]).strip()
+            if not 차량번호 or 차량번호.lower() == "nan":
+                continue
+
+            차대번호 = str(r.get("차대번호", "")).strip() or None
+            차종명 = str(r.get("차종명", "")).strip() or None
+            차량소속 = str(r.get("차량소속", "")).strip() or None
+            스팟 = str(r.get("현재스팟명", "")).strip() or None
+            주소 = str(r.get("현재스팟주소", "")).strip() or None
+            지역시도 = str(r.get("지역(시/도)", "")).strip() or None
+            지역구군 = str(r.get("지역(구/군)", "")).strip() or None
+            담당업체 = str(r.get("담당업체", "")).strip() or None
+
+            최근세차일_raw = r.get("최근세차일", None)
+            최근세차일 = None
+            if 최근세차일_raw and str(최근세차일_raw).strip().lower() not in ("nan", ""):
+                최근세차일 = str(최근세차일_raw).strip()
+
+            세차경과일_raw = r.get("세차경과일", 0)
+            try:
+                세차경과일 = int(float(세차경과일_raw)) if 세차경과일_raw and str(세차경과일_raw).lower() != "nan" else 0
+            except:
+                세차경과일 = 0
+
+            existing = cur.execute("SELECT id FROM vehicle_master WHERE 차량번호=?", (차량번호,)).fetchone()
+            if existing:
+                cur.execute("""
+                    UPDATE vehicle_master
+                    SET 차대번호=?, 차종명=?, 차량소속=?, 스팟=?, 주소=?,
+                        지역시도=?, 지역구군=?, 담당업체=?, 최근세차일=?, 세차경과일=?, updated_at=?
+                    WHERE 차량번호=?
+                """, (차대번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 담당업체, 최근세차일, 세차경과일, today_str, 차량번호))
+                updated += 1
+            else:
+                cur.execute("""
+                    INSERT INTO vehicle_master
+                    (차량번호, 차대번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 담당업체, 최근세차일, 세차경과일, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (차량번호, 차대번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 담당업체, 최근세차일, 세차경과일, today_str))
+                inserted += 1
+
+        conn.commit()
+        conn.close()
+        flash(f"✔ 차량 마스터 업데이트 완료 — 신규 {inserted}대 / 업데이트 {updated}대")
+    except Exception as e:
+        flash(f"❌ 업로드 실패: {e}")
+
+    return redirect(url_for("upload_wash_list"))
 
 
 # =========================================================

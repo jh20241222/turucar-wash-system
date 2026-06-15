@@ -4,3 +4,4 @@ werkzeug
 pandas
 openpyxl
 gunicorn
+APScheduler>=3.10.0

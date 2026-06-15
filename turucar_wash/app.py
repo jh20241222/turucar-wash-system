@@ -4,6 +4,7 @@ import sqlite3
 from datetime import datetime
 
 import pandas as pd
+from apscheduler.schedulers.background import BackgroundScheduler
 from flask import (
     Flask, flash, jsonify, redirect, render_template,
     request, send_file, send_from_directory, url_for
@@ -386,6 +387,22 @@ def saturday_reset():
 
 saturday_reset()
 rollover_wash_orders()
+
+
+# =========================================================
+# APScheduler: 자정 자동 이월 / 토요일 리셋
+# =========================================================
+def scheduled_daily_job():
+    """매일 00:00 KST에 실행. 토요일이면 리셋, 나머지 요일이면 이월."""
+    saturday_reset()
+    rollover_wash_orders()
+    print(f"[TuruWash] 스케줄러 실행 완료 — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+
+_scheduler = BackgroundScheduler(timezone="Asia/Seoul")
+_scheduler.add_job(scheduled_daily_job, "cron", hour=0, minute=0)
+_scheduler.start()
+print("[TuruWash] APScheduler 시작 — 매일 00:00 KST 이월/리셋 자동 실행")
 
 
 # =========================================================

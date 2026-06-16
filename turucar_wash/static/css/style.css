@@ -8002,70 +8002,12 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 }
 
 
-/* ═══════════════════════════════════════════════
-   TURU WASH — 모바일 수정사항
-═══════════════════════════════════════════════ */
 
-/* 1. 카드 아이콘 제거 + 그리드 수정 */
-.turu-car-thumb-v24 { display: none !important; }
-.turu-order-card-v24 {
-    grid-template-columns: minmax(0,1fr) 18px !important;
-    gap: 10px !important;
-    min-height: unset !important;
-    padding: 14px !important;
-}
-.turu-order-page-v24 .turu-order-card-v24,
-.turu-status-page-v24 .turu-order-card-v24 {
-    grid-template-columns: minmax(0,1fr) 18px !important;
-}
+/* ══════════════════════════════════════
+   TURU WASH — 최종 수정 (중복 없음)
+══════════════════════════════════════ */
 
-/* 2. 세차오더/완료현황 날짜 위, 통계 아래 (세로 배치) */
-.turu-order-page-v37 .turu-date-summary-main-v37,
-.turu-status-page-v37 .turu-date-summary-main-v37 {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 8px !important;
-}
-.turu-order-page-v37 .turu-date-summary-copy-v37,
-.turu-status-page-v37 .turu-date-summary-copy-v37 {
-    border-radius: 16px !important;
-    min-height: unset !important;
-    padding: 10px 14px !important;
-}
-.turu-order-page-v37 .turu-date-summary-stats-v37,
-.turu-status-page-v37 .turu-date-summary-stats-v37 {
-    border-radius: 16px !important;
-    min-height: unset !important;
-}
-.turu-order-page-v37 .turu-date-summary-stats-v37 > div,
-.turu-status-page-v37 .turu-date-summary-stats-v37 > div {
-    padding: 10px 8px !important;
-}
-
-/* 3. 내 담당 차량 카드 균일 */
-.mv-item .turu-order-card-v24 {
-    align-items: flex-start !important;
-    min-height: unset !important;
-}
-.turu-card-copy-v24 {
-    padding-left: 0 !important;
-}
-
-/* 4. 데스크탑 요소 모바일 완전 숨김 */
-.desktop-sidebar { display: none !important; }
-.dt-topnav { display: none !important; }
-
-/* 5. 데스크탑에서만 표시 */
-#desktop-mode .desktop-sidebar { display: flex !important; }
-#desktop-mode .dt-topnav { display: flex !important; }
-
-
-
-/* ═══════════════════════════════════════
-   TURU WASH 수정사항
-═══════════════════════════════════════ */
-
-/* 1. 모바일 카드 아이콘 숨기기 */
+/* 카드 아이콘 숨기기 + 레이아웃 */
 .turu-car-thumb-v24 { display: none !important; }
 .turu-order-card-v24 {
     grid-template-columns: minmax(0,1fr) 18px !important;
@@ -8074,8 +8016,13 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
     padding: 14px !important;
 }
 
-/* 2. 데스크탑 사이드바/상단바 모바일 숨김 */
+/* 데스크탑 요소 모바일 숨김 */
 .desktop-sidebar { display: none !important; }
 .dt-topnav { display: none !important; }
+
+/* 데스크탑에서만 표시 */
 #desktop-mode .desktop-sidebar { display: flex !important; }
 #desktop-mode .dt-topnav { display: flex !important; }
+
+/* 모바일 전용 카드 — 데스크탑에서 숨김 */
+#desktop-mode .mobile-only-card { display: none !important; }

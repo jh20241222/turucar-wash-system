@@ -8272,3 +8272,90 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
     color: var(--turu-text) !important;
     line-height: 1 !important;
 }
+
+
+/* ══ 날짜 카드 / 통계 카드 완전 분리 ══ */
+
+/* 기존 turu-date-summary-card-v37 리셋 */
+.turu-order-page-v37 .turu-date-summary-card-v37,
+.turu-status-page-v37 .turu-date-summary-card-v37 {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    background: var(--color-background-primary) !important;
+    border: 0.5px solid var(--color-border-tertiary) !important;
+    border-radius: 18px !important;
+    padding: 6px !important;
+    margin: 0 0 8px !important;
+    gap: 0 !important;
+}
+.turu-order-page-v37 .turu-date-summary-main-v37,
+.turu-status-page-v37 .turu-date-summary-main-v37 {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0 !important;
+    padding: 8px 0 !important;
+}
+.turu-order-page-v37 .turu-date-summary-copy-v37,
+.turu-status-page-v37 .turu-date-summary-copy-v37 {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    min-height: unset !important;
+    padding: 4px 8px !important;
+    width: 100% !important;
+}
+.turu-order-page-v37 .turu-date-summary-copy-v37 span,
+.turu-status-page-v37 .turu-date-summary-copy-v37 span {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    color: var(--color-text-tertiary) !important;
+    margin-bottom: 2px !important;
+}
+.turu-order-page-v37 .turu-date-summary-copy-v37 strong,
+.turu-status-page-v37 .turu-date-summary-copy-v37 strong {
+    font-size: 18px !important;
+    font-weight: 900 !important;
+    letter-spacing: -.02em !important;
+    color: var(--color-text-primary) !important;
+    line-height: 1.1 !important;
+}
+/* stats 숨기기 — 별도 카드로 대체 */
+.turu-order-page-v37 .turu-date-summary-stats-v37,
+.turu-status-page-v37 .turu-date-summary-stats-v37 {
+    display: none !important;
+}
+
+/* 통계 별도 카드 */
+.mv-stat-cards-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    margin: 0 0 14px !important;
+}
+.mv-stat-cards-row .mv-stat-card-item {
+    background: var(--color-background-primary) !important;
+    border: 0.5px solid var(--color-border-tertiary) !important;
+    border-radius: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 10px 14px !important;
+}
+.mv-stat-cards-row .mv-stat-card-item span {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: var(--color-text-tertiary) !important;
+}
+.mv-stat-cards-row .mv-stat-card-item strong {
+    font-size: 24px !important;
+    font-weight: 900 !important;
+    color: var(--color-text-primary) !important;
+    letter-spacing: -.02em !important;
+}

@@ -29,24 +29,24 @@
 
 /* ── 다크 모드 ── */
 [data-theme="dark"] {
-    --d-bg:        #0f1117;
-    --d-surface:   #1a1d23;
-    --d-border:    #2d3139;
-    --d-text:      #e9eaec;
-    --d-muted:     #6b7280;
-    --d-th:        #1f2229;
+    --d-bg:        #111318;
+    --d-surface:   #1c1f26;
+    --d-border:    #2a2d35;
+    --d-text:      #e2e4e9;
+    --d-muted:     #5c6370;
+    --d-th:        #21242c;
     --d-hover:     #22262e;
     --d-urgent:    #1c1208;
-    --d-input:     #1f2229;
-    --d-topbar:    #13151a;
-    --d-sb-bg:         #13151a;
-    --d-sb-border:     #1f2229;
-    --d-sb-text:       #9ca3af;
-    --d-sb-group:      #4b5563;
-    --d-sb-hover:      rgba(255,255,255,0.05);
+    --d-input:     #21242c;
+    --d-topbar:    #111318;
+    --d-sb-bg:         #0d0f14;
+    --d-sb-border:     #1e2128;
+    --d-sb-text:       #8b909a;
+    --d-sb-group:      #3d4250;
+    --d-sb-hover:      rgba(255,255,255,0.04);
     --d-sb-active-bg:  #FF5F00;
     --d-sb-active-txt: #ffffff;
-    --d-sb-sub:        #4b5563;
+    --d-sb-sub:        #3d4250;
 }
 
 /* ══ body ══ */

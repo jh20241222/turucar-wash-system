@@ -320,8 +320,44 @@
 #desktop-mode .turu-desktop-table-v24,
 #desktop-mode .turu-status-desktop {
     display: flex !important; flex-direction: column !important; flex: 1 !important;
-    background: var(--d-surface) !important; border: none !important;
-    overflow: hidden !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important;
+    background: var(--d-bg) !important; border: none !important;
+    overflow: hidden !important; margin: 0 !important; padding: 16px 24px !important;
+    box-shadow: none !important; box-sizing: border-box !important;
+}
+
+/* 테이블 내부를 흰 카드로 */
+#desktop-mode .desktop-table > *,
+#desktop-mode .turu-desktop-table-v24 > *,
+#desktop-mode .turu-status-desktop > * {
+    background: var(--d-surface) !important;
+}
+
+/* toolbar + table-scroll을 흰 카드로 감싸기 */
+#desktop-mode .dt-toolbar {
+    border-radius: 10px 10px 0 0 !important;
+    border: 1px solid var(--d-border) !important;
+    border-bottom: none !important;
+    background: var(--d-surface) !important;
+}
+#desktop-mode .dt-filterbar {
+    border-left: 1px solid var(--d-border) !important;
+    border-right: 1px solid var(--d-border) !important;
+    border-top: none !important;
+    border-bottom: 1px solid var(--d-border) !important;
+    background: var(--d-th) !important;
+}
+#desktop-mode .dt-tab-bar {
+    border-left: 1px solid var(--d-border) !important;
+    border-right: 1px solid var(--d-border) !important;
+    border-top: none !important;
+    border-bottom: 1px solid var(--d-border) !important;
+    background: var(--d-surface) !important;
+}
+#desktop-mode .dt-table-scroll {
+    border: 1px solid var(--d-border) !important;
+    border-top: none !important;
+    border-radius: 0 0 10px 10px !important;
+    background: var(--d-surface) !important;
 }
 #desktop-mode .dt-toolbar {
     display: flex !important; align-items: center !important;
@@ -451,7 +487,7 @@
 }
 
 /* ══ 어드민 공통 ══ */
-#desktop-mode .d-wrap { padding: 28px !important; display: flex !important; flex-direction: column !important; gap: 24px !important; width: 100% !important; box-sizing: border-box !important; }
+#desktop-mode .d-wrap { padding: 24px !important; display: flex !important; flex-direction: column !important; gap: 20px !important; width: 100% !important; box-sizing: border-box !important; background: var(--d-bg) !important; }
 #desktop-mode .d-grid-2 { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 24px !important; }
 #desktop-mode .d-grid-3 { display: grid !important; grid-template-columns: 1fr 1fr 1fr !important; gap: 24px !important; }
 

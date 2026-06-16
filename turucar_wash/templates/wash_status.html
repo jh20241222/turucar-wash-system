@@ -76,16 +76,15 @@
             <div class="dt-toolbar-center">
                 <div class="dt-date-nav">
                     <button type="button" onclick="statusMoveDate(-1)">‹</button>
-                    <span id="dt-status-date" style="cursor:pointer;">{{ start or end or today }}</span>
+                    <span id="dt-status-date" style="cursor:pointer;">{{ start or today }}</span>
                     <button type="button" onclick="statusMoveDate(1)">›</button>
                 </div>
                 <div class="dt-status-stats">
-                    <div class="dt-stat"><span>오늘 완료</span><strong>{{ today_completed_count }}</strong></div>
-                    <div class="dt-stat"><span>조회 건수</span><strong>{{ filtered_count }}</strong></div>
+                    <div class="dt-stat"><span>선택일 완료</span><strong>{{ selected_date_count }}</strong></div>
                     <div class="dt-stat"><span>전체 완료</span><strong>{{ total_completed_count }}</strong></div>
                 </div>
             </div>
-            <div class="dt-toolbar-right">
+            <div class="dt-toolbar-right" style="flex-direction:column;align-items:flex-end;gap:6px;">
                 <button type="button" class="dt-btn" onclick="downloadExcel()">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>엑셀
                 </button>

@@ -473,7 +473,7 @@
 #desktop-mode .dt-row--urgent td { background: transparent !important; }
 #desktop-mode .dt-row:hover td { background: var(--d-hover) !important; }
 #desktop-mode .dt-check-col { width: 44px !important; padding: 12px 14px !important; }
-#desktop-mode .dt-car-link { color: #FF5F00 !important; font-weight: 800 !important; text-decoration: none !important; }
+#desktop-mode .dt-car-link { color: #FF5F00 !important; font-weight: 800 !important; text-decoration: none !important; background: none !important; padding: 0 !important; border-radius: 0 !important; }
 #desktop-mode .dt-car-link:hover { text-decoration: underline !important; }
 #desktop-mode .dt-badge {
     display: inline-block !important; font-size: 12px !important; padding: 3px 10px !important;
@@ -586,3 +586,8 @@
 #desktop-mode .d-mv-stat strong { font-size: 32px !important; font-weight: 800 !important; color: var(--d-text) !important; line-height: 1 !important; font-family: 'NanumSquare', sans-serif !important; letter-spacing: -0.03em !important; }
 #desktop-mode .d-mv-stat.urgent strong { color: #FF5F00 !important; }
 #desktop-mode .d-mv-stat.regular strong { color: #16a34a !important; }
+
+/* ══ car_detail 페이지 ══ */
+#desktop-mode .turu-app-page-v24.car-detail-page-v24,
+#desktop-mode .car-detail-page-v24 { display: none !important; }
+#desktop-mode #d-car-detail { display: block !important; }

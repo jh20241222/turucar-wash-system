@@ -24,11 +24,11 @@
         {% endif %}
     </div>
 
-    <div class="turu-searchbar-v24">
-        <input id="mv-search" placeholder="차량번호, 스팟, 차량소속 검색" oninput="renderGroups()">
-        <button type="button" onclick="renderGroups()" aria-label="검색">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
-        </button>
+    <div style="padding:10px 16px 0;">
+        <div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;display:flex;align-items:center;padding:0 14px;height:44px;gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+            <input id="mv-search" placeholder="차량번호, 스팟, 차량소속 검색" oninput="renderGroups()" style="flex:1;border:none;outline:none;font-size:13px;font-family:'NanumSquare',sans-serif;background:transparent;color:#111;">
+        </div>
     </div>
 
     <div class="turu-card-list-v24" id="mv-list"></div>

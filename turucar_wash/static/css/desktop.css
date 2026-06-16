@@ -126,7 +126,9 @@
     display: flex !important;
     flex-direction: column !important;
     align-items: flex-start !important;
-    padding: 22px 20px 18px !important;
+    padding: 0 20px !important;
+    height: 60px !important;
+    box-sizing: border-box !important;
     border-bottom: 1px solid var(--d-sb-border) !important;
     text-decoration: none !important;
     background: transparent !important;
@@ -168,6 +170,8 @@
 }
 #desktop-mode .side-nav-group {
     display: block !important;
+    border-top: 1px solid var(--d-sb-border) !important;
+    margin-top: 4px !important;
     font-size: 11px !important;
     font-weight: 800 !important;
     letter-spacing: 0.06em !important;
@@ -198,7 +202,7 @@
     transition: background 0.1s, color 0.1s !important;
 }
 #desktop-mode .side-link > span { display: none !important; }
-#desktop-mode .side-link i { font-size: 16px !important; color: var(--d-sb-group) !important; flex-shrink: 0 !important; }
+#desktop-mode .side-link i { display: none !important; }
 #desktop-mode .side-link b { font-weight: 700 !important; color: inherit !important; font-size: inherit !important; font-family: inherit !important; }
 #desktop-mode .side-link:hover { background: var(--d-sb-hover) !important; color: var(--d-text) !important; }
 #desktop-mode .side-link:hover i { color: var(--d-sb-text) !important; }
@@ -214,6 +218,7 @@
     border-radius: 20px !important; flex-shrink: 0 !important;
 }
 #desktop-mode .side-menu-bubble.is-hidden { display: none !important; }
+#desktop-mode .side-nav .side-nav-group:first-child { border-top: none !important; margin-top: 0 !important; }
 
 /* 사이드바 하단 */
 #desktop-mode .sidebar-profile {

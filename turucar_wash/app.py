@@ -177,8 +177,8 @@ def load_band_mapping():
 
 def find_band_link(band_dict, car_org, vendor=""):
     """복합키(차량소속+담당업체) 우선, 없으면 차량소속 단독으로 폴백."""
-    car_org = str(car_org or "").strip() if not (isinstance(car_org, float)) else ""
-    vendor = str(vendor or "").strip() if not (isinstance(vendor, float)) else ""
+    car_org = (car_org or "").strip()
+    vendor = (vendor or "").strip()
     # 1순위: 차량소속 + 담당업체 정확히 일치
     link = band_dict.get((car_org, vendor))
     if link:
@@ -2041,6 +2041,11 @@ def wash_status():
         "SELECT COUNT(*) AS c FROM wash_history WHERE 세차완료일 = ?" + scope_sql,
         [today] + scope_params
     ).fetchone()["c"]
+    # 선택 날짜 완료 대수 (start 파라미터 기준)
+    selected_date_count = cur.execute(
+        "SELECT COUNT(*) AS c FROM wash_history WHERE 세차완료일 = ?" + scope_sql,
+        [(start or today)] + scope_params
+    ).fetchone()["c"]
     total_completed_count = cur.execute(
         "SELECT COUNT(*) AS c FROM wash_history WHERE 1=1" + scope_sql,
         scope_params
@@ -2066,6 +2071,7 @@ def wash_status():
         start=start,
         end=end,
         today_completed_count=today_completed_count,
+        selected_date_count=selected_date_count,
         total_completed_count=total_completed_count,
         filtered_count=filtered_count
     )

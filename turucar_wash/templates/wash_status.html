@@ -72,7 +72,13 @@
     <section class="desktop-table table-panel app-card turu-desktop-table-v24 turu-status-desktop">
 
         <div class="dt-toolbar">
-            <div class="dt-toolbar-left"></div>
+            <div class="dt-toolbar-left">
+                <div class="dt-date-nav">
+                    <input type="date" id="dt_start" value="{{ selected_start or '' }}" onchange="dtApplyStatusFilter()" class="dt-date-input" style="border:1px solid var(--d-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--d-bg);color:var(--d-text);outline:none;">
+                    <span style="font-size:13px;color:var(--d-muted);">~</span>
+                    <input type="date" id="dt_end" value="{{ selected_end or '' }}" onchange="dtApplyStatusFilter()" class="dt-date-input" style="border:1px solid var(--d-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--d-bg);color:var(--d-text);outline:none;">
+                </div>
+            </div>
             <div class="dt-toolbar-center">
                 <div class="dt-status-stats">
                     <div class="dt-stat"><span>오늘 완료</span><strong>{{ today_completed_count }}</strong></div>

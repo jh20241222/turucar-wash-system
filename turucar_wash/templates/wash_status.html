@@ -76,11 +76,11 @@
             <div class="dt-toolbar-center">
                 <div class="dt-date-nav">
                     <button type="button" onclick="statusMoveDate(-1)">‹</button>
-                    <span id="dt-status-date" style="cursor:pointer;">{{ start or today }}</span>
+                    <span id="dt-status-date" style="cursor:pointer;">{{ start if start else today }}</span>
                     <button type="button" onclick="statusMoveDate(1)">›</button>
                 </div>
                 <div class="dt-status-stats">
-                    <div class="dt-stat"><span>선택일 완료</span><strong>{{ selected_date_count }}</strong></div>
+                    <div class="dt-stat"><span>완료</span><strong>{{ selected_date_count }}</strong></div>
                     <div class="dt-stat"><span>전체 완료</span><strong>{{ total_completed_count }}</strong></div>
                 </div>
             </div>
@@ -97,8 +97,6 @@
         </div>
 
         <div class="dt-filterbar">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-text-tertiary);flex-shrink:0"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
-            <input id="dt_search_s" placeholder="차량번호, 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter')dtApplyStatusFilter();">
             <div class="dt-filter-divider"></div>
             <select id="dt_region1_s"><option value="">전체 시/도</option>{% for r in region1 %}<option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
             <select id="dt_region2_s"><option value="">전체 구/군</option>{% for r in region2 %}<option value="{{ r }}" {% if selected_r2 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
@@ -109,6 +107,9 @@
             <input type="date" id="dt_start_s" value="{{ start }}" style="border:none;background:none;font-size:13px;color:var(--color-text-secondary);outline:none;font-weight:800;">
             <span style="font-size:12px;color:var(--color-text-tertiary)">~</span>
             <input type="date" id="dt_end_s" value="{{ end }}" style="border:none;background:none;font-size:13px;color:var(--color-text-secondary);outline:none;font-weight:800;">
+            <div class="dt-filter-divider"></div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--d-muted);flex-shrink:0"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+            <input id="dt_search_s" placeholder="차량번호, 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter')dtApplyStatusFilter();" style="max-width:240px;">
             <button type="button" class="dt-btn dt-btn--primary" onclick="dtApplyStatusFilter()">검색</button>
         </div>
 

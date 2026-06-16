@@ -8,10 +8,20 @@
         <div><h1>완료 현황</h1><p>완료된 세차 기록을 확인합니다.</p></div>
     </div>
 
-    <div class="turu-stat-strip-v24 turu-stat-strip-v37">
-        <div><span>오늘 완료</span><strong>{{ today_completed_count }}</strong><em>건</em></div>
-        <div><span>전체 완료</span><strong>{{ total_completed_count }}</strong><em>건</em></div>
-    </div>
+    <section class="turu-date-summary-card-v37">
+        <button type="button" class="turu-date-nav-btn-v25" onclick="statusMoveDate(-1)" aria-label="이전 날짜">‹</button>
+        <div class="turu-date-summary-main-v37">
+            <div class="turu-date-summary-copy-v37">
+                <span>완료일</span>
+                <strong>{{ start if start else today }}</strong>
+            </div>
+            <div class="turu-date-summary-stats-v37">
+                <div><span>오늘 완료</span><strong>{{ today_completed_count }}</strong></div>
+                <div><span>전체 완료</span><strong>{{ total_completed_count }}</strong></div>
+            </div>
+        </div>
+        <button type="button" class="turu-date-nav-btn-v25" onclick="statusMoveDate(1)" aria-label="다음 날짜">›</button>
+    </section>
 
     <div class="turu-searchbar-v24 turu-status-searchbar-v29 turu-status-searchbar-v37">
         <input id="quick_status_search_input" placeholder="차량 번호 / 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">
@@ -214,5 +224,15 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAnyMob
 function toggleDeleteMode(formId,force){const form=document.getElementById(formId);if(!form){return;}const next=typeof force==="boolean"?force:!form.classList.contains("delete-mode");form.classList.toggle("delete-mode",next);if(!next){form.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);}}
 function toggleAllDelete(master,formId){const form=document.getElementById(formId);if(!form){return;}form.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=master.checked);}
 function confirmSelectedDelete(formId,message){const form=document.getElementById(formId);const count=form?form.querySelectorAll('input[name="ids"]:checked').length:0;if(count<1){alert("삭제할 항목을 선택해주세요.");return false;}return confirm(message||"선택한 항목을 삭제할까요?");}
+
+const _statusDate = "{{ start if start else today }}";
+function statusMoveDate(delta){
+    const d = new Date((_statusDate||new Date().toISOString().slice(0,10))+'T00:00:00');
+    d.setDate(d.getDate()+delta);
+    const nd=d.toISOString().slice(0,10);
+    const p=new URLSearchParams(window.location.search);
+    p.set('start',nd);p.set('end',nd);
+    window.location.search=p.toString();
+}
 </script>
 {% endblock %}

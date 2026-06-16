@@ -66,7 +66,8 @@
         {% for r in rows %}
         <div class="turu-delete-item-v24">
             {% if current_user.is_master %}<label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>{% endif %}
-            <article class="turu-order-card-v24 turu-complete-card-v24" style="gap:0;">
+            <article class="turu-order-card-v24 turu-complete-card-v24">
+                <div class="turu-car-thumb-v24"><img src="{{ url_for('static', filename='img/icon-complete.png') }}" alt=""></div>
                 <div class="turu-card-copy-v24">
                     <div class="turu-card-title-v24"><strong>{{ r['차량번호'] }}</strong><em class="chip-green">완료</em></div>
                     <p><span>📍</span>{{ r['스팟'] or '-' }}{% if r['작업자'] %} | {{ r['작업자'] }}{% endif %}</p>
@@ -227,7 +228,7 @@ function confirmSelectedDelete(formId,message){const form=document.getElementByI
 
 const _statusDate = "{{ start if start else today }}";
 function statusMoveDate(delta){
-    const d = new Date((_statusDate||new Date().toISOString().slice(0,10))+'T00:00:00');
+    const d=new Date((_statusDate||new Date().toISOString().slice(0,10))+'T00:00:00');
     d.setDate(d.getDate()+delta);
     const nd=d.toISOString().slice(0,10);
     const p=new URLSearchParams(window.location.search);

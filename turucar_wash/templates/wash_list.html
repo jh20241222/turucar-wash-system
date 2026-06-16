@@ -20,7 +20,7 @@
             </div>
             <div class="turu-date-summary-stats-v37">
                 <div><span>세차 대상</span><strong>{{ total_target_count }}</strong></div>
-                <div><span>완료 현황</span><strong>{{ completed_count }}</strong></div>
+                <div><span>완료</span><strong>{{ completed_count }}</strong></div>
             </div>
         </div>
         <button type="button" class="turu-date-nav-btn-v25" onclick="moveDate(1)" aria-label="다음 날짜">›</button>
@@ -114,7 +114,10 @@
         <div class="turu-delete-item-v24">
             {% if current_user.is_master %}<label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>{% endif %}
             <a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-order-card-v24 turu-order-card--urgent">
-                <div class="turu-card-copy-v24" style="padding-left:0;">
+                <div class="turu-car-thumb-v24 turu-car-thumb--urgent">
+                    <img src="{{ url_for('static', filename='img/icon-wash-order.png') }}" alt="">
+                </div>
+                <div class="turu-card-copy-v24">
                     <div class="turu-card-title-v24">
                         <strong>{{ r['차량번호'] }}</strong>
                         <em class="chip-urgent">장기 미세차</em>
@@ -147,7 +150,10 @@
         <div class="turu-delete-item-v24">
             {% if current_user.is_master %}<label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>{% endif %}
             <a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-order-card-v24 turu-order-card--regular">
-                <div class="turu-card-copy-v24" style="padding-left:0;">
+                <div class="turu-car-thumb-v24 turu-car-thumb--regular">
+                    <img src="{{ url_for('static', filename='img/icon-wash-order.png') }}" alt="">
+                </div>
+                <div class="turu-card-copy-v24">
                     <div class="turu-card-title-v24">
                         <strong>{{ r['차량번호'] }}</strong>
                         <em class="chip-regular">정기세차</em>

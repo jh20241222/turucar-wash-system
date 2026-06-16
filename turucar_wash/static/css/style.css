@@ -8149,3 +8149,16 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
     text-align: center !important;
     align-items: center !important;
 }
+
+/* 내 담당 차량 카드 높이 고정 */
+.mv-item .turu-order-card-v24 {
+    min-height: 110px !important;
+    height: 110px !important;
+    overflow: hidden !important;
+    align-items: center !important;
+}
+.mv-item .turu-card-copy-v24 p {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}

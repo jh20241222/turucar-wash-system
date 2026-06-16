@@ -8058,3 +8058,94 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 /* 5. 데스크탑에서만 표시 */
 #desktop-mode .desktop-sidebar { display: flex !important; }
 #desktop-mode .dt-topnav { display: flex !important; }
+
+/* ── 추가 수정 ── */
+
+/* 1. 내 담당 차량 카드 너비 — 오더/완료랑 동일 */
+.mv-item .turu-order-card-v24 {
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* 2. 완료현황 날짜 네비 — 세차오더와 동일 클래스 적용 */
+.turu-status-page-v37 .turu-date-summary-card-v37 {
+    display: grid !important;
+    grid-template-columns: 38px minmax(0,1fr) 38px !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+    background: rgba(255,255,255,.97) !important;
+    border: 1px solid var(--turu-line) !important;
+    border-radius: 24px !important;
+    padding: 8px !important;
+    box-shadow: none !important;
+    margin: 0 0 14px !important;
+}
+.turu-status-page-v37 .turu-date-summary-main-v37 {
+    display: grid !important;
+    grid-template-columns: minmax(0,1fr) 1fr !important;
+    gap: 10px !important;
+    align-items: stretch !important;
+}
+.turu-status-page-v37 .turu-date-summary-copy-v37,
+.turu-status-page-v37 .turu-date-summary-stats-v37 {
+    background: #fff !important;
+    border: 1px solid var(--turu-line-soft) !important;
+    border-radius: 18px !important;
+    min-height: 74px !important;
+}
+.turu-status-page-v37 .turu-date-summary-copy-v37 {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 12px 14px !important;
+}
+.turu-status-page-v37 .turu-date-summary-copy-v37 span {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: #8492a5 !important;
+    margin-bottom: 6px !important;
+}
+.turu-status-page-v37 .turu-date-summary-copy-v37 strong {
+    font-size: 20px !important;
+    line-height: 1.1 !important;
+    font-weight: 800 !important;
+    color: var(--turu-text) !important;
+    letter-spacing: -.03em !important;
+}
+.turu-status-page-v37 .turu-date-summary-stats-v37 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    overflow: hidden !important;
+}
+.turu-status-page-v37 .turu-date-summary-stats-v37 > div {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 10px 8px !important;
+}
+.turu-status-page-v37 .turu-date-summary-stats-v37 > div + div {
+    border-left: 1px solid var(--turu-line-soft) !important;
+}
+.turu-status-page-v37 .turu-date-summary-stats-v37 span {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: #8492a5 !important;
+    margin-bottom: 6px !important;
+    text-align: center !important;
+}
+.turu-status-page-v37 .turu-date-summary-stats-v37 strong {
+    font-size: 20px !important;
+    font-weight: 800 !important;
+    color: var(--turu-text) !important;
+    line-height: 1 !important;
+}
+.turu-status-page-v37 .turu-date-summary-card-v37 .turu-date-nav-btn-v25 {
+    align-self: center !important;
+}
+
+/* 3. 세차오더 날짜 가운데 정렬 */
+.turu-order-page-v37 .turu-date-summary-copy-v37 {
+    text-align: center !important;
+    align-items: center !important;
+}

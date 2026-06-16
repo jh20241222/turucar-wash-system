@@ -2061,6 +2061,8 @@ def wash_status():
 
     conn.close()
 
+    today_str = datetime.today().strftime("%Y-%m-%d")
+
     return render_template(
         "wash_status.html",
         rows=rows,
@@ -2077,6 +2079,7 @@ def wash_status():
         selected_vendor=vendor,
         start=start,
         end=end,
+        today=today_str,
         today_completed_count=today_completed_count,
         selected_date_count=selected_date_count,
         total_completed_count=total_completed_count,

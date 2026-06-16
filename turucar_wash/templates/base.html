@@ -42,7 +42,7 @@
     <!-- ══ 데스크탑 사이드바 ══ -->
     <aside class="desktop-sidebar">
         <a href="{{ url_for('dashboard') }}" class="sidebar-brand" aria-label="Turu Wash 홈">
-            <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="Turu CAR" class="sb-main-logo" id="sidebarLogo">
+            <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="Turu CAR" class="sb-main-logo">
             <span class="sb-sub-label">Wash Manager</span>
         </a>
 
@@ -64,9 +64,6 @@
             {% if current_user.is_master %}
             <!-- 데이터 관리 -->
             <p class="side-nav-group" style="margin-top:4px;">데이터 관리</p>
-            <a href="{{ url_for('upload_wash_list') }}#vehicle" class="side-link">
-                <i class="ti ti-database" aria-hidden="true"></i><b>차량 마스터</b>
-            </a>
             <a href="{{ url_for('upload_wash_list') }}" class="side-link {% if request.endpoint == 'upload_wash_list' %}active{% endif %}">
                 <i class="ti ti-upload" aria-hidden="true"></i><b>오더 업로드</b>
             </a>
@@ -253,14 +250,5 @@
         if (label) label.textContent = next === 'dark' ? '다크' : '라이트';
     }
     </script>
-<script>
-function updateSidebarLogo(){
- const logo=document.getElementById('sidebarLogo');
- if(!logo) return;
- const dark=document.documentElement.getAttribute('data-theme')==='dark';
- logo.style.filter=dark?'brightness(0) invert(1)':'none';
-}
-document.addEventListener('DOMContentLoaded',updateSidebarLogo);
-setInterval(updateSidebarLogo,1000);
-</script></body>
+</body>
 </html>

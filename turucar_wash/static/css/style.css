@@ -8004,21 +8004,18 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 
 
 
+
 /* ══ TURU WASH 최종 ══ */
 
-/* 아이콘 숨기기 — 카드 구조 유지, copy만 꽉 채움 */
-.turu-car-thumb-v24 {
-    display: none !important;
-}
+/* 카드 그리드 — 아이콘 없으니 2컬럼으로 */
 .turu-order-card-v24 {
     grid-template-columns: minmax(0,1fr) 24px !important;
     min-height: unset !important;
     gap: 8px !important;
-    padding: 14px 16px !important;
+    padding: 16px !important;
 }
 .turu-card-copy-v24 {
     padding-left: 0 !important;
-    grid-column: 1 !important;
 }
 
 /* 데스크탑 요소 모바일 숨김 */

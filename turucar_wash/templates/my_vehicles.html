@@ -5,22 +5,24 @@
     <header class="turu-page-brand-v24"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
     <div class="turu-page-head-v24"><h1>내 담당 차량</h1></div>
 
-    <div class="mv-stat-card">
-        <div class="mv-stat-label">총 차량</div>
-        <div class="mv-stat-val">{{ total }}<span>대</span></div>
-    </div>
-
-    {% if region_stats %}
-    <div class="mv-region-card">
-        <div class="mv-region-section-head">담당 지역</div>
-        {% for r in region_stats %}
-        <div class="mv-region-row" onclick="filterRegion('{{ r.city }} {{ r.district }}', this)">
-            <span class="mv-region-name">{{ r.city }} {{ r.district }}</span>
-            <span class="mv-region-cnt">{{ r.total }}대 ›</span>
+    <div style="padding:12px 16px 0;display:grid;grid-template-columns:1fr;gap:10px;">
+        <div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;padding:18px 16px;text-align:center;">
+            <div style="font-size:11px;font-weight:800;color:#aaa;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px;font-family:'NanumSquare',sans-serif;">총 차량</div>
+            <div style="font-size:36px;font-weight:950;color:#111;letter-spacing:-.03em;line-height:1;font-family:'NanumSquare',sans-serif;">{{ total }}<span style="font-size:16px;color:#888;font-weight:600;margin-left:4px;">대</span></div>
         </div>
-        {% endfor %}
+
+        {% if region_stats %}
+        <div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;overflow:hidden;">
+            <div style="font-size:10px;font-weight:800;color:#aaa;letter-spacing:.06em;text-transform:uppercase;padding:10px 14px 6px;font-family:'NanumSquare',sans-serif;">담당 지역</div>
+            {% for r in region_stats %}
+            <div onclick="filterRegion('{{ r.city }} {{ r.district }}', this)" style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-top:0.5px solid #f0f0f0;cursor:pointer;" class="mv-region-row">
+                <span style="font-size:14px;font-weight:700;color:#111;font-family:'NanumSquare',sans-serif;">{{ r.city }} {{ r.district }}</span>
+                <span style="font-size:13px;font-weight:700;color:#888;">{{ r.total }}대 ›</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
 
     <div class="turu-searchbar-v24">
         <input id="mv-search" placeholder="차량번호, 스팟, 차량소속 검색" oninput="renderGroups()">
@@ -68,8 +70,8 @@ const _vehicles = {{ vehicles | tojson }};
 let _curRegion = '';
 
 function filterRegion(region, el){
-    if(_curRegion === region){ _curRegion=''; document.querySelectorAll('.mv-region-row').forEach(r=>r.classList.remove('active')); }
-    else { _curRegion=region; document.querySelectorAll('.mv-region-row').forEach(r=>r.classList.remove('active')); el.classList.add('active'); }
+    if(_curRegion === region){ _curRegion=''; document.querySelectorAll('.mv-region-row').forEach(r=>r.style.background=''); }
+    else { _curRegion=region; document.querySelectorAll('.mv-region-row').forEach(r=>r.style.background=''); el.style.background='#fff2e9'; }
     renderGroups();
 }
 
@@ -99,19 +101,26 @@ function renderGroups(){
     const sorted=Object.entries(groups).sort((a,b)=>b[1].length-a[1].length);
 
     let html='<div style="padding:8px 16px 16px;">';
-    sorted.forEach(([spot, cars])=>{
+    sorted.forEach(([spot, cars], idx)=>{
+        const gid='sg'+idx;
         html+=`<div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;overflow:hidden;margin-bottom:8px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:0.5px solid #e5e5e5;">
-                <span style="font-size:13px;font-weight:800;color:#111;font-family:'NanumSquare',sans-serif;">${spot}</span>
-                <span style="font-size:11px;font-weight:700;color:#aaa;background:#f5f5f5;padding:2px 8px;border-radius:20px;">${cars.length}대</span>
-            </div>`;
+            <div onclick="toggleSpot('${gid}')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;">
+                <div>
+                    <div style="font-size:13px;font-weight:800;color:#111;font-family:'NanumSquare',sans-serif;">${spot}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:11px;font-weight:700;color:#aaa;background:#f5f5f5;padding:2px 8px;border-radius:20px;">${cars.length}대</span>
+                    <span id="${gid}_arr" style="font-size:16px;color:#ccc;transition:transform .2s;">›</span>
+                </div>
+            </div>
+            <div id="${gid}" style="display:none;border-top:0.5px solid #e5e5e5;">`;
         cars.forEach((v,i)=>{
             const elapsed=v['세차경과일']||0;
             const isUrg=elapsed>=14;
             const bl=i<cars.length-1?'border-bottom:0.5px solid #f5f5f5;':'';
-            const ul=isUrg?'border-left:3px solid #D85A30;':'';
+            const ul=isUrg?'border-left:3px solid #D85A30;padding-left:11px;':'padding-left:14px;';
             const chipBg=isUrg?'background:#FAECE7;color:#993C1D;':'background:#f0f0f0;color:#888;';
-            html+=`<div style="display:flex;align-items:center;padding:11px 14px;gap:10px;${bl}${ul}">
+            html+=`<div style="display:flex;align-items:center;padding:11px 14px 11px 0;gap:10px;${bl}${ul}">
                 <div style="flex:1;min-width:0;">
                     <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
                         <span style="font-size:14px;font-weight:900;color:#111;font-family:'NanumSquare',sans-serif;">${v['차량번호']||'-'}</span>
@@ -119,16 +128,25 @@ function renderGroups(){
                     </div>
                     <div style="font-size:11px;color:#aaa;">${v['차종명']||'-'}</div>
                 </div>
-                <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;flex-shrink:0;${chipBg}">D+${elapsed}</span>
+                <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;flex-shrink:0;margin-right:14px;${chipBg}">D+${elapsed}</span>
             </div>`;
         });
-        html+='</div>';
+        html+='</div></div>';
     });
     html+='</div>';
     list.innerHTML=html;
 }
 
 document.addEventListener('DOMContentLoaded', renderGroups);
+
+function toggleSpot(id){
+    const el=document.getElementById(id);
+    const arr=document.getElementById(id+'_arr');
+    if(!el) return;
+    const open=el.style.display==='none';
+    el.style.display=open?'block':'none';
+    if(arr) arr.style.transform=open?'rotate(90deg)':'';
+}
 </script>
 
 {# ── 데스크탑 전용 ── #}

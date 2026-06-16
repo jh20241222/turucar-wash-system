@@ -1,3 +1,7 @@
+/* 기본 숨김 — #desktop-mode 없을 때 */
+.desktop-sidebar { display: none; }
+.dt-topnav { display: none; }
+
 /* ═══════════════════════════════════════════════
    Turu Wash — desktop.css
    CARPLAT 스타일 기준 / 나눔스퀘어
@@ -592,3 +596,10 @@
 #desktop-mode .turu-app-page-v24.car-detail-page-v24,
 #desktop-mode .car-detail-page-v24 { display: none !important; }
 #desktop-mode #d-car-detail { display: block !important; }
+
+/* ── 모바일 카드 아이콘 숨기기 ── */
+@media (max-width: 900px) {
+    .turu-car-thumb-v24 { display: none !important; }
+    .turu-order-card-v24 { gap: 0 !important; }
+    .turu-card-copy-v24 { padding-left: 0 !important; }
+}

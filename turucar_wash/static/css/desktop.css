@@ -129,6 +129,7 @@
     padding: 0 20px !important;
     height: 88px !important;
     box-sizing: border-box !important;
+    align-items: center !important;
     border-bottom: 1px solid var(--d-sb-border) !important;
     text-decoration: none !important;
     background: transparent !important;
@@ -266,6 +267,7 @@
     justify-content: space-between !important;
     padding: 0 28px 0 20px !important; height: 88px !important;
     box-sizing: border-box !important;
+    align-items: center !important;
     border-bottom: 1px solid var(--d-border) !important;
     background: var(--d-topbar) !important;
     flex-shrink: 0 !important; position: sticky !important; top: 0 !important; z-index: 50 !important;

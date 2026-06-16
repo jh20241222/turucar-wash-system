@@ -12,7 +12,7 @@
         <button type="button" class="turu-date-nav-btn-v25" onclick="statusMoveDate(-1)" aria-label="이전 날짜">‹</button>
         <div class="turu-date-summary-main-v37">
             <div class="turu-date-summary-copy-v37" onclick="toggleStatusCalendar()" style="cursor:pointer;">
-                <span>완료일</span>
+                <span>완료일 <small style="font-size:10px;color:var(--color-text-tertiary);">탭하여 날짜 선택</small></span>
                 <strong>{{ start if start else today }}</strong>
             </div>
             <div class="turu-date-summary-stats-v37">
@@ -22,7 +22,28 @@
         </div>
         <button type="button" class="turu-date-nav-btn-v25" onclick="statusMoveDate(1)" aria-label="다음 날짜">›</button>
     </section>
-    <input type="date" id="status-date-input" value="{{ start if start else today }}" style="position:absolute;visibility:hidden;width:0;height:0;" onchange="statusDatePicked(this.value)">
+
+    {# ── 달력 팝업 ── #}
+    <div class="notice-modal-backdrop" id="status-cal-backdrop" hidden onclick="closeStatusCalendar()">
+        <div class="turu-mini-modal" style="padding:24px;max-width:320px;" onclick="event.stopPropagation()">
+            <button type="button" class="notice-modal-close" onclick="closeStatusCalendar()" aria-label="닫기">×</button>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                <button onclick="statusCalChangeMonth(-1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 14px;cursor:pointer;">‹</button>
+                <strong id="status-cal-title" style="font-size:15px;font-weight:950;color:var(--color-text-primary);"></strong>
+                <button onclick="statusCalChangeMonth(1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 14px;cursor:pointer;">›</button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px;">
+                <span style="text-align:center;font-size:11px;font-weight:900;color:#E24B4A;padding:4px 0;">일</span>
+                <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">월</span>
+                <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">화</span>
+                <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">수</span>
+                <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">목</span>
+                <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">금</span>
+                <span style="text-align:center;font-size:11px;font-weight:900;color:#185FA5;padding:4px 0;">토</span>
+            </div>
+            <div id="status-cal-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
+        </div>
+    </div>
 
     <div class="turu-searchbar-v24 turu-status-searchbar-v29 turu-status-searchbar-v37">
         <input id="quick_status_search_input" placeholder="차량 번호 / 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">
@@ -59,9 +80,7 @@
     {% endif %}
 
     {% if search_input or selected_r1 or selected_r2 or selected_org or selected_spot or start or end %}
-    <div style="padding:6px 16px;font-size:12px;color:var(--color-text-secondary);">
-        <strong style="color:var(--color-text-primary);">{{ rows|length }}건</strong>이 검색되었습니다.
-    </div>
+    <p style="padding:6px 16px;font-size:12px;color:var(--color-text-secondary);"><strong style="color:var(--color-text-primary);">{{ rows|length }}건</strong>이 검색되었습니다.</p>
     {% endif %}
     <div class="turu-card-list-v24">
         {% for r in rows %}
@@ -228,13 +247,7 @@ function toggleAllDelete(master,formId){const form=document.getElementById(formI
 function confirmSelectedDelete(formId,message){const form=document.getElementById(formId);const count=form?form.querySelectorAll('input[name="ids"]:checked').length:0;if(count<1){alert("삭제할 항목을 선택해주세요.");return false;}return confirm(message||"선택한 항목을 삭제할까요?");}
 
 const _statusDate = "{{ start if start else today }}";
-function toggleStatusCalendar(){
-    const inp = document.getElementById('status-date-input');
-    if(inp){ inp.style.visibility='visible'; inp.showPicker ? inp.showPicker() : inp.click(); }
-}
-function statusDatePicked(val){
-    window.location.href = window.location.pathname + '?start=' + val + '&end=' + val;
-}
+
 function statusMoveDate(delta){
     const base = _statusDate || new Date().toISOString().slice(0,10);
     const d = new Date(base + 'T00:00:00');
@@ -242,5 +255,41 @@ function statusMoveDate(delta){
     const nd = d.toISOString().slice(0,10);
     window.location.href = window.location.pathname + '?start=' + nd + '&end=' + nd;
 }
+
+let _statusCalYear, _statusCalMonth;
+function toggleStatusCalendar(){
+    const bd = document.getElementById('status-cal-backdrop');
+    if(!bd) return;
+    const base = _statusDate || new Date().toISOString().slice(0,10);
+    const d = new Date(base + 'T00:00:00');
+    _statusCalYear = d.getFullYear();
+    _statusCalMonth = d.getMonth();
+    renderStatusCal();
+    bd.hidden = false;
+}
+function closeStatusCalendar(){ document.getElementById('status-cal-backdrop').hidden = true; }
+function statusCalChangeMonth(delta){ _statusCalMonth += delta; if(_statusCalMonth>11){_statusCalMonth=0;_statusCalYear++;}else if(_statusCalMonth<0){_statusCalMonth=11;_statusCalYear--;} renderStatusCal(); }
+function renderStatusCal(){
+    const title = document.getElementById('status-cal-title');
+    const days = document.getElementById('status-cal-days');
+    if(!title||!days) return;
+    title.textContent = `${_statusCalYear}년 ${_statusCalMonth+1}월`;
+    const first = new Date(_statusCalYear, _statusCalMonth, 1).getDay();
+    const last = new Date(_statusCalYear, _statusCalMonth+1, 0).getDate();
+    const sel = _statusDate || new Date().toISOString().slice(0,10);
+    let html = '';
+    for(let i=0;i<first;i++) html += '<span></span>';
+    for(let d=1;d<=last;d++){
+        const ds = `${_statusCalYear}-${String(_statusCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const isSel = ds===sel;
+        html += `<button onclick="statusPickDate('${ds}')" style="border:none;border-radius:8px;padding:6px 2px;font-size:13px;font-weight:${isSel?'900':'600'};background:${isSel?'#FF5F00':'transparent'};color:${isSel?'#fff':'var(--color-text-primary)'};cursor:pointer;">${d}</button>`;
+    }
+    days.innerHTML = html;
+}
+function statusPickDate(ds){
+    closeStatusCalendar();
+    window.location.href = window.location.pathname + '?start=' + ds + '&end=' + ds;
+}
+
 </script>
 {% endblock %}

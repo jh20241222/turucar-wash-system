@@ -8,7 +8,7 @@
         <div><h1>완료 현황</h1><p>완료된 세차 기록을 확인합니다.</p></div>
     </div>
 
-    <div class="mobile-only-card" style="background:var(--color-background-primary);border:1px solid var(--color-border-secondary);border-radius:18px;padding:6px;margin-bottom:8px;display:flex;align-items:center;gap:4px;">
+    <div class="mob-date-card" style="background:var(--color-background-primary);border:1px solid var(--color-border-secondary);border-radius:18px;padding:6px;margin-bottom:8px;display:flex;align-items:center;gap:4px;">
         <button onclick="statusMoveDate(-1)" style="width:38px;height:38px;border:none;border-radius:12px;background:#FFF2E9;color:#FF5F00;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;">‹</button>
         <div onclick="toggleStatusCalendar()" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 0;cursor:pointer;">
             <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.04em;margin-bottom:3px;">완료일</span>
@@ -16,7 +16,7 @@
         </div>
         <button onclick="statusMoveDate(1)" style="width:38px;height:38px;border:none;border-radius:12px;background:#FFF2E9;color:#FF5F00;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;">›</button>
     </div>
-    <div class="mobile-only-card" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+    <div class="mob-stat-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
         <div style="background:var(--color-background-primary);border:1px solid var(--color-border-secondary);border-radius:14px;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;">
             <span style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);">오늘 완료</span>
             <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ today_completed_count }}</strong>
@@ -229,57 +229,6 @@
 </style>
 
 <script>
-const _statusDate = "{{ start if start else today }}";
-
-// 날짜 이동
-function statusMoveDate(delta){
-    const base = _statusDate || new Date().toISOString().slice(0,10);
-    const d = new Date(base + 'T00:00:00');
-    d.setDate(d.getDate() + delta);
-    const nd = d.toISOString().slice(0,10);
-    window.location.href = window.location.pathname + '?start=' + nd + '&end=' + nd;
-}
-
-// 달력 팝업
-let _scy, _scm;
-function toggleStatusCalendar(){
-    const base = _statusDate || new Date().toISOString().slice(0,10);
-    const d = new Date(base + 'T00:00:00');
-    _scy = d.getFullYear();
-    _scm = d.getMonth();
-    renderStatusCal();
-    document.getElementById('status-cal-backdrop').hidden = false;
-}
-function closeStatusCalendar(){
-    document.getElementById('status-cal-backdrop').hidden = true;
-}
-function statusCalChangeMonth(delta){
-    _scm += delta;
-    if(_scm > 11){ _scm = 0; _scy++; }
-    else if(_scm < 0){ _scm = 11; _scy--; }
-    renderStatusCal();
-}
-function renderStatusCal(){
-    document.getElementById('status-cal-title').textContent = `${_scy}년 ${_scm+1}월`;
-    const first = new Date(_scy, _scm, 1).getDay();
-    const last = new Date(_scy, _scm+1, 0).getDate();
-    const sel = _statusDate || new Date().toISOString().slice(0,10);
-    let html = '';
-    for(let i=0;i<first;i++) html += '<span></span>';
-    for(let day=1;day<=last;day++){
-        const ds = `${_scy}-${String(_scm+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-        const isSel = ds === sel;
-        html += `<button onclick="statusPickDate('${ds}')" style="border:none;border-radius:8px;padding:6px 2px;font-size:13px;font-weight:${isSel?900:600};background:${isSel?'#FF5F00':'transparent'};color:${isSel?'#fff':'var(--color-text-primary)'};cursor:pointer;">${day}</button>`;
-    }
-    document.getElementById('status-cal-days').innerHTML = html;
-}
-function statusPickDate(ds){
-    closeStatusCalendar();
-    window.location.href = window.location.pathname + '?start=' + ds + '&end=' + ds;
-}
-
-// 기존 applyFilter, downloadExcel, toggleDeleteMode 등은 유지
-
 function buildStatusParams(){return new URLSearchParams({s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("car_org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:"",start:document.getElementById("start").value,end:document.getElementById("end").value});}
 function applyFilter(){window.location.href=`/wash_status?${buildStatusParams().toString()}`;}
 function downloadExcel(){window.location.href=`/wash_status_excel?${buildStatusParams().toString()}`;}
@@ -303,17 +252,85 @@ function toggleDeleteMode(formId,force){const form=document.getElementById(formI
 function toggleAllDelete(master,formId){const form=document.getElementById(formId);if(!form){return;}form.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=master.checked);}
 function confirmSelectedDelete(formId,message){const form=document.getElementById(formId);const count=form?form.querySelectorAll('input[name="ids"]:checked').length:0;if(count<1){alert("삭제할 항목을 선택해주세요.");return false;}return confirm(message||"선택한 항목을 삭제할까요?");}
 
+const _statusDate = "{{ start if start else today }}";
 
+function statusMoveDate(delta){
+    const base = _statusDate || new Date().toISOString().slice(0,10);
+    const d = new Date(base + 'T00:00:00');
+    d.setDate(d.getDate() + delta);
+    const nd = d.toISOString().slice(0,10);
+    window.location.href = window.location.pathname + '?start=' + nd + '&end=' + nd;
+}
+
+let _statusCalYear, _statusCalMonth;
+function toggleStatusCalendar(){
+    const bd = document.getElementById('status-cal-backdrop');
+    if(!bd) return;
+    const base = _statusDate || new Date().toISOString().slice(0,10);
+    const d = new Date(base + 'T00:00:00');
+    _statusCalYear = d.getFullYear();
+    _statusCalMonth = d.getMonth();
+    renderStatusCal();
+    bd.hidden = false;
+}
+function closeStatusCalendar(){ document.getElementById('status-cal-backdrop').hidden = true; }
+function statusCalChangeMonth(delta){ _statusCalMonth += delta; if(_statusCalMonth>11){_statusCalMonth=0;_statusCalYear++;}else if(_statusCalMonth<0){_statusCalMonth=11;_statusCalYear--;} renderStatusCal(); }
+function renderStatusCal(){
+    const title = document.getElementById('status-cal-title');
+    const days = document.getElementById('status-cal-days');
+    if(!title||!days) return;
+    title.textContent = `${_statusCalYear}년 ${_statusCalMonth+1}월`;
+    const first = new Date(_statusCalYear, _statusCalMonth, 1).getDay();
+    const last = new Date(_statusCalYear, _statusCalMonth+1, 0).getDate();
+    const sel = _statusDate || new Date().toISOString().slice(0,10);
+    let html = '';
     for(let i=0;i<first;i++) html += '<span></span>';
     for(let d=1;d<=last;d++){
+        const ds = `${_statusCalYear}-${String(_statusCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const isSel = ds===sel;
+        html += `<button onclick="statusPickDate('${ds}')" style="border:none;border-radius:8px;padding:6px 2px;font-size:13px;font-weight:${isSel?'900':'600'};background:${isSel?'#FF5F00':'transparent'};color:${isSel?'#fff':'var(--color-text-primary)'};cursor:pointer;">${d}</button>`;
+    }
     days.innerHTML = html;
 }
+function statusPickDate(ds){
+    closeStatusCalendar();
+    window.location.href = window.location.pathname + '?start=' + ds + '&end=' + ds;
+}
 
 
+const _statusDate = "{{ start if start else today }}";
+function statusMoveDate(delta){
+    const base=_statusDate||new Date().toISOString().slice(0,10);
+    const d=new Date(base+'T00:00:00');
+    d.setDate(d.getDate()+delta);
+    const nd=d.toISOString().slice(0,10);
+    window.location.href=window.location.pathname+'?start='+nd+'&end='+nd;
+}
+let _scy,_scm;
+function toggleStatusCalendar(){
+    const base=_statusDate||new Date().toISOString().slice(0,10);
+    const d=new Date(base+'T00:00:00');
+    _scy=d.getFullYear();_scm=d.getMonth();
+    renderStatusCal();
+    document.getElementById('status-cal-backdrop').hidden=false;
+}
+function closeStatusCalendar(){document.getElementById('status-cal-backdrop').hidden=true;}
+function statusCalChangeMonth(delta){_scm+=delta;if(_scm>11){_scm=0;_scy++;}else if(_scm<0){_scm=11;_scy--;}renderStatusCal();}
+function renderStatusCal(){
+    document.getElementById('status-cal-title').textContent=`${_scy}년 ${_scm+1}월`;
+    const first=new Date(_scy,_scm,1).getDay();
+    const last=new Date(_scy,_scm+1,0).getDate();
+    const sel=_statusDate||new Date().toISOString().slice(0,10);
+    let html='';
     for(let i=0;i<first;i++)html+='<span></span>';
     for(let day=1;day<=last;day++){
+        const ds=`${_scy}-${String(_scm+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const isSel=ds===sel;
+        html+=`<button onclick="statusPickDate('${ds}')" style="border:none;border-radius:8px;padding:6px 2px;font-size:13px;font-weight:${isSel?900:600};background:${isSel?'#FF5F00':'transparent'};color:${isSel?'#fff':'var(--color-text-primary)'};cursor:pointer;">${day}</button>`;
+    }
     document.getElementById('status-cal-days').innerHTML=html;
 }
+function statusPickDate(ds){closeStatusCalendar();window.location.href=window.location.pathname+'?start='+ds+'&end='+ds;}
 
 </script>
 {% endblock %}

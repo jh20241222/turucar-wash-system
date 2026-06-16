@@ -144,7 +144,7 @@
 #desktop-mode .brand-combo-logo,
 #desktop-mode .sidebar-subtitle,
 #desktop-mode .daangn-sidebar-brand > strong,
-#desktop-mode .sidebar-brand img:not(.sb-main-logo) { display: none !important; }
+#desktop-mode .sidebar-brand img:not(.sb-logo-dark):not(.sb-logo-light) { display: none !important; }
 
 #desktop-mode .sb-main-logo {
     display: block !important;
@@ -466,7 +466,7 @@
     font-family: 'NanumSquare', sans-serif !important;
 }
 #desktop-mode .dt-table tr:last-child td { border-bottom: none !important; }
-#desktop-mode .dt-row--urgent td { background: var(--d-urgent) !important; }
+#desktop-mode .dt-row--urgent td { background: transparent !important; }
 #desktop-mode .dt-row:hover td { background: var(--d-hover) !important; }
 #desktop-mode .dt-check-col { width: 44px !important; padding: 12px 14px !important; }
 #desktop-mode .dt-car-link { color: #FF5F00 !important; font-weight: 800 !important; text-decoration: none !important; }

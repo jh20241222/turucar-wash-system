@@ -144,23 +144,27 @@
 #desktop-mode .brand-combo-logo,
 #desktop-mode .sidebar-subtitle,
 #desktop-mode .daangn-sidebar-brand > strong,
-#desktop-mode .sidebar-brand img:not(.sb-logo-dark):not(.sb-logo-light) { display: none !important; }
+/* 로고 — 기존 요소 전부 숨기기 */
+#desktop-mode .sidebar-brand img { display: none !important; }
+#desktop-mode .brand-logo-box,
+#desktop-mode .brand-text,
+#desktop-mode .sidebar-logo,
+#desktop-mode .turu-wordmark,
+#desktop-mode .brand-combo-logo,
+#desktop-mode .sidebar-subtitle { display: none !important; }
 
-#desktop-mode .sb-main-logo {
-    display: block !important;
-    height: 26px !important;
+/* 테마별 로고 표시 */
+#desktop-mode .sb-logo-dark,
+#desktop-mode .sb-logo-light {
+    height: 30px !important;
     width: auto !important;
     object-fit: contain !important;
     max-width: 160px !important;
+    display: none !important;
 }
-#desktop-mode .sb-sub-label {
-    display: block !important;
-    font-size: 11px !important;
-    color: var(--d-sb-sub) !important;
-    font-family: 'NanumSquare', sans-serif !important;
-    font-weight: 400 !important;
-    letter-spacing: 0.02em !important;
-}
+[data-theme="dark"] #desktop-mode .sb-logo-dark { display: block !important; }
+[data-theme="light"] #desktop-mode .sb-logo-light { display: block !important; }
+#desktop-mode .sb-sub-label { display: none !important; }
 
 /* 네비 */
 #desktop-mode .side-nav {

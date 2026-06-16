@@ -26,6 +26,11 @@
         <button type="button" class="turu-date-nav-btn-v25" onclick="moveDate(1)" aria-label="다음 날짜">›</button>
     </section>
 
+    <div class="mv-stat-cards-row">
+        <div class="mv-stat-card-item"><span>세차 대상</span><strong>{{ total_target_count }}</strong></div>
+        <div class="mv-stat-card-item"><span>완료</span><strong>{{ completed_count }}</strong></div>
+    </div>
+
     {# ── 커스텀 달력 팝업 ── #}
     <div class="notice-modal-backdrop" id="cal-backdrop" hidden onclick="closeCalendar()">
         <div class="turu-mini-modal" style="padding:24px;max-width:320px;" onclick="event.stopPropagation()">

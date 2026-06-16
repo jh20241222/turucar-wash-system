@@ -23,6 +23,11 @@
         <button type="button" class="turu-date-nav-btn-v25" onclick="statusMoveDate(1)" aria-label="다음 날짜">›</button>
     </section>
 
+    <div class="mv-stat-cards-row">
+        <div class="mv-stat-card-item"><span>오늘 완료</span><strong>{{ today_completed_count }}</strong></div>
+        <div class="mv-stat-card-item"><span>전체 완료</span><strong>{{ total_completed_count }}</strong></div>
+    </div>
+
     {# ── 달력 팝업 ── #}
     <div class="notice-modal-backdrop" id="status-cal-backdrop" hidden onclick="closeStatusCalendar()">
         <div class="turu-mini-modal" style="padding:24px;max-width:320px;" onclick="event.stopPropagation()">

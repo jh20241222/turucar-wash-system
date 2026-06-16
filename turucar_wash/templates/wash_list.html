@@ -13,22 +13,18 @@
 
     <section class="turu-date-summary-card-v37">
         <button type="button" class="turu-date-nav-btn-v25" onclick="moveDate(-1)" aria-label="이전 날짜">‹</button>
-        <div onclick="toggleCalendar()" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 8px;cursor:pointer;">
-            <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.04em;margin-bottom:3px;">세차일</span>
-            <strong style="font-size:18px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ selected_date }}</strong>
+        <div class="turu-date-summary-main-v37">
+            <div class="turu-date-summary-copy-v37" onclick="toggleCalendar()" style="cursor:pointer;">
+                <span>세차일</span>
+                <strong>{{ selected_date }}</strong>
+            </div>
+            <div class="turu-date-summary-stats-v37">
+                <div><span>세차 대상</span><strong>{{ total_target_count }}</strong></div>
+                <div><span>완료</span><strong>{{ completed_count }}</strong></div>
+            </div>
         </div>
         <button type="button" class="turu-date-nav-btn-v25" onclick="moveDate(1)" aria-label="다음 날짜">›</button>
     </section>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 16px 0;">
-        <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;">
-            <span style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);">세차 대상</span>
-            <strong style="font-size:22px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ total_target_count }}</strong>
-        </div>
-        <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;">
-            <span style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);">완료</span>
-            <strong style="font-size:22px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ completed_count }}</strong>
-        </div>
-    </div>
 
     {# ── 커스텀 달력 팝업 ── #}
     <div class="notice-modal-backdrop" id="cal-backdrop" hidden onclick="closeCalendar()">

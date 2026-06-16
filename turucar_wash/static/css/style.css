@@ -8175,3 +8175,20 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
     max-height: 110px !important;
     overflow: hidden !important;
 }
+
+/* ── 완료현황 날짜 네비 (세차오더와 동일) ── */
+@media (min-width: 0px) {
+  .turu-status-page-v37 .turu-date-summary-card-v37{display:grid;grid-template-columns:38px minmax(0,1fr) 38px;gap:8px;align-items:stretch;background:rgba(255,255,255,.97);border:1px solid var(--turu-line);border-radius:24px;padding:8px;box-shadow:none;margin:0 0 14px;}
+  .turu-status-page-v37 .turu-date-summary-main-v37{display:grid;grid-template-columns:minmax(0,1fr) 1fr;gap:10px;align-items:stretch;}
+  .turu-status-page-v37 .turu-date-summary-copy-v37,
+  .turu-status-page-v37 .turu-date-summary-stats-v37{background:#fff;border:1px solid var(--turu-line-soft);border-radius:18px;min-height:74px;}
+  .turu-status-page-v37 .turu-date-summary-copy-v37{display:flex;flex-direction:column;justify-content:center;padding:12px 14px;}
+  .turu-status-page-v37 .turu-date-summary-copy-v37 span{font-size:12px;font-weight:700;color:#8492a5;margin-bottom:6px;}
+  .turu-status-page-v37 .turu-date-summary-copy-v37 strong{font-size:20px;line-height:1.1;font-weight:800;color:var(--turu-text);letter-spacing:-.03em;}
+  .turu-status-page-v37 .turu-date-summary-stats-v37{display:grid;grid-template-columns:1fr 1fr;overflow:hidden;}
+  .turu-status-page-v37 .turu-date-summary-stats-v37 > div{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:10px 8px;}
+  .turu-status-page-v37 .turu-date-summary-stats-v37 > div + div{border-left:1px solid var(--turu-line-soft);}
+  .turu-status-page-v37 .turu-date-summary-stats-v37 span{font-size:11px;font-weight:700;color:#8492a5;margin-bottom:6px;text-align:center;}
+  .turu-status-page-v37 .turu-date-summary-stats-v37 strong{font-size:20px;font-weight:800;color:var(--turu-text);line-height:1;}
+  .turu-status-page-v37 .turu-date-summary-card-v37 .turu-date-nav-btn-v25{align-self:center;}
+}

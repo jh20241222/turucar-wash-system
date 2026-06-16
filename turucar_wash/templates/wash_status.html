@@ -10,22 +10,24 @@
 
     <section class="turu-date-summary-card-v37">
         <button type="button" class="turu-date-nav-btn-v25" onclick="statusMoveDate(-1)" aria-label="이전 날짜">‹</button>
-        <div class="turu-date-summary-copy-v37" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px;border-radius:16px;">
-            <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.04em;margin-bottom:4px;">완료일</span>
-            <strong style="font-size:20px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ start if start else today }}</strong>
+        <div style="flex:1;display:flex;flex-direction:column;gap:8px;padding:8px 0;">
+            <div style="display:flex;flex-direction:column;align-items:center;background:var(--color-background-secondary);border-radius:12px;padding:10px 8px;">
+                <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.04em;margin-bottom:4px;">완료일</span>
+                <strong style="font-size:20px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ start if start else today }}</strong>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                <div style="display:flex;flex-direction:column;align-items:center;background:var(--color-background-secondary);border-radius:12px;padding:10px 8px;">
+                    <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.03em;margin-bottom:4px;">오늘 완료</span>
+                    <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ today_completed_count }}</strong>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;background:var(--color-background-secondary);border-radius:12px;padding:10px 8px;">
+                    <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.03em;margin-bottom:4px;">전체 완료</span>
+                    <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ total_completed_count }}</strong>
+                </div>
+            </div>
         </div>
         <button type="button" class="turu-date-nav-btn-v25" onclick="statusMoveDate(1)" aria-label="다음 날짜">›</button>
     </section>
-    <div style="display:grid;grid-template-columns:1fr 1fr;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:16px;margin:8px 16px 0;overflow:hidden;">
-        <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;">
-            <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.03em;margin-bottom:4px;">오늘 완료</span>
-            <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ today_completed_count }}</strong>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;border-left:0.5px solid var(--color-border-tertiary);">
-            <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.03em;margin-bottom:4px;">전체 완료</span>
-            <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ total_completed_count }}</strong>
-        </div>
-    </div>
 
     <div class="turu-searchbar-v24 turu-status-searchbar-v29 turu-status-searchbar-v37">
         <input id="quick_status_search_input" placeholder="차량 번호 / 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">
@@ -232,12 +234,11 @@ function confirmSelectedDelete(formId,message){const form=document.getElementByI
 
 const _statusDate = "{{ start if start else today }}";
 function statusMoveDate(delta){
-    const d=new Date((_statusDate||new Date().toISOString().slice(0,10))+'T00:00:00');
-    d.setDate(d.getDate()+delta);
-    const nd=d.toISOString().slice(0,10);
-    const p=new URLSearchParams(window.location.search);
-    p.set('start',nd);p.set('end',nd);
-    window.location.search=p.toString();
+    const base = _statusDate || new Date().toISOString().slice(0,10);
+    const d = new Date(base + 'T00:00:00');
+    d.setDate(d.getDate() + delta);
+    const nd = d.toISOString().slice(0,10);
+    window.location.href = window.location.pathname + '?start=' + nd + '&end=' + nd;
 }
 </script>
 {% endblock %}

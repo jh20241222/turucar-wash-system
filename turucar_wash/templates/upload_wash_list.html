@@ -98,7 +98,7 @@ document.getElementById('band_file')?.addEventListener('change',e=>{const f=e.ta
     <div class="d-card">
         <div class="d-card-head"><div><span class="d-eyebrow">01 Upload</span><h2>오더 업로드</h2></div><span class="d-badge-pill">.xlsx</span></div>
         <div class="d-card-body">
-            <form method="POST" enctype="multipart/form-data">
+            <form method="POST" action="{{ url_for('upload_wash_list') }}" enctype="multipart/form-data">
                 <div class="d-fg"><label class="d-label">세차일자</label><input type="date" name="wash_date" class="d-input" required></div>
                 <div class="d-fg">
                     <label class="d-label" for="d-file">엑셀 파일</label>

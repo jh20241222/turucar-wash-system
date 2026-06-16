@@ -325,12 +325,7 @@
     box-shadow: none !important; box-sizing: border-box !important;
 }
 
-/* 테이블 내부를 흰 카드로 */
-#desktop-mode .desktop-table > *,
-#desktop-mode .turu-desktop-table-v24 > *,
-#desktop-mode .turu-status-desktop > * {
-    background: var(--d-surface) !important;
-}
+
 
 /* toolbar + table-scroll을 흰 카드로 감싸기 */
 #desktop-mode .dt-toolbar {
@@ -339,6 +334,9 @@
     border-bottom: none !important;
     background: var(--d-surface) !important;
 }
+/* 테이블 전체 배경 d-surface로 통일 */
+#desktop-mode .dt-table thead tr { background: var(--d-th) !important; }
+#desktop-mode .dt-table tbody { background: var(--d-surface) !important; }
 #desktop-mode .dt-filterbar {
     border-left: 1px solid var(--d-border) !important;
     border-right: 1px solid var(--d-border) !important;

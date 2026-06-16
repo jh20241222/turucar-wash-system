@@ -8192,3 +8192,83 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   .turu-status-page-v37 .turu-date-summary-stats-v37 strong{font-size:20px;font-weight:800;color:var(--turu-text);line-height:1;}
   .turu-status-page-v37 .turu-date-summary-card-v37 .turu-date-nav-btn-v25{align-self:center;}
 }
+
+
+/* ══ 세차오더/완료현황 날짜+통계 분리 카드 ══ */
+
+/* 날짜 카드 단독 (copy) */
+.turu-order-page-v37 .turu-date-summary-main-v37,
+.turu-status-page-v37 .turu-date-summary-main-v37 {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+}
+
+.turu-order-page-v37 .turu-date-summary-copy-v37,
+.turu-status-page-v37 .turu-date-summary-copy-v37 {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 10px 8px !important;
+    min-height: unset !important;
+    border-radius: 16px !important;
+    background: #fff !important;
+    border: 1px solid var(--turu-line-soft) !important;
+}
+.turu-order-page-v37 .turu-date-summary-copy-v37 span,
+.turu-status-page-v37 .turu-date-summary-copy-v37 span {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    color: #8492a5 !important;
+    margin-bottom: 3px !important;
+}
+.turu-order-page-v37 .turu-date-summary-copy-v37 strong,
+.turu-status-page-v37 .turu-date-summary-copy-v37 strong {
+    font-size: 18px !important;
+    font-weight: 900 !important;
+    line-height: 1.1 !important;
+    letter-spacing: -.02em !important;
+    color: var(--turu-text) !important;
+}
+
+/* 통계 카드 */
+.turu-order-page-v37 .turu-date-summary-stats-v37,
+.turu-status-page-v37 .turu-date-summary-stats-v37 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+    min-height: unset !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+}
+.turu-order-page-v37 .turu-date-summary-stats-v37 > div,
+.turu-status-page-v37 .turu-date-summary-stats-v37 > div {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 10px 12px !important;
+    background: #fff !important;
+    border: 1px solid var(--turu-line-soft) !important;
+    border-radius: 16px !important;
+}
+.turu-order-page-v37 .turu-date-summary-stats-v37 > div + div,
+.turu-status-page-v37 .turu-date-summary-stats-v37 > div + div {
+    border-left: 1px solid var(--turu-line-soft) !important;
+}
+.turu-order-page-v37 .turu-date-summary-stats-v37 span,
+.turu-status-page-v37 .turu-date-summary-stats-v37 span {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: #8492a5 !important;
+    margin-bottom: 0 !important;
+}
+.turu-order-page-v37 .turu-date-summary-stats-v37 strong,
+.turu-status-page-v37 .turu-date-summary-stats-v37 strong {
+    font-size: 22px !important;
+    font-weight: 900 !important;
+    color: var(--turu-text) !important;
+    line-height: 1 !important;
+}

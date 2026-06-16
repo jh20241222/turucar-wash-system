@@ -603,3 +603,8 @@
     .turu-order-card-v24 { gap: 0 !important; }
     .turu-card-copy-v24 { padding-left: 0 !important; }
 }
+
+
+/* 모바일 날짜/통계 카드 — 데스크탑에서 숨김 */
+#desktop-mode .mob-date-card { display: none !important; }
+#desktop-mode .mob-stat-cards { display: none !important; }

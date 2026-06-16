@@ -8004,10 +8004,8 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 
 
 /* ══════════════════════════════════════
-   TURU WASH — 최종 수정 (중복 없음)
+   TURU WASH — 최종
 ══════════════════════════════════════ */
-
-/* 카드 아이콘 숨기기 + 레이아웃 */
 .turu-car-thumb-v24 { display: none !important; }
 .turu-order-card-v24 {
     grid-template-columns: minmax(0,1fr) 18px !important;
@@ -8015,14 +8013,7 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
     min-height: unset !important;
     padding: 14px !important;
 }
-
-/* 데스크탑 요소 모바일 숨김 */
 .desktop-sidebar { display: none !important; }
 .dt-topnav { display: none !important; }
-
-/* 데스크탑에서만 표시 */
 #desktop-mode .desktop-sidebar { display: flex !important; }
 #desktop-mode .dt-topnav { display: flex !important; }
-
-/* 모바일 전용 카드 — 데스크탑에서 숨김 */
-#desktop-mode .mobile-only-card { display: none !important; }

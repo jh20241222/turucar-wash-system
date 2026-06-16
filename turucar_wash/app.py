@@ -809,10 +809,12 @@ def my_vehicles():
     urgent_count = sum(1 for v in vehicles if (v["세차경과일"] or 0) >= 14)
     regular_count = total - urgent_count
 
+    vehicles_list = [dict(v) for v in vehicles]
+
     return render_template(
         "my_vehicles.html",
         region_rows=region_rows,
-        vehicles=vehicles,
+        vehicles=vehicles_list,
         region_stats=region_stats,
         total=total,
         urgent_count=urgent_count,
@@ -1444,7 +1446,7 @@ def upload_vehicle_master():
         df = pd.read_excel(file)
         df.columns = df.columns.str.strip()
 
-        required = ["차량번호", "차종명", "차량소속", "현재스팟명", "현재스팟주소", "지역(시/도)", "지역(구/군)", "담당업체"]
+        required = ["차량번호", "차종명", "차량소속"]
         for col in required:
             if col not in df.columns:
                 flash(f"❌ '{col}' 컬럼이 없습니다.")
@@ -1460,6 +1462,10 @@ def upload_vehicle_master():
             차량번호 = str(r["차량번호"]).strip()
             if not 차량번호 or 차량번호.lower() == "nan":
                 continue
+            # 스팟/지역 없는 행 스킵
+            스팟체크 = str(r.get("현재스팟명", "")).strip()
+            if not 스팟체크 or 스팟체크.lower() == "nan":
+                continue
 
             차대번호 = str(r.get("차대번호", "")).strip() or None
             차종명 = str(r.get("차종명", "")).strip() or None
@@ -1468,9 +1474,10 @@ def upload_vehicle_master():
             주소 = str(r.get("현재스팟주소", "")).strip() or None
             지역시도 = str(r.get("지역(시/도)", "")).strip() or None
             지역구군 = str(r.get("지역(구/군)", "")).strip() or None
-            담당업체 = str(r.get("담당업체", "")).strip() or None
+            담당업체_raw = r.get("담당업체", None)
+            담당업체 = str(담당업체_raw).strip() if 담당업체_raw and str(담당업체_raw).strip().lower() not in ("nan", "") else None
 
-            최근세차일_raw = r.get("최근세차일", None)
+            최근세차일_raw = r.get("최근세차일", None) or r.get("세차일", None)
             최근세차일 = None
             if 최근세차일_raw and str(최근세차일_raw).strip().lower() not in ("nan", ""):
                 최근세차일 = str(최근세차일_raw).strip()

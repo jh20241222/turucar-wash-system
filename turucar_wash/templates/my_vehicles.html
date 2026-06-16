@@ -98,25 +98,28 @@ function renderGroups(){
     // 차량 많은 순 정렬
     const sorted=Object.entries(groups).sort((a,b)=>b[1].length-a[1].length);
 
-    let html='<div style="padding-top:10px;">';
+    let html='<div style="padding:8px 16px 16px;">';
     sorted.forEach(([spot, cars])=>{
-        html+=`<div class="mv-spot-group">
-            <div class="mv-spot-head">
-                <span class="mv-spot-name">${spot}</span>
-                <span class="mv-spot-cnt">${cars.length}대</span>
+        html+=`<div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;overflow:hidden;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:0.5px solid #e5e5e5;">
+                <span style="font-size:13px;font-weight:800;color:#111;font-family:'NanumSquare',sans-serif;">${spot}</span>
+                <span style="font-size:11px;font-weight:700;color:#aaa;background:#f5f5f5;padding:2px 8px;border-radius:20px;">${cars.length}대</span>
             </div>`;
-        cars.forEach(v=>{
+        cars.forEach((v,i)=>{
             const elapsed=v['세차경과일']||0;
             const isUrg=elapsed>=14;
-            html+=`<div class="mv-car-row${isUrg?' urg':''}">
-                <div class="mv-car-info">
-                    <div class="mv-car-top">
-                        <span class="mv-car-num">${v['차량번호']||'-'}</span>
-                        <span class="mv-car-org">${v['차량소속']||''}</span>
+            const bl=i<cars.length-1?'border-bottom:0.5px solid #f5f5f5;':'';
+            const ul=isUrg?'border-left:3px solid #D85A30;':'';
+            const chipBg=isUrg?'background:#FAECE7;color:#993C1D;':'background:#f0f0f0;color:#888;';
+            html+=`<div style="display:flex;align-items:center;padding:11px 14px;gap:10px;${bl}${ul}">
+                <div style="flex:1;min-width:0;">
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+                        <span style="font-size:14px;font-weight:900;color:#111;font-family:'NanumSquare',sans-serif;">${v['차량번호']||'-'}</span>
+                        <span style="font-size:12px;font-weight:600;color:#555;">${v['차량소속']||''}</span>
                     </div>
-                    <div class="mv-car-model">${v['차종명']||'-'}</div>
+                    <div style="font-size:11px;color:#aaa;">${v['차종명']||'-'}</div>
                 </div>
-                <span class="mv-chip ${isUrg?'mv-chip-urg':'mv-chip-day'}">D+${elapsed}</span>
+                <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;flex-shrink:0;${chipBg}">D+${elapsed}</span>
             </div>`;
         });
         html+='</div>';

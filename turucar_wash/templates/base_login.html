@@ -16,7 +16,7 @@
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="login-page">
+<body class="login-page" style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f4f6f8;">
     {% block content %}{% endblock %}
     <button type="button" class="install-chip pwa-install login-install-btn" hidden>앱 설치</button>
     <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>

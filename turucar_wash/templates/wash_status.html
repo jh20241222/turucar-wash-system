@@ -8,7 +8,7 @@
         <div><h1>완료 현황</h1><p>완료된 세차 기록을 확인합니다.</p></div>
     </div>
 
-    <div class="mob-date-card" style="background:var(--color-background-primary);border:1px solid var(--color-border-secondary);border-radius:18px;padding:6px;margin-bottom:8px;display:flex;align-items:center;gap:4px;">
+    <div style="background:var(--color-background-primary);border:1px solid var(--color-border-secondary);border-radius:18px;padding:6px;margin-bottom:8px;display:flex;align-items:center;gap:4px;">
         <button onclick="statusMoveDate(-1)" style="width:38px;height:38px;border:none;border-radius:12px;background:#FFF2E9;color:#FF5F00;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;">‹</button>
         <div onclick="toggleStatusCalendar()" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 0;cursor:pointer;">
             <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.04em;margin-bottom:3px;">완료일</span>
@@ -16,7 +16,7 @@
         </div>
         <button onclick="statusMoveDate(1)" style="width:38px;height:38px;border:none;border-radius:12px;background:#FFF2E9;color:#FF5F00;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;">›</button>
     </div>
-    <div class="mob-stat-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
         <div style="background:var(--color-background-primary);border:1px solid var(--color-border-secondary);border-radius:14px;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;">
             <span style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);">오늘 완료</span>
             <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ today_completed_count }}</strong>
@@ -93,8 +93,7 @@
         <div class="turu-delete-item-v24">
             {% if current_user.is_master %}<label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>{% endif %}
             <article class="turu-order-card-v24 turu-complete-card-v24">
-                <div class="turu-car-thumb-v24"><img src="{{ url_for('static', filename='img/icon-complete.png') }}" alt=""></div>
-                <div class="turu-card-copy-v24">
+<div class="turu-card-copy-v24">
                     <div class="turu-card-title-v24"><strong>{{ r['차량번호'] }}</strong><em class="chip-green">완료</em></div>
                     <p><span>📍</span>{{ r['스팟'] or '-' }}{% if r['작업자'] %} | {{ r['작업자'] }}{% endif %}</p>
                     <p><span>🗓</span>{{ r['세차완료일'] or '-' }}</p>

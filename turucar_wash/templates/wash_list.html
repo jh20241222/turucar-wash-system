@@ -11,7 +11,7 @@
         </div>
     </div>
 
-    <div style="background:var(--color-background-primary);border:1px solid var(--color-border-secondary);border-radius:18px;padding:6px;margin-bottom:8px;display:flex;align-items:center;gap:4px;">
+    <div class="mob-date-card" style="background:var(--color-background-primary);border:1px solid var(--color-border-secondary);border-radius:18px;padding:6px;margin-bottom:8px;display:flex;align-items:center;gap:4px;">
         <button onclick="moveDate(-1)" style="width:38px;height:38px;border:none;border-radius:12px;background:#FFF2E9;color:#FF5F00;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;">‹</button>
         <div onclick="toggleCalendar()" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 0;cursor:pointer;">
             <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.04em;margin-bottom:3px;">세차일</span>
@@ -19,7 +19,7 @@
         </div>
         <button onclick="moveDate(1)" style="width:38px;height:38px;border:none;border-radius:12px;background:#FFF2E9;color:#FF5F00;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;">›</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+    <div class="mob-stat-row" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
         <div style="background:var(--color-background-primary);border:1px solid var(--color-border-secondary);border-radius:14px;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;">
             <span style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);">세차 대상</span>
             <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ total_target_count }}</strong>

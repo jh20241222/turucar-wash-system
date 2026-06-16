@@ -262,7 +262,7 @@
                 {% set elapsed = item.elapsed %}
                 <tr class="dt-row {% if elapsed >= 14 %}dt-row--urgent{% endif %}" data-type="{% if elapsed >= 14 %}urgent{% else %}regular{% endif %}">
                     {% if current_user.is_master %}<td class="dt-check-col"><input type="checkbox" name="ids" value="{{ r['id'] }}"></td>{% endif %}
-                    <td><a class="dt-car-link" href="{{ url_for('car_detail', id=r['id']) }}">{{ r['차량번호'] }}</a></td>
+                    <td style="font-weight:800;">{{ r['차량번호'] }}</td>
                     <td>{{ r['차종명'] or '-' }}</td>
                     <td>{{ r['차량소속'] or '-' }}</td>
                     <td>{{ r['스팟'] or '-' }}</td>

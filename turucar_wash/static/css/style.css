@@ -8162,3 +8162,16 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
     overflow: hidden !important;
     text-overflow: ellipsis !important;
 }
+
+/* 내 담당 차량 카드 너비 균일 */
+.mv-item.turu-delete-item-v24 {
+    grid-template-columns: 1fr !important;
+}
+.mv-item .turu-order-card-v24 {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    height: 110px !important;
+    min-height: 110px !important;
+    max-height: 110px !important;
+    overflow: hidden !important;
+}

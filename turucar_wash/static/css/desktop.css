@@ -109,6 +109,7 @@
     height: 100vh !important;
     background: var(--d-sb-bg) !important;
     border-right: 1px solid var(--d-sb-border) !important;
+    box-sizing: border-box !important;
     box-shadow: none !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
@@ -258,7 +259,8 @@
 #desktop-mode .dt-topnav {
     display: flex !important; align-items: center !important;
     justify-content: space-between !important;
-    padding: 0 28px 0 22px !important; height: 60px !important;
+    padding: 0 28px 0 20px !important; height: 60px !important;
+    box-sizing: border-box !important;
     border-bottom: 1px solid var(--d-border) !important;
     background: var(--d-topbar) !important;
     flex-shrink: 0 !important; position: sticky !important; top: 0 !important; z-index: 50 !important;

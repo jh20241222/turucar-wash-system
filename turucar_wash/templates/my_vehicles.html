@@ -1,22 +1,20 @@
 {% extends "base.html" %}
 {% block document_title %}Turu Wash · 내 담당 차량{% endblock %}
 {% block content %}
-<section class="turu-app-page-v24">
+<section class="turu-app-page-v24 mv-page">
     <header class="turu-page-brand-v24"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
-    <div class="turu-page-head-v24"><div><h1>내 담당 차량</h1></div></div>
+    <div class="turu-page-head-v24"><h1>내 담당 차량</h1></div>
 
-    {# 총 차량 — 중앙 정렬 #}
-    <div class="mv-total-bar">
-        <div class="mv-total-label">총 차량</div>
-        <div class="mv-total-val">{{ total }}<span>대</span></div>
+    <div class="mv-stat-card">
+        <div class="mv-stat-label">총 차량</div>
+        <div class="mv-stat-val">{{ total }}<span>대</span></div>
     </div>
 
-    {# 담당 지역별 대수 #}
     {% if region_stats %}
-    <div class="mv-region-section">
+    <div class="mv-region-card">
         <div class="mv-region-section-head">담당 지역</div>
         {% for r in region_stats %}
-        <div class="mv-region-row" onclick="filterByRegion('{{ r.city }} {{ r.district }}', this)">
+        <div class="mv-region-row" onclick="filterRegion('{{ r.city }} {{ r.district }}', this)">
             <span class="mv-region-name">{{ r.city }} {{ r.district }}</span>
             <span class="mv-region-cnt">{{ r.total }}대 ›</span>
         </div>
@@ -24,95 +22,110 @@
     </div>
     {% endif %}
 
-    {# 검색 #}
-    <div class="turu-searchbar-v24" style="margin-top:0;">
-        <input id="mv-search" placeholder="차량번호, 스팟, 차량소속 검색" oninput="filterVehicles()">
-        <button type="button" onclick="filterVehicles()" aria-label="검색">
-            <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+    <div class="turu-searchbar-v24">
+        <input id="mv-search" placeholder="차량번호, 스팟, 차량소속 검색" oninput="renderGroups()">
+        <button type="button" onclick="renderGroups()" aria-label="검색">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
         </button>
     </div>
 
-    {# 차량 카드 목록 #}
-    <div class="turu-card-list-v24" id="mv-list">
-        {% if vehicles %}
-            {% for v in vehicles %}
-            {% set elapsed = v["세차경과일"] or 0 %}
-            <div class="mv-item turu-delete-item-v24"
-                 data-search="{{ v['차량번호'] }} {{ v['스팟'] }} {{ v['차량소속'] }}"
-                 data-region="{{ v['지역시도'] }} {{ v['지역구군'] }}">
-                <a href="{{ url_for('wash_list') }}?s={{ v['차량번호'] }}" class="turu-order-card-v24 {% if elapsed >= 14 %}turu-order-card--urgent{% endif %}">
-                    <div class="turu-card-copy-v24">
-                        <div class="turu-card-title-v24">
-                            <strong>{{ v['차량번호'] }}</strong>
-                            <em class="chip-day {% if elapsed >= 14 %}chip-day--urgent{% elif elapsed == 0 %}chip-day--new{% endif %}">D+{{ elapsed }}</em>
-                        </div>
-                        <p><span>🚗</span>{{ v['차종명'] or '-' }} · {{ v['차량소속'] or '-' }}</p>
-                        <p><span>📍</span>{{ v['스팟'] or '-' }}</p>
-                        <p><span>📌</span>{{ v['지역시도'] }} {{ v['지역구군'] }}</p>
-                    </div>
-                    <span class="turu-row-arrow-v24">›</span>
-                </a>
-            </div>
-            {% endfor %}
-        {% else %}
-        <div class="turu-empty-v24">
-            <strong>담당 차량이 없습니다.</strong>
-            <span>배정 지역에 등록된 차량이 없어요.</span>
-        </div>
-        {% endif %}
-    </div>
-    <p id="mv-empty" style="display:none;text-align:center;color:var(--color-text-tertiary);font-size:13px;padding:24px 0;">검색 결과가 없습니다.</p>
+    <div class="turu-card-list-v24" id="mv-list"></div>
+    <p id="mv-empty" style="display:none;text-align:center;color:var(--color-text-tertiary);font-size:13px;padding:24px 16px;">검색 결과가 없습니다.</p>
 </section>
 
 <style>
-/* 총 차량 */
-.mv-total-bar { background:var(--color-background-primary); border-bottom:0.5px solid var(--color-border-tertiary); padding:16px; text-align:center; }
-.mv-total-label { font-size:11px; font-weight:800; color:var(--color-text-tertiary); letter-spacing:.05em; text-transform:uppercase; margin-bottom:4px; }
-.mv-total-val { font-size:36px; font-weight:950; color:var(--color-text-primary); letter-spacing:-.03em; line-height:1; }
-.mv-total-val span { font-size:16px; font-weight:600; color:var(--color-text-secondary); margin-left:4px; }
-
-/* 지역별 */
-.mv-region-section { background:var(--color-background-primary); border-bottom:0.5px solid var(--color-border-tertiary); }
-.mv-region-section-head { font-size:10px; font-weight:800; color:var(--color-text-tertiary); letter-spacing:.06em; text-transform:uppercase; padding:10px 16px 4px; }
-.mv-region-row { display:flex; align-items:center; justify-content:space-between; padding:11px 16px; border-top:0.5px solid var(--color-border-tertiary); cursor:pointer; }
-.mv-region-row:first-of-type { border-top:none; }
-.mv-region-row.selected { background:var(--color-background-secondary); }
+@import url('https://cdn.jsdelivr.net/gh/moonspam/NanumSquare@2.0/nanumsquare.css');
+.mv-page, .mv-page * { font-family: 'NanumSquare', 'Apple SD Gothic Neo', sans-serif !important; }
+.mv-stat-card { background:var(--color-background-primary); border:0.5px solid var(--color-border-tertiary); border-radius:16px; padding:16px; text-align:center; margin:12px 16px 0; }
+.mv-stat-label { font-size:11px; font-weight:800; color:var(--color-text-tertiary); letter-spacing:.05em; text-transform:uppercase; margin-bottom:6px; }
+.mv-stat-val { font-size:34px; font-weight:950; color:var(--color-text-primary); letter-spacing:-.03em; line-height:1; }
+.mv-stat-val span { font-size:16px; font-weight:600; color:var(--color-text-secondary); margin-left:4px; }
+.mv-region-card { background:var(--color-background-primary); border:0.5px solid var(--color-border-tertiary); border-radius:16px; margin:10px 16px 0; overflow:hidden; }
+.mv-region-section-head { font-size:10px; font-weight:800; color:var(--color-text-tertiary); letter-spacing:.06em; text-transform:uppercase; padding:10px 14px 4px; }
+.mv-region-row { display:flex; align-items:center; justify-content:space-between; padding:11px 14px; border-top:0.5px solid var(--color-border-tertiary); cursor:pointer; }
+.mv-region-row.active { background:var(--color-background-secondary); }
 .mv-region-name { font-size:14px; font-weight:700; color:var(--color-text-primary); }
 .mv-region-cnt { font-size:13px; font-weight:700; color:var(--color-text-secondary); }
-
-/* 카드 */
-.mv-item--urgent .turu-order-card-v24 { border-left:3px solid #D85A30 !important; }
-.chip-day { background:var(--color-background-secondary); color:var(--color-text-secondary); font-size:11px; padding:2px 7px; border-radius:20px; font-style:normal; }
-.chip-day--urgent { background:#FAECE7; color:#993C1D; font-weight:700; }
-.chip-day--new { background:#E6F1FB; color:#185FA5; font-weight:700; }
+.mv-spot-group { background:var(--color-background-primary); border:0.5px solid var(--color-border-tertiary); border-radius:16px; overflow:hidden; margin:0 16px 8px; }
+.mv-spot-head { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:0.5px solid var(--color-border-tertiary); }
+.mv-spot-name { font-size:13px; font-weight:800; color:var(--color-text-primary); }
+.mv-spot-cnt { font-size:11px; font-weight:700; color:var(--color-text-tertiary); background:var(--color-background-secondary); padding:2px 8px; border-radius:20px; }
+.mv-car-row { display:flex; align-items:center; padding:10px 14px; border-bottom:0.5px solid var(--color-border-tertiary); gap:10px; }
+.mv-car-row:last-child { border-bottom:none; }
+.mv-car-row.urg { border-left:3px solid #D85A30; }
+.mv-car-info { flex:1; min-width:0; }
+.mv-car-top { display:flex; align-items:center; gap:6px; margin-bottom:3px; }
+.mv-car-num { font-size:14px; font-weight:900; color:var(--color-text-primary); }
+.mv-car-org { font-size:12px; font-weight:600; color:var(--color-text-secondary); }
+.mv-car-model { font-size:11px; color:var(--color-text-tertiary); }
+.mv-chip { font-size:10px; font-weight:700; padding:2px 7px; border-radius:20px; flex-shrink:0; }
+.mv-chip-urg { background:#FAECE7; color:#993C1D; }
+.mv-chip-day { background:var(--color-background-secondary); color:var(--color-text-secondary); }
 </style>
 
 <script>
-let curRegion = '';
-function filterByRegion(region, el) {
-    if (curRegion === region) {
-        curRegion = '';
-        document.querySelectorAll('.mv-region-row').forEach(r => r.classList.remove('selected'));
-    } else {
-        curRegion = region;
-        document.querySelectorAll('.mv-region-row').forEach(r => r.classList.remove('selected'));
-        el.classList.add('selected');
-    }
-    filterVehicles();
+const _vehicles = {{ vehicles | tojson }};
+let _curRegion = '';
+
+function filterRegion(region, el){
+    if(_curRegion === region){ _curRegion=''; document.querySelectorAll('.mv-region-row').forEach(r=>r.classList.remove('active')); }
+    else { _curRegion=region; document.querySelectorAll('.mv-region-row').forEach(r=>r.classList.remove('active')); el.classList.add('active'); }
+    renderGroups();
 }
-function filterVehicles() {
-    const q = (document.getElementById('mv-search').value || '').toLowerCase();
-    const items = document.querySelectorAll('.mv-item');
-    let visible = 0;
-    items.forEach(item => {
-        const matchQ = !q || item.dataset.search.toLowerCase().includes(q);
-        const matchR = !curRegion || item.dataset.region === curRegion;
-        const show = matchQ && matchR;
-        item.style.display = show ? '' : 'none';
-        if (show) visible++;
+
+function renderGroups(){
+    const q=(document.getElementById('mv-search').value||'').toLowerCase();
+    const list=document.getElementById('mv-list');
+    const empty=document.getElementById('mv-empty');
+
+    let filtered=_vehicles.filter(v=>{
+        const matchQ=!q||(v['차량번호']||'').toLowerCase().includes(q)||(v['스팟']||'').toLowerCase().includes(q)||(v['차량소속']||'').toLowerCase().includes(q);
+        const matchR=!_curRegion||((v['지역시도']||'')+' '+(v['지역구군']||'')).trim()===_curRegion;
+        return matchQ && matchR;
     });
-    document.getElementById('mv-empty').style.display = visible === 0 ? 'block' : 'none';
+
+    if(filtered.length===0){ list.innerHTML=''; empty.style.display='block'; return; }
+    empty.style.display='none';
+
+    // 스팟별 그룹핑
+    const groups={};
+    filtered.forEach(v=>{
+        const spot=v['스팟']||'스팟 미지정';
+        if(!groups[spot]) groups[spot]=[];
+        groups[spot].push(v);
+    });
+
+    // 차량 많은 순 정렬
+    const sorted=Object.entries(groups).sort((a,b)=>b[1].length-a[1].length);
+
+    let html='<div style="padding-top:10px;">';
+    sorted.forEach(([spot, cars])=>{
+        html+=`<div class="mv-spot-group">
+            <div class="mv-spot-head">
+                <span class="mv-spot-name">${spot}</span>
+                <span class="mv-spot-cnt">${cars.length}대</span>
+            </div>`;
+        cars.forEach(v=>{
+            const elapsed=v['세차경과일']||0;
+            const isUrg=elapsed>=14;
+            html+=`<div class="mv-car-row${isUrg?' urg':''}">
+                <div class="mv-car-info">
+                    <div class="mv-car-top">
+                        <span class="mv-car-num">${v['차량번호']||'-'}</span>
+                        <span class="mv-car-org">${v['차량소속']||''}</span>
+                    </div>
+                    <div class="mv-car-model">${v['차종명']||'-'}</div>
+                </div>
+                <span class="mv-chip ${isUrg?'mv-chip-urg':'mv-chip-day'}">D+${elapsed}</span>
+            </div>`;
+        });
+        html+='</div>';
+    });
+    html+='</div>';
+    list.innerHTML=html;
 }
+
+document.addEventListener('DOMContentLoaded', renderGroups);
 </script>
 
 {# ── 데스크탑 전용 ── #}
@@ -158,6 +171,6 @@ function filterVehicles() {
 </div>
 <style>
 #desktop-mode #d-mv { display: block !important; }
-#desktop-mode .turu-app-page-v24 { display: none !important; }
+#desktop-mode .mv-page { display: none !important; }
 </style>
 {% endblock %}

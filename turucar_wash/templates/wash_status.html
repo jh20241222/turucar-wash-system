@@ -228,75 +228,6 @@
 </style>
 
 <script>
-function buildStatusParams(){return new URLSearchParams({s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("car_org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:"",start:document.getElementById("start").value,end:document.getElementById("end").value});}
-function applyFilter(){window.location.href=`/wash_status?${buildStatusParams().toString()}`;}
-function downloadExcel(){window.location.href=`/wash_status_excel?${buildStatusParams().toString()}`;}
-function dtApplyStatusFilter(){
-    document.getElementById('search_input').value = document.getElementById('dt_search_s').value;
-    document.getElementById('region1').value = document.getElementById('dt_region1_s').value;
-    document.getElementById('region2').value = document.getElementById('dt_region2_s').value;
-    document.getElementById('car_org').value = document.getElementById('dt_org_s').value;
-    document.getElementById('spot').value = document.getElementById('dt_spot_s').value;
-    const dv=document.getElementById('dt_vendor_s'); const v=document.getElementById('vendor'); if(dv&&v) v.value=dv.value;
-    document.getElementById('start').value = document.getElementById('dt_start_s').value;
-    document.getElementById('end').value = document.getElementById('dt_end_s').value;
-    applyFilter();
-}
-function focusPeriodRange(){setTimeout(function(){const start=document.getElementById('start');if(start){start.focus();}},120);}
-function openMobileFilter(id){const el=document.getElementById(id);const backdrop=document.getElementById('mobile-filter-backdrop');if(el){el.classList.add('open');el.style.display='block';el.style.visibility='visible';el.style.opacity='1';}if(backdrop){backdrop.classList.add('open');}document.body.classList.add('filter-sheet-open');}
-function closeMobileFilter(id){const el=document.getElementById(id);const backdrop=document.getElementById('mobile-filter-backdrop');if(el){el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';}if(backdrop){backdrop.classList.remove('open');}document.body.classList.remove('filter-sheet-open');}
-function closeAnyMobileFilter(){document.querySelectorAll('.mobile-filter-sheet.open').forEach(el=>{el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';});const backdrop=document.getElementById('mobile-filter-backdrop');if(backdrop){backdrop.classList.remove('open');}document.body.classList.remove('filter-sheet-open');}
-document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAnyMobileFilter();}});
-function toggleDeleteMode(formId,force){const form=document.getElementById(formId);if(!form){return;}const next=typeof force==="boolean"?force:!form.classList.contains("delete-mode");form.classList.toggle("delete-mode",next);if(!next){form.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);}}
-function toggleAllDelete(master,formId){const form=document.getElementById(formId);if(!form){return;}form.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=master.checked);}
-function confirmSelectedDelete(formId,message){const form=document.getElementById(formId);const count=form?form.querySelectorAll('input[name="ids"]:checked').length:0;if(count<1){alert("삭제할 항목을 선택해주세요.");return false;}return confirm(message||"선택한 항목을 삭제할까요?");}
-
-const _statusDate = "{{ start if start else today }}";
-
-function statusMoveDate(delta){
-    const base = _statusDate || new Date().toISOString().slice(0,10);
-    const d = new Date(base + 'T00:00:00');
-    d.setDate(d.getDate() + delta);
-    const nd = d.toISOString().slice(0,10);
-    window.location.href = window.location.pathname + '?start=' + nd + '&end=' + nd;
-}
-
-let _statusCalYear, _statusCalMonth;
-function toggleStatusCalendar(){
-    const bd = document.getElementById('status-cal-backdrop');
-    if(!bd) return;
-    const base = _statusDate || new Date().toISOString().slice(0,10);
-    const d = new Date(base + 'T00:00:00');
-    _statusCalYear = d.getFullYear();
-    _statusCalMonth = d.getMonth();
-    renderStatusCal();
-    bd.hidden = false;
-}
-function closeStatusCalendar(){ document.getElementById('status-cal-backdrop').hidden = true; }
-function statusCalChangeMonth(delta){ _statusCalMonth += delta; if(_statusCalMonth>11){_statusCalMonth=0;_statusCalYear++;}else if(_statusCalMonth<0){_statusCalMonth=11;_statusCalYear--;} renderStatusCal(); }
-function renderStatusCal(){
-    const title = document.getElementById('status-cal-title');
-    const days = document.getElementById('status-cal-days');
-    if(!title||!days) return;
-    title.textContent = `${_statusCalYear}년 ${_statusCalMonth+1}월`;
-    const first = new Date(_statusCalYear, _statusCalMonth, 1).getDay();
-    const last = new Date(_statusCalYear, _statusCalMonth+1, 0).getDate();
-    const sel = _statusDate || new Date().toISOString().slice(0,10);
-    let html = '';
-    for(let i=0;i<first;i++) html += '<span></span>';
-    for(let d=1;d<=last;d++){
-        const ds = `${_statusCalYear}-${String(_statusCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const isSel = ds===sel;
-        html += `<button onclick="statusPickDate('${ds}')" style="border:none;border-radius:8px;padding:6px 2px;font-size:13px;font-weight:${isSel?'900':'600'};background:${isSel?'#FF5F00':'transparent'};color:${isSel?'#fff':'var(--color-text-primary)'};cursor:pointer;">${d}</button>`;
-    }
-    days.innerHTML = html;
-}
-function statusPickDate(ds){
-    closeStatusCalendar();
-    window.location.href = window.location.pathname + '?start=' + ds + '&end=' + ds;
-}
-
-
 const _statusDate = "{{ start if start else today }}";
 function statusMoveDate(delta){
     const base=_statusDate||new Date().toISOString().slice(0,10);
@@ -330,6 +261,34 @@ function renderStatusCal(){
     document.getElementById('status-cal-days').innerHTML=html;
 }
 function statusPickDate(ds){closeStatusCalendar();window.location.href=window.location.pathname+'?start='+ds+'&end='+ds;}
+
+function buildStatusParams(){return new URLSearchParams({s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("car_org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:"",start:document.getElementById("start").value,end:document.getElementById("end").value});}
+function applyFilter(){window.location.href=`/wash_status?${buildStatusParams().toString()}`;}
+function downloadExcel(){window.location.href=`/wash_status_excel?${buildStatusParams().toString()}`;}
+function dtApplyStatusFilter(){
+    document.getElementById('search_input').value = document.getElementById('dt_search_s').value;
+    document.getElementById('region1').value = document.getElementById('dt_region1_s').value;
+    document.getElementById('region2').value = document.getElementById('dt_region2_s').value;
+    document.getElementById('car_org').value = document.getElementById('dt_org_s').value;
+    document.getElementById('spot').value = document.getElementById('dt_spot_s').value;
+    const dv=document.getElementById('dt_vendor_s'); const v=document.getElementById('vendor'); if(dv&&v) v.value=dv.value;
+    document.getElementById('start').value = document.getElementById('dt_start_s').value;
+    document.getElementById('end').value = document.getElementById('dt_end_s').value;
+    applyFilter();
+}
+function focusPeriodRange(){setTimeout(function(){const start=document.getElementById('start');if(start){start.focus();}},120);}
+function openMobileFilter(id){const el=document.getElementById(id);const backdrop=document.getElementById('mobile-filter-backdrop');if(el){el.classList.add('open');el.style.display='block';el.style.visibility='visible';el.style.opacity='1';}if(backdrop){backdrop.classList.add('open');}document.body.classList.add('filter-sheet-open');}
+function closeMobileFilter(id){const el=document.getElementById(id);const backdrop=document.getElementById('mobile-filter-backdrop');if(el){el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';}if(backdrop){backdrop.classList.remove('open');}document.body.classList.remove('filter-sheet-open');}
+function closeAnyMobileFilter(){document.querySelectorAll('.mobile-filter-sheet.open').forEach(el=>{el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';});const backdrop=document.getElementById('mobile-filter-backdrop');if(backdrop){backdrop.classList.remove('open');}document.body.classList.remove('filter-sheet-open');}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAnyMobileFilter();}});
+function toggleDeleteMode(formId,force){const form=document.getElementById(formId);if(!form){return;}const next=typeof force==="boolean"?force:!form.classList.contains("delete-mode");form.classList.toggle("delete-mode",next);if(!next){form.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);}}
+function toggleAllDelete(master,formId){const form=document.getElementById(formId);if(!form){return;}form.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=master.checked);}
+function confirmSelectedDelete(formId,message){const form=document.getElementById(formId);const count=form?form.querySelectorAll('input[name="ids"]:checked').length:0;if(count<1){alert("삭제할 항목을 선택해주세요.");return false;}return confirm(message||"선택한 항목을 삭제할까요?");}
+
+
+
+
+
 
 </script>
 {% endblock %}

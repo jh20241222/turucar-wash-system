@@ -127,7 +127,7 @@
     flex-direction: column !important;
     align-items: flex-start !important;
     padding: 0 20px !important;
-    height: 60px !important;
+    height: 88px !important;
     box-sizing: border-box !important;
     border-bottom: 1px solid var(--d-sb-border) !important;
     text-decoration: none !important;
@@ -264,7 +264,7 @@
 #desktop-mode .dt-topnav {
     display: flex !important; align-items: center !important;
     justify-content: space-between !important;
-    padding: 0 28px 0 20px !important; height: 60px !important;
+    padding: 0 28px 0 20px !important; height: 88px !important;
     box-sizing: border-box !important;
     border-bottom: 1px solid var(--d-border) !important;
     background: var(--d-topbar) !important;

@@ -5,10 +5,9 @@
     <header class="turu-page-brand-v24"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
     <div class="turu-page-head-v24"><div><h1>내 담당 차량</h1><p>배정 지역 기준 차량 현황입니다.</p></div></div>
 
-    <div class="mv-summary-grid">
-        <div class="mv-stat"><span>총 차량</span><strong>{{ total }}</strong></div>
-        <div class="mv-stat mv-stat--urgent"><span>장기미세차</span><strong>{{ urgent_count }}</strong></div>
-        <div class="mv-stat mv-stat--regular"><span>정기세차</span><strong>{{ regular_count }}</strong></div>
+    <div style="padding:14px 16px 8px;">
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:4px;">총 차량</div>
+        <div style="font-size:28px;font-weight:950;color:var(--color-text-primary);letter-spacing:-.02em;">{{ total }}<span style="font-size:14px;font-weight:600;margin-left:4px;">대</span></div>
     </div>
 
     {% if region_stats %}
@@ -21,8 +20,7 @@
                 <span>총 {{ r.total }}대</span>
             </div>
             <div class="mv-region-badges">
-                {% if r.urgent > 0 %}<span class="badge-urgent">장기 {{ r.urgent }}</span>{% endif %}
-                {% if r.regular > 0 %}<span class="badge-regular">정기 {{ r.regular }}</span>{% endif %}
+                <span style="font-size:12px;font-weight:700;color:var(--color-text-secondary);">{{ r.total }}대</span>
             </div>
             <span class="mv-row-arrow">›</span>
         </div>
@@ -37,11 +35,7 @@
         </button>
     </div>
 
-    <div class="mv-tab-bar">
-        <button class="mv-tab active" onclick="setTab('all', this)">전체 <span>{{ total }}</span></button>
-        <button class="mv-tab" onclick="setTab('urgent', this)">장기 미세차 <span class="mv-tab-badge">{{ urgent_count }}</span></button>
-        <button class="mv-tab" onclick="setTab('regular', this)">정기세차 <span>{{ regular_count }}</span></button>
-    </div>
+
 
     <div class="turu-card-list-v24" id="mv-list">
         {% if vehicles %}
@@ -52,26 +46,11 @@
                  data-search="{{ v['차량번호'] }} {{ v['스팟'] }} {{ v['차량소속'] }}"
                  data-region="{{ v['지역시도'] }} {{ v['지역구군'] }}">
                 <a href="{{ url_for('wash_list') }}?s={{ v['차량번호'] }}" class="turu-order-card-v24 {% if elapsed >= 14 %}turu-order-card--urgent{% endif %}">
-                    <div class="turu-car-thumb-v24 {% if elapsed >= 14 %}turu-car-thumb--urgent{% else %}turu-car-thumb--regular{% endif %}">
-                        <img src="{{ url_for('static', filename='img/icon-wash-order.png') }}" alt="">
-                    </div>
-                    <div class="turu-card-copy-v24">
+                    <div class="turu-card-copy-v24" style="padding-left:0;">
                         <div class="turu-card-title-v24">
                             <strong>{{ v['차량번호'] }}</strong>
-                            {% if elapsed >= 14 %}
-                            <em class="chip-urgent">장기 미세차</em>
-                            <em class="chip-day chip-day--urgent">D+{{ elapsed }}</em>
-                            {% elif elapsed > 0 %}
-                            <em class="chip-regular">정기세차</em>
-                            <em class="chip-day">D+{{ elapsed }}</em>
-                            {% else %}
-                            <em class="chip-regular">정기세차</em>
-                            <em class="chip-day chip-day--new">신규</em>
-                            {% endif %}
+                            <em class="chip-day {% if elapsed >= 14 %}chip-day--urgent{% elif elapsed == 0 %}chip-day--new{% endif %}">D+{{ elapsed }}</em>
                         </div>
-                        {% if elapsed >= 14 %}
-                        <div class="wash-urgent-warn">{{ elapsed }}일째 미완료 — 우선 처리 필요</div>
-                        {% endif %}
                         <p><span>🚗</span>{{ v['차종명'] or '-' }} · {{ v['차량소속'] or '-' }}</p>
                         <p><span>📍</span>{{ v['스팟'] or '-' }}</p>
                         <p><span>📌</span>{{ v['지역시도'] }} {{ v['지역구군'] }}</p>

@@ -10,7 +10,6 @@
 
     <div class="turu-stat-strip-v24 turu-stat-strip-v37">
         <div><span>오늘 완료</span><strong>{{ today_completed_count }}</strong><em>건</em></div>
-        <div><span>조회 건수</span><strong>{{ filtered_count }}</strong><em>건</em></div>
         <div><span>전체 완료</span><strong>{{ total_completed_count }}</strong><em>건</em></div>
     </div>
 
@@ -48,12 +47,16 @@
         <div class="master-delete-toolbar status-delete-toolbar turu-delete-toolbar-v24"><button type="button" class="delete-mode-btn" onclick="toggleDeleteMode('status-delete-form')">삭제</button><div class="delete-mode-actions"><label><input type="checkbox" onclick="toggleAllDelete(this, 'status-delete-form')"> 전체 선택</label><button type="submit" class="danger-delete-btn">선택 삭제</button><button type="button" class="cancel-delete-btn" onclick="toggleDeleteMode('status-delete-form', false)">취소</button></div></div>
     {% endif %}
 
+    {% if search_input or selected_r1 or selected_r2 or selected_org or selected_spot or start or end %}
+    <div style="padding:8px 16px;font-size:12px;color:var(--color-text-secondary);background:var(--color-background-secondary);border-bottom:0.5px solid var(--color-border-tertiary);">
+        <strong style="color:var(--color-text-primary);">{{ rows|length }}건</strong>이 검색되었습니다.
+    </div>
+    {% endif %}
     <div class="turu-card-list-v24">
         {% for r in rows %}
         <div class="turu-delete-item-v24">
             {% if current_user.is_master %}<label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>{% endif %}
-            <article class="turu-order-card-v24 turu-complete-card-v24">
-                <div class="turu-car-thumb-v24"><img src="{{ url_for('static', filename='img/icon-complete.png') }}" alt=""></div>
+            <article class="turu-order-card-v24 turu-complete-card-v24" style="gap:0;">
                 <div class="turu-card-copy-v24">
                     <div class="turu-card-title-v24"><strong>{{ r['차량번호'] }}</strong><em class="chip-green">완료</em></div>
                     <p><span>📍</span>{{ r['스팟'] or '-' }}{% if r['작업자'] %} | {{ r['작업자'] }}{% endif %}</p>
@@ -74,17 +77,13 @@
         <div class="dt-toolbar">
             <div class="dt-toolbar-left"></div>
             <div class="dt-toolbar-center">
-                <div class="dt-date-nav">
-                    <button type="button" onclick="statusMoveDate(-1)">‹</button>
-                    <span id="dt-status-date" style="cursor:pointer;">{{ start if start else today }}</span>
-                    <button type="button" onclick="statusMoveDate(1)">›</button>
-                </div>
                 <div class="dt-status-stats">
-                    <div class="dt-stat"><span>완료</span><strong>{{ selected_date_count }}</strong></div>
+                    <div class="dt-stat"><span>오늘 완료</span><strong>{{ today_completed_count }}</strong></div>
+                    <div class="dt-stat"><span>조회 건수</span><strong>{{ filtered_count }}</strong></div>
                     <div class="dt-stat"><span>전체 완료</span><strong>{{ total_completed_count }}</strong></div>
                 </div>
             </div>
-            <div class="dt-toolbar-right" style="flex-direction:column;align-items:flex-end;gap:6px;">
+            <div class="dt-toolbar-right">
                 <button type="button" class="dt-btn" onclick="downloadExcel()">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>엑셀
                 </button>
@@ -97,6 +96,8 @@
         </div>
 
         <div class="dt-filterbar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-text-tertiary);flex-shrink:0"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+            <input id="dt_search_s" placeholder="차량번호, 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter')dtApplyStatusFilter();">
             <div class="dt-filter-divider"></div>
             <select id="dt_region1_s"><option value="">전체 시/도</option>{% for r in region1 %}<option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
             <select id="dt_region2_s"><option value="">전체 구/군</option>{% for r in region2 %}<option value="{{ r }}" {% if selected_r2 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
@@ -107,9 +108,6 @@
             <input type="date" id="dt_start_s" value="{{ start }}" style="border:none;background:none;font-size:13px;color:var(--color-text-secondary);outline:none;font-weight:800;">
             <span style="font-size:12px;color:var(--color-text-tertiary)">~</span>
             <input type="date" id="dt_end_s" value="{{ end }}" style="border:none;background:none;font-size:13px;color:var(--color-text-secondary);outline:none;font-weight:800;">
-            <div class="dt-filter-divider"></div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--d-muted);flex-shrink:0"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
-            <input id="dt_search_s" placeholder="차량번호, 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter')dtApplyStatusFilter();" style="max-width:240px;">
             <button type="button" class="dt-btn dt-btn--primary" onclick="dtApplyStatusFilter()">검색</button>
         </div>
 
@@ -216,16 +214,5 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAnyMob
 function toggleDeleteMode(formId,force){const form=document.getElementById(formId);if(!form){return;}const next=typeof force==="boolean"?force:!form.classList.contains("delete-mode");form.classList.toggle("delete-mode",next);if(!next){form.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);}}
 function toggleAllDelete(master,formId){const form=document.getElementById(formId);if(!form){return;}form.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=master.checked);}
 function confirmSelectedDelete(formId,message){const form=document.getElementById(formId);const count=form?form.querySelectorAll('input[name="ids"]:checked').length:0;if(count<1){alert("삭제할 항목을 선택해주세요.");return false;}return confirm(message||"선택한 항목을 삭제할까요?");}
-
-const _statusDate = "{{ start or end or '' }}";
-function statusMoveDate(delta){
-    const d = new Date(_statusDate || new Date().toISOString().slice(0,10));
-    d.setDate(d.getDate() + delta);
-    const nd = d.toISOString().slice(0,10);
-    const p = new URLSearchParams(window.location.search);
-    p.set('start', nd);
-    p.set('end', nd);
-    window.location.search = p.toString();
-}
 </script>
 {% endblock %}

@@ -13,18 +13,22 @@
 
     <section class="turu-date-summary-card-v37">
         <button type="button" class="turu-date-nav-btn-v25" onclick="moveDate(-1)" aria-label="이전 날짜">‹</button>
-        <div class="turu-date-summary-main-v37" onclick="toggleCalendar()" style="cursor:pointer;">
-            <div class="turu-date-summary-copy-v37">
-                <span>세차일 <small style="font-size:10px;color:var(--color-text-tertiary);">탭하여 날짜 선택</small></span>
-                <strong>{{ selected_date }}</strong>
-            </div>
-            <div class="turu-date-summary-stats-v37">
-                <div><span>세차 대상</span><strong>{{ total_target_count }}</strong></div>
-                <div><span>완료 현황</span><strong>{{ completed_count }}</strong></div>
-            </div>
+        <div class="turu-date-summary-copy-v37" onclick="toggleCalendar()" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px;cursor:pointer;border-radius:16px;">
+            <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.04em;margin-bottom:4px;">세차일</span>
+            <strong style="font-size:20px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ selected_date }}</strong>
         </div>
         <button type="button" class="turu-date-nav-btn-v25" onclick="moveDate(1)" aria-label="다음 날짜">›</button>
     </section>
+    <div style="display:grid;grid-template-columns:1fr 1fr;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:16px;margin:8px 16px 0;overflow:hidden;">
+        <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;">
+            <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.03em;margin-bottom:4px;">세차 대상</span>
+            <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ total_target_count }}</strong>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;border-left:0.5px solid var(--color-border-tertiary);">
+            <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.03em;margin-bottom:4px;">완료</span>
+            <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ completed_count }}</strong>
+        </div>
+    </div>
 
     {# ── 커스텀 달력 팝업 ── #}
     <div class="notice-modal-backdrop" id="cal-backdrop" hidden onclick="closeCalendar()">
@@ -128,10 +132,8 @@
                     </div>
                     <p><span>📍</span>{{ r['스팟'] or '-' }}</p>
                     <p><span>👤</span>{{ r['업체'] or current_user.vendor or '담당자 미지정' }}</p>
+                    {% if r['이월횟수'] and r['이월횟수'] > 0 %}<p><span>🔄</span>{{ r['이월횟수'] }}회 이월</p>{% endif %}
                 </div>
-                <a href="/band_link/{{ r['id'] }}" onclick="openBandLink(event, {{ r['id'] }})" class="turu-band-btn" style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:#03C75A;border-radius:8px;flex-shrink:0;text-decoration:none;" aria-label="밴드">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-                </a>
                 <span class="turu-row-arrow-v24">›</span>
             </a>
         </div>
@@ -164,10 +166,8 @@
                     <p><span>📍</span>{{ r['스팟'] or '-' }}</p>
                     <p><span>🗓</span>{{ r['세차일'] or selected_date }}</p>
                     <p><span>👤</span>{{ r['업체'] or current_user.vendor or '담당자 미지정' }}</p>
+                    {% if r['이월횟수'] and r['이월횟수'] > 0 %}<p><span>🔄</span>{{ r['이월횟수'] }}회 이월</p>{% endif %}
                 </div>
-                <a href="/band_link/{{ r['id'] }}" onclick="openBandLink(event, {{ r['id'] }})" class="turu-band-btn" style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:#03C75A;border-radius:8px;flex-shrink:0;text-decoration:none;" aria-label="밴드">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-                </a>
                 <span class="turu-row-arrow-v24">›</span>
             </a>
         </div>
@@ -257,7 +257,7 @@
                         <th>세차일</th>
                         <th>구분</th>
                         <th>경과일</th>
-                        <th>밴드</th>
+                        <th>이월</th>
                     </tr>
                 </thead>
                 <tbody id="dt-tbody">
@@ -266,7 +266,7 @@
                 {% set elapsed = item.elapsed %}
                 <tr class="dt-row {% if elapsed >= 14 %}dt-row--urgent{% endif %}" data-type="{% if elapsed >= 14 %}urgent{% else %}regular{% endif %}">
                     {% if current_user.is_master %}<td class="dt-check-col"><input type="checkbox" name="ids" value="{{ r['id'] }}"></td>{% endif %}
-                    <td style="font-weight:800;">{{ r['차량번호'] }}</td>
+                    <td><a class="dt-car-link" href="{{ url_for('car_detail', id=r['id']) }}">{{ r['차량번호'] }}</a></td>
                     <td>{{ r['차종명'] or '-' }}</td>
                     <td>{{ r['차량소속'] or '-' }}</td>
                     <td>{{ r['스팟'] or '-' }}</td>
@@ -283,11 +283,7 @@
                         {% endif %}
                     </td>
                     <td class="{% if elapsed >= 14 %}dt-elapsed--urgent{% endif %}">D+{{ elapsed }}</td>
-                    <td>
-                        <a href="/band_link/{{ r['id'] }}" onclick="openBandLink(event, {{ r['id'] }})" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#03C75A;border-radius:6px;text-decoration:none;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-                        </a>
-                    </td>
+                    <td>{{ r['이월횟수'] or 0 }}회</td>
                 </tr>
                 {% else %}
                 <tr><td colspan="{% if current_user.is_master %}11{% else %}10{% endif %}" class="dt-empty">해당 날짜에 세차 대상이 없습니다.</td></tr>
@@ -543,16 +539,5 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAnyMob
 function toggleDeleteMode(formId,force){const form=document.getElementById(formId);if(!form){return;}const next=typeof force==="boolean"?force:!form.classList.contains("delete-mode");form.classList.toggle("delete-mode",next);if(!next){form.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);}}
 function toggleAllDelete(master,formId){const form=document.getElementById(formId);if(!form){return;}form.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=master.checked);}
 function confirmSelectedDelete(formId,message){const form=document.getElementById(formId);const count=form?form.querySelectorAll('input[name="ids"]:checked').length:0;if(count<1){alert("삭제할 항목을 선택해주세요.");return false;}return confirm(message||"선택한 항목을 삭제할까요?");}
-
-function openBandLink(e, id){
-    e.preventDefault();
-    e.stopPropagation();
-    fetch('/band_link/'+id)
-        .then(r=>r.json())
-        .then(d=>{
-            if(d.ok && d.band_link) window.open(d.band_link,'_blank');
-            else alert('밴드 링크가 없습니다.');
-        });
-}
 </script>
 {% endblock %}

@@ -10,18 +10,22 @@
 
     <section class="turu-date-summary-card-v37">
         <button type="button" class="turu-date-nav-btn-v25" onclick="statusMoveDate(-1)" aria-label="이전 날짜">‹</button>
-        <div class="turu-date-summary-main-v37">
-            <div class="turu-date-summary-copy-v37">
-                <span>완료일</span>
-                <strong>{{ start if start else today }}</strong>
-            </div>
-            <div class="turu-date-summary-stats-v37">
-                <div><span>오늘 완료</span><strong>{{ today_completed_count }}</strong></div>
-                <div><span>전체 완료</span><strong>{{ total_completed_count }}</strong></div>
-            </div>
+        <div class="turu-date-summary-copy-v37" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px;border-radius:16px;">
+            <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.04em;margin-bottom:4px;">완료일</span>
+            <strong style="font-size:20px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ start if start else today }}</strong>
         </div>
         <button type="button" class="turu-date-nav-btn-v25" onclick="statusMoveDate(1)" aria-label="다음 날짜">›</button>
     </section>
+    <div style="display:grid;grid-template-columns:1fr 1fr;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:16px;margin:8px 16px 0;overflow:hidden;">
+        <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;">
+            <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.03em;margin-bottom:4px;">오늘 완료</span>
+            <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ today_completed_count }}</strong>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;border-left:0.5px solid var(--color-border-tertiary);">
+            <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.03em;margin-bottom:4px;">전체 완료</span>
+            <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ total_completed_count }}</strong>
+        </div>
+    </div>
 
     <div class="turu-searchbar-v24 turu-status-searchbar-v29 turu-status-searchbar-v37">
         <input id="quick_status_search_input" placeholder="차량 번호 / 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">
@@ -58,7 +62,7 @@
     {% endif %}
 
     {% if search_input or selected_r1 or selected_r2 or selected_org or selected_spot or start or end %}
-    <div style="padding:8px 16px;font-size:12px;color:var(--color-text-secondary);background:var(--color-background-secondary);border-bottom:0.5px solid var(--color-border-tertiary);">
+    <div style="padding:6px 16px;font-size:12px;color:var(--color-text-secondary);">
         <strong style="color:var(--color-text-primary);">{{ rows|length }}건</strong>이 검색되었습니다.
     </div>
     {% endif %}

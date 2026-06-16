@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block document_title %}Turu Wash · 세차 대상 차량{% endblock %}
 {% block content %}
-<section class="turu-app-page-v24 turu-order-page-v24 turu-order-page-v37">
+<section class="turu-app-page-v24 turu-order-page-v24">
     <header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=37" alt="TURU CAR"></header>
 
     <div class="turu-page-head-v24 turu-page-head--single-v25">
@@ -257,7 +257,7 @@
                         <th>세차일</th>
                         <th>구분</th>
                         <th>경과일</th>
-                        <th>이월</th>
+                        <th>밴드</th>
                     </tr>
                 </thead>
                 <tbody id="dt-tbody">
@@ -266,7 +266,7 @@
                 {% set elapsed = item.elapsed %}
                 <tr class="dt-row {% if elapsed >= 14 %}dt-row--urgent{% endif %}" data-type="{% if elapsed >= 14 %}urgent{% else %}regular{% endif %}">
                     {% if current_user.is_master %}<td class="dt-check-col"><input type="checkbox" name="ids" value="{{ r['id'] }}"></td>{% endif %}
-                    <td><a class="dt-car-link" href="{{ url_for('car_detail', id=r['id']) }}">{{ r['차량번호'] }}</a></td>
+                    <td style="font-weight:800;">{{ r['차량번호'] }}</td>
                     <td>{{ r['차종명'] or '-' }}</td>
                     <td>{{ r['차량소속'] or '-' }}</td>
                     <td>{{ r['스팟'] or '-' }}</td>
@@ -283,7 +283,11 @@
                         {% endif %}
                     </td>
                     <td class="{% if elapsed >= 14 %}dt-elapsed--urgent{% endif %}">D+{{ elapsed }}</td>
-                    <td>{{ r['이월횟수'] or 0 }}회</td>
+                    <td>
+                        <a href="#" onclick="openBandLink(event,{{ r['id'] }})" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#03C75A;border-radius:6px;text-decoration:none;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+                        </a>
+                    </td>
                 </tr>
                 {% else %}
                 <tr><td colspan="{% if current_user.is_master %}11{% else %}10{% endif %}" class="dt-empty">해당 날짜에 세차 대상이 없습니다.</td></tr>
@@ -539,5 +543,13 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAnyMob
 function toggleDeleteMode(formId,force){const form=document.getElementById(formId);if(!form){return;}const next=typeof force==="boolean"?force:!form.classList.contains("delete-mode");form.classList.toggle("delete-mode",next);if(!next){form.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);}}
 function toggleAllDelete(master,formId){const form=document.getElementById(formId);if(!form){return;}form.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=master.checked);}
 function confirmSelectedDelete(formId,message){const form=document.getElementById(formId);const count=form?form.querySelectorAll('input[name="ids"]:checked').length:0;if(count<1){alert("삭제할 항목을 선택해주세요.");return false;}return confirm(message||"선택한 항목을 삭제할까요?");}
+
+function openBandLink(e,id){
+    e.preventDefault();e.stopPropagation();
+    fetch('/band_link/'+id).then(r=>r.json()).then(d=>{
+        if(d.ok&&d.band_link) window.open(d.band_link,'_blank');
+        else alert('밴드 링크가 없습니다.');
+    });
+}
 </script>
 {% endblock %}

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block document_title %}Turu Wash · 완료 현황{% endblock %}
 {% block content %}
-<section class="turu-app-page-v24 turu-status-page-v24 turu-status-page-v37">
+<section class="turu-app-page-v24 turu-status-page-v24">
     <header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=37" alt="TURU CAR"></header>
 
     <div class="turu-page-head-v24 turu-page-head--single-v25">
@@ -82,6 +82,9 @@
         <div class="master-delete-toolbar status-delete-toolbar turu-delete-toolbar-v24"><button type="button" class="delete-mode-btn" onclick="toggleDeleteMode('status-delete-form')">삭제</button><div class="delete-mode-actions"><label><input type="checkbox" onclick="toggleAllDelete(this, 'status-delete-form')"> 전체 선택</label><button type="submit" class="danger-delete-btn">선택 삭제</button><button type="button" class="cancel-delete-btn" onclick="toggleDeleteMode('status-delete-form', false)">취소</button></div></div>
     {% endif %}
 
+    {% if search_input or selected_r1 or selected_r2 or selected_org or selected_spot or start or end %}
+    <p style="padding:6px 16px;font-size:12px;color:var(--color-text-secondary);"><strong style="color:var(--color-text-primary);">{{ rows|length }}건</strong>이 검색되었습니다.</p>
+    {% endif %}
     {% if search_input or selected_r1 or selected_r2 or selected_org or selected_spot or start or end %}
     <p style="padding:6px 16px;font-size:12px;color:var(--color-text-secondary);"><strong style="color:var(--color-text-primary);">{{ rows|length }}건</strong>이 검색되었습니다.</p>
     {% endif %}
@@ -293,6 +296,41 @@ function statusPickDate(ds){
     closeStatusCalendar();
     window.location.href = window.location.pathname + '?start=' + ds + '&end=' + ds;
 }
+
+
+const _statusDate = "{{ start if start else today }}";
+function statusMoveDate(delta){
+    const base=_statusDate||new Date().toISOString().slice(0,10);
+    const d=new Date(base+'T00:00:00');
+    d.setDate(d.getDate()+delta);
+    const nd=d.toISOString().slice(0,10);
+    window.location.href=window.location.pathname+'?start='+nd+'&end='+nd;
+}
+let _scy,_scm;
+function toggleStatusCalendar(){
+    const base=_statusDate||new Date().toISOString().slice(0,10);
+    const d=new Date(base+'T00:00:00');
+    _scy=d.getFullYear();_scm=d.getMonth();
+    renderStatusCal();
+    document.getElementById('status-cal-backdrop').hidden=false;
+}
+function closeStatusCalendar(){document.getElementById('status-cal-backdrop').hidden=true;}
+function statusCalChangeMonth(delta){_scm+=delta;if(_scm>11){_scm=0;_scy++;}else if(_scm<0){_scm=11;_scy--;}renderStatusCal();}
+function renderStatusCal(){
+    document.getElementById('status-cal-title').textContent=`${_scy}년 ${_scm+1}월`;
+    const first=new Date(_scy,_scm,1).getDay();
+    const last=new Date(_scy,_scm+1,0).getDate();
+    const sel=_statusDate||new Date().toISOString().slice(0,10);
+    let html='';
+    for(let i=0;i<first;i++)html+='<span></span>';
+    for(let day=1;day<=last;day++){
+        const ds=`${_scy}-${String(_scm+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const isSel=ds===sel;
+        html+=`<button onclick="statusPickDate('${ds}')" style="border:none;border-radius:8px;padding:6px 2px;font-size:13px;font-weight:${isSel?900:600};background:${isSel?'#FF5F00':'transparent'};color:${isSel?'#fff':'var(--color-text-primary)'};cursor:pointer;">${day}</button>`;
+    }
+    document.getElementById('status-cal-days').innerHTML=html;
+}
+function statusPickDate(ds){closeStatusCalendar();window.location.href=window.location.pathname+'?start='+ds+'&end='+ds;}
 
 </script>
 {% endblock %}

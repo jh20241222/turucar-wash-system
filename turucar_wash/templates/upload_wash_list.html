@@ -162,11 +162,49 @@ document.getElementById('band_file')?.addEventListener('change',e=>{const f=e.ta
     </div>
 
 </div>
+
+<div class="d-grid-2">
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">04 Vehicle</span><h2>차량 마스터 업로드</h2></div><span class="d-badge-pill">.xlsx</span></div>
+        <div class="d-card-body">
+            <form method="POST" action="{{ url_for('upload_vehicle_master') }}" enctype="multipart/form-data">
+                <div class="d-fg">
+                    <label class="d-label" for="d-vehicle-file">차량 마스터 파일</label>
+                    <label class="d-file-zone" for="d-vehicle-file">
+                        <span class="d-file-zone-icon">↑</span>
+                        <strong>파일 선택</strong>
+                        <small id="d-vehicle-file-name">차량번호 / 차종명 / 차량소속 / 현재스팟명 / 현재스팟주소 / 지역(시/도) / 지역(구/군) / 담당업체</small>
+                        <input id="d-vehicle-file" type="file" name="vehicle_file" accept=".xlsx" required>
+                    </label>
+                </div>
+                <button type="submit" class="d-btn d-btn-blue" onclick="return confirm('차량 마스터를 업데이트할까요?')">차량 마스터 업데이트</button>
+            </form>
+        </div>
+    </div>
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">Guide</span><h2>필수 컬럼</h2></div></div>
+        <div class="d-card-body">
+            <ul class="d-checklist">
+                <li>차량번호</li>
+                <li>차종명</li>
+                <li>차량소속</li>
+                <li>현재스팟명</li>
+                <li>현재스팟주소</li>
+                <li>지역(시/도)</li>
+                <li>지역(구/군)</li>
+                <li>담당업체</li>
+                <li>최근세차일 (선택)</li>
+                <li>세차경과일 (선택)</li>
+            </ul>
+        </div>
+    </div>
+</div>
 </div>
 </div>
 <script>
 document.getElementById('d-file')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)document.getElementById('d-file-name').textContent=f.name;});
 document.getElementById('d-band-file')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)document.getElementById('d-band-file-name').textContent=f.name;});
+document.getElementById('d-vehicle-file')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)document.getElementById('d-vehicle-file-name').textContent=f.name;});
 </script>
 <style>
 #desktop-mode #d-upload { display: block !important; }

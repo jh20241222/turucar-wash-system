@@ -253,7 +253,7 @@
                         <th>세차일</th>
                         <th>구분</th>
                         <th>경과일</th>
-                        <th>이월</th>
+                        <th>밴드</th>
                     </tr>
                 </thead>
                 <tbody id="dt-tbody">
@@ -279,7 +279,11 @@
                         {% endif %}
                     </td>
                     <td class="{% if elapsed >= 14 %}dt-elapsed--urgent{% endif %}">D+{{ elapsed }}</td>
-                    <td>{{ r['이월횟수'] or 0 }}회</td>
+                    <td>
+                        <a href="{{ url_for('car_detail', id=r['id']) }}" title="세차 오더 기록" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#03C75A;border-radius:6px;text-decoration:none;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" fill="#ffffff"/></svg>
+                        </a>
+                    </td>
                 </tr>
                 {% else %}
                 <tr><td colspan="{% if current_user.is_master %}11{% else %}10{% endif %}" class="dt-empty">해당 날짜에 세차 대상이 없습니다.</td></tr>

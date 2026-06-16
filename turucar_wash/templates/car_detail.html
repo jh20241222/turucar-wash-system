@@ -71,4 +71,73 @@ async function copyToClipboard(text){if(navigator.clipboard&&window.isSecureCont
 async function copyInfo(){const distance=document.getElementById("distance").value||"없음";const damage=document.getElementById("damage").value||"없음";const warning=document.getElementById("warning").value||"없음";const etc=document.getElementById("etc").value||"없음";const text=[`[세차 완료 공유]`,`차량번호: ${carInfo.number||"-"}`,`차종명: ${carInfo.model||"-"}`,`차량소속: ${carInfo.org||"-"}`,`스팟: ${carInfo.spot||"-"}`,`주소: ${carInfo.address||"-"}`,`지역: ${(carInfo.region1||"-")} ${(carInfo.region2||"")}`,`주행거리: ${distance}`,`훼손: ${damage}`,`경고등: ${warning}`,`특이사항: ${etc}`].join("\n");await copyToClipboard(text).catch(()=>null);alert("복사되었습니다.");}
 async function openBand(){try{const response=await fetch("{{ url_for('band_link', id=car['id']) }}");const data=await response.json();if(!response.ok||!data.ok||!data.band_link){alert(data.message||"등록된 밴드 링크가 없습니다.");return;}window.open(data.band_link,"_blank","noopener");}catch(error){alert("밴드 링크를 불러오는 중 오류가 발생했습니다.");}}
 </script>
+{# ── 데스크탑 전용 ── #}
+<div id="d-car-detail" style="display:none">
+<div class="d-wrap">
+<div class="d-grid-2" style="max-width:1000px;">
+
+    <div class="d-card">
+        <div class="d-card-head">
+            <div>
+                <span class="d-eyebrow">차량 정보</span>
+                <h2>{{ car['차량번호'] }}</h2>
+            </div>
+            {% if is_long_wash %}
+            <span class="d-badge-pill" style="background:#FAECE7;color:#993C1D;border-color:#f5c6b0;">장기 미세차 D+{{ elapsed }}</span>
+            {% else %}
+            <span class="d-badge-pill" style="background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;">정기세차 D+{{ elapsed }}</span>
+            {% endif %}
+        </div>
+        <div class="d-card-body">
+            <div class="d-fg"><label class="d-label">차종</label><div style="font-size:14px;font-weight:600;color:var(--d-text);">{{ car['차종명'] or '-' }}</div></div>
+            <div class="d-fg"><label class="d-label">차량소속</label><div style="font-size:14px;font-weight:600;color:var(--d-text);">{{ car['차량소속'] or '-' }}</div></div>
+            <div class="d-fg"><label class="d-label">업체</label><div style="font-size:14px;font-weight:600;color:var(--d-text);">{{ car['업체'] or '-' }}</div></div>
+            <div class="d-fg"><label class="d-label">스팟</label><div style="font-size:14px;font-weight:600;color:var(--d-text);">{{ car['스팟'] or '-' }}</div></div>
+            <div class="d-fg"><label class="d-label">주소</label><div style="font-size:14px;font-weight:600;color:var(--d-text);">{{ car['주소'] or '-' }}</div></div>
+            <div class="d-fg"><label class="d-label">지역</label><div style="font-size:14px;font-weight:600;color:var(--d-text);">{{ car['지역시도'] or '-' }} {{ car['지역구군'] or '' }}</div></div>
+            <div class="d-row-2">
+                <div class="d-fg"><label class="d-label">등록일</label><div style="font-size:14px;font-weight:600;color:var(--d-text);">{{ car['등록일'] or car['세차일'] or '-' }}</div></div>
+                <div class="d-fg"><label class="d-label">세차일</label><div style="font-size:14px;font-weight:600;color:var(--d-text);">{{ car['세차일'] or '-' }}</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">세차 기록 입력</span><h2>기록 작성</h2></div></div>
+        <div class="d-card-body">
+            <form id="d-wash-form" action="{{ url_for('wash_complete', id=car['id']) }}" method="POST">
+                <div class="d-fg"><label class="d-label" for="d-distance">주행거리</label><input id="d-distance" name="distance" class="d-input" inputmode="numeric" placeholder="예: 12530km"></div>
+                <div class="d-fg"><label class="d-label" for="d-damage">차량 훼손 부위</label><textarea id="d-damage" name="damage" class="d-input" style="resize:vertical;min-height:60px;" placeholder="없으면 비워두거나 '없음' 입력"></textarea></div>
+                <div class="d-fg"><label class="d-label" for="d-warning">경고등</label><textarea id="d-warning" name="warning" class="d-input" style="resize:vertical;min-height:60px;" placeholder="경고등 내용 입력"></textarea></div>
+                <div class="d-fg"><label class="d-label" for="d-etc">기타 특이사항</label><textarea id="d-etc" name="etc" class="d-input" style="resize:vertical;min-height:60px;" placeholder="추가로 공유할 내용 입력"></textarea></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px;">
+                    <button type="button" class="d-btn d-btn-gray" onclick="dCopyInfo()">복사</button>
+                    <button type="button" class="d-btn" style="background:#03C75A;color:#fff;margin:0;" onclick="openBand()">밴드</button>
+                    <button type="submit" class="d-btn d-btn-orange" style="margin:0;">완료 처리</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+</div>
+</div>
+<script>
+function dCopyInfo(){
+    const distance=document.getElementById('d-distance').value||'없음';
+    const damage=document.getElementById('d-damage').value||'없음';
+    const warning=document.getElementById('d-warning').value||'없음';
+    const etc=document.getElementById('d-etc').value||'없음';
+    const text=[`[세차 완료 공유]`,`차량번호: ${carInfo.number||'-'}`,`차종명: ${carInfo.model||'-'}`,`차량소속: ${carInfo.org||'-'}`,`스팟: ${carInfo.spot||'-'}`,`주소: ${carInfo.address||'-'}`,`지역: ${carInfo.region1||'-'} ${carInfo.region2||''}`,`주행거리: ${distance}`,`훼손: ${damage}`,`경고등: ${warning}`,`특이사항: ${etc}`].join('\n');
+    if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(text).then(()=>alert('복사되었습니다.'));}else{const t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);alert('복사되었습니다.');}
+}
+</script>
+<style>
+#d-car-detail { display: none; }
+#desktop-mode #d-car-detail { display: block !important; }
+#desktop-mode .detail-page-brand-v36,
+#desktop-mode .detail-hero,
+#desktop-mode .detail-grid { display: none !important; }
+</style>
+
 {% endblock %}

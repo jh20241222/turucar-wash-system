@@ -8003,9 +8003,17 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 
 
 
+
 /* ══ TURU WASH ══ */
-/* 카드 그리드 — 아이콘 제거 후 2컬럼 */
-.turu-order-card-v24 {
+/* 아이콘 제거 후 카드 그리드 — 세차오더 */
+.turu-order-page-v24 .turu-order-card-v24 {
+    grid-template-columns: minmax(0,1fr) 24px !important;
+    min-height: unset !important;
+    padding: 16px !important;
+    gap: 8px !important;
+}
+/* 아이콘 제거 후 카드 그리드 — 완료현황 */
+.turu-status-page-v24 .turu-order-card-v24 {
     grid-template-columns: minmax(0,1fr) 24px !important;
     min-height: unset !important;
     padding: 16px !important;

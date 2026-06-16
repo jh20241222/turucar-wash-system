@@ -605,6 +605,7 @@
 }
 
 
-/* 모바일 날짜/통계 카드 — 데스크탑에서 완전 숨김 */
+
+/* 모바일 날짜/통계 카드 — 데스크탑 완전 숨김 */
 #desktop-mode .mob-date-card { display: none !important; }
 #desktop-mode .mob-stat-row { display: none !important; }

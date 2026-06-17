@@ -442,8 +442,19 @@ def saturday_reset():
     print(f"[TuruWash] 토요일 리셋 완료 — 미완료 오더 삭제됨")
 
 
-saturday_reset()
-rollover_wash_orders()
+def run_daily_once():
+    """앱 시작 시 오늘 날짜 기준으로 이월/리셋을 딱 한 번만 실행."""
+    today_str = today_kst()
+    last_run = get_app_setting("last_rollover_date", "")
+    if last_run == today_str:
+        print(f"[TuruWash] 오늘({today_str}) 이월/리셋 이미 실행됨 — 스킵")
+        return
+    saturday_reset()
+    rollover_wash_orders()
+    set_app_setting("last_rollover_date", today_str)
+    print(f"[TuruWash] 이월/리셋 실행 완료 — {today_str}")
+
+run_daily_once()
 
 
 # =========================================================
@@ -453,7 +464,8 @@ def scheduled_daily_job():
     """매일 00:00 KST에 실행. 토요일이면 리셋, 나머지 요일이면 이월."""
     saturday_reset()
     rollover_wash_orders()
-    print(f"[TuruWash] 스케줄러 실행 완료 — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    set_app_setting("last_rollover_date", today_kst())
+    print(f"[TuruWash] 스케줄러 실행 완료 — {now_kst().strftime('%Y-%m-%d %H:%M:%S')}")
 
 
 _scheduler = BackgroundScheduler(timezone="Asia/Seoul")
@@ -1623,35 +1635,50 @@ def upload_wash_list():
             else:
                 elapsed_days = 0
 
-            # 중복 체크: 같은 날짜에 같은 차량번호가 이미 있으면 스킵
+            차량번호 = str(r["차량번호"]).strip()
+
+            # 같은 날짜에 같은 차량번호가 이미 있으면 정보 업데이트 (이월된 오더 포함)
             existing = cur.execute(
                 "SELECT id FROM wash_list WHERE 차량번호=? AND 세차일=?",
-                (str(r["차량번호"]).strip(), wash_date)
+                (차량번호, wash_date)
             ).fetchone()
             if existing:
-                skipped += 1
-                continue
-
-            cur.execute(
-                """
-                INSERT INTO wash_list
-                (차량번호, 차종명, 차량소속, 스팟, 주소,
-                 지역시도, 지역구군, 세차일,
-                 업체, 밴드링크, 작업자, 완료, 등록일, 이월횟수, 세차경과일)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?)
-                """,
-                (
-                    r["차량번호"], r["차종명"], r["차량소속"], r["현재스팟명"],
-                    r["현재스팟주소"], r["지역(시/도)"], r["지역(구/군)"],
-                    wash_date, r["담당업체"], band, None, today_str, elapsed_days
+                cur.execute(
+                    """
+                    UPDATE wash_list
+                    SET 차종명=?, 차량소속=?, 스팟=?, 주소=?,
+                        지역시도=?, 지역구군=?, 업체=?, 밴드링크=?, 세차경과일=?
+                    WHERE 차량번호=? AND 세차일=?
+                    """,
+                    (
+                        r["차종명"], r["차량소속"], r["현재스팟명"],
+                        r["현재스팟주소"], r["지역(시/도)"], r["지역(구/군)"],
+                        r["담당업체"], band, elapsed_days,
+                        차량번호, wash_date
+                    )
                 )
-            )
-            inserted += 1
+                skipped += 1
+            else:
+                cur.execute(
+                    """
+                    INSERT INTO wash_list
+                    (차량번호, 차종명, 차량소속, 스팟, 주소,
+                     지역시도, 지역구군, 세차일,
+                     업체, 밴드링크, 작업자, 완료, 등록일, 이월횟수, 세차경과일)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?)
+                    """,
+                    (
+                        차량번호, r["차종명"], r["차량소속"], r["현재스팟명"],
+                        r["현재스팟주소"], r["지역(시/도)"], r["지역(구/군)"],
+                        wash_date, r["담당업체"], band, None, today_str, elapsed_days
+                    )
+                )
+                inserted += 1
         conn.commit()
         conn.close()
 
         if skipped:
-            flash(f"✔ 업로드 완료 — {inserted}건 등록, {skipped}건 중복 스킵")
+            flash(f"✔ 업로드 완료 — {inserted}건 신규등록, {skipped}건 정보 업데이트")
         else:
             flash(f"✔ 업로드 완료 — {inserted}건 등록")
         return redirect(url_for("upload_wash_list"))

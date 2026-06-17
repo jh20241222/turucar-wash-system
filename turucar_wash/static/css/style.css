@@ -8004,25 +8004,27 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 
 
 
-/* ══ TURU WASH ══ */
-/* 아이콘 제거 후 카드 그리드 — 세차오더 */
-.turu-order-page-v24 .turu-order-card-v24 {
+
+/* ══ TURU WASH 최종 ══ */
+
+/* 카드 그리드 — 아이콘 없으니 2컬럼으로 */
+.turu-order-card-v24 {
     grid-template-columns: minmax(0,1fr) 24px !important;
     min-height: unset !important;
-    padding: 16px !important;
     gap: 8px !important;
-}
-/* 아이콘 제거 후 카드 그리드 — 완료현황 */
-.turu-status-page-v24 .turu-order-card-v24 {
-    grid-template-columns: minmax(0,1fr) 24px !important;
-    min-height: unset !important;
     padding: 16px !important;
-    gap: 8px !important;
 }
-.turu-card-copy-v24 { padding-left: 0 !important; }
+.turu-card-copy-v24 {
+    padding-left: 0 !important;
+}
 
 /* 데스크탑 요소 모바일 숨김 */
 .desktop-sidebar { display: none !important; }
 .dt-topnav { display: none !important; }
 #desktop-mode .desktop-sidebar { display: flex !important; }
 #desktop-mode .dt-topnav { display: flex !important; }
+
+/* 모바일 날짜/통계 카드 데스크탑 숨김 */
+#desktop-mode .mob-date-card { display: none !important; }
+#desktop-mode .mob-stat-cards { display: none !important; }
+#desktop-mode .mob-stat-row { display: none !important; }

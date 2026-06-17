@@ -454,8 +454,6 @@ def run_daily_once():
     set_app_setting("last_rollover_date", today_str)
     print(f"[TuruWash] 이월/리셋 실행 완료 — {today_str}")
 
-run_daily_once()
-
 
 # =========================================================
 # APScheduler: 자정 자동 이월 / 토요일 리셋
@@ -946,6 +944,10 @@ def set_app_setting(key, value):
     )
     conn.commit()
     conn.close()
+
+
+# get_app_setting/set_app_setting 정의 이후 실행 — 순서 중요
+run_daily_once()
 
 
 

@@ -177,8 +177,8 @@ def load_band_mapping():
 
 def find_band_link(band_dict, car_org, vendor=""):
     """복합키(차량소속+담당업체) 우선, 없으면 차량소속 단독으로 폴백."""
-    car_org = (car_org or "").strip()
-    vendor = (vendor or "").strip()
+    car_org = str(car_org).strip() if car_org and not isinstance(car_org, float) else ""
+    vendor = str(vendor).strip() if vendor and not isinstance(vendor, float) else ""
     # 1순위: 차량소속 + 담당업체 정확히 일치
     link = band_dict.get((car_org, vendor))
     if link:

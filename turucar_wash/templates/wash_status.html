@@ -85,9 +85,6 @@
     {% if search_input or selected_r1 or selected_r2 or selected_org or selected_spot or start or end %}
     <p style="padding:6px 16px;font-size:12px;color:var(--color-text-secondary);"><strong style="color:var(--color-text-primary);">{{ rows|length }}건</strong>이 검색되었습니다.</p>
     {% endif %}
-    {% if search_input or selected_r1 or selected_r2 or selected_org or selected_spot or start or end %}
-    <p style="padding:6px 16px;font-size:12px;color:var(--color-text-secondary);"><strong style="color:var(--color-text-primary);">{{ rows|length }}건</strong>이 검색되었습니다.</p>
-    {% endif %}
     <div class="turu-card-list-v24">
         {% for r in rows %}
         <div class="turu-delete-item-v24">
@@ -106,6 +103,7 @@
         <div class="turu-empty-v24"><strong>완료 내역이 없습니다.</strong><span>검색 조건을 바꿔보세요.</span></div>
         {% endfor %}
     </div>
+    {% if current_user.is_master %}</form>{% endif %}
 
     {# ── 데스크탑 전용 ── #}
     <section class="desktop-table table-panel app-card turu-desktop-table-v24 turu-status-desktop">
@@ -262,20 +260,16 @@ function renderStatusCal(){
 }
 function statusPickDate(ds){closeStatusCalendar();window.location.href=window.location.pathname+'?start='+ds+'&end='+ds;}
 
-function buildStatusParams(){return new URLSearchParams({s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("car_org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:"",start:document.getElementById("start").value,end:document.getElementById("end").value});}
+function getStatusVal(mobileId, desktopId){
+    const desktop = document.getElementById(desktopId);
+    const mobile = document.getElementById(mobileId);
+    if(desktop && desktop.offsetParent !== null) return desktop.value;
+    return mobile ? mobile.value : "";
+}
+function buildStatusParams(){return new URLSearchParams({s:getStatusVal("search_input","dt_search_s"),r1:getStatusVal("region1","dt_region1_s"),r2:getStatusVal("region2","dt_region2_s"),org:getStatusVal("car_org","dt_org_s"),spot:getStatusVal("spot","dt_spot_s"),vendor:getStatusVal("vendor","dt_vendor_s"),start:getStatusVal("start","dt_start_s"),end:getStatusVal("end","dt_end_s")});}
 function applyFilter(){window.location.href=`/wash_status?${buildStatusParams().toString()}`;}
 function downloadExcel(){window.location.href=`/wash_status_excel?${buildStatusParams().toString()}`;}
-function dtApplyStatusFilter(){
-    document.getElementById('search_input').value = document.getElementById('dt_search_s').value;
-    document.getElementById('region1').value = document.getElementById('dt_region1_s').value;
-    document.getElementById('region2').value = document.getElementById('dt_region2_s').value;
-    document.getElementById('car_org').value = document.getElementById('dt_org_s').value;
-    document.getElementById('spot').value = document.getElementById('dt_spot_s').value;
-    const dv=document.getElementById('dt_vendor_s'); const v=document.getElementById('vendor'); if(dv&&v) v.value=dv.value;
-    document.getElementById('start').value = document.getElementById('dt_start_s').value;
-    document.getElementById('end').value = document.getElementById('dt_end_s').value;
-    applyFilter();
-}
+function dtApplyStatusFilter(){ applyFilter(); }
 function focusPeriodRange(){setTimeout(function(){const start=document.getElementById('start');if(start){start.focus();}},120);}
 function openMobileFilter(id){const el=document.getElementById(id);const backdrop=document.getElementById('mobile-filter-backdrop');if(el){el.classList.add('open');el.style.display='block';el.style.visibility='visible';el.style.opacity='1';}if(backdrop){backdrop.classList.add('open');}document.body.classList.add('filter-sheet-open');}
 function closeMobileFilter(id){const el=document.getElementById(id);const backdrop=document.getElementById('mobile-filter-backdrop');if(el){el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';}if(backdrop){backdrop.classList.remove('open');}document.body.classList.remove('filter-sheet-open');}

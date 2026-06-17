@@ -171,6 +171,7 @@
         <div class="turu-empty-v24"><strong>세차 대상이 없습니다.</strong><span>날짜를 바꾸거나 필터를 초기화해보세요.</span></div>
         {% endif %}
     </div>
+    {% if current_user.is_master %}</form>{% endif %}
 
     <section class="desktop-table table-panel app-card turu-desktop-table-v24">
 
@@ -525,7 +526,14 @@ function _renderCal(){
 }
 function moveToDate(dateStr){ if(dateStr) window.location.href=`/wash_list?date=${dateStr}`; }
 function moveDate(days){const current=new Date("{{ selected_date }}T00:00:00");current.setDate(current.getDate()+days);const yyyy=current.getFullYear();const mm=String(current.getMonth()+1).padStart(2,'0');const dd=String(current.getDate()).padStart(2,'0');window.location.href=`/wash_list?date=${yyyy}-${mm}-${dd}`;}
-function buildOrderParams(){return new URLSearchParams({date:"{{ selected_date }}",s:document.getElementById("search_input").value,r1:document.getElementById("region1").value,r2:document.getElementById("region2").value,org:document.getElementById("org").value,spot:document.getElementById("spot").value,vendor:document.getElementById("vendor")?document.getElementById("vendor").value:""});}
+function getVal(mobileId, desktopId){
+    const desktop = document.getElementById(desktopId);
+    const mobile = document.getElementById(mobileId);
+    // 데스크탑 모드면 dt_ 값 우선
+    if(desktop && desktop.offsetParent !== null) return desktop.value;
+    return mobile ? mobile.value : "";
+}
+function buildOrderParams(){return new URLSearchParams({date:"{{ selected_date }}",s:getVal("search_input","dt_search"),r1:getVal("region1","dt_region1"),r2:getVal("region2","dt_region2"),org:getVal("org","dt_org"),spot:getVal("spot","dt_spot"),vendor:getVal("vendor","dt_vendor")});}
 function applyFilter(){window.location.href=`/wash_list?${buildOrderParams().toString()}`;}
 function downloadOrderExcel(){window.location.href=`/wash_list_excel?${buildOrderParams().toString()}`;}
 function openMobileFilter(id){const el=document.getElementById(id);const backdrop=document.getElementById('mobile-filter-backdrop');if(el){el.classList.add('open');el.style.display='block';el.style.visibility='visible';el.style.opacity='1';}if(backdrop){backdrop.classList.add('open');}document.body.classList.add('filter-sheet-open');}

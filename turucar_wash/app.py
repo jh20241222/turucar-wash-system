@@ -2,6 +2,17 @@ import os
 import shutil
 import sqlite3
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+KST = ZoneInfo("Asia/Seoul")
+
+def now_kst():
+    """현재 KST 시각 반환."""
+    return datetime.now(KST)
+
+def today_kst():
+    """오늘 KST 날짜 문자열 반환 (YYYY-MM-DD)."""
+    return datetime.now(KST).strftime("%Y-%m-%d")
 
 import pandas as pd
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -397,7 +408,7 @@ ensure_wash_schema()
 # =========================================================
 def rollover_wash_orders():
     """세차일이 오늘보다 과거인 미완료 오더를 오늘 날짜로 이월. 토요일은 이월 없음(리셋에서 처리)."""
-    today = datetime.today()
+    today = now_kst()
     # 토요일(weekday=5)은 이월 안 함 — saturday_reset이 처리
     if today.weekday() == 5:
         return
@@ -419,7 +430,7 @@ def rollover_wash_orders():
 # =========================================================
 def saturday_reset():
     """토요일에 앱 시작 시 실행. 세차일이 오늘(토) 이전인 미완료 오더를 전부 삭제한다."""
-    today = datetime.today()
+    today = now_kst()
     if today.weekday() != 5:  # 토요일만
         return
     today_str = today.strftime("%Y-%m-%d")
@@ -1590,9 +1601,11 @@ def upload_wash_list():
                 return redirect(url_for("upload_wash_list"))
 
         has_elapsed_col = "세차경과일" in df.columns
-        today_str = datetime.today().strftime("%Y-%m-%d")
+        today_str = today_kst()
         conn = get_wash_db()
         cur = conn.cursor()
+        inserted = 0
+        skipped = 0
         for _, r in df.iterrows():
             # 밴드링크 결정
             if has_band_col:
@@ -1610,6 +1623,15 @@ def upload_wash_list():
             else:
                 elapsed_days = 0
 
+            # 중복 체크: 같은 날짜에 같은 차량번호가 이미 있으면 스킵
+            existing = cur.execute(
+                "SELECT id FROM wash_list WHERE 차량번호=? AND 세차일=?",
+                (str(r["차량번호"]).strip(), wash_date)
+            ).fetchone()
+            if existing:
+                skipped += 1
+                continue
+
             cur.execute(
                 """
                 INSERT INTO wash_list
@@ -1624,10 +1646,14 @@ def upload_wash_list():
                     wash_date, r["담당업체"], band, None, today_str, elapsed_days
                 )
             )
+            inserted += 1
         conn.commit()
         conn.close()
 
-        flash("✔ 업로드 완료")
+        if skipped:
+            flash(f"✔ 업로드 완료 — {inserted}건 등록, {skipped}건 중복 스킵")
+        else:
+            flash(f"✔ 업로드 완료 — {inserted}건 등록")
         return redirect(url_for("upload_wash_list"))
 
     # 날짜 목록 조회 (삭제 UI용)
@@ -1639,6 +1665,35 @@ def upload_wash_list():
     conn.close()
 
     return render_template("upload_wash_list.html", date_list=date_list, total_count=total_count)
+
+
+# =========================================================
+# 기존 오더 중복 제거 (마스터 전용)
+# =========================================================
+@app.route("/wash_deduplicate", methods=["POST"])
+@login_required
+def wash_deduplicate():
+    if not current_user.is_master:
+        flash("❌ 마스터 계정만 실행할 수 있습니다.")
+        return redirect(url_for("upload_wash_list"))
+
+    conn = get_wash_db()
+    cur = conn.cursor()
+    # 같은 날짜 + 같은 차량번호 중 id가 가장 작은 것(최초 등록)만 남기고 나머지 삭제
+    cur.execute("""
+        DELETE FROM wash_list
+        WHERE id NOT IN (
+            SELECT MIN(id)
+            FROM wash_list
+            GROUP BY 차량번호, 세차일
+        )
+    """)
+    deleted = cur.rowcount
+    conn.commit()
+    conn.close()
+
+    flash(f"✔ 중복 오더 {deleted}건 삭제 완료")
+    return redirect(url_for("upload_wash_list"))
 
 
 # =========================================================
@@ -1964,7 +2019,7 @@ def wash_complete(id):
         conn.close()
         return "데이터 없음"
 
-    done_date = datetime.now().strftime("%Y-%m-%d")
+    done_date = today_kst()
     cur.execute(
         """
         INSERT INTO wash_history

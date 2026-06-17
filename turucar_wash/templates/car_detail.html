@@ -66,9 +66,9 @@
 </section>
 
 <script>
-const carInfo={number:{{ car['차량번호'] | tojson }},model:{{ car['차종명'] | tojson }},org:{{ car['차량소속'] | tojson }},spot:{{ car['스팟'] | tojson }},address:{{ car['주소'] | tojson }},region1:{{ car['지역시도'] | tojson }},region2:{{ car['지역구군'] | tojson }}};
+const carInfo={number:{{ car['차량번호'] | tojson }},model:{{ car['차종명'] | tojson }},org:{{ car['차량소속'] | tojson }},spot:{{ car['스팟'] | tojson }},address:{{ car['주소'] | tojson }},region1:{{ car['지역시도'] | tojson }},region2:{{ car['지역구군'] | tojson }},washDate:{{ car['세차일'] | tojson }}};
 async function copyToClipboard(text){if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);return;}const textarea=document.createElement("textarea");textarea.value=text;textarea.style.position="fixed";textarea.style.left="-9999px";document.body.appendChild(textarea);textarea.focus();textarea.select();document.execCommand("copy");document.body.removeChild(textarea);}
-async function copyInfo(){const distance=document.getElementById("distance").value||"없음";const damage=document.getElementById("damage").value||"없음";const warning=document.getElementById("warning").value||"없음";const etc=document.getElementById("etc").value||"없음";const text=[`[세차 완료 공유]`,`차량번호: ${carInfo.number||"-"}`,`차종명: ${carInfo.model||"-"}`,`차량소속: ${carInfo.org||"-"}`,`스팟: ${carInfo.spot||"-"}`,`주소: ${carInfo.address||"-"}`,`지역: ${(carInfo.region1||"-")} ${(carInfo.region2||"")}`,`주행거리: ${distance}`,`훼손: ${damage}`,`경고등: ${warning}`,`특이사항: ${etc}`].join("\n");await copyToClipboard(text).catch(()=>null);alert("복사되었습니다.");}
+async function copyInfo(){const distance=document.getElementById("distance").value||"없음";const damage=document.getElementById("damage").value||"없음";const warning=document.getElementById("warning").value||"없음";const etc=document.getElementById("etc").value||"없음";const text=[`[세차 완료 공유]`,`차량번호: ${carInfo.number||"-"}`,`차종명: ${carInfo.model||"-"}`,`차량소속: ${carInfo.org||"-"}`,`스팟: ${carInfo.spot||"-"}`,`주소: ${carInfo.address||"-"}`,`지역: ${(carInfo.region1||"-")} ${(carInfo.region2||"")}`,`세차일자: ${carInfo.washDate||"-"}`,`주행거리: ${distance}`,`훼손: ${damage}`,`경고등: ${warning}`,`특이사항: ${etc}`].join("\n");await copyToClipboard(text).catch(()=>null);alert("복사되었습니다.");}
 async function openBand(){try{const response=await fetch("{{ url_for('band_link', id=car['id']) }}");const data=await response.json();if(!response.ok||!data.ok||!data.band_link){alert(data.message||"등록된 밴드 링크가 없습니다.");return;}window.open(data.band_link,"_blank","noopener");}catch(error){alert("밴드 링크를 불러오는 중 오류가 발생했습니다.");}}
 </script>
 {# ── 데스크탑 전용 ── #}
@@ -128,7 +128,7 @@ function dCopyInfo(){
     const damage=document.getElementById('d-damage').value||'없음';
     const warning=document.getElementById('d-warning').value||'없음';
     const etc=document.getElementById('d-etc').value||'없음';
-    const text=[`[세차 완료 공유]`,`차량번호: ${carInfo.number||'-'}`,`차종명: ${carInfo.model||'-'}`,`차량소속: ${carInfo.org||'-'}`,`스팟: ${carInfo.spot||'-'}`,`주소: ${carInfo.address||'-'}`,`지역: ${carInfo.region1||'-'} ${carInfo.region2||''}`,`주행거리: ${distance}`,`훼손: ${damage}`,`경고등: ${warning}`,`특이사항: ${etc}`].join('\n');
+    const text=[`[세차 완료 공유]`,`차량번호: ${carInfo.number||'-'}`,`차종명: ${carInfo.model||'-'}`,`차량소속: ${carInfo.org||'-'}`,`스팟: ${carInfo.spot||'-'}`,`주소: ${carInfo.address||'-'}`,`지역: ${carInfo.region1||'-'} ${carInfo.region2||''}`,`세차일자: ${carInfo.washDate||'-'}`,`주행거리: ${distance}`,`훼손: ${damage}`,`경고등: ${warning}`,`특이사항: ${etc}`].join('\n');
     if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(text).then(()=>alert('복사되었습니다.'));}else{const t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);alert('복사되었습니다.');}
 }
 </script>

@@ -70,6 +70,12 @@
                 <label class="field-label">전체 삭제</label>
                 <button type="submit" class="danger-delete-btn full" style="width:100%; padding: 12px;">전체 오더 삭제 ({{ total_count }}대)</button>
             </form>
+
+            {# 중복 제거 #}
+            <form method="POST" action="{{ url_for('wash_deduplicate') }}" onsubmit="return confirm('중복 오더를 제거할까요? 같은 날짜+차량번호 중 가장 먼저 등록된 것만 남깁니다.');" style="margin-top:12px;">
+                <label class="field-label">중복 오더 제거</label>
+                <button type="submit" class="danger-delete-btn full" style="width:100%; padding: 12px; background:#e67e22;">중복 오더 제거</button>
+            </form>
         </div>
     </article>
 
@@ -152,6 +158,12 @@ document.getElementById('band_file')?.addEventListener('change',e=>{const f=e.ta
                 <input type="hidden" name="delete_type" value="all">
                 <div class="d-fg"><label class="d-label">전체 삭제</label>
                     <button type="submit" class="d-btn-danger-sm" style="width:100%;padding:8px;">전체 오더 삭제 ({{ total_count }}대)</button>
+                </div>
+            </form>
+            <hr class="d-divider">
+            <form method="POST" action="{{ url_for('wash_deduplicate') }}" onsubmit="return confirm('중복 오더를 제거할까요? 같은 날짜+차량번호 중 가장 먼저 등록된 것만 남깁니다.');">
+                <div class="d-fg"><label class="d-label">중복 오더 제거</label>
+                    <button type="submit" class="d-btn-danger-sm" style="width:100%;padding:8px;background:#e67e22;border-color:#e67e22;">중복 오더 제거</button>
                 </div>
             </form>
             {% if date_list %}

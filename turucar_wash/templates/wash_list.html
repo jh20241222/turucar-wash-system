@@ -11,7 +11,7 @@
         </div>
     </div>
 
-    <div class="mob-date-card" style="background:var(--color-background-primary) !important;border:1px solid #dfe7f1 !important;border-radius:18px !important;padding:6px !important;margin-bottom:8px !important;display:flex !important;align-items:center !important;gap:4px !important;">
+    <div class="mob-date-card">
         <button onclick="moveDate(-1)" style="width:38px;height:38px;border:none;border-radius:12px;background:#FFF2E9;color:#FF5F00;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;">‹</button>
         <div onclick="toggleCalendar()" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 0;cursor:pointer;">
             <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.04em;margin-bottom:3px;">세차일</span>
@@ -19,7 +19,7 @@
         </div>
         <button onclick="moveDate(1)" style="width:38px;height:38px;border:none;border-radius:12px;background:#FFF2E9;color:#FF5F00;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;">›</button>
     </div>
-    <div class="mob-stat-row" style="display:grid !important;grid-template-columns:1fr 1fr !important;gap:8px !important;margin-bottom:14px !important;">
+    <div class="mob-stat-row" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
         <div style="background:var(--color-background-primary) !important;border:1px solid #dfe7f1 !important;border-radius:14px !important;display:flex !important;align-items:center !important;justify-content:space-between !important;padding:10px 14px !important;">
             <span style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);">세차 대상</span>
             <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ total_target_count }}</strong>
@@ -171,7 +171,6 @@
         <div class="turu-empty-v24"><strong>세차 대상이 없습니다.</strong><span>날짜를 바꾸거나 필터를 초기화해보세요.</span></div>
         {% endif %}
     </div>
-    {% if current_user.is_master %}</form>{% endif %}
 
     <section class="desktop-table table-panel app-card turu-desktop-table-v24">
 
@@ -250,7 +249,7 @@
                         <th>세차일</th>
                         <th>구분</th>
                         <th>경과일</th>
-                        <th>밴드</th>
+                        <th>내역 업로드</th>
                     </tr>
                 </thead>
                 <tbody id="dt-tbody">
@@ -277,9 +276,9 @@
                     </td>
                     <td class="{% if elapsed >= 14 %}dt-elapsed--urgent{% endif %}">D+{{ elapsed }}</td>
                     <td>
-                        <a href="#" onclick="openBandLink(event,{{ r['id'] }})" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#03C75A;border-radius:6px;text-decoration:none;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-                        </a>
+                        <button type="button" onclick="openHistoryModal('{{ r['차량번호'] }}')" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#f0f4ff;border:1px solid #c5d0e8;border-radius:6px;font-size:12px;font-weight:600;color:#3a5bb5;cursor:pointer;">
+                            내역
+                        </button>
                     </td>
                 </tr>
                 {% else %}
@@ -551,5 +550,62 @@ function openBandLink(e,id){
         else alert('밴드 링크가 없습니다.');
     });
 }
+
+function openHistoryModal(carNum){
+    const modal = document.getElementById('history-modal');
+    const title = document.getElementById('history-modal-title');
+    const body = document.getElementById('history-modal-body');
+    title.textContent = carNum + ' · 세차 수행 기록';
+    body.innerHTML = '<p style="text-align:center;color:#999;padding:24px 0;">불러오는 중...</p>';
+    modal.removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+
+    fetch('/car_history?car_num=' + encodeURIComponent(carNum))
+        .then(r => r.json())
+        .then(data => {
+            if (!data.rows || data.rows.length === 0) {
+                body.innerHTML = '<p style="text-align:center;color:#999;padding:24px 0;">세차 기록이 없습니다.</p>';
+                return;
+            }
+            let html = '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+            html += '<thead><tr style="background:#f5f7fa;">';
+            html += '<th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e5e9f0;">완료일</th>';
+            html += '<th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e5e9f0;">주행거리</th>';
+            html += '<th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e5e9f0;">훼손</th>';
+            html += '<th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e5e9f0;">경고등</th>';
+            html += '<th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e5e9f0;">특이사항</th>';
+            html += '<th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e5e9f0;">작업자</th>';
+            html += '</tr></thead><tbody>';
+            data.rows.forEach(r => {
+                html += '<tr style="border-bottom:1px solid #f0f2f5;">';
+                html += `<td style="padding:8px 10px;">${r.세차완료일||'-'}</td>`;
+                html += `<td style="padding:8px 10px;">${r.주행거리||'-'}</td>`;
+                html += `<td style="padding:8px 10px;">${r.훼손||'없음'}</td>`;
+                html += `<td style="padding:8px 10px;">${r.경고등||'없음'}</td>`;
+                html += `<td style="padding:8px 10px;">${r.특이사항||'없음'}</td>`;
+                html += `<td style="padding:8px 10px;">${r.작업자||'-'}</td>`;
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            body.innerHTML = html;
+        })
+        .catch(() => { body.innerHTML = '<p style="text-align:center;color:#e74c3c;padding:24px 0;">불러오기 실패</p>'; });
+}
+
+function closeHistoryModal(){
+    document.getElementById('history-modal').setAttribute('hidden','');
+    document.body.style.overflow = '';
+}
 </script>
+
+{# ── 세차 수행 기록 모달 ── #}
+<div id="history-modal" hidden style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);" onclick="closeHistoryModal()">
+    <div style="background:#fff;border-radius:16px;width:90%;max-width:760px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.18);" onclick="event.stopPropagation()">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 12px;border-bottom:1px solid #e5e9f0;">
+            <strong id="history-modal-title" style="font-size:15px;font-weight:800;color:#1a2233;"></strong>
+            <button onclick="closeHistoryModal()" style="background:none;border:none;font-size:22px;color:#888;cursor:pointer;line-height:1;">×</button>
+        </div>
+        <div id="history-modal-body" style="overflow-y:auto;padding:12px 8px;"></div>
+    </div>
+</div>
 {% endblock %}

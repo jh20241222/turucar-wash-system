@@ -8,7 +8,7 @@
         <div><h1>완료 현황</h1><p>완료된 세차 기록을 확인합니다.</p></div>
     </div>
 
-    <div class="mob-date-card" style="background:var(--color-background-primary) !important;border:1px solid #dfe7f1 !important;border-radius:18px !important;padding:6px !important;margin-bottom:8px !important;display:flex !important;align-items:center !important;gap:4px !important;">
+    <div class="mob-date-card">
         <button onclick="statusMoveDate(-1)" style="width:38px;height:38px;border:none;border-radius:12px;background:#FFF2E9;color:#FF5F00;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;">‹</button>
         <div onclick="toggleStatusCalendar()" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 0;cursor:pointer;">
             <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.04em;margin-bottom:3px;">완료일</span>
@@ -16,7 +16,7 @@
         </div>
         <button onclick="statusMoveDate(1)" style="width:38px;height:38px;border:none;border-radius:12px;background:#FFF2E9;color:#FF5F00;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;">›</button>
     </div>
-    <div class="mob-stat-row" style="display:grid !important;grid-template-columns:1fr 1fr !important;gap:8px !important;margin-bottom:14px !important;">
+    <div class="mob-stat-row" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
         <div style="background:var(--color-background-primary) !important;border:1px solid #dfe7f1 !important;border-radius:14px !important;display:flex !important;align-items:center !important;justify-content:space-between !important;padding:10px 14px !important;">
             <span style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);">오늘 완료</span>
             <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ today_completed_count }}</strong>
@@ -103,7 +103,6 @@
         <div class="turu-empty-v24"><strong>완료 내역이 없습니다.</strong><span>검색 조건을 바꿔보세요.</span></div>
         {% endfor %}
     </div>
-    {% if current_user.is_master %}</form>{% endif %}
 
     {# ── 데스크탑 전용 ── #}
     <section class="desktop-table table-panel app-card turu-desktop-table-v24 turu-status-desktop">

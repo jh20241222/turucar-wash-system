@@ -110,9 +110,14 @@
         <div class="dt-toolbar">
             <div class="dt-toolbar-left"></div>
             <div class="dt-toolbar-center">
-                <div class="dt-status-stats">
+                <div class="dt-date-nav">
+                    <button type="button" onclick="statusMoveDate(-1)">‹</button>
+                    <span onclick="toggleStatusCalendar()" style="cursor:pointer;">{{ selected_date }}</span>
+                    <button type="button" onclick="statusMoveDate(1)">›</button>
+                </div>
+                <div class="dt-stats">
                     <div class="dt-stat"><span>오늘 완료</span><strong>{{ today_completed_count }}</strong></div>
-                    <div class="dt-stat"><span>조회 건수</span><strong>{{ filtered_count }}</strong></div>
+                    <div class="dt-stat"><span>선택일 완료</span><strong>{{ selected_date_count }}</strong></div>
                     <div class="dt-stat"><span>전체 완료</span><strong>{{ total_completed_count }}</strong></div>
                 </div>
             </div>
@@ -121,26 +126,34 @@
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>엑셀
                 </button>
                 {% if current_user.is_master %}
-                <button type="button" class="dt-btn dt-btn--danger" onclick="toggleDeleteMode('status-delete-form')">
+                <button type="button" id="dt-status-delete-btn" class="dt-btn dt-btn--danger" onclick="enterStatusDeleteMode()">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>삭제
                 </button>
                 {% endif %}
             </div>
         </div>
 
+        {# ── 삭제 확인 바 ── #}
+        {% if current_user.is_master %}
+        <div id="dt-status-delete-bar" style="display:none;align-items:center;gap:10px;padding:10px 16px;background:#fff3f0;border-bottom:1px solid #ffd0c0;">
+            <span id="dt-status-delete-count" style="font-size:13px;font-weight:600;color:#c0392b;">0건 선택</span>
+            <label style="font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;">
+                <input type="checkbox" id="dt-status-select-all" onchange="toggleAllDelete(this,'status-delete-form')"> 전체 선택
+            </label>
+            <button type="button" onclick="submitStatusDeleteForm()" style="padding:6px 18px;background:#e74c3c;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;">선택 삭제</button>
+            <button type="button" onclick="exitStatusDeleteMode()" style="padding:6px 14px;background:#f0f0f0;color:#333;border:none;border-radius:6px;font-size:13px;cursor:pointer;">취소</button>
+        </div>
+        {% endif %}
+
         <div class="dt-filterbar">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-text-tertiary);flex-shrink:0"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
-            <input id="dt_search_s" placeholder="차량번호, 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter')dtApplyStatusFilter();">
+            <input id="dt_search_s" placeholder="차량번호, 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){event.preventDefault();dtApplyStatusFilter();}">
             <div class="dt-filter-divider"></div>
             <select id="dt_region1_s"><option value="">전체 시/도</option>{% for r in region1 %}<option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
             <select id="dt_region2_s"><option value="">전체 구/군</option>{% for r in region2 %}<option value="{{ r }}" {% if selected_r2 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
             <select id="dt_org_s"><option value="">전체 차량소속</option>{% for o in car_org_list %}<option value="{{ o }}" {% if selected_org == o %}selected{% endif %}>{{ o }}</option>{% endfor %}</select>
             <select id="dt_spot_s"><option value="">전체 스팟</option>{% for s in spot_list %}<option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
             {% if current_user.is_master %}<select id="dt_vendor_s"><option value="">전체 업체</option>{% for v in vendor_list %}<option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>{% endif %}
-            <div class="dt-filter-divider"></div>
-            <input type="date" id="dt_start_s" value="{{ start }}" style="border:none;background:none;font-size:13px;color:var(--color-text-secondary);outline:none;font-weight:800;">
-            <span style="font-size:12px;color:var(--color-text-tertiary)">~</span>
-            <input type="date" id="dt_end_s" value="{{ end }}" style="border:none;background:none;font-size:13px;color:var(--color-text-secondary);outline:none;font-weight:800;">
             <button type="button" class="dt-btn dt-btn--primary" onclick="dtApplyStatusFilter()">검색</button>
         </div>
 
@@ -225,18 +238,16 @@
 </style>
 
 <script>
-const _statusDate = "{{ start if start else today }}";
+const _statusDate = "{{ selected_date }}";
 function statusMoveDate(delta){
-    const base=_statusDate||new Date().toISOString().slice(0,10);
-    const d=new Date(base+'T00:00:00');
+    const d=new Date(_statusDate+'T00:00:00');
     d.setDate(d.getDate()+delta);
-    const nd=d.toISOString().slice(0,10);
-    window.location.href=window.location.pathname+'?start='+nd+'&end='+nd;
+    const nd=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    window.location.href='/wash_status?date='+nd;
 }
 let _scy,_scm;
 function toggleStatusCalendar(){
-    const base=_statusDate||new Date().toISOString().slice(0,10);
-    const d=new Date(base+'T00:00:00');
+    const d=new Date(_statusDate+'T00:00:00');
     _scy=d.getFullYear();_scm=d.getMonth();
     renderStatusCal();
     document.getElementById('status-cal-backdrop').hidden=false;
@@ -247,17 +258,16 @@ function renderStatusCal(){
     document.getElementById('status-cal-title').textContent=`${_scy}년 ${_scm+1}월`;
     const first=new Date(_scy,_scm,1).getDay();
     const last=new Date(_scy,_scm+1,0).getDate();
-    const sel=_statusDate||new Date().toISOString().slice(0,10);
     let html='';
     for(let i=0;i<first;i++)html+='<span></span>';
     for(let day=1;day<=last;day++){
         const ds=`${_scy}-${String(_scm+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-        const isSel=ds===sel;
+        const isSel=ds===_statusDate;
         html+=`<button onclick="statusPickDate('${ds}')" style="border:none;border-radius:8px;padding:6px 2px;font-size:13px;font-weight:${isSel?900:600};background:${isSel?'#FF5F00':'transparent'};color:${isSel?'#fff':'var(--color-text-primary)'};cursor:pointer;">${day}</button>`;
     }
     document.getElementById('status-cal-days').innerHTML=html;
 }
-function statusPickDate(ds){closeStatusCalendar();window.location.href=window.location.pathname+'?start='+ds+'&end='+ds;}
+function statusPickDate(ds){closeStatusCalendar();window.location.href='/wash_status?date='+ds;}
 
 function getStatusVal(mobileId, desktopId){
     const desktop = document.getElementById(desktopId);
@@ -265,11 +275,54 @@ function getStatusVal(mobileId, desktopId){
     if(desktop && desktop.offsetParent !== null) return desktop.value;
     return mobile ? mobile.value : "";
 }
-function buildStatusParams(){return new URLSearchParams({s:getStatusVal("search_input","dt_search_s"),r1:getStatusVal("region1","dt_region1_s"),r2:getStatusVal("region2","dt_region2_s"),org:getStatusVal("car_org","dt_org_s"),spot:getStatusVal("spot","dt_spot_s"),vendor:getStatusVal("vendor","dt_vendor_s"),start:getStatusVal("start","dt_start_s"),end:getStatusVal("end","dt_end_s")});}
+function buildStatusParams(){
+    return new URLSearchParams({
+        date: _statusDate,
+        s: getStatusVal("search_input","dt_search_s"),
+        r1: getStatusVal("region1","dt_region1_s"),
+        r2: getStatusVal("region2","dt_region2_s"),
+        org: getStatusVal("car_org","dt_org_s"),
+        spot: getStatusVal("spot","dt_spot_s"),
+        vendor: getStatusVal("vendor","dt_vendor_s")
+    });
+}
 function applyFilter(){window.location.href=`/wash_status?${buildStatusParams().toString()}`;}
 function downloadExcel(){window.location.href=`/wash_status_excel?${buildStatusParams().toString()}`;}
 function dtApplyStatusFilter(){ applyFilter(); }
-function focusPeriodRange(){setTimeout(function(){const start=document.getElementById('start');if(start){start.focus();}},120);}
+
+function enterStatusDeleteMode(){
+    const form = document.getElementById('status-delete-form');
+    if(!form) return;
+    form.classList.add('delete-mode');
+    document.getElementById('dt-status-delete-bar').style.display = 'flex';
+    document.getElementById('dt-status-delete-btn').style.display = 'none';
+    form.querySelectorAll('input[name="ids"]').forEach(cb => { cb.onchange = updateStatusDeleteCount; });
+    updateStatusDeleteCount();
+}
+function exitStatusDeleteMode(){
+    const form = document.getElementById('status-delete-form');
+    if(!form) return;
+    form.classList.remove('delete-mode');
+    form.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.getElementById('dt-status-delete-bar').style.display = 'none';
+    document.getElementById('dt-status-delete-btn').style.display = '';
+    document.getElementById('dt-status-select-all').checked = false;
+    updateStatusDeleteCount();
+}
+function updateStatusDeleteCount(){
+    const form = document.getElementById('status-delete-form');
+    if(!form) return;
+    const count = form.querySelectorAll('input[name="ids"]:checked').length;
+    const el = document.getElementById('dt-status-delete-count');
+    if(el) el.textContent = count + '건 선택';
+}
+function submitStatusDeleteForm(){
+    const form = document.getElementById('status-delete-form');
+    if(!form) return;
+    const count = form.querySelectorAll('input[name="ids"]:checked').length;
+    if(count < 1){ alert('삭제할 항목을 선택해주세요.'); return; }
+    if(confirm(count + '건을 삭제할까요? 되돌릴 수 없습니다.')){ form.submit(); }
+}
 function openMobileFilter(id){const el=document.getElementById(id);const backdrop=document.getElementById('mobile-filter-backdrop');if(el){el.classList.add('open');el.style.display='block';el.style.visibility='visible';el.style.opacity='1';}if(backdrop){backdrop.classList.add('open');}document.body.classList.add('filter-sheet-open');}
 function closeMobileFilter(id){const el=document.getElementById(id);const backdrop=document.getElementById('mobile-filter-backdrop');if(el){el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';}if(backdrop){backdrop.classList.remove('open');}document.body.classList.remove('filter-sheet-open');}
 function closeAnyMobileFilter(){document.querySelectorAll('.mobile-filter-sheet.open').forEach(el=>{el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';});const backdrop=document.getElementById('mobile-filter-backdrop');if(backdrop){backdrop.classList.remove('open');}document.body.classList.remove('filter-sheet-open');}

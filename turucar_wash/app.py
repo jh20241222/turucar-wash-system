@@ -1996,6 +1996,23 @@ def car_detail(id):
 # =========================================================
 # 밴드 링크 조회
 # =========================================================
+@app.route("/car_history")
+@login_required
+def car_history():
+    """차량번호로 세차 수행 기록(wash_history) 조회 — JSON 반환"""
+    from flask import jsonify
+    car_num = request.args.get("car_num", "").strip()
+    if not car_num:
+        return jsonify({"rows": []})
+    conn = get_wash_db()
+    rows = conn.execute(
+        "SELECT 세차완료일, 주행거리, 훼손, 경고등, 특이사항, 작업자 FROM wash_history WHERE 차량번호=? ORDER BY 세차완료일 DESC LIMIT 50",
+        (car_num,)
+    ).fetchall()
+    conn.close()
+    return jsonify({"rows": [dict(r) for r in rows]})
+
+
 @app.route("/band_link/<int:id>", methods=["GET"])
 @login_required
 def band_link(id):

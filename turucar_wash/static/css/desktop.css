@@ -69,6 +69,10 @@
     letter-spacing: -0.01em !important;
 }
 
+#desktop-mode * {
+    font-family: 'NanumSquare', 'Pretendard', 'Apple SD Gothic Neo', sans-serif !important;
+}
+
 /* ══ 모바일 요소 숨기기 ══ */
 #desktop-mode .app-topbar,
 #desktop-mode .mobile-tabbar,

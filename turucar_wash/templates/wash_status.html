@@ -231,9 +231,9 @@ function toggleStatusCalendar(){
     const d=new Date(_statusDate+'T00:00:00');
     _scy=d.getFullYear();_scm=d.getMonth();
     renderStatusCal();
-    document.getElementById('status-cal-backdrop').style.display='flex';
+    document.getElementById('status-cal-backdrop').classList.add('open');
 }
-function closeStatusCalendar(){document.getElementById('status-cal-backdrop').style.display='none';}
+function closeStatusCalendar(){document.getElementById('status-cal-backdrop').classList.remove('open');}
 function statusCalChangeMonth(delta){_scm+=delta;if(_scm>11){_scm=0;_scy++;}else if(_scm<0){_scm=11;_scy--;}renderStatusCal();}
 function renderStatusCal(){
     document.getElementById('status-cal-title').textContent=`${_scy}년 ${_scm+1}월`;
@@ -320,9 +320,9 @@ function confirmSelectedDelete(formId,message){const form=document.getElementByI
 </script>
 
 {# ── 달력 팝업 (section 밖 — 데스크탑/모바일 공용) ── #}
-<div id="status-cal-backdrop" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(17,24,39,.34);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:22px;" onclick="closeStatusCalendar()">
-    <div style="position:relative;width:min(340px,100%);background:#fff;border-radius:28px;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,0.18);" onclick="event.stopPropagation()">
-        <button type="button" style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:22px;color:#888;cursor:pointer;line-height:1;" onclick="closeStatusCalendar()">×</button>
+<div class="notice-modal-backdrop" id="status-cal-backdrop" onclick="closeStatusCalendar()">
+    <div class="turu-mini-modal" style="padding:24px;max-width:320px;" onclick="event.stopPropagation()">
+        <button type="button" class="notice-modal-close" onclick="closeStatusCalendar()" aria-label="닫기">×</button>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
             <button onclick="statusCalChangeMonth(-1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 14px;cursor:pointer;">‹</button>
             <strong id="status-cal-title" style="font-size:15px;font-weight:950;color:var(--color-text-primary);"></strong>

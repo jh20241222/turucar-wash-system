@@ -18,23 +18,12 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/desktop.css') }}?v=20">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <script>
-    // FOUC 방지 — 데스크탑에서 모바일 요소 즉시 숨김
+    // FOUC 방지
     (function(){
         if(window.innerWidth >= 901){
             var s = document.createElement('style');
             s.id = '_fouc_guard';
-            s.textContent = [
-                '.turu-searchbar-v24',
-                '.turu-order-searchbar-v37',
-                '.turu-status-searchbar-v29',
-                '.turu-status-searchbar-v37',
-                '.mobile-filter-sheet',
-                '.turu-card-list-v24',
-                '.mob-date-card',
-                '.mob-stat-row',
-                '.app-topbar',
-                '.mobile-tabbar'
-            ].join(',') + '{display:none!important}';
+            s.textContent = 'body{opacity:0!important;transition:none!important}';
             document.head.appendChild(s);
         }
     })();
@@ -243,9 +232,9 @@
             } else {
                 document.body.id = '';
             }
-            // FOUC 방지 style 태그 제거
             var s = document.getElementById('_fouc_guard');
             if(s) s.remove();
+            document.body.style.opacity = '';
         }
         setMode();
         window.addEventListener('resize', setMode);

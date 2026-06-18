@@ -8028,6 +8028,11 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 #desktop-mode .desktop-sidebar { display: flex !important; }
 #desktop-mode .dt-topnav { display: flex !important; }
 
+/* 모바일 날짜/통계 카드 기본 스타일 */
+.mob-date-card { display:flex; align-items:center; gap:4px; background:#fff; border:none; border-radius:18px; padding:6px; margin-bottom:8px; box-shadow:0 1px 8px rgba(0,0,0,0.07); }
+.mob-stat-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
+
 /* 모바일 날짜/통계 카드 데스크탑 숨김 */
 #desktop-mode .mob-date-card { display: none !important; }
 #desktop-mode .mob-stat-cards { display: none !important; }
+#desktop-mode .mob-stat-row { display: none !important; }

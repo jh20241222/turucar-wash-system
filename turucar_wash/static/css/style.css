@@ -8024,7 +8024,11 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 #desktop-mode .desktop-sidebar { display: flex !important; }
 #desktop-mode .dt-topnav { display: flex !important; }
 
-/* 모바일 날짜/통계 카드 데스크탑 숨김 */
+/* 모바일 날짜/통계 카드 기본 표시 스타일 */
+.mob-date-card { display:flex; align-items:center; gap:4px; background:var(--color-background-primary); border:1px solid #dfe7f1; border-radius:18px; padding:6px; margin-bottom:8px; }
+.mob-stat-row { display:grid; }
+
+/* 데스크탑 모드에서 완전 숨김 */
 #desktop-mode .mob-date-card { display: none !important; }
 #desktop-mode .mob-stat-cards { display: none !important; }
 #desktop-mode .mob-stat-row { display: none !important; }

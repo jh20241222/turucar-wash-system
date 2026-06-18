@@ -381,23 +381,36 @@ ensure_user_schema()
 def ensure_wash_schema():
     conn = get_wash_db()
     cur = conn.cursor()
-    wash_cols = [row[1] for row in cur.execute("PRAGMA table_info(wash_list)").fetchall()]
-    if "등록일" not in wash_cols:
-        cur.execute("ALTER TABLE wash_list ADD COLUMN 등록일 TEXT")
-        cur.execute("UPDATE wash_list SET 등록일 = 세차일 WHERE 등록일 IS NULL")
-    if "이월횟수" not in wash_cols:
-        cur.execute("ALTER TABLE wash_list ADD COLUMN 이월횟수 INTEGER DEFAULT 0")
-        cur.execute("UPDATE wash_list SET 이월횟수 = 0 WHERE 이월횟수 IS NULL")
-    if "세차경과일" not in wash_cols:
-        cur.execute("ALTER TABLE wash_list ADD COLUMN 세차경과일 INTEGER DEFAULT 0")
-        cur.execute("UPDATE wash_list SET 세차경과일 = 0 WHERE 세차경과일 IS NULL")
+    try:
+        wash_cols = [row[1] for row in cur.execute("PRAGMA table_info(wash_list)").fetchall()]
+        if "등록일" not in wash_cols:
+            cur.execute("ALTER TABLE wash_list ADD COLUMN 등록일 TEXT")
+            cur.execute("UPDATE wash_list SET 등록일 = 세차일 WHERE 등록일 IS NULL")
+            print("[TuruWash] wash_list.등록일 컬럼 추가됨")
+        if "이월횟수" not in wash_cols:
+            cur.execute("ALTER TABLE wash_list ADD COLUMN 이월횟수 INTEGER DEFAULT 0")
+            cur.execute("UPDATE wash_list SET 이월횟수 = 0 WHERE 이월횟수 IS NULL")
+            print("[TuruWash] wash_list.이월횟수 컬럼 추가됨")
+        if "세차경과일" not in wash_cols:
+            cur.execute("ALTER TABLE wash_list ADD COLUMN 세차경과일 INTEGER DEFAULT 0")
+            cur.execute("UPDATE wash_list SET 세차경과일 = 0 WHERE 세차경과일 IS NULL")
+            print("[TuruWash] wash_list.세차경과일 컬럼 추가됨")
 
-    hist_cols = [row[1] for row in cur.execute("PRAGMA table_info(wash_history)").fetchall()]
-    if "상태" not in hist_cols:
-        cur.execute("ALTER TABLE wash_history ADD COLUMN 상태 TEXT DEFAULT '완료'")
+        hist_cols = [row[1] for row in cur.execute("PRAGMA table_info(wash_history)").fetchall()]
+        if "상태" not in hist_cols:
+            cur.execute("ALTER TABLE wash_history ADD COLUMN 상태 TEXT DEFAULT '완료'")
+            print("[TuruWash] wash_history.상태 컬럼 추가됨")
+        if "원본ID" not in hist_cols:
+            cur.execute("ALTER TABLE wash_history ADD COLUMN 원본ID INTEGER")
+            print("[TuruWash] wash_history.원본ID 컬럼 추가됨")
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+        print("[TuruWash] ensure_wash_schema 완료")
+    except Exception as e:
+        print(f"[TuruWash] ensure_wash_schema 오류: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
 
 
 ensure_wash_schema()
@@ -409,20 +422,34 @@ ensure_wash_schema()
 def rollover_wash_orders():
     """세차일이 오늘보다 과거인 미완료 오더를 오늘 날짜로 이월. 토요일은 이월 없음(리셋에서 처리)."""
     today = now_kst()
-    # 토요일(weekday=5)은 이월 안 함 — saturday_reset이 처리
     if today.weekday() == 5:
         return
     today_str = today.strftime("%Y-%m-%d")
     conn = get_wash_db()
     cur = conn.cursor()
-    cur.execute("""
-        UPDATE wash_list
-        SET 세차일 = ?,
-            이월횟수 = COALESCE(이월횟수, 0) + 1
-        WHERE 세차일 < ? AND 완료 = 0
-    """, (today_str, today_str))
-    conn.commit()
-    conn.close()
+    try:
+        # 이월횟수 컬럼 존재 여부 확인 후 분기
+        wash_cols = [row[1] for row in cur.execute("PRAGMA table_info(wash_list)").fetchall()]
+        if "이월횟수" in wash_cols:
+            cur.execute("""
+                UPDATE wash_list
+                SET 세차일 = ?,
+                    이월횟수 = COALESCE(이월횟수, 0) + 1
+                WHERE 세차일 < ? AND 완료 = 0
+            """, (today_str, today_str))
+        else:
+            cur.execute("""
+                UPDATE wash_list SET 세차일 = ?
+                WHERE 세차일 < ? AND 완료 = 0
+            """, (today_str, today_str))
+        affected = cur.rowcount
+        conn.commit()
+        print(f"[TuruWash] 이월 완료 — {affected}건 → {today_str}")
+    except Exception as e:
+        print(f"[TuruWash] rollover 오류: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
 
 
 # =========================================================
@@ -431,15 +458,21 @@ def rollover_wash_orders():
 def saturday_reset():
     """토요일에 앱 시작 시 실행. 세차일이 오늘(토) 이전인 미완료 오더를 전부 삭제한다."""
     today = now_kst()
-    if today.weekday() != 5:  # 토요일만
+    if today.weekday() != 5:
         return
     today_str = today.strftime("%Y-%m-%d")
     conn = get_wash_db()
     cur = conn.cursor()
-    cur.execute("DELETE FROM wash_list WHERE 세차일 < ? AND 완료 = 0", (today_str,))
-    conn.commit()
-    conn.close()
-    print(f"[TuruWash] 토요일 리셋 완료 — 미완료 오더 삭제됨")
+    try:
+        cur.execute("DELETE FROM wash_list WHERE 세차일 < ? AND 완료 = 0", (today_str,))
+        affected = cur.rowcount
+        conn.commit()
+        print(f"[TuruWash] 토요일 리셋 완료 — 미완료 오더 {affected}건 삭제됨")
+    except Exception as e:
+        print(f"[TuruWash] saturday_reset 오류: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
 
 
 def run_daily_once():
@@ -1093,13 +1126,13 @@ def delete_dashboard_notice(notice_id):
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    today = datetime.today().strftime("%Y-%m-%d")
+    today = today_kst()
     conn = get_wash_db()
     cur = conn.cursor()
 
     scope_sql, scope_params = scoped_condition("wash_list", current_user)
     total_count = cur.execute(
-        f"SELECT COUNT(*) AS c FROM wash_list WHERE 세차일 = ?{scope_sql}",
+        f"SELECT COUNT(*) AS c FROM wash_list WHERE 세차일 = ? AND 완료 = 0{scope_sql}",
         [today] + scope_params
     ).fetchone()["c"]
     done_count = cur.execute(
@@ -1107,7 +1140,7 @@ def dashboard():
         [today] + scoped_condition("wash_history", current_user)[1]
     ).fetchone()["c"]
     vendor_counts = cur.execute(
-        f"SELECT 업체, COUNT(*) AS c FROM wash_list WHERE 세차일 = ?{scope_sql} GROUP BY 업체 ORDER BY 업체",
+        f"SELECT 업체, COUNT(*) AS c FROM wash_list WHERE 세차일 = ? AND 완료 = 0{scope_sql} GROUP BY 업체 ORDER BY 업체",
         [today] + scope_params
     ).fetchall()
     conn.close()
@@ -1639,9 +1672,9 @@ def upload_wash_list():
 
             차량번호 = str(r["차량번호"]).strip()
 
-            # 같은 날짜에 같은 차량번호가 이미 있으면 정보 업데이트 (이월된 오더 포함)
+            # 같은 날짜에 같은 차량번호가 미완료로 이미 있으면 정보 업데이트 (이월된 오더 포함)
             existing = cur.execute(
-                "SELECT id FROM wash_list WHERE 차량번호=? AND 세차일=?",
+                "SELECT id FROM wash_list WHERE 차량번호=? AND 세차일=? AND 완료=0",
                 (차량번호, wash_date)
             ).fetchone()
             if existing:
@@ -1688,9 +1721,9 @@ def upload_wash_list():
     # 날짜 목록 조회 (삭제 UI용)
     conn = get_wash_db()
     date_list = conn.execute(
-        "SELECT 세차일, COUNT(*) AS cnt FROM wash_list GROUP BY 세차일 ORDER BY 세차일 DESC"
+        "SELECT 세차일, COUNT(*) AS cnt FROM wash_list WHERE 완료=0 GROUP BY 세차일 ORDER BY 세차일 DESC"
     ).fetchall()
-    total_count = conn.execute("SELECT COUNT(*) AS c FROM wash_list").fetchone()["c"]
+    total_count = conn.execute("SELECT COUNT(*) AS c FROM wash_list WHERE 완료=0").fetchone()["c"]
     conn.close()
 
     return render_template("upload_wash_list.html", date_list=date_list, total_count=total_count)
@@ -1708,12 +1741,13 @@ def wash_deduplicate():
 
     conn = get_wash_db()
     cur = conn.cursor()
-    # 같은 날짜 + 같은 차량번호 중 id가 가장 작은 것(최초 등록)만 남기고 나머지 삭제
     cur.execute("""
         DELETE FROM wash_list
-        WHERE id NOT IN (
+        WHERE 완료 = 0
+        AND id NOT IN (
             SELECT MIN(id)
             FROM wash_list
+            WHERE 완료 = 0
             GROUP BY 차량번호, 세차일
         )
     """)
@@ -1722,6 +1756,38 @@ def wash_deduplicate():
     conn.close()
 
     flash(f"✔ 중복 오더 {deleted}건 삭제 완료")
+    return redirect(url_for("upload_wash_list"))
+
+
+@app.route("/wash_force_rollover", methods=["POST"])
+@login_required
+def wash_force_rollover():
+    """과거 날짜로 밀린 미완료 오더를 오늘로 강제 이월 (마스터 전용)."""
+    if not current_user.is_master:
+        flash("❌ 마스터 계정만 실행할 수 있습니다.")
+        return redirect(url_for("upload_wash_list"))
+
+    today_str = today_kst()
+    conn = get_wash_db()
+    cur = conn.cursor()
+    try:
+        wash_cols = [row[1] for row in cur.execute("PRAGMA table_info(wash_list)").fetchall()]
+        if "이월횟수" in wash_cols:
+            cur.execute("""
+                UPDATE wash_list SET 세차일=?, 이월횟수=COALESCE(이월횟수,0)+1
+                WHERE 세차일 < ? AND 완료=0
+            """, (today_str, today_str))
+        else:
+            cur.execute("UPDATE wash_list SET 세차일=? WHERE 세차일 < ? AND 완료=0", (today_str, today_str))
+        affected = cur.rowcount
+        conn.commit()
+        flash(f"✔ 밀린 오더 {affected}건을 오늘({today_str})로 이월했습니다.")
+    except Exception as e:
+        conn.rollback()
+        flash(f"❌ 이월 오류: {e}")
+    finally:
+        conn.close()
+
     return redirect(url_for("upload_wash_list"))
 
 
@@ -1769,10 +1835,10 @@ def wash_list():
     conn = get_wash_db()
     cur = conn.cursor()
 
-    today = datetime.today().strftime("%Y-%m-%d")
+    today = today_kst()
     selected_date = request.args.get("date", today)
 
-    query = "SELECT * FROM wash_list WHERE 세차일 = ?"
+    query = "SELECT * FROM wash_list WHERE 세차일 = ? AND 완료 = 0"
     params = [selected_date]
 
     scope_sql, scope_params = scoped_condition("wash_list", current_user)
@@ -1891,7 +1957,7 @@ def wash_list():
 def wash_list_excel():
     from io import BytesIO
 
-    today = datetime.today().strftime("%Y-%m-%d")
+    today = today_kst()
     selected_date = request.args.get("date", today)
     search = request.args.get("s", "")
     r1 = request.args.get("r1", "")
@@ -1901,7 +1967,7 @@ def wash_list_excel():
     vendor = request.args.get("vendor", "")
 
     conn = get_wash_db()
-    query = "SELECT * FROM wash_list WHERE 세차일 = ?"
+    query = "SELECT * FROM wash_list WHERE 세차일 = ? AND 완료 = 0"
     params = [selected_date]
 
     scope_sql, scope_params = scoped_condition("wash_list", current_user)
@@ -2054,7 +2120,7 @@ def wash_complete(id):
     conn = get_wash_db()
     cur = conn.cursor()
 
-    query = "SELECT * FROM wash_list WHERE id=?"
+    query = "SELECT * FROM wash_list WHERE id=? AND 완료=0"
     params = [id]
     scope_sql, scope_params = scoped_condition("wash_list", current_user)
     query += scope_sql
@@ -2063,29 +2129,36 @@ def wash_complete(id):
 
     if not row:
         conn.close()
-        return "데이터 없음"
+        flash("❌ 이미 완료 처리됐거나 존재하지 않는 오더입니다.")
+        return redirect(url_for("wash_list"))
 
     done_date = today_kst()
-    cur.execute(
-        """
-        INSERT INTO wash_history
-        (차량번호, 차종명, 차량소속, 스팟, 주소,
-         지역시도, 지역구군, 업체, 세차완료일,
-         주행거리, 훼손, 경고등, 특이사항, 작업자, 원본ID)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            row["차량번호"], row["차종명"], row["차량소속"], row["스팟"], row["주소"],
-            row["지역시도"], row["지역구군"], row["업체"], done_date,
-            request.form.get("distance"), request.form.get("damage"),
-            request.form.get("warning"), request.form.get("etc"),
-            current_user.username, id
+    try:
+        cur.execute(
+            """
+            INSERT INTO wash_history
+            (차량번호, 차종명, 차량소속, 스팟, 주소,
+             지역시도, 지역구군, 업체, 세차완료일,
+             주행거리, 훼손, 경고등, 특이사항, 작업자, 원본ID)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                row["차량번호"], row["차종명"], row["차량소속"], row["스팟"], row["주소"],
+                row["지역시도"], row["지역구군"], row["업체"], done_date,
+                request.form.get("distance"), request.form.get("damage"),
+                request.form.get("warning"), request.form.get("etc"),
+                current_user.username, id
+            )
         )
-    )
-    cur.execute("DELETE FROM wash_list WHERE id=?", (id,))
-    conn.commit()
-    conn.close()
+        cur.execute("DELETE FROM wash_list WHERE id=? AND 완료=0", (id,))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        flash(f"❌ 완료 처리 오류: {e}")
+        return redirect(url_for("wash_list"))
 
+    conn.close()
     return redirect(url_for("wash_status"))
 
 

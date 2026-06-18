@@ -195,12 +195,24 @@
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>엑셀
                 </button>
                 {% if current_user.is_master %}
-                <button type="button" class="dt-btn dt-btn--danger" onclick="toggleDeleteMode('order-delete-form')">
+                <button type="button" id="dt-delete-toggle-btn" class="dt-btn dt-btn--danger" onclick="enterDeleteMode()">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>삭제
                 </button>
                 {% endif %}
             </div>
         </div>
+
+        {# ── 삭제 확인 바 (삭제 모드일 때만 표시) ── #}
+        {% if current_user.is_master %}
+        <div id="dt-delete-bar" style="display:none;align-items:center;gap:10px;padding:10px 16px;background:#fff3f0;border-bottom:1px solid #ffd0c0;">
+            <span id="dt-delete-count" style="font-size:13px;font-weight:600;color:#c0392b;">0건 선택</span>
+            <label style="font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;">
+                <input type="checkbox" id="dt-select-all-check" onchange="toggleAllDelete(this,'order-delete-form')"> 전체 선택
+            </label>
+            <button type="button" onclick="submitDeleteForm()" style="padding:6px 18px;background:#e74c3c;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;">선택 삭제</button>
+            <button type="button" onclick="exitDeleteMode()" style="padding:6px 14px;background:#f0f0f0;color:#333;border:none;border-radius:6px;font-size:13px;cursor:pointer;">취소</button>
+        </div>
+        {% endif %}
 
         {# ── 데스크탑 필터바 ── #}
         <div class="dt-filterbar">
@@ -223,7 +235,7 @@
             {% endif %}
             <div class="dt-filter-divider"></div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-text-tertiary);flex-shrink:0"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
-            <input id="dt_search" placeholder="차량번호, 스팟, 차량소속 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">
+            <input id="dt_search" placeholder="차량번호, 스팟, 차량소속 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){event.preventDefault();dtApplyFilter();}">
             <button type="button" class="dt-btn dt-btn--primary" onclick="dtApplyFilter()">검색</button>
         </div>
 
@@ -540,8 +552,45 @@ function closeMobileFilter(id){const el=document.getElementById(id);const backdr
 function closeAnyMobileFilter(){document.querySelectorAll('.mobile-filter-sheet.open').forEach(el=>{el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';});const backdrop=document.getElementById('mobile-filter-backdrop');if(backdrop){backdrop.classList.remove('open');}document.body.classList.remove('filter-sheet-open');}
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAnyMobileFilter();}});
 function toggleDeleteMode(formId,force){const form=document.getElementById(formId);if(!form){return;}const next=typeof force==="boolean"?force:!form.classList.contains("delete-mode");form.classList.toggle("delete-mode",next);if(!next){form.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);}}
-function toggleAllDelete(master,formId){const form=document.getElementById(formId);if(!form){return;}form.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=master.checked);}
+function toggleAllDelete(master,formId){const form=document.getElementById(formId);if(!form){return;}form.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=master.checked);updateDeleteCount();}
 function confirmSelectedDelete(formId,message){const form=document.getElementById(formId);const count=form?form.querySelectorAll('input[name="ids"]:checked').length:0;if(count<1){alert("삭제할 항목을 선택해주세요.");return false;}return confirm(message||"선택한 항목을 삭제할까요?");}
+
+function enterDeleteMode(){
+    const form = document.getElementById('order-delete-form');
+    if(!form) return;
+    form.classList.add('delete-mode');
+    document.getElementById('dt-delete-bar').style.display = 'flex';
+    document.getElementById('dt-delete-toggle-btn').style.display = 'none';
+    updateDeleteCount();
+    // 체크박스 클릭시 카운트 갱신
+    form.querySelectorAll('input[name="ids"]').forEach(cb => {
+        cb.onchange = updateDeleteCount;
+    });
+}
+function exitDeleteMode(){
+    const form = document.getElementById('order-delete-form');
+    if(!form) return;
+    form.classList.remove('delete-mode');
+    form.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.getElementById('dt-delete-bar').style.display = 'none';
+    document.getElementById('dt-delete-toggle-btn').style.display = '';
+    document.getElementById('dt-select-all-check').checked = false;
+    updateDeleteCount();
+}
+function updateDeleteCount(){
+    const form = document.getElementById('order-delete-form');
+    if(!form) return;
+    const count = form.querySelectorAll('input[name="ids"]:checked').length;
+    const el = document.getElementById('dt-delete-count');
+    if(el) el.textContent = count + '건 선택';
+}
+function submitDeleteForm(){
+    const form = document.getElementById('order-delete-form');
+    if(!form) return;
+    const count = form.querySelectorAll('input[name="ids"]:checked').length;
+    if(count < 1){ alert('삭제할 항목을 선택해주세요.'); return; }
+    if(confirm(count + '건을 삭제할까요? 되돌릴 수 없습니다.')){ form.submit(); }
+}
 
 function openBandLink(e,id){
     e.preventDefault();e.stopPropagation();

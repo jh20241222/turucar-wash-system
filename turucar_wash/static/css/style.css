@@ -7919,20 +7919,34 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   .turu-status-page-v37 .turu-status-searchbar-v37 .filter{justify-content:center !important;white-space:nowrap;}
   .turu-status-page-v37 .turu-status-searchbar-v37 .period{height:46px;border-radius:16px;border:1px solid var(--turu-line);background:#fff;color:var(--turu-text);font-size:13px;font-weight:700;padding:0 10px;}
 
+  .turu-order-page-v24 .mobile-filter-sheet,
   .turu-order-page-v37 .mobile-filter-sheet,
+  .turu-status-page-v24 .mobile-filter-sheet,
   .turu-status-page-v37 .mobile-filter-sheet{left:16px !important;right:16px !important;bottom:calc(16px + env(safe-area-inset-bottom)) !important;z-index:330 !important;display:none;max-height:min(78vh,720px) !important;overflow-y:auto !important;padding:18px !important;border-radius:26px !important;background:#fff !important;border:1px solid var(--turu-line) !important;box-shadow:0 24px 60px rgba(15,28,51,.16) !important;}
+  .turu-order-page-v24 .mobile-filter-sheet.open,
   .turu-order-page-v37 .mobile-filter-sheet.open,
+  .turu-status-page-v24 .mobile-filter-sheet.open,
   .turu-status-page-v37 .mobile-filter-sheet.open{display:block !important;visibility:visible !important;opacity:1 !important;}
+  .turu-order-page-v24 .mobile-filter-sheet .filter-grid,
   .turu-order-page-v37 .mobile-filter-sheet .filter-grid,
+  .turu-status-page-v24 .mobile-filter-sheet .filter-grid,
   .turu-status-page-v37 .mobile-filter-sheet .filter-grid,
   .turu-status-page-v37 .mobile-filter-sheet .status-filter-grid{display:grid !important;grid-template-columns:1fr !important;gap:10px !important;}
+  .turu-order-page-v24 .mobile-filter-sheet .blue-btn,
   .turu-order-page-v37 .mobile-filter-sheet .blue-btn,
+  .turu-status-page-v24 .mobile-filter-sheet .blue-btn,
   .turu-status-page-v37 .mobile-filter-sheet .blue-btn,
+  .turu-order-page-v24 .mobile-filter-sheet .primary-btn,
   .turu-order-page-v37 .mobile-filter-sheet .primary-btn,
+  .turu-status-page-v24 .mobile-filter-sheet .primary-btn,
   .turu-status-page-v37 .mobile-filter-sheet .primary-btn{height:48px !important;}
+  .turu-order-page-v24 .mobile-filter-sheet-head,
   .turu-order-page-v37 .mobile-filter-sheet-head,
+  .turu-status-page-v24 .mobile-filter-sheet-head,
   .turu-status-page-v37 .mobile-filter-sheet-head{display:flex !important;align-items:center !important;justify-content:space-between !important;gap:12px !important;margin-bottom:14px !important;}
+  .turu-order-page-v24 .mobile-filter-sheet-head button,
   .turu-order-page-v37 .mobile-filter-sheet-head button,
+  .turu-status-page-v24 .mobile-filter-sheet-head button,
   .turu-status-page-v37 .mobile-filter-sheet-head button{width:36px;height:36px;border:none;border-radius:999px;background:#f5f7fb;color:var(--turu-text);font-size:24px;line-height:1;}
 
   .turu-status-page-v37 .turu-stat-strip-v37{margin-bottom:14px !important;}
@@ -8025,7 +8039,7 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 #desktop-mode .dt-topnav { display: flex !important; }
 
 /* 모바일 날짜/통계 카드 기본 표시 스타일 */
-.mob-date-card { display:flex; align-items:center; gap:4px; background:var(--color-background-primary); border:1px solid #dfe7f1; border-radius:18px; padding:6px; margin-bottom:8px; }
+.mob-date-card { display:flex; align-items:center; gap:4px; background:#fff; border:none; border-radius:18px; padding:6px; margin-bottom:8px; box-shadow:0 1px 8px rgba(0,0,0,0.07); }
 .mob-stat-row { display:grid; }
 
 /* 데스크탑 모드에서 완전 숨김 */

@@ -26,28 +26,6 @@
             <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ total_completed_count }}</strong>
         </div>
     </div>
-    {# ── 달력 팝업 ── #}
-    <div class="notice-modal-backdrop" id="status-cal-backdrop" hidden onclick="closeStatusCalendar()">
-        <div class="turu-mini-modal" style="padding:24px;max-width:320px;" onclick="event.stopPropagation()">
-            <button type="button" class="notice-modal-close" onclick="closeStatusCalendar()" aria-label="닫기">×</button>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                <button onclick="statusCalChangeMonth(-1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 14px;cursor:pointer;">‹</button>
-                <strong id="status-cal-title" style="font-size:15px;font-weight:950;color:var(--color-text-primary);"></strong>
-                <button onclick="statusCalChangeMonth(1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 14px;cursor:pointer;">›</button>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px;">
-                <span style="text-align:center;font-size:11px;font-weight:900;color:#E24B4A;padding:4px 0;">일</span>
-                <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">월</span>
-                <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">화</span>
-                <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">수</span>
-                <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">목</span>
-                <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">금</span>
-                <span style="text-align:center;font-size:11px;font-weight:900;color:#185FA5;padding:4px 0;">토</span>
-            </div>
-            <div id="status-cal-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
-        </div>
-    </div>
-
     <div class="turu-searchbar-v24 turu-status-searchbar-v29 turu-status-searchbar-v37">
         <input id="quick_status_search_input" placeholder="차량 번호 / 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">
         <button type="button" onclick="document.getElementById('search_input').value=document.getElementById('quick_status_search_input').value;applyFilter();" aria-label="검색">
@@ -335,4 +313,26 @@ function confirmSelectedDelete(formId,message){const form=document.getElementByI
 
 
 </script>
+
+{# ── 달력 팝업 (section 밖 — 데스크탑/모바일 공용) ── #}
+<div class="notice-modal-backdrop" id="status-cal-backdrop" hidden onclick="closeStatusCalendar()">
+    <div class="turu-mini-modal" style="padding:24px;max-width:320px;" onclick="event.stopPropagation()">
+        <button type="button" class="notice-modal-close" onclick="closeStatusCalendar()" aria-label="닫기">×</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <button onclick="statusCalChangeMonth(-1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 14px;cursor:pointer;">‹</button>
+            <strong id="status-cal-title" style="font-size:15px;font-weight:950;color:var(--color-text-primary);"></strong>
+            <button onclick="statusCalChangeMonth(1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 14px;cursor:pointer;">›</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px;">
+            <span style="text-align:center;font-size:11px;font-weight:900;color:#E24B4A;padding:4px 0;">일</span>
+            <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">월</span>
+            <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">화</span>
+            <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">수</span>
+            <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">목</span>
+            <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">금</span>
+            <span style="text-align:center;font-size:11px;font-weight:900;color:#185FA5;padding:4px 0;">토</span>
+        </div>
+        <div id="status-cal-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
+    </div>
+</div>
 {% endblock %}

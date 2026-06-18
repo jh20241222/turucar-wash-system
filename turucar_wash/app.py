@@ -2103,6 +2103,8 @@ def wash_status():
     vendor = request.args.get("vendor", "")
     start = request.args.get("start", "")
     end = request.args.get("end", "")
+    today_str = today_kst()
+    selected_date = request.args.get("date", today_str)
 
     conn = get_wash_db()
     cur = conn.cursor()
@@ -2134,6 +2136,10 @@ def wash_status():
     if start and end:
         query += " AND 세차완료일 BETWEEN ? AND ?"
         params += [start, end]
+    else:
+        # 날짜 네비게이터 기준 단일 날짜 필터
+        query += " AND 세차완료일=?"
+        params.append(selected_date)
 
     query += " ORDER BY id DESC"
     rows = cur.execute(query, params).fetchall()
@@ -2144,15 +2150,13 @@ def wash_status():
     spot_list = filter_distinct_values(cur, "wash_history", "스팟", scope_sql, scope_params)
     vendor_list = filter_distinct_values(cur, "wash_history", "업체", scope_sql, scope_params)
 
-    today = datetime.today().strftime("%Y-%m-%d")
     today_completed_count = cur.execute(
         "SELECT COUNT(*) AS c FROM wash_history WHERE 세차완료일 = ?" + scope_sql,
-        [today] + scope_params
+        [today_str] + scope_params
     ).fetchone()["c"]
-    # 선택 날짜 완료 대수 (start 파라미터 기준)
     selected_date_count = cur.execute(
         "SELECT COUNT(*) AS c FROM wash_history WHERE 세차완료일 = ?" + scope_sql,
-        [(start or today)] + scope_params
+        [selected_date] + scope_params
     ).fetchone()["c"]
     total_completed_count = cur.execute(
         "SELECT COUNT(*) AS c FROM wash_history WHERE 1=1" + scope_sql,
@@ -2161,8 +2165,6 @@ def wash_status():
     filtered_count = len(rows)
 
     conn.close()
-
-    today_str = datetime.today().strftime("%Y-%m-%d")
 
     return render_template(
         "wash_status.html",
@@ -2181,6 +2183,7 @@ def wash_status():
         start=start,
         end=end,
         today=today_str,
+        selected_date=selected_date,
         today_completed_count=today_completed_count,
         selected_date_count=selected_date_count,
         total_completed_count=total_completed_count,

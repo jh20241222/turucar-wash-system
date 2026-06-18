@@ -104,6 +104,9 @@
 #desktop-mode .notice-modal-backdrop,
 #desktop-mode .turu-home-v12 { display: none !important; }
 
+#desktop-mode #cal-backdrop.open,
+#desktop-mode #status-cal-backdrop.open { display: flex !important; }
+
 /* ══ 사이드바 ══ */
 #desktop-mode .desktop-sidebar {
     display: flex !important;

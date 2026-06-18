@@ -73,8 +73,8 @@ async function openBand(){try{const response=await fetch("{{ url_for('band_link'
 </script>
 {# ── 데스크탑 전용 ── #}
 <div id="d-car-detail" style="display:none">
-<div class="d-wrap">
-<div class="d-grid-2" style="max-width:1000px;">
+<div class="d-wrap" style="max-width:1400px;padding:32px 40px;">
+<div class="d-grid-2" style="max-width:100%;grid-template-columns:1fr 1fr;gap:28px;">
 
     <div class="d-card">
         <div class="d-card-head">
@@ -89,15 +89,15 @@ async function openBand(){try{const response=await fetch("{{ url_for('band_link'
             {% endif %}
         </div>
         <div class="d-card-body">
-            <div class="d-fg"><label class="d-label">차종</label><div style="font-size:14px;font-weight:600;color:var(--d-text);">{{ car['차종명'] or '-' }}</div></div>
-            <div class="d-fg"><label class="d-label">차량소속</label><div style="font-size:14px;font-weight:600;color:var(--d-text);">{{ car['차량소속'] or '-' }}</div></div>
-            <div class="d-fg"><label class="d-label">업체</label><div style="font-size:14px;font-weight:600;color:var(--d-text);">{{ car['업체'] or '-' }}</div></div>
-            <div class="d-fg"><label class="d-label">스팟</label><div style="font-size:14px;font-weight:600;color:var(--d-text);">{{ car['스팟'] or '-' }}</div></div>
-            <div class="d-fg"><label class="d-label">주소</label><div style="font-size:14px;font-weight:600;color:var(--d-text);">{{ car['주소'] or '-' }}</div></div>
-            <div class="d-fg"><label class="d-label">지역</label><div style="font-size:14px;font-weight:600;color:var(--d-text);">{{ car['지역시도'] or '-' }} {{ car['지역구군'] or '' }}</div></div>
+            <div class="d-fg"><label class="d-label">차종</label><div style="font-size:15px;font-weight:600;color:var(--d-text);">{{ car['차종명'] or '-' }}</div></div>
+            <div class="d-fg"><label class="d-label">차량소속</label><div style="font-size:15px;font-weight:600;color:var(--d-text);">{{ car['차량소속'] or '-' }}</div></div>
+            <div class="d-fg"><label class="d-label">업체</label><div style="font-size:15px;font-weight:600;color:var(--d-text);">{{ car['업체'] or '-' }}</div></div>
+            <div class="d-fg"><label class="d-label">스팟</label><div style="font-size:15px;font-weight:600;color:var(--d-text);">{{ car['스팟'] or '-' }}</div></div>
+            <div class="d-fg"><label class="d-label">주소</label><div style="font-size:15px;font-weight:600;color:var(--d-text);">{{ car['주소'] or '-' }}</div></div>
+            <div class="d-fg"><label class="d-label">지역</label><div style="font-size:15px;font-weight:600;color:var(--d-text);">{{ car['지역시도'] or '-' }} {{ car['지역구군'] or '' }}</div></div>
             <div class="d-row-2">
-                <div class="d-fg"><label class="d-label">등록일</label><div style="font-size:14px;font-weight:600;color:var(--d-text);">{{ car['등록일'] or car['세차일'] or '-' }}</div></div>
-                <div class="d-fg"><label class="d-label">세차일</label><div style="font-size:14px;font-weight:600;color:var(--d-text);">{{ car['세차일'] or '-' }}</div></div>
+                <div class="d-fg"><label class="d-label">등록일</label><div style="font-size:15px;font-weight:600;color:var(--d-text);">{{ car['등록일'] or car['세차일'] or '-' }}</div></div>
+                <div class="d-fg"><label class="d-label">세차일</label><div style="font-size:15px;font-weight:600;color:var(--d-text);">{{ car['세차일'] or '-' }}</div></div>
             </div>
         </div>
     </div>
@@ -106,14 +106,14 @@ async function openBand(){try{const response=await fetch("{{ url_for('band_link'
         <div class="d-card-head"><div><span class="d-eyebrow">세차 기록 입력</span><h2>기록 작성</h2></div></div>
         <div class="d-card-body">
             <form id="d-wash-form" action="{{ url_for('wash_complete', id=car['id']) }}" method="POST">
-                <div class="d-fg"><label class="d-label" for="d-distance">주행거리</label><input id="d-distance" name="distance" class="d-input" inputmode="numeric" placeholder="예: 12530km"></div>
-                <div class="d-fg"><label class="d-label" for="d-damage">차량 훼손 부위</label><textarea id="d-damage" name="damage" class="d-input" style="resize:vertical;min-height:60px;" placeholder="없으면 비워두거나 '없음' 입력"></textarea></div>
-                <div class="d-fg"><label class="d-label" for="d-warning">경고등</label><textarea id="d-warning" name="warning" class="d-input" style="resize:vertical;min-height:60px;" placeholder="경고등 내용 입력"></textarea></div>
-                <div class="d-fg"><label class="d-label" for="d-etc">기타 특이사항</label><textarea id="d-etc" name="etc" class="d-input" style="resize:vertical;min-height:60px;" placeholder="추가로 공유할 내용 입력"></textarea></div>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px;">
-                    <button type="button" class="d-btn d-btn-gray" onclick="dCopyInfo()">복사</button>
-                    <button type="button" class="d-btn" style="background:#03C75A;color:#fff;margin:0;" onclick="openBand()">밴드</button>
-                    <button type="submit" class="d-btn d-btn-orange" style="margin:0;">완료 처리</button>
+                <div class="d-fg"><label class="d-label" for="d-distance">주행거리</label><input id="d-distance" name="distance" class="d-input" inputmode="numeric" placeholder="예: 12530km" style="height:44px;font-size:14px;"></div>
+                <div class="d-fg"><label class="d-label" for="d-damage">차량 훼손 부위</label><textarea id="d-damage" name="damage" class="d-input" style="resize:vertical;min-height:80px;font-size:14px;" placeholder="없으면 비워두거나 '없음' 입력"></textarea></div>
+                <div class="d-fg"><label class="d-label" for="d-warning">경고등</label><textarea id="d-warning" name="warning" class="d-input" style="resize:vertical;min-height:80px;font-size:14px;" placeholder="경고등 내용 입력"></textarea></div>
+                <div class="d-fg"><label class="d-label" for="d-etc">기타 특이사항</label><textarea id="d-etc" name="etc" class="d-input" style="resize:vertical;min-height:80px;font-size:14px;" placeholder="추가로 공유할 내용 입력"></textarea></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px;">
+                    <button type="button" class="d-btn d-btn-gray" style="height:46px;font-size:14px;" onclick="dCopyInfo()">복사</button>
+                    <button type="button" class="d-btn" style="background:#03C75A;color:#fff;margin:0;height:46px;font-size:14px;" onclick="openBand()">밴드</button>
+                    <button type="submit" class="d-btn d-btn-orange" style="margin:0;height:46px;font-size:14px;">완료 처리</button>
                 </div>
             </form>
         </div>

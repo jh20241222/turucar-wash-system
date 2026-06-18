@@ -2,7 +2,6 @@
 <html lang="ko" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <script>if(window.innerWidth>=901)document.documentElement.classList.add('is-desktop');</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#212121">
     <meta name="mobile-web-app-capable" content="yes">
@@ -16,7 +15,7 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/desktop.css') }}?v=21">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/desktop.css') }}?v=20">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 </head>
 <body class="app-shell endpoint-{{ request.endpoint or 'page' }}">
@@ -214,6 +213,21 @@
 
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=31"></script>
     <script src="{{ url_for('static', filename='js/app_loader.js') }}?v=31"></script>
+    <script>
+    (function(){
+        function setMode(){
+            if(window.innerWidth >= 901){
+                document.body.id = 'desktop-mode';
+            } else {
+                document.body.id = '';
+            }
+        }
+        setMode();
+        window.addEventListener('resize', setMode);
+    })();
+    </script>
+
+
     <script>
     (function() {
         const saved = localStorage.getItem('turu-theme') || 'light';

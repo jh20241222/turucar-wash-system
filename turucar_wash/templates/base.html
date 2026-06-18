@@ -17,6 +17,17 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/desktop.css') }}?v=20">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <script>
+    // FOUC 방지 — CSS 로딩 직후 desktop-mode 즉시 적용
+    (function(){
+        if(window.innerWidth >= 901){
+            var s = document.createElement('style');
+            s.id = '_fouc_guard';
+            s.textContent = 'body:not(#desktop-mode){visibility:hidden}';
+            document.head.appendChild(s);
+        }
+    })();
+    </script>
 </head>
 <body class="app-shell endpoint-{{ request.endpoint or 'page' }}">
 
@@ -221,6 +232,9 @@
             } else {
                 document.body.id = '';
             }
+            // FOUC 방지 style 태그 제거
+            var s = document.getElementById('_fouc_guard');
+            if(s) s.remove();
         }
         setMode();
         window.addEventListener('resize', setMode);

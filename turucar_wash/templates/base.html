@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/desktop.css') }}?v=20">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <script>if(window.innerWidth>=901)document.write('<style>body{visibility:hidden}</style>');</script>
 </head>
 <body class="app-shell endpoint-{{ request.endpoint or 'page' }}">
 
@@ -221,6 +222,7 @@
             } else {
                 document.body.id = '';
             }
+            document.body.style.visibility = '';
         }
         setMode();
         window.addEventListener('resize', setMode);

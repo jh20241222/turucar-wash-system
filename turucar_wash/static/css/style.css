@@ -1870,13 +1870,16 @@ body {
 .notice-modal-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 300;
+    z-index: 9000;
     background: rgba(17, 24, 39, .34);
     backdrop-filter: blur(8px);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     padding: 22px;
+}
+.notice-modal-backdrop.open {
+    display: flex;
 }
 .notice-modal-backdrop[hidden] {
     display: none !important;

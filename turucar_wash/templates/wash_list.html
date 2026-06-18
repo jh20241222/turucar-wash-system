@@ -557,7 +557,7 @@ function openHistoryModal(carNum){
     const body = document.getElementById('history-modal-body');
     title.textContent = carNum + ' · 세차 수행 기록';
     body.innerHTML = '<p style="text-align:center;color:#999;padding:24px 0;">불러오는 중...</p>';
-    modal.removeAttribute('hidden');
+    modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 
     fetch('/car_history?car_num=' + encodeURIComponent(carNum))
@@ -593,13 +593,14 @@ function openHistoryModal(carNum){
 }
 
 function closeHistoryModal(){
-    document.getElementById('history-modal').setAttribute('hidden','');
+    const modal = document.getElementById('history-modal');
+    modal.style.display = 'none';
     document.body.style.overflow = '';
 }
 </script>
 
 {# ── 세차 수행 기록 모달 ── #}
-<div id="history-modal" hidden style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);" onclick="closeHistoryModal()">
+<div id="history-modal" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);" onclick="closeHistoryModal()">
     <div style="background:#fff;border-radius:16px;width:90%;max-width:760px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.18);" onclick="event.stopPropagation()">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 12px;border-bottom:1px solid #e5e9f0;">
             <strong id="history-modal-title" style="font-size:15px;font-weight:800;color:#1a2233;"></strong>

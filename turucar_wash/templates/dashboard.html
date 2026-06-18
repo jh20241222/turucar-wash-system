@@ -154,12 +154,10 @@ document.addEventListener('keydown',function(event){
 </div>
 <style>
 #d-home { display: none; }
-#desktop-mode #d-home { display: block !important; }
-#desktop-mode .turu-home-v12,
-#desktop-mode .home-dev-toast-v12,
-#desktop-mode .notice-modal-backdrop { display: none !important; }
-#desktop-mode #cal-backdrop.open,
-#desktop-mode #status-cal-backdrop.open { display: flex !important; }
+@media (min-width: 901px) {
+    #d-home { display: block !important; }
+    .turu-home-v12, .home-dev-toast-v12 { display: none !important; }
+}
 </style>
 
 {% endblock %}

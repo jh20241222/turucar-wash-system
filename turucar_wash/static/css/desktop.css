@@ -383,12 +383,13 @@
 #desktop-mode .dt-toolbar-right { display: flex !important; align-items: center !important; gap: 10px !important; }
 
 #desktop-mode .dt-date-nav { display: flex !important; align-items: center !important; gap: 16px !important; }
-#desktop-mode .dt-date-nav button {
+#desktop-mode .dt-date-nav > button {
     background: #FFF2E9 !important; border: none !important; border-radius: 8px !important;
-    cursor: pointer !important; color: #FF5F00 !important; font-size: 18px !important;
-    font-weight: 900 !important; padding: 6px 16px !important; line-height: 1 !important;
+    cursor: pointer !important; color: #FF5F00 !important; font-size: 22px !important;
+    font-weight: 900 !important; padding: 4px 14px !important; line-height: 1 !important;
+    font-family: Arial, sans-serif !important;
 }
-#desktop-mode .dt-date-nav button:hover { background: #FF5F00 !important; color: #fff !important; }
+#desktop-mode .dt-date-nav > button:hover { background: #FF5F00 !important; color: #fff !important; }
 #desktop-mode .dt-date-nav span {
     font-size: 24px !important; font-weight: 800 !important; color: var(--d-text) !important;
     min-width: 150px !important; text-align: center !important; cursor: pointer !important;

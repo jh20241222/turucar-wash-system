@@ -226,9 +226,9 @@ function toggleStatusCalendar(){
     const d=new Date(_statusDate+'T00:00:00');
     _scy=d.getFullYear();_scm=d.getMonth();
     renderStatusCal();
-    document.getElementById('status-cal-backdrop').hidden=false;
+    document.getElementById('status-cal-backdrop').style.display='flex';
 }
-function closeStatusCalendar(){document.getElementById('status-cal-backdrop').hidden=true;}
+function closeStatusCalendar(){document.getElementById('status-cal-backdrop').style.display='none';}
 function statusCalChangeMonth(delta){_scm+=delta;if(_scm>11){_scm=0;_scy++;}else if(_scm<0){_scm=11;_scy--;}renderStatusCal();}
 function renderStatusCal(){
     document.getElementById('status-cal-title').textContent=`${_scy}년 ${_scm+1}월`;
@@ -315,7 +315,7 @@ function confirmSelectedDelete(formId,message){const form=document.getElementByI
 </script>
 
 {# ── 달력 팝업 (section 밖 — 데스크탑/모바일 공용) ── #}
-<div class="notice-modal-backdrop" id="status-cal-backdrop" hidden onclick="closeStatusCalendar()">
+<div class="notice-modal-backdrop" id="status-cal-backdrop" style="display:none;" onclick="closeStatusCalendar()">
     <div class="turu-mini-modal" style="padding:24px;max-width:320px;" onclick="event.stopPropagation()">
         <button type="button" class="notice-modal-close" onclick="closeStatusCalendar()" aria-label="닫기">×</button>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">

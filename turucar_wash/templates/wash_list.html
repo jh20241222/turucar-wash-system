@@ -472,16 +472,16 @@ function _initCal(){
 }
 function toggleCalendar(){
     const bd = document.getElementById('cal-backdrop');
-    if(bd.hidden){
+    if(bd.style.display === 'none' || !bd.style.display){
         _initCal();
-        bd.hidden = false;
+        bd.style.display = 'flex';
         _renderCal();
     } else {
         closeCalendar();
     }
 }
 function closeCalendar(){
-    document.getElementById('cal-backdrop').hidden = true;
+    document.getElementById('cal-backdrop').style.display = 'none';
 }
 function calChangeMonth(dir){
     _calMonth += dir;
@@ -638,7 +638,7 @@ function closeHistoryModal(){
 </div>
 
 {# ── 커스텀 달력 팝업 (section 밖 — 데스크탑/모바일 공용) ── #}
-<div class="notice-modal-backdrop" id="cal-backdrop" hidden onclick="closeCalendar()">
+<div class="notice-modal-backdrop" id="cal-backdrop" style="display:none;" onclick="closeCalendar()">
     <div class="turu-mini-modal" style="padding:24px;max-width:320px;" onclick="event.stopPropagation()">
         <button type="button" class="notice-modal-close" onclick="closeCalendar()" aria-label="닫기">×</button>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">

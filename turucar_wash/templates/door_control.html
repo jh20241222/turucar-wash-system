@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="turu-page-wrap-v24" style="max-width:480px;margin:0 auto;padding:24px 16px;">
+
+    <h2 style="font-size:20px;font-weight:900;margin-bottom:20px;color:#111;">🔓 도어 제어</h2>
+
+    <!-- 차량번호 입력 -->
+    <div style="background:#fff;border-radius:16px;padding:20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);margin-bottom:16px;">
+        <label style="font-size:12px;font-weight:700;color:#888;display:block;margin-bottom:8px;">차량번호</label>
+        <div style="display:flex;gap:8px;">
+            <input id="car-no-input" type="text" placeholder="예) 146하7820"
+                style="flex:1;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:16px;font-weight:700;outline:none;"
+                onkeydown="if(event.key==='Enter') searchCar()">
+            <button onclick="searchCar()"
+                style="padding:12px 18px;background:#111;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">
+                조회
+            </button>
+        </div>
+    </div>
+
+    <!-- 차량 정보 + 버튼 -->
+    <div id="result-wrap" style="display:none;">
+        <div id="car-info-card" style="background:#f9f9f9;border-radius:16px;padding:16px 20px;margin-bottom:16px;border:1px solid #e5e7eb;">
+            <div style="font-size:12px;color:#888;margin-bottom:4px;">등록된 차량</div>
+            <div id="car-info-text" style="font-size:18px;font-weight:900;color:#111;"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+            <button onclick="sendCommand('unlock')"
+                style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 8px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;cursor:pointer;font-size:13px;font-weight:700;color:#111;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                잠금해제
+            </button>
+            <button onclick="sendCommand('lock')"
+                style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 8px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;cursor:pointer;font-size:13px;font-weight:700;color:#111;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                잠금
+            </button>
+            <button onclick="sendCommand('hazard')"
+                style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 8px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;cursor:pointer;font-size:13px;font-weight:700;color:#111;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                비상등
+            </button>
+        </div>
+    </div>
+
+    <!-- 상태 메시지 -->
+    <div id="status-msg" style="display:none;padding:14px 16px;border-radius:12px;font-size:14px;font-weight:700;text-align:center;"></div>
+
+    <!-- 최근 제어 이력 -->
+    <div id="history-wrap" style="margin-top:24px;display:none;">
+        <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:10px;">최근 제어 이력</div>
+        <ul id="history-list" style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;"></ul>
+    </div>
+</div>
+
+<script>
+let currentCarNo = '';
+const cmdLabel = { unlock: '잠금해제', lock: '잠금', hazard: '비상등' };
+const history = [];
+
+async function searchCar() {
+    const carNo = document.getElementById('car-no-input').value.trim();
+    if (!carNo) return;
+
+    showStatus('조회 중…', '#888', '#f5f5f5');
+
+    // 단말기 존재 여부 확인 (unlock 명령 시도 없이 조회만)
+    // 조회는 실제 명령 전 서버에서 처리하므로 일단 UI만 보여줌
+    currentCarNo = carNo;
+    document.getElementById('car-info-text').textContent = carNo;
+    document.getElementById('result-wrap').style.display = 'block';
+    hideStatus();
+}
+
+async function sendCommand(cmd) {
+    if (!currentCarNo) return;
+
+    const label = cmdLabel[cmd];
+    showStatus(`${label} 명령 전송 중…`, '#666', '#f5f5f5');
+
+    try {
+        const res = await fetch('/door_control_action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ car_no: currentCarNo, command: cmd })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+            showStatus(`✅ ${currentCarNo} ${label} 완료`, '#166534', '#dcfce7');
+            addHistory(currentCarNo, label, true);
+        } else {
+            showStatus(`❌ ${data.message}`, '#991b1b', '#fee2e2');
+            addHistory(currentCarNo, label, false, data.message);
+        }
+    } catch (e) {
+        showStatus(`❌ 통신 오류: ${e.message}`, '#991b1b', '#fee2e2');
+    }
+}
+
+function showStatus(msg, color, bg) {
+    const el = document.getElementById('status-msg');
+    el.textContent = msg;
+    el.style.color = color;
+    el.style.background = bg;
+    el.style.display = 'block';
+}
+
+function hideStatus() {
+    document.getElementById('status-msg').style.display = 'none';
+}
+
+function addHistory(carNo, label, ok, errMsg) {
+    const wrap = document.getElementById('history-wrap');
+    const list = document.getElementById('history-list');
+    wrap.style.display = 'block';
+
+    const now = new Date();
+    const time = now.toTimeString().slice(0, 5);
+    const li = document.createElement('li');
+    li.style.cssText = 'background:#fff;border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;font-size:13px;border:1px solid #f0f0f0;';
+    li.innerHTML = `
+        <span style="font-weight:700;">${carNo} <span style="color:#888;font-weight:400;">${label}</span></span>
+        <span style="color:${ok ? '#16a34a' : '#ef4444'};font-size:12px;">${ok ? '성공' : '실패'} ${time}</span>
+    `;
+    list.insertBefore(li, list.firstChild);
+
+    // 최대 10개
+    while (list.children.length > 10) list.removeChild(list.lastChild);
+}
+
+document.getElementById('car-no-input').focus();
+</script>
+{% endblock %}

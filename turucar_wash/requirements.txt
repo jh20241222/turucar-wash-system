@@ -5,3 +5,6 @@ pandas
 openpyxl
 gunicorn
 APScheduler>=3.10.0
+requests
+xlrd
+urllib3

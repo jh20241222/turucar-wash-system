@@ -58,6 +58,18 @@
             <strong>긴급 세차</strong>
             
         </button>
+        {% if current_user.is_master or current_user.is_admin %}
+        <a href="{{ url_for('door_control') }}" class="home-support-card-v12">
+            <span class="support-visual-v12" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none">
+                    <rect x="10" y="28" width="44" height="30" rx="6" fill="#FFF7E8" stroke="#FF9900" stroke-width="4"/>
+                    <path d="M22 28V20a10 10 0 0 1 18.5-5" stroke="#FF9900" stroke-width="4" stroke-linecap="round"/>
+                    <circle cx="32" cy="43" r="4" fill="#FF9900"/>
+                </svg>
+            </span>
+            <strong>도어 제어</strong>
+        </a>
+        {% endif %}
         <a href="{{ url_for('support_chat') }}" class="home-support-card-v12">
             <span class="support-visual-v12 chat-v12" aria-hidden="true">
                 <svg viewBox="0 0 64 64" fill="none">

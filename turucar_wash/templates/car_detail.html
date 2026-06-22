@@ -43,6 +43,27 @@
             <div><small>이월 횟수</small><strong>{{ car['이월횟수'] }}회</strong></div>
             {% endif %}
         </div>
+
+        {% if terminal %}
+        <div style="border-top:1px solid #f0f0f0;margin-top:16px;padding-top:16px;">
+            <div style="font-size:11px;font-weight:800;color:#999;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px;">도어 제어</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                <button type="button" onclick="carControl('unlock')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;background:none;border:1px solid #e5e7eb;border-radius:12px;cursor:pointer;font-size:12px;font-weight:700;color:#111;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                    잠금해제
+                </button>
+                <button type="button" onclick="carControl('lock')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;background:none;border:1px solid #e5e7eb;border-radius:12px;cursor:pointer;font-size:12px;font-weight:700;color:#111;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    잠금
+                </button>
+                <button type="button" onclick="carControl('hazard')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;background:none;border:1px solid #e5e7eb;border-radius:12px;cursor:pointer;font-size:12px;font-weight:700;color:#111;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    비상등
+                </button>
+            </div>
+            <div id="control-status" style="margin-top:8px;font-size:13px;font-weight:700;text-align:center;min-height:18px;color:#666;"></div>
+        </div>
+        {% endif %}
     </article>
 
     <form id="wash-form" class="work-form app-card work-form-clean" action="{{ url_for('wash_complete', id=car['id']) }}" method="POST">
@@ -130,6 +151,40 @@ function dCopyInfo(){
     const etc=document.getElementById('d-etc').value||'없음';
     const text=[`[세차 완료 공유]`,`세차일자: ${carInfo.washDate||'-'}`,`차량번호: ${carInfo.number||'-'}`,`차종명: ${carInfo.model||'-'}`,`차량소속: ${carInfo.org||'-'}`,`스팟: ${carInfo.spot||'-'}`,`주소: ${carInfo.address||'-'}`,`지역: ${carInfo.region1||'-'} ${carInfo.region2||''}`,`주행거리: ${distance}`,`훼손: ${damage}`,`경고등: ${warning}`,`특이사항: ${etc}`].join('\n');
     if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(text).then(()=>alert('복사되었습니다.'));}else{const t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);alert('복사되었습니다.');}
+}
+async function carControl(command) {
+    const statusEl = document.getElementById('control-status');
+    const labels = { lock: '잠금', unlock: '잠금해제', hazard: '비상등' };
+    const btns = document.querySelectorAll('[onclick^="carControl"]');
+
+    // 버튼 비활성화
+    btns.forEach(b => { b.disabled = true; b.style.opacity = '0.4'; });
+    statusEl.style.color = '#666';
+    statusEl.textContent = `⏳ ${labels[command]} 명령 전송 중...`;
+
+    try {
+        const res = await fetch('/car_control/{{ car["id"] }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ command })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            statusEl.style.color = '#16a34a';
+            statusEl.textContent = `✔ ${labels[command]} 명령 전송 완료`;
+        } else {
+            statusEl.style.color = '#dc2626';
+            statusEl.textContent = `❌ ${data.message}`;
+        }
+    } catch (e) {
+        statusEl.style.color = '#dc2626';
+        statusEl.textContent = '❌ 네트워크 오류';
+    }
+
+    // 3초 후 재활성화
+    setTimeout(() => {
+        btns.forEach(b => { b.disabled = false; b.style.opacity = '1'; });
+    }, 3000);
 }
 </script>
 <style>

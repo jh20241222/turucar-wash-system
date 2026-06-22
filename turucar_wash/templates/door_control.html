@@ -77,7 +77,11 @@ async function sendCommand(cmd) {
     if (!currentCarNo) return;
 
     const label = cmdLabel[cmd];
-    showStatus(`${label} 명령 전송 중…`, '#666', '#f5f5f5');
+    const btns = document.querySelectorAll('#result-wrap button');
+
+    // 버튼 전체 비활성화
+    btns.forEach(b => { b.disabled = true; b.style.opacity = '0.4'; });
+    showStatus(`⏳ ${label} 명령 전송 중…`, '#666', '#f5f5f5');
 
     try {
         const res = await fetch('/door_control_action', {
@@ -97,6 +101,11 @@ async function sendCommand(cmd) {
     } catch (e) {
         showStatus(`❌ 통신 오류: ${e.message}`, '#991b1b', '#fee2e2');
     }
+
+    // 3초 후 버튼 재활성화
+    setTimeout(() => {
+        btns.forEach(b => { b.disabled = false; b.style.opacity = '1'; });
+    }, 3000);
 }
 
 function showStatus(msg, color, bg) {

@@ -343,6 +343,16 @@ def init_db():
             updated_at TEXT
         )
     """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS terminal_devices (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            차량번호 TEXT UNIQUE NOT NULL,
+            terminal_id TEXT NOT NULL,
+            client_id TEXT NOT NULL,
+            차량소속 TEXT,
+            updated_at TEXT
+        )
+    """)
     conn.commit()
     conn.close()
 
@@ -2048,15 +2058,235 @@ def car_detail(id):
     params += scope_params
 
     car = cur.execute(query, params).fetchone()
+
+    terminal = None
+    if car:
+        terminal = cur.execute(
+            "SELECT * FROM terminal_devices WHERE 차량번호=?",
+            (car["차량번호"],)
+        ).fetchone()
+
     conn.close()
 
     if not car:
         return "❌ 차량 정보를 찾을 수 없습니다.", 404
 
-    elapsed = car["세차경과일"] or 0
+    from datetime import date as _date
+    try:
+        reg_date = (car["등록일"] or car["세차일"] or today_kst())[:10]
+        elapsed = max((_date.fromisoformat(today_kst()) - _date.fromisoformat(reg_date)).days, 0)
+    except Exception:
+        elapsed = 0
     is_long_wash = elapsed >= 14
 
-    return render_template("car_detail.html", car=car, elapsed=elapsed, is_long_wash=is_long_wash)
+    return render_template("car_detail.html", car=car, elapsed=elapsed, is_long_wash=is_long_wash, terminal=terminal)
+
+
+# =========================================================
+# 오토플러그 차량 제어
+# =========================================================
+import os as _os_env, requests as _requests
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+_CLIENT_ID_MAP = {
+    "PEOPLECAR-CAR123-PROD": _os_env.environ.get("CLIENT_ID_CAR123", "44d0cc23b8ea5a36f11aeaa69d6baeda"),
+    "PEOPLECAR-PROD": _os_env.environ.get("CLIENT_ID_GENERAL", "dbd8e7fc563e462781c24b39d4378568"),
+}
+
+def _otoplug_session(car_org):
+    if car_org == "카일이삼제스퍼":
+        acc_id = _os_env.environ.get("OTOPLUG_ID_CAR123", "PPCC123PROD")
+        acc_pw = _os_env.environ.get("OTOPLUG_PW_CAR123", "")
+    else:
+        acc_id = _os_env.environ.get("OTOPLUG_ID_GENERAL", "peoplecar_prod01")
+        acc_pw = _os_env.environ.get("OTOPLUG_PW_GENERAL", "")
+    sess = _requests.Session()
+    try:
+        resp = sess.post(
+            "https://maintenance.otoplug.com:40443/login",
+            files={"adminId": (None, acc_id), "adminPw": (None, acc_pw)},
+            headers={"User-Agent": "Mozilla/5.0", "Origin": "https://maintenance.otoplug.com:40443"},
+            timeout=8, verify=False
+        )
+        if resp.status_code == 200:
+            return sess
+    except Exception:
+        pass
+    return None
+
+
+@app.route("/car_control/<int:wash_id>", methods=["POST"])
+@login_required
+def car_control(wash_id):
+    command = request.json.get("command")
+    if command not in ("lock", "unlock", "hazard"):
+        return jsonify({"ok": False, "message": "잘못된 명령"}), 400
+
+    conn = get_wash_db()
+    car = conn.execute(
+        "SELECT 차량번호, 차량소속 FROM wash_list WHERE id=?", (wash_id,)
+    ).fetchone()
+    terminal = None
+    if car:
+        terminal = conn.execute(
+            "SELECT terminal_id, client_id FROM terminal_devices WHERE 차량번호=?",
+            (car["차량번호"],)
+        ).fetchone()
+    conn.close()
+
+    if not car:
+        return jsonify({"ok": False, "message": "차량 없음"}), 404
+    if not terminal:
+        return jsonify({"ok": False, "message": "단말기 정보 없음. 관리자에게 문의하세요."}), 404
+
+    sess = _otoplug_session(car["차량소속"])
+    if not sess:
+        return jsonify({"ok": False, "message": "오토플러그 로그인 실패"}), 500
+
+    url_map = {
+        "unlock": "https://maintenance.otoplug.com:40443/tl/doorunlock",
+        "lock":   "https://maintenance.otoplug.com:40443/tl/doorlock",
+        "hazard": "https://maintenance.otoplug.com:40443/tl/hazard",
+    }
+    hex_client   = _CLIENT_ID_MAP.get(terminal["client_id"].strip(), terminal["client_id"].strip().lower())
+    hex_terminal = terminal["terminal_id"].strip().lower()
+
+    try:
+        resp = sess.post(
+            url_map[command],
+            json={"clientID": hex_client, "terminalID": hex_terminal},
+            headers={"content-type": "application/json", "User-Agent": "Mozilla/5.0",
+                     "Origin": "https://maintenance.otoplug.com:40443"},
+            timeout=8, verify=False
+        )
+        result = resp.json()
+        if result.get("smsIdx", 0) > 0:
+            return jsonify({"ok": True, "message": "명령 전송 완료"})
+        else:
+            return jsonify({"ok": False, "message": f"서버 거부: {result}"})
+    except Exception as e:
+        return jsonify({"ok": False, "message": f"통신 오류: {str(e)}"})
+
+
+@app.route("/door_control", methods=["GET"])
+@login_required
+def door_control():
+    """차량번호 직접 입력 도어 제어 페이지"""
+    return render_template("door_control.html")
+
+
+@app.route("/door_control_action", methods=["POST"])
+@login_required
+def door_control_action():
+    """차량번호로 직접 도어 제어"""
+    data = request.json
+    car_no  = (data.get("car_no") or "").strip()
+    command = data.get("command")
+
+    if not car_no:
+        return jsonify({"ok": False, "message": "차량번호를 입력해주세요."})
+    if command not in ("lock", "unlock", "hazard"):
+        return jsonify({"ok": False, "message": "잘못된 명령"})
+
+    conn = get_wash_db()
+    terminal = conn.execute(
+        "SELECT terminal_id, client_id, 차량소속 FROM terminal_devices WHERE 차량번호=?",
+        (car_no,)
+    ).fetchone()
+    conn.close()
+
+    if not terminal:
+        return jsonify({"ok": False, "message": f"'{car_no}' 단말기 정보 없음. 단말기 등록 여부를 확인하세요."})
+
+    sess = _otoplug_session(terminal["차량소속"])
+    if not sess:
+        return jsonify({"ok": False, "message": "오토플러그 로그인 실패"})
+
+    url_map = {
+        "unlock": "https://maintenance.otoplug.com:40443/tl/doorunlock",
+        "lock":   "https://maintenance.otoplug.com:40443/tl/doorlock",
+        "hazard": "https://maintenance.otoplug.com:40443/tl/hazard",
+    }
+    hex_client   = _CLIENT_ID_MAP.get(terminal["client_id"].strip(), terminal["client_id"].strip().lower())
+    hex_terminal = terminal["terminal_id"].strip().lower()
+
+    try:
+        resp = sess.post(
+            url_map[command],
+            json={"clientID": hex_client, "terminalID": hex_terminal},
+            headers={"content-type": "application/json", "User-Agent": "Mozilla/5.0",
+                     "Origin": "https://maintenance.otoplug.com:40443"},
+            timeout=8, verify=False
+        )
+        result = resp.json()
+        if result.get("smsIdx", 0) > 0:
+            return jsonify({"ok": True, "message": "명령 전송 완료"})
+        else:
+            return jsonify({"ok": False, "message": f"서버 거부: {result}"})
+    except Exception as e:
+        return jsonify({"ok": False, "message": f"통신 오류: {str(e)}"})
+
+
+# =========================================================
+# 단말기 엑셀 업로드
+# =========================================================
+@app.route("/upload_terminal", methods=["GET", "POST"])
+@login_required
+def upload_terminal():
+    if not current_user.is_master:
+        flash("❌ 마스터 계정만 접근 가능합니다.")
+        return redirect(url_for("upload_wash_list"))
+
+    if request.method == "POST":
+        file = request.files.get("file")
+        if not file or not file.filename.lower().endswith(".xls"):
+            flash("❌ .xls 파일만 업로드 가능합니다.")
+            return redirect(url_for("upload_terminal"))
+
+        import xlrd, tempfile
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".xls") as tmp:
+            file.save(tmp.name)
+            tmp_path = tmp.name
+
+        try:
+            wb = xlrd.open_workbook(tmp_path)
+            sheet = wb.sheet_by_index(0)
+            conn = get_wash_db()
+            cur = conn.cursor()
+            upserted = 0
+            for row_idx in range(1, sheet.nrows):
+                car_num     = str(sheet.cell_value(row_idx, 15)).strip()
+                terminal_id = str(sheet.cell_value(row_idx, 2)).strip()
+                client_id   = str(sheet.cell_value(row_idx, 22)).strip()
+                car_org     = str(sheet.cell_value(row_idx, 5)).strip()
+                if not car_num or not terminal_id:
+                    continue
+                cur.execute("""
+                    INSERT INTO terminal_devices (차량번호, terminal_id, client_id, 차량소속, updated_at)
+                    VALUES (?, ?, ?, ?, ?)
+                    ON CONFLICT(차량번호) DO UPDATE SET
+                        terminal_id=excluded.terminal_id,
+                        client_id=excluded.client_id,
+                        차량소속=excluded.차량소속,
+                        updated_at=excluded.updated_at
+                """, (car_num, terminal_id, client_id, car_org, today_kst()))
+                upserted += 1
+            conn.commit()
+            conn.close()
+            flash(f"✔ 단말기 정보 {upserted}건 등록/업데이트 완료")
+        except Exception as e:
+            flash(f"❌ 오류: {str(e)}")
+        finally:
+            import os as _ot
+            _ot.unlink(tmp_path)
+
+        return redirect(url_for("upload_terminal"))
+
+    conn = get_wash_db()
+    total = conn.execute("SELECT COUNT(*) AS c FROM terminal_devices").fetchone()["c"]
+    conn.close()
+    return render_template("upload_terminal.html", total=total)
 
 
 # =========================================================
@@ -2648,6 +2878,9 @@ def support_reply(ticket_id):
     flash("문의 답변이 저장되었습니다.")
     return redirect(url_for("support_manage"))
 
+
+
+import re as _re
 
 
 if __name__ == "__main__":

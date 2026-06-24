@@ -2499,10 +2499,58 @@ def wash_status():
 # =========================================================
 # 누락 라우트 스텁 / 기능 추가
 # =========================================================
-@app.route("/support_manage", methods=["GET", "POST"])
+@app.route("/support_manage")
 @login_required
 def support_manage():
-    return redirect(url_for("vendor_manage"))
+    if not (current_user.is_master or current_user.is_admin):
+        flash("\u274c 권한이 없습니다.")
+        return redirect(url_for("dashboard"))
+    selected_status = request.args.get("status", "")
+    conn = get_wash_db()
+    if selected_status:
+        rows = conn.execute(
+            "SELECT * FROM support_tickets WHERE status=? ORDER BY created_at DESC",
+            [selected_status]
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT * FROM support_tickets ORDER BY created_at DESC"
+        ).fetchall()
+    conn.close()
+    return render_template("support_manage.html", rows=rows, selected_status=selected_status)
+
+
+@app.route("/support_reply/<int:ticket_id>", methods=["POST"])
+@login_required
+def support_reply(ticket_id):
+    if not (current_user.is_master or current_user.is_admin):
+        flash("\u274c 권한이 없습니다.")
+        return redirect(url_for("dashboard"))
+    status = request.form.get("status", "접수")
+    admin_reply = request.form.get("admin_reply", "")
+    conn = get_wash_db()
+    conn.execute(
+        "UPDATE support_tickets SET status=?, admin_reply=?, updated_at=? WHERE id=?",
+        [status, admin_reply, today_kst(), ticket_id]
+    )
+    conn.commit()
+    conn.close()
+    flash("\u2714 저장되었습니다.")
+    return redirect(url_for("support_manage"))
+
+
+@app.route("/support_delete/<int:ticket_id>", methods=["POST"])
+@login_required
+def support_delete(ticket_id):
+    if not current_user.is_master:
+        flash("\u274c 마스터 계정만 삭제할 수 있습니다.")
+        return redirect(url_for("support_manage"))
+    conn = get_wash_db()
+    conn.execute("DELETE FROM support_tickets WHERE id=?", [ticket_id])
+    conn.commit()
+    conn.close()
+    flash("\u2714 삭제되었습니다.")
+    return redirect(url_for("support_manage"))
 
 
 @app.route("/support_chat", methods=["GET", "POST"])

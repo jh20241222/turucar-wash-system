@@ -3,21 +3,16 @@
 {% block content %}
 <section class="turu-app-page-v24 turu-order-page-v24">
     <header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=37" alt="TURU CAR"></header>
-
     <div class="turu-page-head-v24 turu-page-head--single-v25">
-        <div>
-            <h1>세차 대상 차량</h1>
-            <p>미완료 차량은 다음날로 자동 이월됩니다.</p>
-        </div>
+        <div><h1>세차 대상 차량</h1><p>미완료 차량은 다음날로 자동 이월됩니다.</p></div>
     </div>
-
     <div class="mob-date-card">
-        <button onclick="moveDate(-1)" style="width:38px;height:38px;border:none;border-radius:12px;background:#FFF2E9;color:#FF5F00;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;">‹</button>
+        <button onclick="moveDate(-1)" style="width:38px;height:38px;border:none;border-radius:12px;background:#FFF2E9;color:#FF5F00;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;">&#8249;</button>
         <div onclick="toggleCalendar()" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 0;cursor:pointer;">
             <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.04em;margin-bottom:3px;">세차일</span>
             <strong style="font-size:18px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ selected_date }}</strong>
         </div>
-        <button onclick="moveDate(1)" style="width:38px;height:38px;border:none;border-radius:12px;background:#FFF2E9;color:#FF5F00;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;">›</button>
+        <button onclick="moveDate(1)" style="width:38px;height:38px;border:none;border-radius:12px;background:#FFF2E9;color:#FF5F00;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;">&#8250;</button>
     </div>
     <div class="mob-stat-row" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
         <div style="background:#fff;border:none;border-radius:14px;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;box-shadow:0 1px 8px rgba(0,0,0,0.07);">
@@ -29,7 +24,6 @@
             <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ completed_count }}</strong>
         </div>
     </div>
-
     <div class="turu-searchbar-v24 turu-order-searchbar-v37">
         <input id="quick_search_input" placeholder="차량번호, 스팟, 차량소속 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">
         <button type="button" onclick="document.getElementById('search_input').value=document.getElementById('quick_search_input').value;applyFilter();" aria-label="검색">
@@ -39,12 +33,11 @@
             <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M7 12h10M10 18h4"/></svg>필터
         </button>
     </div>
-
     <div id="mobile-filter-backdrop" class="mobile-filter-backdrop" onclick="closeAnyMobileFilter()"></div>
     <section id="order-filter-sheet" class="filter-card app-card search-panel mobile-filter-sheet turu-filter-sheet-v24">
         <div class="mobile-filter-sheet-head">
             <strong>세차 대상 필터</strong>
-            <button type="button" onclick="closeMobileFilter('order-filter-sheet')" aria-label="닫기">×</button>
+            <button type="button" onclick="closeMobileFilter('order-filter-sheet')" aria-label="닫기">&#215;</button>
         </div>
         <div class="filter-head">
             <div><strong>세차 대상 검색</strong><small>차량번호, 스팟, 지역, 업체 기준으로 세차 대상을 찾아보세요.</small></div>
@@ -61,7 +54,6 @@
             <button type="button" onclick="downloadOrderExcel()" class="blue-btn order-excel-btn">엑셀 저장</button>
         </div>
     </section>
-
     {% if current_user.is_master %}
     <form method="post" action="{{ url_for('wash_list_delete') }}" id="order-delete-form" class="master-delete-form order-delete-form" onsubmit="return confirmSelectedDelete('order-delete-form', '선택한 세차 오더를 삭제할까요?');">
         <input type="hidden" name="return_query" value="{{ request.query_string.decode() }}">
@@ -74,16 +66,12 @@
             </div>
         </div>
     {% endif %}
-
     <div class="wash-type-filter-bar">
         <button type="button" class="wash-type-btn wash-type-btn--all active" onclick="setWashFilter('all')">전체</button>
         <button type="button" class="wash-type-btn wash-type-btn--urgent" onclick="setWashFilter('urgent')">🔴 장기 미세차</button>
         <button type="button" class="wash-type-btn wash-type-btn--regular" onclick="setWashFilter('regular')">🟢 정기세차</button>
     </div>
-
     <div class="turu-card-list-v24">
-
-        {# ── 장기 미세차 섹션 ── #}
         {% if long_wash_rows %}
         <div id="section-urgent">
         <div class="wash-section-label wash-section-label--urgent">
@@ -95,34 +83,23 @@
         {% set elapsed = item.elapsed %}
         <div class="turu-delete-item-v24">
             {% if current_user.is_master %}<label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>{% endif %}
-            <a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-order-card-v24 turu-order-card--urgent" data-car-num="{{ r['차량번호'] }}" data-car-model="{{ r['차종명'] or '' }}">
+            <a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-order-card-v24 turu-order-card--urgent">
                 <div class="turu-card-copy-v24">
-                    <div class="turu-card-top-v24">
-                        <div class="car-icon-wrap"></div>
-                        <div class="turu-card-copy-inner">
-                            <div class="turu-card-title-v24">
-                                <strong>{{ r['차량번호'] }}</strong>
-                                <em class="chip-urgent">장기 미세차</em>
-                                <em class="chip-day chip-day--urgent">D+{{ elapsed }}</em>
-                            </div>
-                            {% if r['차종명'] %}<div style="font-size:11px;color:#999;margin-bottom:3px;">{{ r['차종명'] }}</div>{% endif %}
-                            <div class="wash-urgent-warn">{{ elapsed }}일째 미완료 — 우선 처리 필요</div>
-                            <p><span>📍</span>{{ r['스팟'] or '-' }}</p>
-                            <p><span>👤</span>{{ r['업체'] or current_user.vendor or '담당자 미지정' }}</p>
-                        </div>
+                    <div class="turu-card-title-v24">
+                        <strong>{{ r['차량번호'] }}</strong>
+                        <em class="chip-urgent">장기 미세차</em>
+                        <em class="chip-day chip-day--urgent">D+{{ elapsed }}</em>
                     </div>
-                    <div class="res-timeline-wrap" id="tl-{{ r['차량번호'] | replace(' ','_') | replace('(','') | replace(')','') }}">
-                        <div class="res-skeleton"></div>
-                    </div>
+                    <div class="wash-urgent-warn">{{ elapsed }}일째 미완료 — 우선 처리 필요</div>
+                    <p><span>📍</span>{{ r['스팟'] or '-' }}</p>
+                    <p><span>👤</span>{{ r['업체'] or current_user.vendor or '담당자 미지정' }}</p>
                 </div>
-                <span class="turu-row-arrow-v24">›</span>
+                <span class="turu-row-arrow-v24">&#8250;</span>
             </a>
         </div>
         {% endfor %}
         </div>
         {% endif %}
-
-        {# ── 정기세차 섹션 ── #}
         {% if regular_rows %}
         <div id="section-regular">
         <div class="wash-section-label wash-section-label--regular {% if long_wash_rows %}wash-section-label--mt{% endif %}">
@@ -134,51 +111,40 @@
         {% set elapsed = item.elapsed %}
         <div class="turu-delete-item-v24">
             {% if current_user.is_master %}<label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>{% endif %}
-            <a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-order-card-v24 turu-order-card--regular" data-car-num="{{ r['차량번호'] }}" data-car-model="{{ r['차종명'] or '' }}">
+            <a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-order-card-v24 turu-order-card--regular">
                 <div class="turu-card-copy-v24">
-                    <div class="turu-card-top-v24">
-                        <div class="car-icon-wrap"></div>
-                        <div class="turu-card-copy-inner">
-                            <div class="turu-card-title-v24">
-                                <strong>{{ r['차량번호'] }}</strong>
-                                <em class="chip-regular">정기세차</em>
-                                {% if elapsed > 0 %}<em class="chip-day">D+{{ elapsed }}</em>{% else %}<em class="chip-day chip-day--new">신규</em>{% endif %}
-                            </div>
-                            {% if r['차종명'] %}<div style="font-size:11px;color:#999;margin-bottom:3px;">{{ r['차종명'] }}</div>{% endif %}
-                            <p><span>📍</span>{{ r['스팟'] or '-' }}</p>
-                            <p><span>🗓</span>{{ r['세차일'] or selected_date }}</p>
-                            <p><span>👤</span>{{ r['업체'] or current_user.vendor or '담당자 미지정' }}</p>
-                        </div>
+                    <div class="turu-card-title-v24">
+                        <strong>{{ r['차량번호'] }}</strong>
+                        <em class="chip-regular">정기세차</em>
+                        {% if elapsed > 0 %}<em class="chip-day">D+{{ elapsed }}</em>{% else %}<em class="chip-day chip-day--new">신규</em>{% endif %}
                     </div>
-                    <div class="res-timeline-wrap" id="tl-{{ r['차량번호'] | replace(' ','_') | replace('(','') | replace(')','') }}">
-                        <div class="res-skeleton"></div>
-                    </div>
+                    <p><span>📍</span>{{ r['스팟'] or '-' }}</p>
+                    <p><span>🗓</span>{{ r['세차일'] or selected_date }}</p>
+                    <p><span>👤</span>{{ r['업체'] or current_user.vendor or '담당자 미지정' }}</p>
                 </div>
-                <span class="turu-row-arrow-v24">›</span>
+                <span class="turu-row-arrow-v24">&#8250;</span>
             </a>
         </div>
         {% endfor %}
         </div>
         {% endif %}
-
         {% if not long_wash_rows and not regular_rows %}
         <div class="turu-empty-v24"><strong>세차 대상이 없습니다.</strong><span>날짜를 바꾸거나 필터를 초기화해보세요.</span></div>
         {% endif %}
     </div>
-
     <section class="desktop-table table-panel app-card turu-desktop-table-v24">
         <div class="dt-toolbar">
             <div class="dt-toolbar-left"></div>
             <div class="dt-toolbar-center">
                 <div class="dt-date-nav">
-                    <button type="button" onclick="moveDate(-1)">‹</button>
+                    <button type="button" onclick="moveDate(-1)">&#8249;</button>
                     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
                         <span style="font-size:22px;font-weight:950;color:var(--color-text-primary);letter-spacing:-.02em;">{{ selected_date }}</span>
                         <button type="button" onclick="event.stopPropagation();toggleCalendar();" style="background:none;border:none;padding:2px;cursor:pointer;color:var(--color-text-tertiary);line-height:1;">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         </button>
                     </div>
-                    <button type="button" onclick="moveDate(1)">›</button>
+                    <button type="button" onclick="moveDate(1)">&#8250;</button>
                 </div>
                 <div class="dt-stats">
                     <div class="dt-stat"><span>세차 대상</span><strong>{{ total_target_count }}</strong></div>
@@ -209,23 +175,11 @@
         </div>
         {% endif %}
         <div class="dt-filterbar">
-            <select id="dt_region1" onchange="filterRegion2(this.value,'dt_region2');syncAndFilter('region1','dt_region1')">
-                <option value="">전체 시/도</option>{% for r in region1 %}<option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
-            </select>
-            <select id="dt_region2" onchange="syncAndFilter('region2','dt_region2')">
-                <option value="">전체 구/군</option>{% for r in region2 %}<option value="{{ r }}" {% if selected_r2 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
-            </select>
-            <select id="dt_org" onchange="syncAndFilter('org','dt_org')">
-                <option value="">전체 차량소속</option>{% for o in car_org_list %}<option value="{{ o }}" {% if selected_org == o %}selected{% endif %}>{{ o }}</option>{% endfor %}
-            </select>
-            <select id="dt_spot" onchange="syncAndFilter('spot','dt_spot')">
-                <option value="">전체 스팟</option>{% for s in spot_list %}<option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
-            </select>
-            {% if current_user.is_master %}
-            <select id="dt_vendor" onchange="syncAndFilter('vendor','dt_vendor')">
-                <option value="">전체 업체</option>{% for v in vendor_list %}<option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>{% endfor %}
-            </select>
-            {% endif %}
+            <select id="dt_region1" onchange="filterRegion2(this.value,'dt_region2');syncAndFilter('region1','dt_region1')"><option value="">전체 시/도</option>{% for r in region1 %}<option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
+            <select id="dt_region2" onchange="syncAndFilter('region2','dt_region2')"><option value="">전체 구/군</option>{% for r in region2 %}<option value="{{ r }}" {% if selected_r2 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
+            <select id="dt_org" onchange="syncAndFilter('org','dt_org')"><option value="">전체 차량소속</option>{% for o in car_org_list %}<option value="{{ o }}" {% if selected_org == o %}selected{% endif %}>{{ o }}</option>{% endfor %}</select>
+            <select id="dt_spot" onchange="syncAndFilter('spot','dt_spot')"><option value="">전체 스팟</option>{% for s in spot_list %}<option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+            {% if current_user.is_master %}<select id="dt_vendor" onchange="syncAndFilter('vendor','dt_vendor')"><option value="">전체 업체</option>{% for v in vendor_list %}<option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>{% endif %}
             <div class="dt-filter-divider"></div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-text-tertiary);flex-shrink:0"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
             <input id="dt_search" placeholder="차량번호, 스팟, 차량소속 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){event.preventDefault();dtApplyFilter();}">
@@ -257,17 +211,9 @@
                     <td>{{ r['지역시도'] or '' }} {{ r['지역구군'] or '' }}</td>
                     <td>{{ r['업체'] or '-' }}</td>
                     <td>{{ r['세차일'] or selected_date }}</td>
-                    <td>
-                        {% if elapsed >= 14 %}<span class="dt-badge dt-badge--urgent">장기 미세차</span>
-                        {% elif elapsed == 0 %}<span class="dt-badge dt-badge--new">신규</span>
-                        {% else %}<span class="dt-badge dt-badge--regular">정기세차</span>{% endif %}
-                    </td>
+                    <td>{% if elapsed >= 14 %}<span class="dt-badge dt-badge--urgent">장기 미세차</span>{% elif elapsed == 0 %}<span class="dt-badge dt-badge--new">신규</span>{% else %}<span class="dt-badge dt-badge--regular">정기세차</span>{% endif %}</td>
                     <td class="{% if elapsed >= 14 %}dt-elapsed--urgent{% endif %}">D+{{ elapsed }}</td>
-                    <td>
-                        <a href="{{ url_for('car_detail', id=r['id']) }}" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#FF5F00;border-radius:6px;text-decoration:none;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                        </a>
-                    </td>
+                    <td><a href="{{ url_for('car_detail', id=r['id']) }}" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#FF5F00;border-radius:6px;text-decoration:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></a></td>
                 </tr>
                 {% else %}
                 <tr><td colspan="{% if current_user.is_master %}11{% else %}10{% endif %}" class="dt-empty">해당 날짜에 세차 대상이 없습니다.</td></tr>
@@ -276,12 +222,10 @@
             </table>
         </div>
     </section>
-
 </section>
 {% if current_user.is_master %}</form>{% endif %}
 
 <style>
-/* ── 기존 스타일 ── */
 .wash-type-filter-bar{display:flex;gap:8px;padding:4px 0 8px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .wash-type-btn{flex-shrink:0;font-size:13px;font-weight:500;padding:6px 14px;border-radius:20px;border:1.5px solid var(--color-border-tertiary);background:var(--color-background-primary);color:var(--color-text-secondary);cursor:pointer;}
 .wash-type-btn.active{color:var(--color-text-primary);border-color:var(--color-border-primary);background:var(--color-background-secondary);}
@@ -299,37 +243,17 @@
 .chip-day--urgent{background:#FAECE7;color:#993C1D;font-weight:500;}
 .chip-day--new{background:#E6F1FB;color:#185FA5;font-weight:500;}
 .wash-urgent-warn{display:flex;align-items:center;gap:5px;font-size:11px;color:#993C1D;background:#FAECE7;border-radius:6px;padding:5px 9px;margin:4px 0 5px;}
-
-/* ── 차종 아이콘 ── */
-.turu-card-top-v24{display:flex;align-items:flex-start;gap:0;}
-.car-icon-wrap{width:54px;height:38px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:10px;margin-top:2px;}
-.car-icon-wrap svg{width:100%;height:100%;}
-.turu-card-copy-inner{flex:1;min-width:0;}
-
-/* ── 예약현황 타임라인 ── */
-.res-timeline-wrap{margin-top:9px;padding-top:8px;border-top:1px solid rgba(0,0,0,0.06);}
-.res-timeline-label{font-size:10px;font-weight:700;color:#bbb;letter-spacing:.03em;margin-bottom:4px;display:flex;align-items:center;gap:4px;}
-.res-timeline-label.has-res{color:#FF5F00;}
-.res-timeline-bar{display:grid;grid-template-columns:repeat(24,1fr);gap:1.5px;height:10px;border-radius:5px;overflow:hidden;}
-.res-hour{height:100%;background:#ececec;border-radius:1px;}
-.res-hour.reserved{background:#FF5F00;}
-.res-hour.in-use{background:#FF5F00;opacity:.7;}
-.res-hour.now-marker{outline:1.5px solid #FF5F00;outline-offset:-1px;background:#e0e0e0;}
-.res-timeline-ticks{display:flex;justify-content:space-between;margin-top:3px;padding:0 1px;font-size:9px;color:#ccc;font-weight:600;}
-.res-skeleton{height:10px;border-radius:5px;background:linear-gradient(90deg,#f0f0f0 25%,#e4e4e4 50%,#f0f0f0 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;margin-top:8px;}
-@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-
 @media (min-width: 901px) {
     .turu-app-page-v24 > .turu-page-head-v24,.turu-date-summary-card-v37,.turu-searchbar-v24,.wash-type-filter-bar,.turu-card-list-v24,.master-delete-toolbar,#order-filter-sheet,.mobile-filter-backdrop{display:none !important;}
     .turu-desktop-table-v24{display:block !important;padding:0 !important;border-radius:var(--border-radius-lg) !important;overflow:hidden;margin:0 !important;}
     .dt-toolbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:start;padding:32px 28px 24px;border-bottom:0.5px solid var(--color-border-tertiary);gap:0;}
-    .dt-toolbar-left{display:flex;flex-direction:column;align-items:flex-start;gap:12px;}
-    .dt-toolbar-center{display:flex;flex-direction:column;align-items:center;gap:16px;}
-    .dt-toolbar-right{display:flex;flex-direction:column;align-items:flex-end;gap:12px;}
+    .dt-toolbar-left,.dt-toolbar-center,.dt-toolbar-right{display:flex;}
+    .dt-toolbar-left{flex-direction:column;align-items:flex-start;gap:12px;}
+    .dt-toolbar-center{flex-direction:column;align-items:center;gap:16px;}
+    .dt-toolbar-right{flex-direction:column;align-items:flex-end;gap:12px;}
     .dt-date-nav{display:flex;align-items:center;gap:14px;}
     .dt-date-nav button{background:#FFF2E9;border:none;border-radius:10px;cursor:pointer;color:#FF5F00;font-size:18px;font-weight:900;padding:6px 16px;line-height:1;}
     .dt-date-nav button:hover{background:#F0997B;color:#fff;}
-    .dt-date-nav span{font-size:26px;font-weight:950;color:var(--color-text-primary);letter-spacing:-.03em;min-width:150px;text-align:center;}
     .dt-stats{display:flex;align-items:center;}
     .dt-stat{text-align:center;padding:0 20px;border-right:0.5px solid var(--color-border-tertiary);}
     .dt-stat:last-child{border-right:none;}
@@ -339,7 +263,6 @@
     .dt-btn{display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;font-size:13px;cursor:pointer;border:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);color:var(--color-text-secondary);font-weight:800;}
     .dt-btn:hover{background:var(--color-background-secondary);}
     .dt-btn--primary{background:#FF5F00;color:#fff;border-color:#FF5F00;}
-    .dt-btn--primary:hover{background:#e05500;}
     .dt-btn--danger{color:#993C1D;border-color:#F0997B;}
     .dt-btn--danger:hover{background:#FAECE7;}
     .dt-filterbar{display:flex;align-items:center;gap:8px;padding:10px 20px;border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);}
@@ -371,143 +294,44 @@
 
 <script>
 const REGION_MAP = {{ region_map | tojson }};
-function filterRegion2(city,targetId){const sel=document.getElementById(targetId);if(!sel)return;const prev=sel.value;sel.innerHTML='<option value="">전체 구/군</option>';if(city&&REGION_MAP[city]){REGION_MAP[city].forEach(d=>{const opt=document.createElement('option');opt.value=d;opt.textContent=d;if(d===prev)opt.selected=true;sel.appendChild(opt);});}const pairs=[['region2','dt_region2'],['dt_region2','region2']];pairs.forEach(([src,dst])=>{if(targetId===src){const other=document.getElementById(dst);if(other){other.innerHTML=sel.innerHTML;other.value=sel.value;}}});}
+function filterRegion2(city,targetId){const sel=document.getElementById(targetId);if(!sel)return;const prev=sel.value;sel.innerHTML='<option value="">전체 구/군</option>';if(city&&REGION_MAP[city]){REGION_MAP[city].forEach(d=>{const opt=document.createElement('option');opt.value=d;opt.textContent=d;if(d===prev)opt.selected=true;sel.appendChild(opt);});}[['region2','dt_region2'],['dt_region2','region2']].forEach(([src,dst])=>{if(targetId===src){const other=document.getElementById(dst);if(other){other.innerHTML=sel.innerHTML;other.value=sel.value;}}});}
 window.addEventListener('DOMContentLoaded',()=>{const r1=document.getElementById('region1');if(r1&&r1.value){filterRegion2(r1.value,'region2');filterRegion2(r1.value,'dt_region2');const r2val="{{ selected_r2 }}";['region2','dt_region2'].forEach(id=>{const el=document.getElementById(id);if(el&&r2val)el.value=r2val;});}});
-function setWashFilter(type){document.querySelectorAll('.wash-type-btn').forEach(btn=>btn.classList.remove('active'));document.querySelector('.wash-type-btn--'+type).classList.add('active');const u=document.getElementById('section-urgent');const r=document.getElementById('section-regular');if(type==='all'){if(u)u.style.display='';if(r)r.style.display='';}else if(type==='urgent'){if(u)u.style.display='';if(r)r.style.display='none';}else{if(u)u.style.display='none';if(r)r.style.display='';}}
-function dtSetTab(type,el){document.querySelectorAll('.dt-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.querySelectorAll('#dt-tbody .dt-row').forEach(row=>{if(type==='all')row.style.display='';else if(type==='urgent')row.style.display=row.dataset.type==='urgent'?'':'none';else row.style.display=row.dataset.type==='regular'?'':'none';});}
-function syncAndFilter(targetId,sourceId){const val=document.getElementById(sourceId).value;const el=document.getElementById(targetId);if(el)el.value=val;}
-function dtApplyFilter(){document.getElementById('search_input').value=document.getElementById('dt_search').value;document.getElementById('region1').value=document.getElementById('dt_region1').value;document.getElementById('region2').value=document.getElementById('dt_region2').value;document.getElementById('org').value=document.getElementById('dt_org').value;document.getElementById('spot').value=document.getElementById('dt_spot').value;const dtv=document.getElementById('dt_vendor');const v=document.getElementById('vendor');if(dtv&&v)v.value=dtv.value;applyFilter();}
+function setWashFilter(type){document.querySelectorAll('.wash-type-btn').forEach(b=>b.classList.remove('active'));document.querySelector('.wash-type-btn--'+type).classList.add('active');const u=document.getElementById('section-urgent'),r=document.getElementById('section-regular');if(type==='all'){if(u)u.style.display='';if(r)r.style.display='';}else if(type==='urgent'){if(u)u.style.display='';if(r)r.style.display='none';}else{if(u)u.style.display='none';if(r)r.style.display='';}}
+function dtSetTab(type,el){document.querySelectorAll('.dt-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.querySelectorAll('#dt-tbody .dt-row').forEach(row=>{row.style.display=(type==='all'||row.dataset.type===type)?'':'none';});}
+function syncAndFilter(tid,sid){const el=document.getElementById(tid);if(el)el.value=document.getElementById(sid).value;}
+function dtApplyFilter(){document.getElementById('search_input').value=document.getElementById('dt_search').value;document.getElementById('region1').value=document.getElementById('dt_region1').value;document.getElementById('region2').value=document.getElementById('dt_region2').value;document.getElementById('org').value=document.getElementById('dt_org').value;document.getElementById('spot').value=document.getElementById('dt_spot').value;const dtv=document.getElementById('dt_vendor'),v=document.getElementById('vendor');if(dtv&&v)v.value=dtv.value;applyFilter();}
 let _calYear,_calMonth;const _selDate="{{ selected_date }}";
 function _initCal(){const p=_selDate.split('-');_calYear=parseInt(p[0]);_calMonth=parseInt(p[1])-1;}
 function toggleCalendar(){const bd=document.getElementById('cal-backdrop');if(bd.classList.contains('open')){closeCalendar();}else{_initCal();bd.classList.add('open');_renderCal();}}
 function closeCalendar(){document.getElementById('cal-backdrop').classList.remove('open');}
 function calChangeMonth(dir){_calMonth+=dir;if(_calMonth<0){_calMonth=11;_calYear--;}if(_calMonth>11){_calMonth=0;_calYear++;}_renderCal();}
-function _renderCal(){document.getElementById('cal-title').textContent=`${_calYear}년 ${_calMonth+1}월`;const first=new Date(_calYear,_calMonth,1).getDay();const last=new Date(_calYear,_calMonth+1,0).getDate();const today=new Date();const todayStr=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;let html='';for(let i=0;i<first;i++)html+=`<div></div>`;for(let d=1;d<=last;d++){const ds=`${_calYear}-${String(_calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;const isSel=ds===_selDate;const isToday=ds===todayStr;const isSun=(first+d-1)%7===0;const isSat=(first+d-1)%7===6;let style=`text-align:center;padding:7px 2px;font-size:13px;font-weight:800;border-radius:8px;cursor:pointer;border:none;`;if(isSel)style+=`background:#FF5F00;color:#fff;font-weight:950;`;else if(isToday)style+=`border:1.5px solid #FF5F00;color:#FF5F00;background:none;`;else if(isSun)style+=`color:#E24B4A;background:none;`;else if(isSat)style+=`color:#185FA5;background:none;`;else style+=`color:var(--color-text-primary);background:none;`;html+=`<button style="${style}" onclick="moveToDate('${ds}')">${d}</button>`;}document.getElementById('cal-days').innerHTML=html;}
-function moveToDate(dateStr){if(dateStr)window.location.href=`/wash_list?date=${dateStr}`;}
-function moveDate(days){const current=new Date("{{ selected_date }}T00:00:00");current.setDate(current.getDate()+days);const yyyy=current.getFullYear();const mm=String(current.getMonth()+1).padStart(2,'0');const dd=String(current.getDate()).padStart(2,'0');window.location.href=`/wash_list?date=${yyyy}-${mm}-${dd}`;}
-function getVal(mobileId,desktopId){const desktop=document.getElementById(desktopId);const mobile=document.getElementById(mobileId);if(desktop&&desktop.offsetParent!==null)return desktop.value;return mobile?mobile.value:"";}
+function _renderCal(){document.getElementById('cal-title').textContent=_calYear+'년 '+(_calMonth+1)+'월';const first=new Date(_calYear,_calMonth,1).getDay(),last=new Date(_calYear,_calMonth+1,0).getDate();const today=new Date(),todayStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');let html='';for(let i=0;i<first;i++)html+='<div></div>';for(let d=1;d<=last;d++){const ds=_calYear+'-'+String(_calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');const isSel=ds===_selDate,isToday=ds===todayStr,isSun=(first+d-1)%7===0,isSat=(first+d-1)%7===6;let s='text-align:center;padding:7px 2px;font-size:13px;font-weight:800;border-radius:8px;cursor:pointer;border:none;';if(isSel)s+='background:#FF5F00;color:#fff;font-weight:950;';else if(isToday)s+='border:1.5px solid #FF5F00;color:#FF5F00;background:none;';else if(isSun)s+='color:#E24B4A;background:none;';else if(isSat)s+='color:#185FA5;background:none;';else s+='color:var(--color-text-primary);background:none;';html+='<button style="'+s+'" onclick="moveToDate(\''+ds+'\')">'+d+'</button>';}document.getElementById('cal-days').innerHTML=html;}
+function moveToDate(ds){if(ds)window.location.href='/wash_list?date='+ds;}
+function moveDate(days){const c=new Date("{{ selected_date }}T00:00:00");c.setDate(c.getDate()+days);const yyyy=c.getFullYear(),mm=String(c.getMonth()+1).padStart(2,'0'),dd=String(c.getDate()).padStart(2,'0');window.location.href='/wash_list?date='+yyyy+'-'+mm+'-'+dd;}
+function getVal(mid,did){const d=document.getElementById(did),m=document.getElementById(mid);return(d&&d.offsetParent!==null)?d.value:(m?m.value:'');}
 function buildOrderParams(){return new URLSearchParams({date:"{{ selected_date }}",s:getVal("search_input","dt_search"),r1:getVal("region1","dt_region1"),r2:getVal("region2","dt_region2"),org:getVal("org","dt_org"),spot:getVal("spot","dt_spot"),vendor:getVal("vendor","dt_vendor")});}
-function applyFilter(){window.location.href=`/wash_list?${buildOrderParams().toString()}`;}
-function downloadOrderExcel(){window.location.href=`/wash_list_excel?${buildOrderParams().toString()}`;}
-function openMobileFilter(id){const el=document.getElementById(id);const backdrop=document.getElementById('mobile-filter-backdrop');if(el){el.classList.add('open');el.style.display='block';el.style.visibility='visible';el.style.opacity='1';}if(backdrop){backdrop.classList.add('open');}document.body.classList.add('filter-sheet-open');}
-function closeMobileFilter(id){const el=document.getElementById(id);const backdrop=document.getElementById('mobile-filter-backdrop');if(el){el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';}if(backdrop){backdrop.classList.remove('open');}document.body.classList.remove('filter-sheet-open');}
-function closeAnyMobileFilter(){document.querySelectorAll('.mobile-filter-sheet.open').forEach(el=>{el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';});const backdrop=document.getElementById('mobile-filter-backdrop');if(backdrop){backdrop.classList.remove('open');}document.body.classList.remove('filter-sheet-open');}
-document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAnyMobileFilter();}});
-function toggleDeleteMode(formId,force){const form=document.getElementById(formId);if(!form){return;}const next=typeof force==="boolean"?force:!form.classList.contains("delete-mode");form.classList.toggle("delete-mode",next);if(!next){form.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);}}
-function toggleAllDelete(master,formId){const form=document.getElementById(formId);if(!form){return;}form.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=master.checked);updateDeleteCount();}
-function confirmSelectedDelete(formId,message){const form=document.getElementById(formId);const count=form?form.querySelectorAll('input[name="ids"]:checked').length:0;if(count<1){alert("삭제할 항목을 선택해주세요.");return false;}return confirm(message||"선택한 항목을 삭제할까요?");}
+function applyFilter(){window.location.href='/wash_list?'+buildOrderParams().toString();}
+function downloadOrderExcel(){window.location.href='/wash_list_excel?'+buildOrderParams().toString();}
+function openMobileFilter(id){const el=document.getElementById(id),bd=document.getElementById('mobile-filter-backdrop');if(el){el.classList.add('open');el.style.display='block';el.style.visibility='visible';el.style.opacity='1';}if(bd)bd.classList.add('open');document.body.classList.add('filter-sheet-open');}
+function closeMobileFilter(id){const el=document.getElementById(id),bd=document.getElementById('mobile-filter-backdrop');if(el){el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';}if(bd)bd.classList.remove('open');document.body.classList.remove('filter-sheet-open');}
+function closeAnyMobileFilter(){document.querySelectorAll('.mobile-filter-sheet.open').forEach(el=>{el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';});const bd=document.getElementById('mobile-filter-backdrop');if(bd)bd.classList.remove('open');document.body.classList.remove('filter-sheet-open');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAnyMobileFilter();});
+function toggleDeleteMode(formId,force){const form=document.getElementById(formId);if(!form)return;const next=typeof force==='boolean'?force:!form.classList.contains('delete-mode');form.classList.toggle('delete-mode',next);if(!next)form.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);}
+function toggleAllDelete(master,formId){const form=document.getElementById(formId);if(!form)return;form.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=master.checked);updateDeleteCount();}
+function confirmSelectedDelete(formId,message){const form=document.getElementById(formId);const count=form?form.querySelectorAll('input[name="ids"]:checked').length:0;if(count<1){alert('삭제할 항목을 선택해주세요.');return false;}return confirm(message||'선택한 항목을 삭제할까요?');}
 function enterDeleteMode(){const form=document.getElementById('order-delete-form');if(!form)return;form.classList.add('delete-mode');document.getElementById('dt-delete-bar').style.display='flex';document.getElementById('dt-delete-toggle-btn').style.display='none';updateDeleteCount();form.querySelectorAll('input[name="ids"]').forEach(cb=>{cb.onchange=updateDeleteCount;});}
 function exitDeleteMode(){const form=document.getElementById('order-delete-form');if(!form)return;form.classList.remove('delete-mode');form.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);document.getElementById('dt-delete-bar').style.display='none';document.getElementById('dt-delete-toggle-btn').style.display='';document.getElementById('dt-select-all-check').checked=false;updateDeleteCount();}
 function updateDeleteCount(){const form=document.getElementById('order-delete-form');if(!form)return;const count=form.querySelectorAll('input[name="ids"]:checked').length;const el=document.getElementById('dt-delete-count');if(el)el.textContent=count+'건 선택';}
-function submitDeleteForm(){const form=document.getElementById('order-delete-form');if(!form)return;const count=form.querySelectorAll('input[name="ids"]:checked').length;if(count<1){alert('삭제할 항목을 선택해주세요.');return;}if(confirm(count+'건을 삭제할까요? 되돌릴 수 없습니다.')){form.submit();}}
-function openBandLink(e,id){e.preventDefault();e.stopPropagation();fetch('/band_link/'+id).then(r=>r.json()).then(d=>{if(d.ok&&d.band_link)window.open(d.band_link,'_blank');else alert('밴드 링크가 없습니다.');});}
-function openHistoryModal(carNum){const modal=document.getElementById('history-modal');const title=document.getElementById('history-modal-title');const body=document.getElementById('history-modal-body');title.textContent=carNum+' · 세차 수행 기록';body.innerHTML='<p style="text-align:center;color:#999;padding:24px 0;">불러오는 중...</p>';modal.style.display='flex';document.body.style.overflow='hidden';fetch('/car_history?car_num='+encodeURIComponent(carNum)).then(r=>r.json()).then(data=>{if(!data.rows||data.rows.length===0){body.innerHTML='<p style="text-align:center;color:#999;padding:24px 0;">세차 기록이 없습니다.</p>';return;}let html='<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#f5f7fa;"><th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e5e9f0;">완료일</th><th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e5e9f0;">주행거리</th><th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e5e9f0;">훼손</th><th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e5e9f0;">경고등</th><th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e5e9f0;">특이사항</th><th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e5e9f0;">작업자</th></tr></thead><tbody>';data.rows.forEach(r=>{html+=`<tr style="border-bottom:1px solid #f0f2f5;"><td style="padding:8px 10px;">${r.세차완료일||'-'}</td><td style="padding:8px 10px;">${r.주행거리||'-'}</td><td style="padding:8px 10px;">${r.훼손||'없음'}</td><td style="padding:8px 10px;">${r.경고등||'없음'}</td><td style="padding:8px 10px;">${r.특이사항||'없음'}</td><td style="padding:8px 10px;">${r.작업자||'-'}</td></tr>`;});html+='</tbody></table>';body.innerHTML=html;}).catch(()=>{body.innerHTML='<p style="text-align:center;color:#e74c3c;padding:24px 0;">불러오기 실패</p>';});}
-function closeHistoryModal(){const modal=document.getElementById('history-modal');modal.style.display='none';document.body.style.overflow='';}
-
-/* ── 차종 아이콘 SVG ── */
-const CAR_ICONS = {
-  sedan: '<svg viewBox="0 0 80 36" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 24 Q14 14 22 12 L35 9 Q44 8 52 11 L66 15 Q72 17 74 22 L76 26 Q76 28 74 28 L68 28 Q67 23 62 23 Q57 23 56 28 L24 28 Q23 23 18 23 Q13 23 12 28 L8 28 Q6 28 6 26 Z" fill="#D0D5DD" stroke="#9AA0AC" stroke-width="1.2"/><path d="M22 12 L28 8 Q36 5 46 6 L58 8 L66 15" stroke="#9AA0AC" stroke-width="1" fill="none"/><circle cx="18" cy="28" r="4" fill="#6B7280" stroke="#9AA0AC" stroke-width="1"/><circle cx="62" cy="28" r="4" fill="#6B7280" stroke="#9AA0AC" stroke-width="1"/><rect x="28" y="6" width="26" height="7" rx="2" fill="#A8D4F5" opacity=".7"/></svg>',
-  suv: '<svg viewBox="0 0 80 36" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 24 Q10 12 20 10 L32 8 Q42 7 52 8 L64 11 Q72 14 74 22 L76 26 Q76 28 74 28 L68 28 Q67 23 62 23 Q57 23 56 28 L24 28 Q23 23 18 23 Q13 23 12 28 L8 28 Q6 28 6 26 Z" fill="#C8D0DC" stroke="#8A929E" stroke-width="1.2"/><path d="M20 10 L22 6 Q32 4 52 5 L64 8 L64 11" stroke="#8A929E" stroke-width="1" fill="none"/><circle cx="18" cy="28" r="4" fill="#6B7280" stroke="#9AA0AC" stroke-width="1"/><circle cx="62" cy="28" r="4" fill="#6B7280" stroke="#9AA0AC" stroke-width="1"/><rect x="22" y="5" width="28" height="6" rx="1.5" fill="#A8D4F5" opacity=".7"/><rect x="52" y="6" width="12" height="5" rx="1.5" fill="#A8D4F5" opacity=".5"/></svg>',
-  van: '<svg viewBox="0 0 80 36" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 24 Q6 10 18 8 L56 7 Q68 7 72 14 L74 22 L76 26 Q76 28 74 28 L68 28 Q67 23 62 23 Q57 23 56 28 L24 28 Q23 23 18 23 Q13 23 12 28 L6 28 Z" fill="#BFC8D4" stroke="#8A929E" stroke-width="1.2"/><line x1="38" y1="8" x2="38" y2="28" stroke="#9AA0AC" stroke-width=".8" stroke-dasharray="2,2"/><rect x="10" y="9" width="26" height="9" rx="1.5" fill="#A8D4F5" opacity=".7"/><rect x="38" y="9" width="28" height="6" rx="1.5" fill="#A8D4F5" opacity=".5"/><circle cx="18" cy="28" r="4" fill="#6B7280" stroke="#9AA0AC" stroke-width="1"/><circle cx="62" cy="28" r="4" fill="#6B7280" stroke="#9AA0AC" stroke-width="1"/></svg>',
-  compact: '<svg viewBox="0 0 80 36" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 24 Q18 16 26 13 L36 11 Q44 10 52 13 L60 16 Q66 19 68 24 L70 28 L10 28 Q8 28 8 26 Z" fill="#D0D5DD" stroke="#9AA0AC" stroke-width="1.2"/><path d="M26 13 L30 9 Q38 7 46 8 L54 11" stroke="#9AA0AC" stroke-width="1" fill="none"/><circle cx="20" cy="28" r="4" fill="#6B7280" stroke="#9AA0AC" stroke-width="1"/><circle cx="58" cy="28" r="4" fill="#6B7280" stroke="#9AA0AC" stroke-width="1"/><rect x="30" y="8" width="20" height="6" rx="2" fill="#A8D4F5" opacity=".7"/></svg>',
-  electric: '<svg viewBox="0 0 80 36" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 24 Q14 13 22 11 L36 8 Q44 7 52 10 L66 14 Q72 17 74 22 L76 26 Q76 28 74 28 L68 28 Q67 23 62 23 Q57 23 56 28 L24 28 Q23 23 18 23 Q13 23 12 28 L8 28 Q6 28 6 26 Z" fill="#C8D5E8" stroke="#7A9AB8" stroke-width="1.2"/><path d="M22 11 L28 7 Q36 4 48 5 L58 8 L66 14" stroke="#7A9AB8" stroke-width="1" fill="none"/><circle cx="18" cy="28" r="4" fill="#5B7FA6" stroke="#7A9AB8" stroke-width="1"/><circle cx="62" cy="28" r="4" fill="#5B7FA6" stroke="#7A9AB8" stroke-width="1"/><rect x="28" y="5" width="28" height="7" rx="2" fill="#9BC4E8" opacity=".8"/><text x="37" y="21" font-size="8" fill="#5B7FA6" font-weight="bold" font-family="sans-serif">EV</text></svg>',
-};
-
-function getCarIconType(m) {
-  if (!m) return 'sedan';
-  m = m.toLowerCase();
-  if (/아이오닉|ioniq|ev\d|bz\d|코나.?ev|니로.?ev|bolt|아이오닉5|아이오닉6|ev6|ev9/.test(m)) return 'electric';
-  if (/카니발|스타리아|스타렉스|그랜드.?스타렉스|카운티|쏠라티|봉고|포터/.test(m)) return 'van';
-  if (/팰리세이드|싼타페|투싼|스포티지|셀토스|베뉴|코나|니로|티구안|qm6|qm5|트레일블레이저|이쿼녹스|캡티바|크레타|gv80|gv70|gv60|테라칸|모하비/.test(m)) return 'suv';
-  if (/모닝|레이|스파크|캐스퍼|아토스|비스토/.test(m)) return 'compact';
-  return 'sedan';
-}
-
-/* 차종 아이콘 삽입 */
-document.querySelectorAll('[data-car-num]').forEach(card => {
-  const model = card.getAttribute('data-car-model') || '';
-  const wrap = card.querySelector('.car-icon-wrap');
-  if (wrap) wrap.innerHTML = CAR_ICONS[getCarIconType(model)];
-});
-
-/* 예약현황 타임라인 */
-(function(){
-  const date = "{{ selected_date }}";
-  const nowH = new Date().getHours();
-
-  fetch('/api/reservations_today?date=' + date)
-    .then(r => r.json())
-    .then(data => {
-      const byCar = data.by_car || {};
-      document.querySelectorAll('[data-car-num]').forEach(card => {
-        const carNum = card.getAttribute('data-car-num');
-        const safeId = carNum.replace(/[ ()]/g, '_');
-        const tlWrap = document.getElementById('tl-' + safeId);
-        if (!tlWrap) return;
-
-        const reservations = byCar[carNum] || [];
-        const hours = new Array(24).fill(0);
-
-        reservations.forEach(res => {
-          const s = timeH(res.시작시간), e = timeH(res.종료시간);
-          const active = /운행|사용/.test(res.서비스상태 || '');
-          if (s !== null && e !== null) {
-            for (let h = s; h <= Math.min(e, 23); h++) hours[h] = active ? 2 : 1;
-          }
-        });
-
-        const hasRes = reservations.length > 0;
-        let blocks = '';
-        for (let h = 0; h < 24; h++) {
-          let cls = 'res-hour';
-          if (h === nowH) cls += ' now-marker';
-          if (hours[h] === 2) cls += ' in-use';
-          else if (hours[h] === 1) cls += ' reserved';
-          blocks += `<div class="${cls}" title="${h}시"></div>`;
-        }
-
-        const slots = reservations.map(r =>
-          (r.시작시간 && r.종료시간) ? r.시작시간.slice(0,5)+'~'+r.종료시간.slice(0,5) : ''
-        ).filter(Boolean);
-
-        const labelCls = hasRes ? 'res-timeline-label has-res' : 'res-timeline-label';
-        const labelTxt = hasRes
-          ? '예약 '+reservations.length+'건' + (slots.length ? ' · '+slots.slice(0,3).join(', ') : '')
-          : '예약 없음';
-
-        tlWrap.innerHTML =
-          `<div class="${labelCls}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${labelTxt}</div>` +
-          `<div class="res-timeline-bar">${blocks}</div>` +
-          `<div class="res-timeline-ticks"><span>0</span><span>6</span><span>12</span><span>18</span><span>24</span></div>`;
-      });
-    })
-    .catch(() => { document.querySelectorAll('.res-skeleton').forEach(el => el.remove()); });
-})();
-
-function timeH(t) {
-  if (!t) return null;
-  const p = t.split(':');
-  return p.length >= 2 ? parseInt(p[0], 10) : null;
-}
+function submitDeleteForm(){const form=document.getElementById('order-delete-form');if(!form)return;const count=form.querySelectorAll('input[name="ids"]:checked').length;if(count<1){alert('삭제할 항목을 선택해주세요.');return;}if(confirm(count+'건을 삭제할까요?'))form.submit();}
 </script>
-
-<div id="history-modal" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);" onclick="closeHistoryModal()">
-    <div style="background:#fff;border-radius:16px;width:90%;max-width:760px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.18);" onclick="event.stopPropagation()">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 12px;border-bottom:1px solid #e5e9f0;">
-            <strong id="history-modal-title" style="font-size:15px;font-weight:800;color:#1a2233;"></strong>
-            <button onclick="closeHistoryModal()" style="background:none;border:none;font-size:22px;color:#888;cursor:pointer;line-height:1;">×</button>
-        </div>
-        <div id="history-modal-body" style="overflow-y:auto;padding:12px 8px;"></div>
-    </div>
-</div>
 
 <div class="notice-modal-backdrop" id="cal-backdrop" onclick="closeCalendar()">
     <div class="turu-mini-modal" style="padding:24px;max-width:320px;" onclick="event.stopPropagation()">
-        <button type="button" class="notice-modal-close" onclick="closeCalendar()" aria-label="닫기">×</button>
+        <button type="button" class="notice-modal-close" onclick="closeCalendar()" aria-label="닫기">&#215;</button>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-            <button onclick="calChangeMonth(-1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 14px;cursor:pointer;">‹</button>
+            <button onclick="calChangeMonth(-1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 14px;cursor:pointer;">&#8249;</button>
             <strong id="cal-title" style="font-size:15px;font-weight:950;color:var(--color-text-primary);"></strong>
-            <button onclick="calChangeMonth(1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 14px;cursor:pointer;">›</button>
+            <button onclick="calChangeMonth(1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 14px;cursor:pointer;">&#8250;</button>
         </div>
         <div style="display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px;">
             <span style="text-align:center;font-size:11px;font-weight:900;color:#E24B4A;padding:4px 0;">일</span>

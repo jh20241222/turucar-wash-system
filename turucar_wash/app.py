@@ -1237,6 +1237,12 @@ def vendor_manage():
     return render_template("vendor_manage.html", vendors=vendors)
 
 
+@app.route("/support_manage", methods=["GET", "POST"])
+@login_required
+def support_manage():
+    return redirect(url_for("vendor_manage"))
+
+
 # =========================================================
 # 계정/지역 관리
 # =========================================================

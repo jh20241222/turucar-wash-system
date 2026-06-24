@@ -24,6 +24,7 @@ from flask_login import (
     LoginManager, UserMixin, current_user,
     login_required, login_user, logout_user
 )
+from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -1233,24 +1234,6 @@ def vendor_manage():
     return render_template("vendor_manage.html", vendors=vendors)
 
 
-@app.route("/support_manage", methods=["GET", "POST"])
-@login_required
-def support_manage():
-    return redirect(url_for("vendor_manage"))
-
-
-@app.route("/support_chat", methods=["GET", "POST"])
-@login_required
-def support_chat():
-    return redirect(url_for("dashboard"))
-
-
-@app.route("/api/support_alerts_poll")
-@login_required
-def support_alerts_poll():
-    return jsonify({"alerts": [], "count": 0})
-
-
 # =========================================================
 # 계정/지역 관리
 # =========================================================
@@ -1853,46 +1836,6 @@ def wash_schedule_delete():
     return redirect(url_for("upload_wash_list"))
 
 
-@app.route("/wash_list_delete", methods=["POST"])
-@login_required
-def wash_list_delete():
-    if not current_user.is_master:
-        flash("❌ 마스터 계정만 삭제할 수 있습니다.")
-        return redirect(url_for("wash_list"))
-    ids = request.form.getlist("ids")
-    return_query = request.form.get("return_query", "")
-    if ids:
-        conn = get_wash_db()
-        conn.execute(
-            "DELETE FROM wash_list WHERE id IN ({})".format(",".join("?" * len(ids))),
-            ids,
-        )
-        conn.commit()
-        conn.close()
-        flash(f"✔ {len(ids)}건 삭제되었습니다.")
-    return redirect(url_for("wash_list") + ("?" + return_query if return_query else ""))
-
-
-@app.route("/wash_status_delete", methods=["POST"])
-@login_required
-def wash_status_delete():
-    if not current_user.is_master:
-        flash("❌ 마스터 계정만 삭제할 수 있습니다.")
-        return redirect(url_for("wash_status"))
-    ids = request.form.getlist("ids")
-    return_query = request.form.get("return_query", "")
-    if ids:
-        conn = get_wash_db()
-        conn.execute(
-            "DELETE FROM wash_complete WHERE id IN ({})".format(",".join("?" * len(ids))),
-            ids,
-        )
-        conn.commit()
-        conn.close()
-        flash(f"✔ {len(ids)}건 삭제되었습니다.")
-    return redirect(url_for("wash_status") + ("?" + return_query if return_query else ""))
-
-
 # =========================================================
 # 세차 대상 리스트
 # =========================================================
@@ -2012,6 +1955,8 @@ def wash_list():
         order_count=order_count,
         completed_count=completed_count,
         total_target_count=total_target_count
+    )
+
 
 
 # =========================================================
@@ -2095,69 +2040,6 @@ def wash_list_excel():
     )
 
 
-@app.route("/wash_status_excel")
-@login_required
-def wash_status_excel():
-    selected_date = request.args.get("date", today_kst())
-    search = request.args.get("s", "")
-    r1 = request.args.get("r1", "")
-    r2 = request.args.get("r2", "")
-    org = request.args.get("org", "")
-    spot = request.args.get("spot", "")
-    vendor = request.args.get("vendor", "")
-
-    conn = get_wash_db()
-    query = "SELECT * FROM wash_complete WHERE 세차완료일 = ?"
-    params = [selected_date]
-
-    scope_sql, scope_params = scoped_condition("wash_complete", current_user)
-    query += scope_sql
-    params += scope_params
-
-    if search:
-        query += " AND (차량번호 LIKE ? OR 스팟 LIKE ?)"
-        params += [f"%{search}%", f"%{search}%"]
-    if r1:
-        query += " AND 지역시도 = ?"
-        params.append(r1)
-    if r2:
-        query += " AND 지역구군 = ?"
-        params.append(r2)
-    if org:
-        query += " AND 차량소속 = ?"
-        params.append(org)
-    if spot:
-        query += " AND 스팟 = ?"
-        params.append(spot)
-    if vendor and current_user.is_master:
-        query += " AND 업체 = ?"
-        params.append(vendor)
-
-    query += " ORDER BY id DESC"
-
-    df = pd.read_sql_query(query, conn, params=params)
-    conn.close()
-
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name="완료현황")
-        worksheet = writer.sheets["완료현황"]
-        for column_cells in worksheet.columns:
-            max_length = 10
-            column_letter = column_cells[0].column_letter
-            for cell in column_cells:
-                value = "" if cell.value is None else str(cell.value)
-                max_length = max(max_length, min(len(value) + 2, 40))
-            worksheet.column_dimensions[column_letter].width = max_length
-
-    output.seek(0)
-    filename = f"wash_status_{selected_date}.xlsx"
-    return send_file(
-        output,
-        as_attachment=True,
-        download_name=filename,
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
 
 
 # =========================================================
@@ -2494,3 +2376,182 @@ def wash_complete(id):
                 row["차량번호"], row["차종명"], row["차량소속"], row["스팟"], row["주소"],
                 row["지역시도"], row["지역구군"], row["업체"], done_date,
                 request.form.get("distance"), request.form.get("damage"),
+                request.form.get("warning"), request.form.get("etc"),
+                current_user.username, id
+            )
+        )
+        cur.execute("DELETE FROM wash_list WHERE id=? AND 완료=0", (id,))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        flash(f"❌ 완료 처리 오류: {e}")
+        return redirect(url_for("wash_list"))
+
+    conn.close()
+    return redirect(url_for("wash_status"))
+
+
+# =========================================================
+# 세차 현황
+# =========================================================
+@app.route("/wash_status")
+@login_required
+def wash_status():
+    s = request.args.get("s", "")
+    r1 = request.args.get("r1", "")
+    r2 = request.args.get("r2", "")
+    org = request.args.get("org", "")
+    sp = request.args.get("spot", "")
+    vendor = request.args.get("vendor", "")
+    start = request.args.get("start", "")
+    end = request.args.get("end", "")
+    today_str = today_kst()
+    selected_date = request.args.get("date", today_str)
+
+    conn = get_wash_db()
+    cur = conn.cursor()
+
+    query = "SELECT * FROM wash_history WHERE 1=1"
+    params = []
+    scope_sql, scope_params = scoped_condition("wash_history", current_user)
+    query += scope_sql
+    params += scope_params
+
+    if s:
+        query += " AND (차량번호 LIKE ? OR 스팟 LIKE ?)"
+        params += [f"%{s}%", f"%{s}%"]
+    if r1:
+        query += " AND 지역시도=?"
+        params.append(r1)
+    if r2:
+        query += " AND 지역구군=?"
+        params.append(r2)
+    if org:
+        query += " AND 차량소속=?"
+        params.append(org)
+    if sp:
+        query += " AND 스팟=?"
+        params.append(sp)
+    if vendor and current_user.is_master:
+        query += " AND 업체=?"
+        params.append(vendor)
+    if start and end:
+        query += " AND 세차완료일 BETWEEN ? AND ?"
+        params += [start, end]
+    else:
+        # 날짜 네비게이터 기준 단일 날짜 필터
+        query += " AND 세차완료일=?"
+        params.append(selected_date)
+
+    query += " ORDER BY id DESC"
+    rows = cur.execute(query, params).fetchall()
+
+    region1 = filter_distinct_values(cur, "wash_history", "지역시도", scope_sql, scope_params)
+    region2 = filter_distinct_values(cur, "wash_history", "지역구군", scope_sql, scope_params)
+    car_org_list = filter_distinct_values(cur, "wash_history", "차량소속", scope_sql, scope_params)
+    spot_list = filter_distinct_values(cur, "wash_history", "스팟", scope_sql, scope_params)
+    vendor_list = filter_distinct_values(cur, "wash_history", "업체", scope_sql, scope_params)
+
+    today_completed_count = cur.execute(
+        "SELECT COUNT(*) AS c FROM wash_history WHERE 세차완료일 = ?" + scope_sql,
+        [today_str] + scope_params
+    ).fetchone()["c"]
+    selected_date_count = cur.execute(
+        "SELECT COUNT(*) AS c FROM wash_history WHERE 세차완료일 = ?" + scope_sql,
+        [selected_date] + scope_params
+    ).fetchone()["c"]
+    total_completed_count = cur.execute(
+        "SELECT COUNT(*) AS c FROM wash_history WHERE 1=1" + scope_sql,
+        scope_params
+    ).fetchone()["c"]
+    filtered_count = len(rows)
+
+    conn.close()
+
+    return render_template(
+        "wash_status.html",
+        rows=rows,
+        region1=region1,
+        region2=region2,
+        car_org_list=car_org_list,
+        spot_list=spot_list,
+        vendor_list=vendor_list,
+        search_input=s,
+        selected_r1=r1,
+        selected_r2=r2,
+        selected_org=org,
+        selected_spot=sp,
+        selected_vendor=vendor,
+        start=start,
+        end=end,
+        today=today_str,
+        selected_date=selected_date,
+        today_completed_count=today_completed_count,
+        selected_date_count=selected_date_count,
+        total_completed_count=total_completed_count,
+        filtered_count=filtered_count
+    )
+
+
+# =============================================
+
+# =========================================================
+# 누락 라우트 스텁 / 기능 추가
+# =========================================================
+@app.route("/support_manage", methods=["GET", "POST"])
+@login_required
+def support_manage():
+    return redirect(url_for("vendor_manage"))
+
+
+@app.route("/support_chat", methods=["GET", "POST"])
+@login_required
+def support_chat():
+    return redirect(url_for("dashboard"))
+
+
+@app.route("/api/support_alerts_poll")
+@login_required
+def support_alerts_poll():
+    return jsonify({"alerts": [], "count": 0})
+
+
+@app.route("/wash_list_delete", methods=["POST"])
+@login_required
+def wash_list_delete():
+    if not current_user.is_master:
+        flash("\u274c 마스터 계정만 삭제할 수 있습니다.")
+        return redirect(url_for("wash_list"))
+    ids = request.form.getlist("ids")
+    return_query = request.form.get("return_query", "")
+    if ids:
+        conn = get_wash_db()
+        conn.execute(
+            "DELETE FROM wash_list WHERE id IN ({})".format(",".join("?" * len(ids))),
+            ids
+        )
+        conn.commit()
+        conn.close()
+        flash(f"\u2714 {len(ids)}건 삭제되었습니다.")
+    return redirect(url_for("wash_list") + ("?" + return_query if return_query else ""))
+
+
+@app.route("/wash_status_delete", methods=["POST"])
+@login_required
+def wash_status_delete():
+    if not current_user.is_master:
+        flash("\u274c 마스터 계정만 삭제할 수 있습니다.")
+        return redirect(url_for("wash_status"))
+    ids = request.form.getlist("ids")
+    return_query = request.form.get("return_query", "")
+    if ids:
+        conn = get_wash_db()
+        conn.execute(
+            "DELETE FROM wash_complete WHERE id IN ({})".format(",".join("?" * len(ids))),
+            ids
+        )
+        conn.commit()
+        conn.close()
+        flash(f"\u2714 {len(ids)}건 삭제되었습니다.")
+    return redirect(url_for("wash_status") + ("?" + return_query if return_query else ""))

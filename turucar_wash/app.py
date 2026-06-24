@@ -1243,6 +1243,12 @@ def support_manage():
     return redirect(url_for("vendor_manage"))
 
 
+@app.route("/support_chat", methods=["GET", "POST"])
+@login_required
+def support_chat():
+    return redirect(url_for("dashboard"))
+
+
 # =========================================================
 # 계정/지역 관리
 # =========================================================

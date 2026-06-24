@@ -1249,6 +1249,12 @@ def support_chat():
     return redirect(url_for("dashboard"))
 
 
+@app.route("/api/support_alerts_poll")
+@login_required
+def support_alerts_poll():
+    return jsonify({"alerts": [], "count": 0})
+
+
 # =========================================================
 # 계정/지역 관리
 # =========================================================

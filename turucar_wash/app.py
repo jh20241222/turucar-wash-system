@@ -25,6 +25,9 @@ from flask_login import (
     login_required, login_user, logout_user
 )
 from werkzeug.security import check_password_hash, generate_password_hash
+from peoplecar import PeopleCarClient, PeopleCarLoginError
+import urllib3
+urllib3.disable_warnings()
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -1957,6 +1960,50 @@ def wash_list():
         total_target_count=total_target_count
     )
 
+# =========================================================
+# People Car 예약현황 API
+# =========================================================
+def _get_peoplecar_credentials():
+    uid = os.environ.get("PEOPLECAR_ID", "wjddus874")
+    pw  = os.environ.get("PEOPLECAR_PW", "jy1020^^")
+    return uid, pw
+
+
+@app.route("/api/reservations_today")
+@login_required
+def api_reservations_today():
+    target_date = request.args.get("date", today_kst())
+    uid, pw = _get_peoplecar_credentials()
+    try:
+        client = PeopleCarClient()
+        client.login(uid, pw)
+        all_res = client.get_all_reservations(target_date, target_date)
+        by_car = {}
+        for res in all_res:
+            car_num = res.get("차량번호", "").strip()
+            if not car_num:
+                continue
+            by_car.setdefault(car_num, []).append({
+                "서비스상태": res.get("서비스상태", ""),
+                "예약자명":   res.get("예약자명", ""),
+                "시작시간":   res.get("시작시간", ""),
+                "종료시간":   res.get("종료시간", ""),
+                "출발스팟":   res.get("출발스팟", ""),
+                "반납스팟":   res.get("반납스팟", ""),
+                "차종":       res.get("차종", ""),
+            })
+        return jsonify({
+            "date":      target_date,
+            "corp_name": client.corp_name,
+            "total":     len(all_res),
+            "by_car":    by_car,
+        })
+    except PeopleCarLoginError as e:
+        return jsonify({"error": str(e)}), 401
+    except Exception as e:
+        app.logger.error(f"[PeopleCar] {e}")
+        return jsonify({"error": str(e)}), 500
+
 
 
 # =========================================================
@@ -2494,396 +2541,4 @@ def wash_status():
     )
 
 
-# =========================================================
-# 세차 현황 엑셀 다운로드
-# =========================================================
-@app.route("/wash_status_excel")
-@login_required
-def wash_status_excel():
-    from io import BytesIO
-
-    s = request.args.get("s", "")
-    r1 = request.args.get("r1", "")
-    r2 = request.args.get("r2", "")
-    org = request.args.get("org", "")
-    sp = request.args.get("spot", "")
-    vendor = request.args.get("vendor", "")
-    start = request.args.get("start", "")
-    end = request.args.get("end", "")
-
-    conn = get_wash_db()
-    query = "SELECT * FROM wash_history WHERE 1=1"
-    params = []
-    scope_sql, scope_params = scoped_condition("wash_history", current_user)
-    query += scope_sql
-    params += scope_params
-
-    if s:
-        query += " AND (차량번호 LIKE ? OR 스팟 LIKE ?)"
-        params += [f"%{s}%", f"%{s}%"]
-    if r1:
-        query += " AND 지역시도=?"
-        params.append(r1)
-    if r2:
-        query += " AND 지역구군=?"
-        params.append(r2)
-    if org:
-        query += " AND 차량소속=?"
-        params.append(org)
-    if sp:
-        query += " AND 스팟=?"
-        params.append(sp)
-    if vendor and current_user.is_master:
-        query += " AND 업체=?"
-        params.append(vendor)
-    if start and end:
-        query += " AND 세차완료일 BETWEEN ? AND ?"
-        params += [start, end]
-
-    df = pd.read_sql_query(query, conn, params=params)
-    conn.close()
-
-    output = BytesIO()
-    df.to_excel(output, index=False)
-    output.seek(0)
-
-    return send_file(
-        output,
-        as_attachment=True,
-        download_name="wash_status.xlsx",
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
-
-
-
-# =========================================================
-# Master delete actions
-# =========================================================
-@app.route("/wash_list/delete", methods=["POST"])
-@login_required
-def wash_list_delete():
-    if not current_user.is_master:
-        flash("❌ 마스터 계정만 세차 오더를 삭제할 수 있습니다.")
-        return redirect(url_for("wash_list"))
-
-    ids = request.form.getlist("ids")
-    return_query = request.form.get("return_query", "")
-
-    if not ids:
-        flash("삭제할 세차 오더를 선택해주세요.")
-        return redirect(url_for("wash_list") + (f"?{return_query}" if return_query else ""))
-
-    placeholders = ",".join(["?"] * len(ids))
-    conn = get_wash_db()
-    conn.execute(f"DELETE FROM wash_list WHERE id IN ({placeholders})", ids)
-    conn.commit()
-    conn.close()
-
-    flash(f"세차 오더 {len(ids)}건이 삭제되었습니다.")
-    return redirect(url_for("wash_list") + (f"?{return_query}" if return_query else ""))
-
-
-@app.route("/wash_status/delete", methods=["POST"])
-@login_required
-def wash_status_delete():
-    if not current_user.is_master:
-        flash("❌ 마스터 계정만 완료 이력을 삭제할 수 있습니다.")
-        return redirect(url_for("wash_status"))
-
-    ids = request.form.getlist("ids")
-    return_query = request.form.get("return_query", "")
-
-    if not ids:
-        flash("삭제할 완료 이력을 선택해주세요.")
-        return redirect(url_for("wash_status") + (f"?{return_query}" if return_query else ""))
-
-    placeholders = ",".join(["?"] * len(ids))
-    conn = get_wash_db()
-    conn.execute(f"DELETE FROM wash_history WHERE id IN ({placeholders})", ids)
-    conn.commit()
-    conn.close()
-
-    flash(f"완료 이력 {len(ids)}건이 삭제되었습니다.")
-    return redirect(url_for("wash_status") + (f"?{return_query}" if return_query else ""))
-
-
-@app.route("/support-manage/<int:ticket_id>/delete", methods=["POST"])
-@login_required
-def support_delete(ticket_id):
-    if not current_user.is_master:
-        flash("❌ 마스터 계정만 문의를 삭제할 수 있습니다.")
-        return redirect(url_for("support_manage"))
-
-    conn = get_user_db()
-    conn.execute("DELETE FROM support_messages WHERE ticket_id=?", (ticket_id,))
-    conn.execute("DELETE FROM support_tickets WHERE id=?", (ticket_id,))
-    conn.commit()
-    conn.close()
-
-    flash("문의 내역이 삭제되었습니다.")
-    return redirect(url_for("support_manage"))
-
-
-
-# =========================================================
-# 문의봇 / 문의 관리
-# =========================================================
-@app.route("/support-chat")
-@login_required
-def support_chat():
-    conn = get_user_db()
-    rows = conn.execute(
-        """
-        SELECT *
-        FROM support_tickets
-        WHERE requester=?
-        ORDER BY id DESC
-        LIMIT 10
-        """,
-        (current_user.username,)
-    ).fetchall()
-    conn.close()
-    return render_template("support_chat.html", tickets=rows)
-
-
-@app.route("/support-chat/submit", methods=["POST"])
-@login_required
-def support_chat_submit():
-    data = request.get_json(silent=True) or request.form
-
-    category = (data.get("category") or "").strip()
-    message = (data.get("message") or "").strip()
-    ticket_id = data.get("ticket_id")
-
-    if not category or not message:
-        return jsonify({"ok": False, "message": "문의유형과 메시지를 입력해주세요."}), 400
-
-    now = datetime.now().strftime("%Y-%m-%d %H:%M")
-    conn = get_user_db()
-    cur = conn.cursor()
-
-    if ticket_id:
-        ticket = cur.execute(
-            "SELECT * FROM support_tickets WHERE id=? AND requester=?",
-            (ticket_id, current_user.username)
-        ).fetchone()
-
-        if not ticket:
-            conn.close()
-            return jsonify({"ok": False, "message": "문의 내역을 찾을 수 없습니다."}), 404
-
-        existing_message = ticket["message"] or ""
-        updated_message = (existing_message + "\n\n" if existing_message else "") + f"[작업자] {message}"
-        cur.execute(
-            """
-            UPDATE support_tickets
-            SET message=?, status=CASE WHEN status='완료' THEN '접수' ELSE status END, updated_at=?
-            WHERE id=?
-            """,
-            (updated_message, now, ticket_id)
-        )
-        cur.execute(
-            """
-            INSERT INTO support_messages (ticket_id, sender, message, created_at)
-            VALUES (?, 'worker', ?, ?)
-            """,
-            (ticket_id, message, now)
-        )
-        conn.commit()
-        conn.close()
-
-        return jsonify({
-            "ok": True,
-            "ticket_id": int(ticket_id),
-            "message": "메시지가 전달되었습니다."
-        })
-
-    # First free-chat message creates ticket.
-    car_number = (data.get("car_number") or "").strip()
-    if not car_number:
-        # Free chat mode: car number is optional; keep a visible placeholder for manager.
-        car_number = "미입력"
-
-    cur.execute(
-        """
-        INSERT INTO support_tickets
-            (category, car_number, message, requester, requester_role, vendor, status, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, '접수', ?, ?)
-        """,
-        (
-            category,
-            car_number,
-            f"[작업자] {message}",
-            current_user.username,
-            getattr(current_user, "role", ""),
-            getattr(current_user, "vendor", ""),
-            now,
-            now
-        )
-    )
-    new_ticket_id = cur.lastrowid
-    cur.execute(
-        """
-        INSERT INTO support_messages (ticket_id, sender, message, created_at)
-        VALUES (?, 'worker', ?, ?)
-        """,
-        (new_ticket_id, message, now)
-    )
-    conn.commit()
-    conn.close()
-
-    return jsonify({
-        "ok": True,
-        "ticket_id": new_ticket_id,
-        "message": "문의가 접수되었습니다. 담당자가 확인 후 답변드리겠습니다."
-    })
-
-
-
-
-
-
-@app.route("/support-alerts/poll")
-@login_required
-def support_alerts_poll():
-    """Return newly registered support ticket count for master screen.
-
-    This is intentionally lightweight polling for the case where the web/PWA app
-    is already open. It does not send OS-level push notifications.
-    """
-    if not can_manage_support(current_user):
-        return jsonify({"ok": False, "message": "forbidden"}), 403
-
-    try:
-        since_id = int(request.args.get("since_id", 0) or 0)
-    except (TypeError, ValueError):
-        since_id = 0
-
-    conn = get_user_db()
-    params = []
-    where = "WHERE 1=1"
-
-
-    latest_row = conn.execute(
-        f"SELECT COALESCE(MAX(id), 0) AS max_id FROM support_tickets {where}",
-        params
-    ).fetchone()
-    max_id = int(latest_row["max_id"] if latest_row else 0)
-
-    total_row = conn.execute(
-        f"SELECT COUNT(*) AS cnt FROM support_tickets {where}",
-        params
-    ).fetchone()
-    total_count = int(total_row["cnt"] if total_row else 0)
-
-    count_params = list(params) + [since_id]
-    count_row = conn.execute(
-        f"SELECT COUNT(*) AS cnt FROM support_tickets {where} AND id > ?",
-        count_params
-    ).fetchone()
-    new_count = int(count_row["cnt"] if count_row else 0)
-
-    latest_ticket = None
-    if new_count:
-        ticket = conn.execute(
-            f"""
-            SELECT id, category, requester, car_number, created_at
-            FROM support_tickets
-            {where} AND id > ?
-            ORDER BY id DESC
-            LIMIT 1
-            """,
-            count_params
-        ).fetchone()
-        if ticket:
-            latest_ticket = {
-                "id": ticket["id"],
-                "category": ticket["category"],
-                "requester": ticket["requester"],
-                "car_number": ticket["car_number"],
-                "created_at": ticket["created_at"],
-            }
-
-    conn.close()
-    return jsonify({
-        "ok": True,
-        "max_id": max_id,
-        "total_count": total_count,
-        "new_count": new_count,
-        "latest_ticket": latest_ticket,
-        "manage_url": url_for("support_manage"),
-    })
-
-
-@app.route("/support-manage")
-@login_required
-def support_manage():
-    if not can_manage_support(current_user):
-        flash("❌ 문의 관리는 마스터 계정만 볼 수 있습니다.")
-        return redirect(url_for("dashboard"))
-
-    status = request.args.get("status", "")
-    query = "SELECT * FROM support_tickets WHERE 1=1"
-    params = []
-
-    if status:
-        query += " AND status=?"
-        params.append(status)
-
-
-    query += " ORDER BY id DESC"
-
-    conn = get_user_db()
-    rows = conn.execute(query, params).fetchall()
-    conn.close()
-
-    return render_template("support_manage.html", rows=rows, selected_status=status)
-
-
-@app.route("/support-manage/<int:ticket_id>/reply", methods=["POST"])
-@login_required
-def support_reply(ticket_id):
-    if not can_manage_support(current_user):
-        flash("❌ 문의 답변은 마스터 계정만 가능합니다.")
-        return redirect(url_for("dashboard"))
-
-    status = request.form.get("status", "확인중").strip() or "확인중"
-    admin_reply = request.form.get("admin_reply", "").strip()
-
-    conn = get_user_db()
-    cur = conn.cursor()
-
-    cur.execute(
-        """
-        UPDATE support_tickets
-        SET status=?, admin_reply=?, updated_at=?
-        WHERE id=?
-        """,
-        (status, admin_reply, datetime.now().strftime("%Y-%m-%d %H:%M"), ticket_id)
-    )
-
-    if admin_reply:
-        cur.execute(
-            """
-            INSERT INTO support_messages (ticket_id, sender, message, created_at)
-            VALUES (?, 'admin', ?, ?)
-            """,
-            (ticket_id, admin_reply, datetime.now().strftime("%Y-%m-%d %H:%M"))
-        )
-
-    conn.commit()
-    conn.close()
-
-    flash("문의 답변이 저장되었습니다.")
-    return redirect(url_for("support_manage"))
-
-
-
-import re as _re
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
-
-app = app
+# =============================================

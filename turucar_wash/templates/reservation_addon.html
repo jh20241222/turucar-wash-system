@@ -1,0 +1,328 @@
+<!--
+==========================================================
+  wash_list.html 에 추가할 예약현황 타임라인 + 차종 아이콘
+
+  [적용 위치 안내]
+  1. 이 파일의 <style> 블록 → wash_list.html의 기존 <style> 블록 안에 추가
+  2. 카드 HTML 변경 → 아래 [카드 교체] 안내대로 적용
+  3. <script> 블록 → wash_list.html의 기존 </script> 바로 위에 추가
+==========================================================
+-->
+
+<!-- ==================== [1] CSS ==================== -->
+<style>
+/* 차종 아이콘 */
+.car-icon-wrap {
+    width: 52px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-right: 10px;
+}
+.car-icon-wrap svg { width: 100%; height: 100%; }
+
+/* 카드 상단 레이아웃 — 아이콘 + 텍스트 가로 배치 */
+.turu-card-top-v24 {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+.turu-card-copy-inner { flex: 1; min-width: 0; }
+
+/* 타임라인 */
+.res-timeline-wrap {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+}
+.res-timeline-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #aaa;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.res-timeline-label.has-res { color: #FF5F00; }
+.res-timeline-bar {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(24, 1fr);
+    gap: 1.5px;
+    height: 10px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #f0f0f0;
+}
+.res-hour {
+    height: 100%;
+    background: #e8e8e8;
+    border-radius: 1px;
+    transition: background .2s;
+}
+.res-hour.reserved   { background: #FF5F00; }
+.res-hour.in-use     { background: #FF5F00; opacity: .85; }
+.res-hour.current    { background: #e0e0e0; outline: 1.5px solid #FF5F00; outline-offset: -1px; }
+.res-timeline-ticks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3px;
+    font-size: 9px;
+    color: #bbb;
+    font-weight: 600;
+}
+
+/* 로딩 스켈레톤 */
+.res-skeleton {
+    height: 10px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    margin-top: 8px;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+</style>
+
+
+<!-- ==================== [2] 카드 HTML 교체 ====================
+
+장기 미세차 카드 원본:
+─────────────────────────────────────────
+<a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-order-card-v24 turu-order-card--urgent">
+<div class="turu-card-copy-v24">
+                    <div class="turu-card-title-v24">
+                        <strong>{{ r['차량번호'] }}</strong>
+                        <em class="chip-urgent">장기 미세차</em>
+                        <em class="chip-day chip-day--urgent">D+{{ elapsed }}</em>
+                    </div>
+                    <div class="wash-urgent-warn">
+                        {{ elapsed }}일째 미완료 — 우선 처리 필요
+                    </div>
+                    <p><span>📍</span>{{ r['스팟'] or '-' }}</p>
+                    <p><span>👤</span>{{ r['업체'] or current_user.vendor or '담당자 미지정' }}</p>
+                </div>
+                <span class="turu-row-arrow-v24">›</span>
+            </a>
+
+↓ 교체:
+─────────────────────────────────────────
+-->
+<a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-order-card-v24 turu-order-card--urgent" data-car-num="{{ r['차량번호'] }}" data-car-model="{{ r['차종명'] or '' }}">
+    <div class="turu-card-copy-v24">
+        <div class="turu-card-top-v24">
+            <div class="car-icon-wrap" id="icon-{{ loop.index }}"><!-- JS가 채움 --></div>
+            <div class="turu-card-copy-inner">
+                <div class="turu-card-title-v24">
+                    <strong>{{ r['차량번호'] }}</strong>
+                    <em class="chip-urgent">장기 미세차</em>
+                    <em class="chip-day chip-day--urgent">D+{{ elapsed }}</em>
+                </div>
+                {% if r['차종명'] %}<div style="font-size:11px;color:#888;margin-bottom:2px;">{{ r['차종명'] }}</div>{% endif %}
+                <div class="wash-urgent-warn">{{ elapsed }}일째 미완료 — 우선 처리 필요</div>
+                <p><span>📍</span>{{ r['스팟'] or '-' }}</p>
+                <p><span>👤</span>{{ r['업체'] or current_user.vendor or '담당자 미지정' }}</p>
+            </div>
+        </div>
+        <!-- 예약현황 타임라인 -->
+        <div class="res-timeline-wrap" id="tl-{{ r['차량번호'] | replace(' ','_') }}">
+            <div class="res-skeleton"></div>
+        </div>
+    </div>
+    <span class="turu-row-arrow-v24">›</span>
+</a>
+
+<!--
+정기세차 카드 원본:
+─────────────────────────────────────────
+<a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-order-card-v24 turu-order-card--regular">
+<div class="turu-card-copy-v24">
+                    <div class="turu-card-title-v24">
+                        <strong>{{ r['차량번호'] }}</strong>
+                        <em class="chip-regular">정기세차</em>
+                        {% if elapsed > 0 %}<em class="chip-day">D+{{ elapsed }}</em>{% else %}<em class="chip-day chip-day--new">신규</em>{% endif %}
+                    </div>
+                    <p><span>📍</span>{{ r['스팟'] or '-' }}</p>
+                    <p><span>🗓</span>{{ r['세차일'] or selected_date }}</p>
+                    <p><span>👤</span>{{ r['업체'] or current_user.vendor or '담당자 미지정' }}</p>
+                </div>
+                <span class="turu-row-arrow-v24">›</span>
+            </a>
+
+↓ 교체:
+─────────────────────────────────────────
+-->
+<a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-order-card-v24 turu-order-card--regular" data-car-num="{{ r['차량번호'] }}" data-car-model="{{ r['차종명'] or '' }}">
+    <div class="turu-card-copy-v24">
+        <div class="turu-card-top-v24">
+            <div class="car-icon-wrap"><!-- JS가 채움 --></div>
+            <div class="turu-card-copy-inner">
+                <div class="turu-card-title-v24">
+                    <strong>{{ r['차량번호'] }}</strong>
+                    <em class="chip-regular">정기세차</em>
+                    {% if elapsed > 0 %}<em class="chip-day">D+{{ elapsed }}</em>{% else %}<em class="chip-day chip-day--new">신규</em>{% endif %}
+                </div>
+                {% if r['차종명'] %}<div style="font-size:11px;color:#888;margin-bottom:2px;">{{ r['차종명'] }}</div>{% endif %}
+                <p><span>📍</span>{{ r['스팟'] or '-' }}</p>
+                <p><span>🗓</span>{{ r['세차일'] or selected_date }}</p>
+                <p><span>👤</span>{{ r['업체'] or current_user.vendor or '담당자 미지정' }}</p>
+            </div>
+        </div>
+        <!-- 예약현황 타임라인 -->
+        <div class="res-timeline-wrap" id="tl-{{ r['차량번호'] | replace(' ','_') }}">
+            <div class="res-skeleton"></div>
+        </div>
+    </div>
+    <span class="turu-row-arrow-v24">›</span>
+</a>
+
+
+<!-- ==================== [3] JS (기존 </script> 바로 위에 추가) ==================== -->
+<script>
+// ── 차종 → 아이콘 SVG 매핑 ──────────────────────────────────────
+const CAR_ICONS = {
+  sedan: `<svg viewBox="0 0 80 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M8 24 Q14 14 22 12 L35 9 Q44 8 52 11 L66 15 Q72 17 74 22 L76 26 Q76 28 74 28 L68 28 Q67 23 62 23 Q57 23 56 28 L24 28 Q23 23 18 23 Q13 23 12 28 L8 28 Q6 28 6 26 Z" fill="#D0D5DD" stroke="#9AA0AC" stroke-width="1.2"/>
+    <path d="M22 12 L28 8 Q36 5 46 6 L58 8 L66 15" stroke="#9AA0AC" stroke-width="1" fill="none"/>
+    <circle cx="18" cy="28" r="4" fill="#6B7280" stroke="#9AA0AC" stroke-width="1"/>
+    <circle cx="62" cy="28" r="4" fill="#6B7280" stroke="#9AA0AC" stroke-width="1"/>
+    <rect x="28" y="6" width="26" height="7" rx="2" fill="#A8D4F5" opacity=".7"/>
+  </svg>`,
+
+  suv: `<svg viewBox="0 0 80 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M8 24 Q10 12 20 10 L32 8 Q42 7 52 8 L64 11 Q72 14 74 22 L76 26 Q76 28 74 28 L68 28 Q67 23 62 23 Q57 23 56 28 L24 28 Q23 23 18 23 Q13 23 12 28 L8 28 Q6 28 6 26 Z" fill="#C8D0DC" stroke="#8A929E" stroke-width="1.2"/>
+    <path d="M20 10 L22 6 Q32 4 52 5 L64 8 L64 11" stroke="#8A929E" stroke-width="1" fill="none"/>
+    <circle cx="18" cy="28" r="4" fill="#6B7280" stroke="#9AA0AC" stroke-width="1"/>
+    <circle cx="62" cy="28" r="4" fill="#6B7280" stroke="#9AA0AC" stroke-width="1"/>
+    <rect x="22" y="5" width="28" height="6" rx="1.5" fill="#A8D4F5" opacity=".7"/>
+    <rect x="52" y="6" width="12" height="5" rx="1.5" fill="#A8D4F5" opacity=".5"/>
+  </svg>`,
+
+  van: `<svg viewBox="0 0 80 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M6 24 Q6 10 18 8 L56 7 Q68 7 72 14 L74 22 L76 26 Q76 28 74 28 L68 28 Q67 23 62 23 Q57 23 56 28 L24 28 Q23 23 18 23 Q13 23 12 28 L6 28 Z" fill="#BFC8D4" stroke="#8A929E" stroke-width="1.2"/>
+    <line x1="38" y1="8" x2="38" y2="28" stroke="#9AA0AC" stroke-width=".8" stroke-dasharray="2,2"/>
+    <rect x="10" y="9" width="26" height="9" rx="1.5" fill="#A8D4F5" opacity=".7"/>
+    <rect x="38" y="9" width="28" height="6" rx="1.5" fill="#A8D4F5" opacity=".5"/>
+    <circle cx="18" cy="28" r="4" fill="#6B7280" stroke="#9AA0AC" stroke-width="1"/>
+    <circle cx="62" cy="28" r="4" fill="#6B7280" stroke="#9AA0AC" stroke-width="1"/>
+  </svg>`,
+
+  compact: `<svg viewBox="0 0 80 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M14 24 Q18 16 26 13 L36 11 Q44 10 52 13 L60 16 Q66 19 68 24 L70 28 L10 28 Q8 28 8 26 Z" fill="#D0D5DD" stroke="#9AA0AC" stroke-width="1.2"/>
+    <path d="M26 13 L30 9 Q38 7 46 8 L54 11" stroke="#9AA0AC" stroke-width="1" fill="none"/>
+    <circle cx="20" cy="28" r="4" fill="#6B7280" stroke="#9AA0AC" stroke-width="1"/>
+    <circle cx="58" cy="28" r="4" fill="#6B7280" stroke="#9AA0AC" stroke-width="1"/>
+    <rect x="30" y="8" width="20" height="6" rx="2" fill="#A8D4F5" opacity=".7"/>
+  </svg>`,
+
+  electric: `<svg viewBox="0 0 80 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M8 24 Q14 13 22 11 L36 8 Q44 7 52 10 L66 14 Q72 17 74 22 L76 26 Q76 28 74 28 L68 28 Q67 23 62 23 Q57 23 56 28 L24 28 Q23 23 18 23 Q13 23 12 28 L8 28 Q6 28 6 26 Z" fill="#C8D5E8" stroke="#7A9AB8" stroke-width="1.2"/>
+    <path d="M22 11 L28 7 Q36 4 48 5 L58 8 L66 14" stroke="#7A9AB8" stroke-width="1" fill="none"/>
+    <circle cx="18" cy="28" r="4" fill="#5B7FA6" stroke="#7A9AB8" stroke-width="1"/>
+    <circle cx="62" cy="28" r="4" fill="#5B7FA6" stroke="#7A9AB8" stroke-width="1"/>
+    <rect x="28" y="5" width="28" height="7" rx="2" fill="#9BC4E8" opacity=".8"/>
+    <text x="38" y="20" font-size="7" fill="#5B7FA6" font-weight="bold" font-family="sans-serif">⚡</text>
+  </svg>`,
+};
+
+// 차종명 → 아이콘 타입 매핑
+function getCarIconType(modelName) {
+  if (!modelName) return 'sedan';
+  const m = modelName.toLowerCase();
+  if (/아이오닉|ioniq|ev\d|bz\d|코나 ev|니로 ev|bolt|id\.\d/.test(m)) return 'electric';
+  if (/카니발|스타리아|스타렉스|그랜드 스타렉스|카운티|쏠라티|봉고/.test(m)) return 'van';
+  if (/팰리세이드|싼타페|투싼|스포티지|셀토스|베뉴|코나|니로|티구안|qm6|qm5|트레일블레이저|이쿼녹스|captiva|크레타|gv80|gv70|gv60|ev6 suv|EV9/.test(m)) return 'suv';
+  if (/모닝|레이|스파크|캐스퍼|아토스|비스토/.test(m)) return 'compact';
+  return 'sedan';  // 그랜저, 소나타, 아반테, K5, K8, K9 등
+}
+
+// 모든 카드에 아이콘 삽입
+document.querySelectorAll('[data-car-num]').forEach(card => {
+  const model = card.getAttribute('data-car-model') || '';
+  const iconType = getCarIconType(model);
+  const iconWrap = card.querySelector('.car-icon-wrap');
+  if (iconWrap) iconWrap.innerHTML = CAR_ICONS[iconType] || CAR_ICONS.sedan;
+});
+
+
+// ── 예약현황 타임라인 ──────────────────────────────────────────
+(function loadReservationTimelines() {
+  const date = "{{ selected_date }}";
+  const nowH = new Date().getHours();
+
+  fetch(`/api/reservations_today?date=${date}`)
+    .then(r => r.json())
+    .then(data => {
+      const byCar = data.by_car || {};
+
+      document.querySelectorAll('[data-car-num]').forEach(card => {
+        const carNum = card.getAttribute('data-car-num');
+        const tlWrap = document.getElementById('tl-' + carNum.replace(/ /g, '_'));
+        if (!tlWrap) return;
+
+        const reservations = byCar[carNum] || [];
+
+        // 예약이 없으면 스켈레톤 제거하고 타임라인만 (비어있는 바)
+        // 예약이 있으면 블록 강조
+        const hasRes = reservations.length > 0;
+
+        // 각 시간대(0~23)에 예약이 있는지 계산
+        const hours = new Array(24).fill(0); // 0=없음, 1=예약, 2=운행중
+        reservations.forEach(res => {
+          const start = timeToHour(res.시작시간);
+          const end   = timeToHour(res.종료시간);
+          const status = res.서비스상태 || '';
+          const isActive = status.includes('운행') || status.includes('사용');
+          if (start !== null && end !== null) {
+            for (let h = start; h < Math.min(end + 1, 24); h++) {
+              hours[h] = isActive ? 2 : 1;
+            }
+          }
+        });
+
+        // 예약 요약 텍스트
+        let labelText = '예약현황 없음';
+        let labelClass = '';
+        if (hasRes) {
+          const slots = reservations.map(r =>
+            (r.시작시간 && r.종료시간) ? `${r.시작시간.slice(0,5)}~${r.종료시간.slice(0,5)}` : ''
+          ).filter(Boolean);
+          labelText = `예약 ${reservations.length}건` + (slots.length ? ' · ' + slots.slice(0,2).join(', ') : '');
+          labelClass = 'has-res';
+        }
+
+        // 타임라인 HTML 생성
+        let hourBlocks = '';
+        for (let h = 0; h < 24; h++) {
+          let cls = 'res-hour';
+          if (h === nowH) cls += ' current';
+          if (hours[h] === 2) cls += ' in-use';
+          else if (hours[h] === 1) cls += ' reserved';
+          hourBlocks += `<div class="${cls}" title="${h}시"></div>`;
+        }
+
+        tlWrap.innerHTML = `
+          <div class="res-timeline-label ${labelClass}">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            ${labelText}
+          </div>
+          <div class="res-timeline-bar">${hourBlocks}</div>
+          <div class="res-timeline-ticks">
+            <span>0</span><span>6</span><span>12</span><span>18</span><span>24</span>
+          </div>
+        `;
+      });
+    })
+    .catch(() => {
+      // 오류 시 스켈레톤 제거
+      document.querySelectorAll('.res-skeleton').forEach(el => el.remove());
+    });
+})();
+
+function timeToHour(timeStr) {
+  if (!timeStr) return null;
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return null;
+  return parseInt(parts[0], 10);
+}
+</script>

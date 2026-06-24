@@ -1857,6 +1857,46 @@ def wash_schedule_delete():
     return redirect(url_for("upload_wash_list"))
 
 
+@app.route("/wash_list_delete", methods=["POST"])
+@login_required
+def wash_list_delete():
+    if not current_user.is_master:
+        flash("❌ 마스터 계정만 삭제할 수 있습니다.")
+        return redirect(url_for("wash_list"))
+    ids = request.form.getlist("ids")
+    return_query = request.form.get("return_query", "")
+    if ids:
+        conn = get_wash_db()
+        conn.execute(
+            "DELETE FROM wash_list WHERE id IN ({})".format(",".join("?" * len(ids))),
+            ids,
+        )
+        conn.commit()
+        conn.close()
+        flash(f"✔ {len(ids)}건 삭제되었습니다.")
+    return redirect(url_for("wash_list") + ("?" + return_query if return_query else ""))
+
+
+@app.route("/wash_status_delete", methods=["POST"])
+@login_required
+def wash_status_delete():
+    if not current_user.is_master:
+        flash("❌ 마스터 계정만 삭제할 수 있습니다.")
+        return redirect(url_for("wash_status"))
+    ids = request.form.getlist("ids")
+    return_query = request.form.get("return_query", "")
+    if ids:
+        conn = get_wash_db()
+        conn.execute(
+            "DELETE FROM wash_complete WHERE id IN ({})".format(",".join("?" * len(ids))),
+            ids,
+        )
+        conn.commit()
+        conn.close()
+        flash(f"✔ {len(ids)}건 삭제되었습니다.")
+    return redirect(url_for("wash_status") + ("?" + return_query if return_query else ""))
+
+
 # =========================================================
 # 세차 대상 리스트
 # =========================================================
@@ -2105,6 +2145,69 @@ def wash_list_excel():
     )
 
 
+@app.route("/wash_status_excel")
+@login_required
+def wash_status_excel():
+    selected_date = request.args.get("date", today_kst())
+    search = request.args.get("s", "")
+    r1 = request.args.get("r1", "")
+    r2 = request.args.get("r2", "")
+    org = request.args.get("org", "")
+    spot = request.args.get("spot", "")
+    vendor = request.args.get("vendor", "")
+
+    conn = get_wash_db()
+    query = "SELECT * FROM wash_complete WHERE 세차완료일 = ?"
+    params = [selected_date]
+
+    scope_sql, scope_params = scoped_condition("wash_complete", current_user)
+    query += scope_sql
+    params += scope_params
+
+    if search:
+        query += " AND (차량번호 LIKE ? OR 스팟 LIKE ?)"
+        params += [f"%{search}%", f"%{search}%"]
+    if r1:
+        query += " AND 지역시도 = ?"
+        params.append(r1)
+    if r2:
+        query += " AND 지역구군 = ?"
+        params.append(r2)
+    if org:
+        query += " AND 차량소속 = ?"
+        params.append(org)
+    if spot:
+        query += " AND 스팟 = ?"
+        params.append(spot)
+    if vendor and current_user.is_master:
+        query += " AND 업체 = ?"
+        params.append(vendor)
+
+    query += " ORDER BY id DESC"
+
+    df = pd.read_sql_query(query, conn, params=params)
+    conn.close()
+
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="완료현황")
+        worksheet = writer.sheets["완료현황"]
+        for column_cells in worksheet.columns:
+            max_length = 10
+            column_letter = column_cells[0].column_letter
+            for cell in column_cells:
+                value = "" if cell.value is None else str(cell.value)
+                max_length = max(max_length, min(len(value) + 2, 40))
+            worksheet.column_dimensions[column_letter].width = max_length
+
+    output.seek(0)
+    filename = f"wash_status_{selected_date}.xlsx"
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name=filename,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 
 # =========================================================

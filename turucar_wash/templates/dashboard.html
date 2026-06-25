@@ -17,16 +17,9 @@
             </div>
             <div class="notice-copy-v12">
                 {% if latest_notice %}
-                    <button type="button" class="home-notice-title-button-v12"
-                        data-title="{{ latest_notice.title|e }}"
-                        data-body="{{ latest_notice.body|e }}"
-                        data-created="{{ latest_notice.created_at|e }}"
-                        data-author="{{ latest_notice.author|e }}"
-                        data-image="{{ latest_notice.image_path or '' }}"
-                        onclick="openHomeNoticeViewer(this)">
+                    <button type="button" class="home-notice-title-button-v12" data-title="{{ latest_notice.title|e }}" data-body="{{ latest_notice.body|e }}" data-created="{{ latest_notice.created_at|e }}" data-author="{{ latest_notice.author|e }}" onclick="openHomeNoticeViewer(this)">
                         <strong>{{ latest_notice.title }}</strong>
                         <span>{{ latest_notice.body }}</span>
-                        {% if latest_notice.image_path %}<span class="notice-has-attach" title="첨부파일 있음">📎</span>{% endif %}
                     </button>
                 {% else %}
                     <strong>아직 등록된 공지사항이 없습니다.</strong>
@@ -41,19 +34,16 @@
             <span class="main-icon-v12"><img src="{{ url_for('static', filename='img/icon-wash-order.png') }}" alt=""></span>
             <strong>세차 오더</strong>
             <small>대상 차량 확인</small>
-            
         </a>
         <a href="https://pm.peoplecar.co.kr:8082/#" target="_blank" rel="noopener" class="home-main-card-v12 card-control-v12">
             <span class="main-icon-v12"><img src="{{ url_for('static', filename='img/icon-control.png') }}" alt=""></span>
             <strong>예약/문제어</strong>
             <small>예약/제어 관리</small>
-            
         </a>
         <a href="{{ url_for('wash_status') }}" class="home-main-card-v12 card-complete-v12">
             <span class="main-icon-v12"><img src="{{ url_for('static', filename='img/icon-complete.png') }}" alt=""></span>
             <strong>완료 현황</strong>
             <small>작업 기록 조회</small>
-            
         </a>
     </section>
 
@@ -63,7 +53,6 @@
                 <img src="{{ url_for('static', filename='img/icon-urgent-wash.png') }}" alt="">
             </span>
             <strong>긴급 세차</strong>
-            
         </button>
         {% if current_user.is_master or current_user.is_admin %}
         <a href="{{ url_for('door_control') }}" class="home-support-card-v12">
@@ -77,15 +66,14 @@
             <strong>도어 제어</strong>
         </a>
         {% endif %}
-        <a href="{{ url_for('support_chat') }}" class="home-support-card-v12">
+        <a href="{{ url_for('support_choice') }}" class="home-support-card-v12">
             <span class="support-visual-v12 chat-v12" aria-hidden="true">
                 <svg viewBox="0 0 64 64" fill="none">
                     <path d="M15 14h34c5 0 9 4 9 9v17c0 5-4 9-9 9H31L16 57v-8h-1c-5 0-9-4-9-9V23c0-5 4-9 9-9Z" fill="#FFF7E8" stroke="#FF9900" stroke-width="4" stroke-linejoin="round"/>
                     <circle cx="25" cy="32" r="3" fill="#FF9900"/><circle cx="36" cy="32" r="3" fill="#FF9900"/><circle cx="47" cy="32" r="3" fill="#FF9900"/>
                 </svg>
             </span>
-            <strong>문의하기</strong>
-            
+            <strong>문의/제보</strong>
         </a>
     </section>
 
@@ -116,25 +104,8 @@
         <h2 id="home-notice-viewer-title"></h2>
         <div class="notice-modal-meta"><span id="home-notice-viewer-created"></span><span id="home-notice-viewer-author"></span></div>
         <p class="notice-modal-body" id="home-notice-viewer-body"></p>
-        <div id="home-notice-viewer-attachment" class="notice-attachment-viewer" hidden>
-            <img id="home-notice-viewer-img" src="" alt="첨부 이미지" class="notice-attach-img" hidden>
-            <div id="home-notice-viewer-pdf-wrap" class="notice-pdf-wrap" hidden>
-                <a id="home-notice-viewer-pdf-link" href="#" target="_blank" rel="noopener" class="notice-pdf-open-btn">📄 PDF 파일 열기</a>
-                <iframe id="home-notice-viewer-pdf-frame" src="" class="notice-pdf-frame" title="PDF 뷰어"></iframe>
-            </div>
-        </div>
     </section>
 </div>
-<style>
-.notice-has-attach{font-size:.85rem;margin-left:4px;}
-.notice-attachment-viewer{margin-top:14px;}
-.notice-attach-img{max-width:100%;border-radius:10px;cursor:zoom-in;border:1px solid var(--border,#e0e0e0);}
-.notice-pdf-wrap{display:flex;flex-direction:column;gap:8px;}
-.notice-pdf-open-btn{display:inline-block;padding:8px 14px;border-radius:8px;background:var(--surface-2,#f5f5f5);border:1px solid var(--border,#ddd);font-size:.9rem;text-decoration:none;color:inherit;}
-.notice-pdf-frame{width:100%;height:420px;border:1px solid var(--border,#ddd);border-radius:8px;}
-.notice-img-fullscreen{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;cursor:zoom-out;}
-.notice-img-fullscreen img{max-width:96vw;max-height:92vh;border-radius:8px;}
-</style>
 <div class="home-dev-toast-v12" id="home-dev-toast-v12" hidden>해당 기능은 개발중입니다.</div>
 <script>
 function openHomeNoticeViewer(button){
@@ -142,34 +113,13 @@ function openHomeNoticeViewer(button){
   document.getElementById('home-notice-viewer-body').textContent=button.dataset.body||'공지사항 내용이 없습니다.';
   document.getElementById('home-notice-viewer-created').textContent=button.dataset.created||'';
   document.getElementById('home-notice-viewer-author').textContent=button.dataset.author||'투루카 담당자';
-  const attachWrap=document.getElementById('home-notice-viewer-attachment');
-  const img=document.getElementById('home-notice-viewer-img');
-  const pdfWrap=document.getElementById('home-notice-viewer-pdf-wrap');
-  const pdfFrame=document.getElementById('home-notice-viewer-pdf-frame');
-  const pdfLink=document.getElementById('home-notice-viewer-pdf-link');
-  img.hidden=true;img.src='';pdfWrap.hidden=true;pdfFrame.src='';attachWrap.hidden=true;
-  const imagePath=button.dataset.image;
-  if(imagePath){
-    const fileUrl='/notice_file/'+imagePath;
-    const ext=imagePath.split('.').pop().toLowerCase();
-    if(ext==='pdf'){pdfFrame.src=fileUrl;pdfLink.href=fileUrl;pdfWrap.hidden=false;}
-    else{img.src=fileUrl;img.hidden=false;}
-    attachWrap.hidden=false;
-  }
   document.getElementById('home-notice-viewer-modal').hidden=false;
   document.body.classList.add('modal-open');
 }
 function closeHomeNoticeViewer(){
   document.getElementById('home-notice-viewer-modal').hidden=true;
   document.body.classList.remove('modal-open');
-  document.getElementById('home-notice-viewer-pdf-frame').src='';
 }
-document.getElementById('home-notice-viewer-img').addEventListener('click',function(){
-  if(!this.src)return;
-  const fs=document.createElement('div');fs.className='notice-img-fullscreen';
-  const big=document.createElement('img');big.src=this.src;fs.appendChild(big);
-  fs.addEventListener('click',()=>fs.remove());document.body.appendChild(fs);
-});
 let homeDevToastTimer=null;
 function showHomeDevToast(){
   const toast=document.getElementById('home-dev-toast-v12');
@@ -185,7 +135,6 @@ document.addEventListener('keydown',function(event){
   }
 });
 </script>
-
 
 {# ── 데스크탑 전용 ── #}
 <div id="d-home">

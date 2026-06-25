@@ -2862,3 +2862,29 @@ def damage_alerts_poll():
     rows = conn.execute("SELECT id FROM damage_reports WHERE status='접수' AND id > ? ORDER BY id DESC", (since_id,)).fetchall()
     conn.close()
     return jsonify({"count": len(rows), "new_ids": [r["id"] for r in rows]})
+@app.route("/support_submit", methods=["GET", "POST"])
+@login_required
+def support_submit():
+    if request.method == "POST":
+        category = request.form.get("category", "일반").strip()
+        car_number = request.form.get("car_number", "").strip()
+        message = request.form.get("message", "").strip()
+        if not car_number or not message:
+            flash("차량번호와 문의 내용을 입력하세요.")
+            return redirect(url_for("support_submit"))
+        created_at = now_kst().strftime("%Y-%m-%d %H:%M")
+        conn = get_user_db()
+        conn.execute(
+            """INSERT INTO support_tickets
+               (category, car_number, message, requester, requester_role, vendor, status, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, '접수', ?)""",
+            (category, car_number, message,
+             current_user.username, current_user.role,
+             getattr(current_user, 'vendor', '') or '',
+             created_at)
+        )
+        conn.commit()
+        conn.close()
+        flash("✅ 문의가 접수되었습니다.")
+        return redirect(url_for("support_submit"))
+    return render_template("support_submit.html")

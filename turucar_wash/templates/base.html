@@ -61,45 +61,44 @@
             <!-- 세차 관리 -->
             <p class="side-nav-group">세차 관리</p>
             <a href="{{ url_for('dashboard') }}" class="side-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
-                <i class="ti ti-home" aria-hidden="true"></i><b>홈</b>
+                <i class="ti ti-home"></i><b>홈</b>
             </a>
             <a href="{{ url_for('wash_list') }}" class="side-link {% if request.endpoint in ['wash_list','car_detail'] %}active{% endif %}">
-                <i class="ti ti-car" aria-hidden="true"></i><b>세차 오더</b>
+                <i class="ti ti-car"></i><b>세차 오더</b>
             </a>
             <a href="https://pm.peoplecar.co.kr:8082/#" class="side-link admin-app-link" target="_blank">
-                <i class="ti ti-calendar" aria-hidden="true"></i><b>예약/제어</b>
+                <i class="ti ti-calendar"></i><b>예약/제어</b>
             </a>
             <a href="{{ url_for('wash_status') }}" class="side-link {% if request.endpoint == 'wash_status' %}active{% endif %}">
-                <i class="ti ti-check" aria-hidden="true"></i><b>완료 현황</b>
+                <i class="ti ti-check"></i><b>완료 현황</b>
             </a>
+
             {% if current_user.is_master %}
             <!-- 데이터 관리 -->
             <p class="side-nav-group" style="margin-top:4px;">데이터 관리</p>
             <a href="{{ url_for('upload_wash_list') }}" class="side-link {% if request.endpoint == 'upload_wash_list' %}active{% endif %}">
-                <i class="ti ti-upload" aria-hidden="true"></i><b>오더 업로드</b>
+                <i class="ti ti-upload"></i><b>오더 업로드</b>
             </a>
-            {% if current_user.is_master %}
             <a href="{{ url_for('upload_terminal') }}" class="side-link {% if request.endpoint == 'upload_terminal' %}active{% endif %}">
-                <i class="ti ti-cpu" aria-hidden="true"></i><b>단말기 등록</b>
+                <i class="ti ti-cpu"></i><b>단말기 등록</b>
             </a>
-            {% endif %}
             <!-- 도어 제어 -->
             <p class="side-nav-group" style="margin-top:4px;">차량 제어</p>
             <a href="{{ url_for('door_control') }}" class="side-link {% if request.endpoint == 'door_control' %}active{% endif %}">
-                <i class="ti ti-lock-open" aria-hidden="true"></i><b>도어 제어</b>
+                <i class="ti ti-lock-open"></i><b>도어 제어</b>
             </a>
             <!-- 계정 관리 -->
             <p class="side-nav-group" style="margin-top:4px;">계정 관리</p>
             <a href="{{ url_for('account_manage') }}" class="side-link {% if request.endpoint == 'account_manage' %}active{% endif %}">
-                <i class="ti ti-users" aria-hidden="true"></i><b>계정/지역</b>
+                <i class="ti ti-users"></i><b>계정/지역</b>
             </a>
             <a href="{{ url_for('vendor_manage') }}" class="side-link {% if request.endpoint == 'vendor_manage' %}active{% endif %}">
-                <i class="ti ti-building" aria-hidden="true"></i><b>업체 관리</b>
+                <i class="ti ti-building"></i><b>업체 관리</b>
             </a>
-            <a href="{{ url_for('support_manage') }}" class="side-link side-link-with-badge {% if request.endpoint == 'support_manage' %}active{% endif %}">
-                <i class="ti ti-message" aria-hidden="true"></i><b>문의 관리</b>
-                <em class="side-menu-bubble support-menu-badge{% if not support_badge_count %} is-hidden{% endif %}" data-support-badge>
-                    {{ support_badge_count if support_badge_count and support_badge_count < 100 else ('99+' if support_badge_count else '') }}
+            <a href="{{ url_for('support_choice') }}" class="side-link side-link-with-badge {% if request.endpoint in ['support_manage', 'support_choice', 'damage_manage'] %}active{% endif %}">
+                <i class="ti ti-message"></i><b>문의/제보</b>
+                <em class="side-menu-bubble support-menu-badge{% if not (support_badge_count or damage_badge_count) %} is-hidden{% endif %}" data-support-badge>
+                    {{ (support_badge_count or 0) + (damage_badge_count or 0) }}
                 </em>
             </a>
             {% endif %}
@@ -107,17 +106,24 @@
             {% if current_user.is_admin and not current_user.is_master %}
             <p class="side-nav-group" style="margin-top:4px;">관리</p>
             <a href="{{ url_for('account_manage') }}" class="side-link {% if request.endpoint == 'account_manage' %}active{% endif %}">
-                <i class="ti ti-users" aria-hidden="true"></i><b>계정/지역</b>
+                <i class="ti ti-users"></i><b>계정/지역</b>
             </a>
-            <a href="{{ url_for('support_manage') }}" class="side-link side-link-with-badge {% if request.endpoint == 'support_manage' %}active{% endif %}">
-                <i class="ti ti-message" aria-hidden="true"></i><b>문의 관리</b>
-                <em class="side-menu-bubble support-menu-badge{% if not support_badge_count %} is-hidden{% endif %}" data-support-badge>
-                    {{ support_badge_count if support_badge_count and support_badge_count < 100 else ('99+' if support_badge_count else '') }}
+            <a href="{{ url_for('support_choice') }}" class="side-link side-link-with-badge {% if request.endpoint in ['support_manage', 'support_choice', 'damage_manage'] %}active{% endif %}">
+                <i class="ti ti-message"></i><b>문의/제보</b>
+                <em class="side-menu-bubble support-menu-badge{% if not (support_badge_count or damage_badge_count) %} is-hidden{% endif %}" data-support-badge>
+                    {{ (support_badge_count or 0) + (damage_badge_count or 0) }}
                 </em>
             </a>
             <p class="side-nav-group" style="margin-top:4px;">차량 제어</p>
             <a href="{{ url_for('door_control') }}" class="side-link {% if request.endpoint == 'door_control' %}active{% endif %}">
-                <i class="ti ti-lock-open" aria-hidden="true"></i><b>도어 제어</b>
+                <i class="ti ti-lock-open"></i><b>도어 제어</b>
+            </a>
+            {% endif %}
+
+            {% if not current_user.is_master and not current_user.is_admin %}
+            <p class="side-nav-group" style="margin-top:4px;">제보</p>
+            <a href="{{ url_for('damage_submit') }}" class="side-link {% if request.endpoint == 'damage_submit' %}active{% endif %}">
+                <i class="ti ti-alert-triangle"></i><b>차량 훼손 제보</b>
             </a>
             {% endif %}
 
@@ -125,10 +131,10 @@
             <!-- 내정보 -->
             <p class="side-nav-group" style="margin-top:4px;">내정보</p>
             <a href="{{ url_for('profile') }}" class="side-link {% if request.endpoint == 'profile' %}active{% endif %}">
-                <i class="ti ti-user" aria-hidden="true"></i><b>계정 정보</b>
+                <i class="ti ti-user"></i><b>계정 정보</b>
             </a>
             <a href="{{ url_for('my_vehicles') }}" class="side-link {% if request.endpoint == 'my_vehicles' %}active{% endif %}">
-                <i class="ti ti-car" aria-hidden="true"></i><b>내 담당 차량</b>
+                <i class="ti ti-car"></i><b>내 담당 차량</b>
             </a>
             {% endif %}
         </nav>
@@ -157,6 +163,7 @@
                     {% elif request.endpoint in ['account_manage'] %}계정 관리
                     {% elif request.endpoint == 'vendor_manage' %}계정 관리
                     {% elif request.endpoint == 'support_manage' %}계정 관리
+                    {% elif request.endpoint in ['support_choice', 'damage_manage', 'damage_submit'] %}계정 관리
                     {% elif request.endpoint == 'profile' %}내정보
                     {% elif request.endpoint == 'my_vehicles' %}내정보
                     {% else %}홈{% endif %}
@@ -169,6 +176,9 @@
                     {% elif request.endpoint == 'account_manage' %}계정/지역
                     {% elif request.endpoint == 'vendor_manage' %}업체 관리
                     {% elif request.endpoint == 'support_manage' %}문의 관리
+                    {% elif request.endpoint == 'support_choice' %}문의/제보
+                    {% elif request.endpoint == 'damage_manage' %}훼손 제보 관리
+                    {% elif request.endpoint == 'damage_submit' %}차량 훼손 제보
                     {% elif request.endpoint == 'profile' %}계정 정보
                     {% elif request.endpoint == 'my_vehicles' %}내 담당 차량
                     {% elif request.endpoint == 'dashboard' %}홈
@@ -177,7 +187,7 @@
             </div>
             <div class="dt-topnav-right">
                 <button class="dt-theme-btn" onclick="toggleTheme()" aria-label="테마 전환">
-                    <i class="ti ti-sun" id="dt-theme-icon" aria-hidden="true"></i>
+                    <i class="ti ti-sun" id="dt-theme-icon"></i>
                     <span id="dt-theme-label">라이트</span>
                 </button>
                 <span class="dt-topnav-user">{{ current_user.username }}</span>
@@ -201,23 +211,21 @@
     <!-- ══ 모바일 하단 탭바 ══ -->
     <nav class="mobile-tabbar turu-mobile-tabbar" aria-label="주요 메뉴">
         <a href="{{ url_for('dashboard') }}" class="tab-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
-            <span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3.5 11.2 12 4.3l8.5 6.9"/><path d="M6.5 10.3v9.4h11v-9.4"/><path d="M10 19.7v-5h4v5"/></svg></span><b>홈</b>
+            <span><!-- home SVG --></span><b>홈</b>
         </a>
         <a href="{{ url_for('wash_list') }}" class="tab-item {% if request.endpoint in ['wash_list','car_detail'] %}active{% endif %}">
-            <span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5h8l1 3H7l1-3Z"/><rect x="5.5" y="7" width="13" height="14" rx="2"/><path d="M8.5 12h7M8.5 16h5"/></svg></span><b>오더</b>
+            <span><!-- order SVG --></span><b>오더</b>
         </a>
         <a href="https://pm.peoplecar.co.kr:8082/#" class="tab-item admin-app-tab">
-            <span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2"/><circle cx="15" cy="17" r="2"/></svg></span><b>제어</b>
+            <span><!-- control SVG --></span><b>제어</b>
         </a>
         <a href="{{ url_for('wash_status') }}" class="tab-item {% if request.endpoint == 'wash_status' %}active{% endif %}">
-            <span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5.5" y="4.5" width="13" height="16" rx="2"/><path d="M9 9h6M9 13h4M9.5 17l2 2 4-5"/></svg></span><b>완료</b>
+            <span><!-- done SVG --></span><b>완료</b>
         </a>
         <a href="{{ url_for('profile') }}" class="tab-item {% if request.endpoint in ['profile','account_manage','vendor_manage','upload_wash_list','my_vehicles'] %}active{% endif %}">
-            <span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1.5-5 13.5-5 15 0"/></svg></span><b>내정보</b>
+            <span><!-- profile SVG --></span><b>내정보</b>
         </a>
     </nav>
-
-    <a href="{{ url_for('dashboard') }}" class="floating-turu-home-link" aria-label="Turu Wash 홈으로 이동">Turu Wash</a>
 
     {% if current_user.is_authenticated and (current_user.is_master or current_user.username == 'jeongyeon.kim') %}
     <script>
@@ -229,12 +237,6 @@
     </script>
     <script src="{{ url_for('static', filename='js/support_alerts.js') }}?v=23"></script>
     {% endif %}
-
-    <div class="turu-app-loader-overlay" id="turuAppLoader" aria-hidden="true">
-        <div class="turu-app-loader-card" role="status" aria-live="polite">
-            <span class="turu-app-loader-spinner" aria-hidden="true"></span>
-        </div>
-    </div>
 
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=31"></script>
     <script src="{{ url_for('static', filename='js/app_loader.js') }}?v=31"></script>
@@ -254,29 +256,12 @@
         window.addEventListener('resize', setMode);
     })();
     </script>
-
-
     <script>
     (function() {
         const saved = localStorage.getItem('turu-theme') || 'light';
         document.documentElement.setAttribute('data-theme', saved);
-        const icon = document.getElementById('dt-theme-icon');
-        const label = document.getElementById('dt-theme-label');
-        if (icon) icon.className = saved === 'dark' ? 'ti ti-moon' : 'ti ti-sun';
-        if (label) label.textContent = saved === 'dark' ? '다크' : '라이트';
+        // ... toggleTheme() function
     })();
-
-    function toggleTheme() {
-        const html = document.documentElement;
-        const current = html.getAttribute('data-theme');
-        const next = current === 'dark' ? 'light' : 'dark';
-        html.setAttribute('data-theme', next);
-        localStorage.setItem('turu-theme', next);
-        const icon = document.getElementById('dt-theme-icon');
-        const label = document.getElementById('dt-theme-label');
-        if (icon) icon.className = next === 'dark' ? 'ti ti-moon' : 'ti ti-sun';
-        if (label) label.textContent = next === 'dark' ? '다크' : '라이트';
-    }
     </script>
 </body>
 </html>

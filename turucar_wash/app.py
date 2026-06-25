@@ -2721,7 +2721,7 @@ def _send_damage_slack(report, base_url):
     blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": f"*첨부 사진*\n{photo_text}"}})
     blocks.append({"type": "actions", "elements": [{"type": "button", "text": {"type": "plain_text", "text": "제보 관리 페이지 열기"}, "url": manage_url, "style": "primary"}]})
     try:
-        requests.post(SLACK_DAMAGE_WEBHOOK, json={"blocks": blocks}, timeout=5)
+        _requests.post(SLACK_DAMAGE_WEBHOOK, json={"blocks": blocks}, timeout=5)
     except Exception:
         pass
 

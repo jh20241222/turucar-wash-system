@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block document_title %}Turu Wash · 문의하기{% endblock %}
+{% block content %}
+<section class="app-card elevated support-submit-page">
+  <div style="padding:24px 20px 8px;">
+    <p class="eyebrow">문의</p>
+    <h1>문의하기</h1>
+    <p style="color:var(--text-secondary);margin-top:4px;">세차 업무 관련 문의를 접수해 주세요.</p>
+  </div>
+
+  <form method="post" action="{{ url_for('support_submit') }}"
+        style="padding:16px 20px 32px;display:flex;flex-direction:column;gap:16px;">
+
+    <div class="field-group">
+      <label class="field-label">차량번호 <span class="required">*</span></label>
+      <input type="text" name="car_number" class="app-input" placeholder="예: 12가 3456" required>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">문의 유형</label>
+      <select name="category" class="app-input">
+        <option value="일반">일반 문의</option>
+        <option value="세차">세차 관련</option>
+        <option value="차량">차량 관련</option>
+        <option value="기타">기타</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">문의 내용 <span class="required">*</span></label>
+      <textarea name="message" class="app-input" rows="5"
+                placeholder="문의 내용을 자세히 입력해주세요." required></textarea>
+    </div>
+
+    <button type="submit" class="primary-btn" style="margin-top:8px;">문의 제출</button>
+  </form>
+</section>
+
+{# 데스크탑 #}
+<div id="d-support-submit" style="display:none;">
+  <div class="d-wrap" style="max-width:600px;">
+    <form method="post" action="{{ url_for('support_submit') }}"
+          style="display:flex;flex-direction:column;gap:16px;">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="field-group">
+          <label class="field-label">차량번호 <span class="required">*</span></label>
+          <input type="text" name="car_number" class="d-input" placeholder="예: 12가 3456" required>
+        </div>
+        <div class="field-group">
+          <label class="field-label">문의 유형</label>
+          <select name="category" class="d-input">
+            <option value="일반">일반 문의</option>
+            <option value="세차">세차 관련</option>
+            <option value="차량">차량 관련</option>
+            <option value="기타">기타</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">문의 내용 <span class="required">*</span></label>
+        <textarea name="message" class="d-input" rows="5"
+                  placeholder="문의 내용을 자세히 입력해주세요." required></textarea>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <a href="{{ url_for('support_choice') }}" class="d-btn d-btn-gray">취소</a>
+        <button type="submit" class="d-btn d-btn-orange">문의 제출</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+.field-group { display:flex;flex-direction:column;gap:6px; }
+.field-label { font-size:13px;font-weight:600;color:var(--text-primary); }
+.required { color:#e53935; }
+textarea.app-input { resize:vertical;min-height:100px; }
+textarea.d-input { resize:vertical;min-height:100px;width:100%;box-sizing:border-box; }
+
+#desktop-mode #d-support-submit { display:block !important; }
+#desktop-mode .app-card.elevated.support-submit-page { display:none !important; }
+</style>
+{% endblock %}

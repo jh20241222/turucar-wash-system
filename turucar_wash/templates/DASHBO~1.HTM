@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% block content %}
+{% set latest_notice = notice_rows[0] if notice_rows and notice_rows|length > 0 else none %}
+<div class="turu-home-v12" aria-label="TURU CAR 홈">
+    <header class="home-brand-v12">
+        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR" class="home-brand-logo-v12">
+    </header>
+
+    <section class="home-notice-card-v12" aria-labelledby="homeNoticeTitle">
+        <div class="notice-head-v12">
+            <h2 id="homeNoticeTitle"><a href="{{ url_for('notices') }}" class="notice-heading-link-v12">공지사항</a></h2>
+            <a href="{{ url_for('notices') }}" class="notice-more-v12">더보기</a>
+        </div>
+        <div class="notice-body-v12">
+            <div class="notice-visual-v12" aria-hidden="true">
+                <img src="{{ url_for('static', filename='img/icon-megaphone.png') }}" alt="">
+            </div>
+            <div class="notice-copy-v12">
+                {% if latest_notice %}
+                    <button type="button" class="home-notice-title-button-v12"
+                        data-title="{{ latest_notice.title|e }}"
+                        data-body="{{ latest_notice.body|e }}"
+                        data-created="{{ latest_notice.created_at|e }}"
+                        data-author="{{ latest_notice.author|e }}"
+                        data-image="{{ latest_notice.image_path or '' }}"
+                        onclick="openHomeNoticeViewer(this)">
+                        <strong>{{ latest_notice.title }}</strong>
+                        <span>{{ latest_notice.body }}</span>
+                        {% if latest_notice.image_path %}<span class="notice-has-attach" title="첨부파일 있음">📎</span>{% endif %}
+                    </button>
+                {% else %}
+                    <strong>아직 등록된 공지사항이 없습니다.</strong>
+                    <span>공지사항을 작성하면 이곳에 누적됩니다.</span>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <section class="home-main-grid-v12" aria-label="주요 메뉴">
+        <a href="{{ url_for('wash_list') }}" class="home-main-card-v12 card-wash-v12">
+            <span class="main-icon-v12"><img src="{{ url_for('static', filename='img/icon-wash-order.png') }}" alt=""></span>
+            <strong>세차 오더</strong>
+            <small>대상 차량 확인</small>
+            
+        </a>
+        <a href="https://pm.peoplecar.co.kr:8082/#" target="_blank" rel="noopener" class="home-main-card-v12 card-control-v12">
+            <span class="main-icon-v12"><img src="{{ url_for('static', filename='img/icon-control.png') }}" alt=""></span>
+            <strong>예약/문제어</strong>
+            <small>예약/제어 관리</small>
+            
+        </a>
+        <a href="{{ url_for('wash_status') }}" class="home-main-card-v12 card-complete-v12">
+            <span class="main-icon-v12"><img src="{{ url_for('static', filename='img/icon-complete.png') }}" alt=""></span>
+            <strong>완료 현황</strong>
+            <small>작업 기록 조회</small>
+            
+        </a>
+    </section>
+
+    <section class="home-support-grid-v12" aria-label="지원 메뉴">
+        <button type="button" class="home-support-card-v12 home-support-button-v12" onclick="showHomeDevToast()">
+            <span class="support-visual-v12" aria-hidden="true">
+                <img src="{{ url_for('static', filename='img/icon-urgent-wash.png') }}" alt="">
+            </span>
+            <strong>긴급 세차</strong>
+            
+        </button>
+        {% if current_user.is_master or current_user.is_admin %}
+        <a href="{{ url_for('door_control') }}" class="home-support-card-v12">
+            <span class="support-visual-v12" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none">
+                    <rect x="10" y="28" width="44" height="30" rx="6" fill="#FFF7E8" stroke="#FF9900" stroke-width="4"/>
+                    <path d="M22 28V20a10 10 0 0 1 18.5-5" stroke="#FF9900" stroke-width="4" stroke-linecap="round"/>
+                    <circle cx="32" cy="43" r="4" fill="#FF9900"/>
+                </svg>
+            </span>
+            <strong>도어 제어</strong>
+        </a>
+        {% endif %}
+        <a href="{{ url_for('support_chat') }}" class="home-support-card-v12">
+            <span class="support-visual-v12 chat-v12" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none">
+                    <path d="M15 14h34c5 0 9 4 9 9v17c0 5-4 9-9 9H31L16 57v-8h-1c-5 0-9-4-9-9V23c0-5 4-9 9-9Z" fill="#FFF7E8" stroke="#FF9900" stroke-width="4" stroke-linejoin="round"/>
+                    <circle cx="25" cy="32" r="3" fill="#FF9900"/><circle cx="36" cy="32" r="3" fill="#FF9900"/><circle cx="47" cy="32" r="3" fill="#FF9900"/>
+                </svg>
+            </span>
+            <strong>문의하기</strong>
+            
+        </a>
+    </section>
+
+    <nav class="home-tabbar-v12" aria-label="하단 메뉴">
+        <a href="{{ url_for('dashboard') }}" class="home-tab-v12 active">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M3.5 11.2 12 4.3l8.5 6.9"/><path d="M6.5 10.3v9.4h11v-9.4"/><path d="M10 19.7v-5h4v5"/></svg><span>홈</span>
+        </a>
+        <a href="{{ url_for('wash_list') }}" class="home-tab-v12">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M8 5h8l1 3H7l1-3Z"/><rect x="5.5" y="7" width="13" height="14" rx="2"/><path d="M8.5 12h7M8.5 16h5"/></svg><span>오더</span>
+        </a>
+        <a href="https://pm.peoplecar.co.kr:8082/#" class="home-tab-v12">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2"/><circle cx="15" cy="17" r="2"/></svg><span>제어</span>
+        </a>
+        <a href="{{ url_for('wash_status') }}" class="home-tab-v12">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="5.5" y="4.5" width="13" height="16" rx="2"/><path d="M9 9h6M9 13h4M9.5 17l2 2 4-5"/></svg><span>완료</span>
+        </a>
+        <a href="{{ url_for('profile') }}" class="home-tab-v12">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1.5-5 13.5-5 15 0"/></svg><span>내정보</span>
+        </a>
+    </nav>
+</div>
+
+<div class="notice-modal-backdrop" id="home-notice-viewer-modal" hidden>
+    <section class="notice-modal turu-mini-modal" role="dialog" aria-modal="true" aria-labelledby="home-notice-viewer-title">
+        <button type="button" class="notice-modal-close" onclick="closeHomeNoticeViewer()" aria-label="닫기">×</button>
+        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="notice-modal-logo">
+        <p class="eyebrow">Notice</p>
+        <h2 id="home-notice-viewer-title"></h2>
+        <div class="notice-modal-meta"><span id="home-notice-viewer-created"></span><span id="home-notice-viewer-author"></span></div>
+        <p class="notice-modal-body" id="home-notice-viewer-body"></p>
+        <div id="home-notice-viewer-attachment" class="notice-attachment-viewer" hidden>
+            <img id="home-notice-viewer-img" src="" alt="첨부 이미지" class="notice-attach-img" hidden>
+            <div id="home-notice-viewer-pdf-wrap" class="notice-pdf-wrap" hidden>
+                <a id="home-notice-viewer-pdf-link" href="#" target="_blank" rel="noopener" class="notice-pdf-open-btn">📄 PDF 파일 열기</a>
+                <iframe id="home-notice-viewer-pdf-frame" src="" class="notice-pdf-frame" title="PDF 뷰어"></iframe>
+            </div>
+        </div>
+    </section>
+</div>
+<style>
+.notice-has-attach{font-size:.85rem;margin-left:4px;}
+.notice-attachment-viewer{margin-top:14px;}
+.notice-attach-img{max-width:100%;border-radius:10px;cursor:zoom-in;border:1px solid var(--border,#e0e0e0);}
+.notice-pdf-wrap{display:flex;flex-direction:column;gap:8px;}
+.notice-pdf-open-btn{display:inline-block;padding:8px 14px;border-radius:8px;background:var(--surface-2,#f5f5f5);border:1px solid var(--border,#ddd);font-size:.9rem;text-decoration:none;color:inherit;}
+.notice-pdf-frame{width:100%;height:420px;border:1px solid var(--border,#ddd);border-radius:8px;}
+.notice-img-fullscreen{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;cursor:zoom-out;}
+.notice-img-fullscreen img{max-width:96vw;max-height:92vh;border-radius:8px;}
+</style>
+<div class="home-dev-toast-v12" id="home-dev-toast-v12" hidden>해당 기능은 개발중입니다.</div>
+<script>
+function openHomeNoticeViewer(button){
+  document.getElementById('home-notice-viewer-title').textContent=button.dataset.title||'공지사항';
+  document.getElementById('home-notice-viewer-body').textContent=button.dataset.body||'공지사항 내용이 없습니다.';
+  document.getElementById('home-notice-viewer-created').textContent=button.dataset.created||'';
+  document.getElementById('home-notice-viewer-author').textContent=button.dataset.author||'투루카 담당자';
+  const attachWrap=document.getElementById('home-notice-viewer-attachment');
+  const img=document.getElementById('home-notice-viewer-img');
+  const pdfWrap=document.getElementById('home-notice-viewer-pdf-wrap');
+  const pdfFrame=document.getElementById('home-notice-viewer-pdf-frame');
+  const pdfLink=document.getElementById('home-notice-viewer-pdf-link');
+  img.hidden=true;img.src='';pdfWrap.hidden=true;pdfFrame.src='';attachWrap.hidden=true;
+  const imagePath=button.dataset.image;
+  if(imagePath){
+    const fileUrl='/notice_file/'+imagePath;
+    const ext=imagePath.split('.').pop().toLowerCase();
+    if(ext==='pdf'){pdfFrame.src=fileUrl;pdfLink.href=fileUrl;pdfWrap.hidden=false;}
+    else{img.src=fileUrl;img.hidden=false;}
+    attachWrap.hidden=false;
+  }
+  document.getElementById('home-notice-viewer-modal').hidden=false;
+  document.body.classList.add('modal-open');
+}
+function closeHomeNoticeViewer(){
+  document.getElementById('home-notice-viewer-modal').hidden=true;
+  document.body.classList.remove('modal-open');
+  document.getElementById('home-notice-viewer-pdf-frame').src='';
+}
+document.getElementById('home-notice-viewer-img').addEventListener('click',function(){
+  if(!this.src)return;
+  const fs=document.createElement('div');fs.className='notice-img-fullscreen';
+  const big=document.createElement('img');big.src=this.src;fs.appendChild(big);
+  fs.addEventListener('click',()=>fs.remove());document.body.appendChild(fs);
+});
+let homeDevToastTimer=null;
+function showHomeDevToast(){
+  const toast=document.getElementById('home-dev-toast-v12');
+  toast.hidden=false;
+  toast.classList.add('show');
+  clearTimeout(homeDevToastTimer);
+  homeDevToastTimer=setTimeout(function(){toast.classList.remove('show');toast.hidden=true;},2200);
+}
+document.addEventListener('keydown',function(event){
+  if(event.key==='Escape'){
+    const modal=document.getElementById('home-notice-viewer-modal');
+    if(modal && !modal.hidden){closeHomeNoticeViewer();}
+  }
+});
+</script>
+
+
+{# ── 데스크탑 전용 ── #}
+<div id="d-home">
+    <div class="d-notice-section">
+        <div class="d-notice-card">
+            <div class="d-notice-head">
+                <h2>공지사항</h2>
+                <a href="{{ url_for('notices') }}" class="d-notice-more">전체보기</a>
+            </div>
+            {% if notice_rows %}
+                {% for n in notice_rows %}
+                <div class="d-notice-row">
+                    <span class="d-notice-title">{{ n.title }}</span>
+                    <span class="d-notice-body-text">{{ n.body }}</span>
+                    <span class="d-notice-date">{{ n.created_at }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="d-notice-empty">등록된 공지사항이 없습니다.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<style>
+#d-home { display: none; }
+#desktop-mode #d-home { display: block !important; }
+#desktop-mode .turu-home-v12,
+#desktop-mode .home-dev-toast-v12,
+#desktop-mode .notice-modal-backdrop { display: none !important; }
+#desktop-mode #cal-backdrop.open,
+#desktop-mode #status-cal-backdrop.open { display: flex !important; }
+</style>
+
+{% endblock %}

@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block document_title %}Turu Wash · 차량 훼손 제보{% endblock %}
+{% block content %}
+<section class="app-card elevated damage-submit-page">
+  <div style="padding:24px 20px 8px;">
+    <p class="eyebrow">제보</p>
+    <h1>차량 훼손 제보</h1>
+    <p style="color:var(--text-secondary);margin-top:4px;">세차 중 발견한 차량 훼손 내용을 제출해주세요.</p>
+  </div>
+
+  <form method="post" action="{{ url_for('damage_submit') }}" enctype="multipart/form-data"
+        style="padding:16px 20px 32px;display:flex;flex-direction:column;gap:16px;">
+
+    <div class="field-group">
+      <label class="field-label">차량번호 <span class="required">*</span></label>
+      <input type="text" name="car_number" class="app-input" placeholder="예: 12가 3456" required>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">세차일자 <span class="required">*</span></label>
+      <input type="date" name="wash_date" class="app-input" value="{{ today }}" required>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">훼손 부위 <span class="required">*</span></label>
+      <input type="text" name="damage_location" class="app-input"
+             placeholder="예: 운전석 도어 스크래치, 범퍼 찌그러짐" required>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">상세 내용</label>
+      <textarea name="description" class="app-input" rows="3"
+                placeholder="훼손 상황, 발견 경위 등 추가 설명"></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">차량 정면 사진 <span class="required">*</span></label>
+      <label class="photo-upload-btn" id="lbl-front">
+        <input type="file" name="photo_front" accept="image/*" capture="environment"
+               onchange="previewPhoto(this,'prev-front','lbl-front')" required>
+        <i class="ti ti-camera"></i> 사진 촬영 / 선택
+      </label>
+      <img id="prev-front" class="photo-preview" style="display:none;">
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">훼손 부위 사진 1 <span class="required">*</span></label>
+      <label class="photo-upload-btn" id="lbl-d1">
+        <input type="file" name="photo_damage1" accept="image/*" capture="environment"
+               onchange="previewPhoto(this,'prev-d1','lbl-d1')" required>
+        <i class="ti ti-camera"></i> 사진 촬영 / 선택
+      </label>
+      <img id="prev-d1" class="photo-preview" style="display:none;">
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">훼손 부위 사진 2</label>
+      <label class="photo-upload-btn" id="lbl-d2">
+        <input type="file" name="photo_damage2" accept="image/*" capture="environment"
+               onchange="previewPhoto(this,'prev-d2','lbl-d2')">
+        <i class="ti ti-camera"></i> 사진 촬영 / 선택
+      </label>
+      <img id="prev-d2" class="photo-preview" style="display:none;">
+    </div>
+
+    <button type="submit" class="primary-btn" style="margin-top:8px;">제보 제출</button>
+  </form>
+</section>
+
+{# 데스크탑 #}
+<div id="d-damage-submit" style="display:none;">
+  <div class="d-wrap" style="max-width:600px;">
+    <form method="post" action="{{ url_for('damage_submit') }}" enctype="multipart/form-data"
+          style="display:flex;flex-direction:column;gap:16px;">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="field-group">
+          <label class="field-label">차량번호 <span class="required">*</span></label>
+          <input type="text" name="car_number" class="d-input" placeholder="예: 12가 3456" required>
+        </div>
+        <div class="field-group">
+          <label class="field-label">세차일자 <span class="required">*</span></label>
+          <input type="date" name="wash_date" class="d-input" value="{{ today }}" required>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">훼손 부위 <span class="required">*</span></label>
+        <input type="text" name="damage_location" class="d-input"
+               placeholder="예: 운전석 도어 스크래치" required>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">상세 내용</label>
+        <textarea name="description" class="d-input" rows="3"
+                  placeholder="훼손 상황, 발견 경위 등"></textarea>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+        <div class="field-group">
+          <label class="field-label">정면 사진 <span class="required">*</span></label>
+          <label class="photo-upload-btn" id="d-lbl-front">
+            <input type="file" name="photo_front" accept="image/*"
+                   onchange="previewPhoto(this,'d-prev-front','d-lbl-front')" required>
+            <i class="ti ti-upload"></i> 업로드
+          </label>
+          <img id="d-prev-front" class="photo-preview" style="display:none;">
+        </div>
+        <div class="field-group">
+          <label class="field-label">훼손 사진 1 <span class="required">*</span></label>
+          <label class="photo-upload-btn" id="d-lbl-d1">
+            <input type="file" name="photo_damage1" accept="image/*"
+                   onchange="previewPhoto(this,'d-prev-d1','d-lbl-d1')" required>
+            <i class="ti ti-upload"></i> 업로드
+          </label>
+          <img id="d-prev-d1" class="photo-preview" style="display:none;">
+        </div>
+        <div class="field-group">
+          <label class="field-label">훼손 사진 2</label>
+          <label class="photo-upload-btn" id="d-lbl-d2">
+            <input type="file" name="photo_damage2" accept="image/*"
+                   onchange="previewPhoto(this,'d-prev-d2','d-lbl-d2')">
+            <i class="ti ti-upload"></i> 업로드
+          </label>
+          <img id="d-prev-d2" class="photo-preview" style="display:none;">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <a href="{{ url_for('support_choice') }}" class="d-btn d-btn-gray">취소</a>
+        <button type="submit" class="d-btn d-btn-orange">제보 제출</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+.field-group { display:flex;flex-direction:column;gap:6px; }
+.field-label { font-size:13px;font-weight:600;color:var(--text-primary); }
+.required { color:#e53935; }
+textarea.app-input { resize:vertical;min-height:72px; }
+textarea.d-input { resize:vertical;min-height:72px;width:100%;box-sizing:border-box; }
+
+.photo-upload-btn {
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--surface);border:2px dashed var(--border);border-radius:10px;
+  padding:14px;cursor:pointer;font-size:14px;font-weight:600;color:var(--text-secondary);
+  transition:border-color .15s;
+}
+.photo-upload-btn:hover { border-color:var(--primary); }
+.photo-upload-btn input[type=file] { display:none; }
+.photo-preview {
+  width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:6px;
+}
+
+#desktop-mode #d-damage-submit { display:block !important; }
+#desktop-mode .app-card.elevated.damage-submit-page { display:none !important; }
+</style>
+
+<script>
+function previewPhoto(input, previewId, labelId) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = document.getElementById(previewId);
+    img.src = e.target.result;
+    img.style.display = 'block';
+    const lbl = document.getElementById(labelId);
+    if (lbl) lbl.style.borderColor = '#43a047';
+  };
+  reader.readAsDataURL(file);
+}
+</script>
+{% endblock %}

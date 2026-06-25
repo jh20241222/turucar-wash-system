@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block document_title %}Turu Wash · 문의/제보{% endblock %}
+{% block content %}
+<section class="app-card elevated">
+  <div style="padding:24px 20px 8px;">
+    <p class="eyebrow">Support</p>
+    <h1>문의 / 제보</h1>
+    <p style="color:var(--text-secondary);margin-top:4px;">원하는 메뉴를 선택하세요.</p>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:12px;padding:20px;">
+    {% if current_user.is_master or current_user.is_admin %}
+    <a href="{{ url_for('support_manage') }}" class="support-choice-card">
+      <div class="scc-icon"><i class="ti ti-message-circle"></i></div>
+      <div class="scc-body">
+        <strong>문의 관리</strong>
+        <span>작업자가 접수한 문의 확인 및 답변</span>
+      </div>
+      <i class="ti ti-chevron-right scc-arrow"></i>
+    </a>
+    <a href="{{ url_for('damage_manage') }}" class="support-choice-card">
+      <div class="scc-icon scc-icon--danger"><i class="ti ti-alert-triangle"></i></div>
+      <div class="scc-body">
+        <strong>훼손 제보 관리</strong>
+        <span>세차 작업 중 차량 훼손 제보 내역 확인</span>
+        {% if damage_badge_count %}
+        <em class="scc-badge">{{ damage_badge_count }}건 미확인</em>
+        {% endif %}
+      </div>
+      <i class="ti ti-chevron-right scc-arrow"></i>
+    </a>
+    {% else %}
+    <a href="{{ url_for('damage_submit') }}" class="support-choice-card">
+      <div class="scc-icon scc-icon--danger"><i class="ti ti-alert-triangle"></i></div>
+      <div class="scc-body">
+        <strong>차량 훼손 제보</strong>
+        <span>세차 중 발견한 차량 외관 훼손 사진·내용 제출</span>
+      </div>
+      <i class="ti ti-chevron-right scc-arrow"></i>
+    </a>
+    {% endif %}
+  </div>
+</section>
+
+{# 데스크탑 #}
+<div id="d-support-choice" style="display:none;">
+  <div class="d-wrap" style="max-width:560px;">
+    {% if current_user.is_master or current_user.is_admin %}
+    <a href="{{ url_for('support_manage') }}" class="d-choice-card">
+      <div class="d-choice-icon"><i class="ti ti-message-circle"></i></div>
+      <div class="d-choice-body">
+        <strong>문의 관리</strong>
+        <span>작업자가 접수한 문의 확인 및 답변</span>
+      </div>
+      <i class="ti ti-chevron-right" style="color:var(--text-tertiary);"></i>
+    </a>
+    <a href="{{ url_for('damage_manage') }}" class="d-choice-card">
+      <div class="d-choice-icon d-choice-icon--danger"><i class="ti ti-alert-triangle"></i></div>
+      <div class="d-choice-body">
+        <strong>훼손 제보 관리</strong>
+        <span>세차 작업 중 차량 훼손 제보 내역 확인</span>
+        {% if damage_badge_count %}
+        <em class="d-choice-badge">{{ damage_badge_count }}건 미확인</em>
+        {% endif %}
+      </div>
+      <i class="ti ti-chevron-right" style="color:var(--text-tertiary);"></i>
+    </a>
+    {% else %}
+    <a href="{{ url_for('damage_submit') }}" class="d-choice-card">
+      <div class="d-choice-icon d-choice-icon--danger"><i class="ti ti-alert-triangle"></i></div>
+      <div class="d-choice-body">
+        <strong>차량 훼손 제보</strong>
+        <span>세차 중 발견한 차량 외관 훼손 사진·내용 제출</span>
+      </div>
+      <i class="ti ti-chevron-right" style="color:var(--text-tertiary);"></i>
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+/* ── 모바일 카드 ── */
+.support-choice-card {
+  display:flex;align-items:center;gap:14px;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:16px;text-decoration:none;color:inherit;
+  transition:background .15s;
+}
+.support-choice-card:active { background:var(--surface-hover); }
+.scc-icon {
+  width:44px;height:44px;border-radius:10px;
+  background:#fff3e0;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.scc-icon .ti { font-size:22px;color:#e65100; }
+.scc-icon--danger { background:#fce4ec; }
+.scc-icon--danger .ti { color:#c62828; }
+.scc-body { flex:1;display:flex;flex-direction:column;gap:2px; }
+.scc-body strong { font-size:15px;font-weight:700; }
+.scc-body span { font-size:13px;color:var(--text-secondary); }
+.scc-badge {
+  display:inline-block;margin-top:4px;
+  background:#e53935;color:#fff;border-radius:99px;
+  font-size:11px;font-weight:700;padding:2px 8px;width:fit-content;
+}
+.scc-arrow { font-size:18px;color:var(--text-tertiary); }
+
+/* ── 데스크탑 ── */
+#desktop-mode #d-support-choice { display:block !important; }
+#desktop-mode .app-card.elevated { display:none !important; }
+
+.d-choice-card {
+  display:flex;align-items:center;gap:16px;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:20px;text-decoration:none;color:inherit;margin-bottom:12px;
+  transition:background .15s;cursor:pointer;
+}
+.d-choice-card:hover { background:var(--surface-hover); }
+.d-choice-icon {
+  width:48px;height:48px;border-radius:12px;
+  background:#fff3e0;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.d-choice-icon .ti { font-size:24px;color:#e65100; }
+.d-choice-icon--danger { background:#fce4ec; }
+.d-choice-icon--danger .ti { color:#c62828; }
+.d-choice-body { flex:1;display:flex;flex-direction:column;gap:3px; }
+.d-choice-body strong { font-size:16px;font-weight:700; }
+.d-choice-body span { font-size:13px;color:var(--text-secondary); }
+.d-choice-badge {
+  display:inline-block;margin-top:4px;
+  background:#e53935;color:#fff;border-radius:99px;
+  font-size:11px;font-weight:700;padding:2px 8px;width:fit-content;
+}
+</style>
+{% endblock %}

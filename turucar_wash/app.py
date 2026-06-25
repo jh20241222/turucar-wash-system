@@ -2700,9 +2700,28 @@ def _save_damage_photo(file_obj):
 
 
 def _send_damage_slack(report, base_url):
+    if not SLACK_DAMAGE_WEBHOOK:
+        print("[Slack] SLACK_DAMAGE_WEBHOOK 환경변수가 비어있습니다.")
+        return
     manage_url = f"{base_url}/damage_manage"
-    photos = []
-    for field in ("photo_front", "photo_damage1", "photo_damage2"):
+    text = (
+        f"🚨 *차량 훼손 제보 접수*\n"
+        f"• 차량번호: {report['car_number']}\n"
+        f"• 세차일자: {report['wash_date']}\n"
+        f"• 훼손 부위: {report['damage_location']}\n"
+        f"• 제보자: {report['reporter']} ({report.get('vendor', '')})\n"
+        f"• 상세: {report.get('description') or '-'}\n"
+        f"<{manage_url}|제보 관리 페이지 열기>"
+    )
+    try:
+        resp = _requests.post(
+            SLACK_DAMAGE_WEBHOOK,
+            json={"text": text},
+            timeout=5
+        )
+        print(f"[Slack] status={resp.status_code}, body={resp.text[:200]}")
+    except Exception as e:
+        print(f"[Slack] 전송 오류: {e}")
         fname = report.get(field)
         if fname:
             photos.append(f"{base_url}/damage_photo/{fname}")

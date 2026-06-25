@@ -288,18 +288,9 @@ def init_db():
             admin_reply TEXT,
             created_at TEXT NOT NULL,
             updated_at TEXT
-        )
+               )
     """)
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS support_messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            ticket_id INTEGER NOT NULL,
-            sender TEXT NOT NULL,
-            message TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            FOREIGN KEY(ticket_id) REFERENCES support_tickets(id)
-        )
-        cur.execute("""
         CREATE TABLE IF NOT EXISTS damage_reports (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             car_number    TEXT NOT NULL,
@@ -316,7 +307,6 @@ def init_db():
             created_at    TEXT NOT NULL,
             updated_at    TEXT
         )
-    """)
     """)
     # dashboard_notices 테이블에 image_path 컬럼 마이그레이션 (기존 DB 호환)
     existing_cols = [row[1] for row in cur.execute("PRAGMA table_info(dashboard_notices)").fetchall()]

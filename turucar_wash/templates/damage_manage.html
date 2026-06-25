@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block document_title %}Turu Wash · 훼손 제보 관리{% endblock %}
+{% block content %}
+<section class="app-card elevated damage-manage-page">
+  <div class="support-manage-head">
+    <div>
+      <p class="eyebrow">제보 관리</p>
+      <h1>훼손 제보 관리</h1>
+      <p>작업자가 접수한 차량 훼손 제보를 확인합니다.</p>
+    </div>
+    <a href="{{ url_for('support_choice') }}" class="notice-more-btn">← 뒤로</a>
+  </div>
+
+  <div class="support-filter">
+    <a class="{% if not selected_status %}active{% endif %}" href="{{ url_for('damage_manage') }}">전체</a>
+    <a class="{% if selected_status == '접수' %}active{% endif %}" href="{{ url_for('damage_manage', status='접수') }}">접수</a>
+    <a class="{% if selected_status == '확인중' %}active{% endif %}" href="{{ url_for('damage_manage', status='확인중') }}">확인중</a>
+    <a class="{% if selected_status == '완료' %}active{% endif %}" href="{{ url_for('damage_manage', status='완료') }}">완료</a>
+  </div>
+
+  <div class="support-ticket-list">
+    {% for r in rows %}
+    <article class="support-ticket-card">
+      <div class="ticket-title-row">
+        <span class="ticket-status">{{ r.status }}</span>
+        <strong>{{ r.car_number }}</strong>
+        <small>{{ r.created_at }}</small>
+      </div>
+      <div class="ticket-meta">
+        <span>세차일 {{ r.wash_date }}</span>
+        <span>제보자 {{ r.reporter }}</span>
+        {% if r.vendor %}<span>업체 {{ r.vendor }}</span>{% endif %}
+      </div>
+      <p class="ticket-message"><b>훼손 부위:</b> {{ r.damage_location }}</p>
+      {% if r.description %}<p class="ticket-message">{{ r.description }}</p>{% endif %}
+
+      {% if r.photo_front or r.photo_damage1 or r.photo_damage2 %}
+      <div class="damage-photos">
+        {% if r.photo_front %}
+        <a href="{{ url_for('serve_damage_photo', filename=r.photo_front) }}" target="_blank">
+          <img src="{{ url_for('serve_damage_photo', filename=r.photo_front) }}" alt="정면">
+          <span>정면</span>
+        </a>
+        {% endif %}
+        {% if r.photo_damage1 %}
+        <a href="{{ url_for('serve_damage_photo', filename=r.photo_damage1) }}" target="_blank">
+          <img src="{{ url_for('serve_damage_photo', filename=r.photo_damage1) }}" alt="훼손1">
+          <span>훼손1</span>
+        </a>
+        {% endif %}
+        {% if r.photo_damage2 %}
+        <a href="{{ url_for('serve_damage_photo', filename=r.photo_damage2) }}" target="_blank">
+          <img src="{{ url_for('serve_damage_photo', filename=r.photo_damage2) }}" alt="훼손2">
+          <span>훼손2</span>
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if r.admin_reply %}
+      <div class="ticket-reply"><strong>답변</strong><p>{{ r.admin_reply }}</p></div>
+      {% endif %}
+
+      <form method="post" action="{{ url_for('damage_reply', report_id=r.id) }}" class="ticket-reply-form">
+        <select name="status" class="app-input">
+          <option value="접수" {% if r.status == '접수' %}selected{% endif %}>접수</option>
+          <option value="확인중" {% if r.status == '확인중' %}selected{% endif %}>확인중</option>
+          <option value="완료" {% if r.status == '완료' %}selected{% endif %}>완료</option>
+        </select>
+        <input name="admin_reply" class="app-input" placeholder="메모 입력" value="{{ r.admin_reply or '' }}">
+        <button class="primary-btn" type="submit">저장</button>
+      </form>
+
+      {% if current_user.is_master %}
+      <form method="post" action="{{ url_for('damage_delete', report_id=r.id) }}"
+            onsubmit="return confirm('이 제보를 삭제할까요?');" class="ticket-delete-form">
+        <button type="submit" class="danger-delete-btn">제보 삭제</button>
+      </form>
+      {% endif %}
+    </article>
+    {% else %}
+    <div class="notice-empty">
+      <strong>접수된 제보가 없습니다.</strong>
+      <span>작업자가 제보하면 이곳에 표시됩니다.</span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+{# ── 데스크탑 ── #}
+<div id="d-damage-manage" style="display:none;">
+  <div class="d-wrap">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      <a class="d-btn d-btn-{% if not selected_status %}orange{% else %}gray{% endif %}" href="{{ url_for('damage_manage') }}">전체</a>
+      <a class="d-btn d-btn-{% if selected_status == '접수' %}orange{% else %}gray{% endif %}" href="{{ url_for('damage_manage', status='접수') }}">접수</a>
+      <a class="d-btn d-btn-{% if selected_status == '확인중' %}orange{% else %}gray{% endif %}" href="{{ url_for('damage_manage', status='확인중') }}">확인중</a>
+      <a class="d-btn d-btn-{% if selected_status == '완료' %}orange{% else %}gray{% endif %}" href="{{ url_for('damage_manage', status='완료') }}">완료</a>
+    </div>
+
+    {% for r in rows %}
+    <div class="d-ticket">
+      <div class="d-ticket-head">
+        <span class="d-ticket-badge">{{ r.status }}</span>
+        <span class="d-ticket-title">{{ r.car_number }} — {{ r.damage_location }}</span>
+        <span class="d-ticket-time">{{ r.created_at }}</span>
+      </div>
+      <div class="d-ticket-meta">
+        <span>세차일 {{ r.wash_date }}</span>
+        <span>제보자 {{ r.reporter }}</span>
+        {% if r.vendor %}<span>업체 {{ r.vendor }}</span>{% endif %}
+      </div>
+      {% if r.description %}<p class="d-ticket-msg">{{ r.description }}</p>{% endif %}
+
+      {% if r.photo_front or r.photo_damage1 or r.photo_damage2 %}
+      <div class="d-damage-photos">
+        {% if r.photo_front %}
+        <a href="{{ url_for('serve_damage_photo', filename=r.photo_front) }}" target="_blank" class="d-photo-thumb">
+          <img src="{{ url_for('serve_damage_photo', filename=r.photo_front) }}" alt="정면">
+          <span>정면</span>
+        </a>
+        {% endif %}
+        {% if r.photo_damage1 %}
+        <a href="{{ url_for('serve_damage_photo', filename=r.photo_damage1) }}" target="_blank" class="d-photo-thumb">
+          <img src="{{ url_for('serve_damage_photo', filename=r.photo_damage1) }}" alt="훼손1">
+          <span>훼손1</span>
+        </a>
+        {% endif %}
+        {% if r.photo_damage2 %}
+        <a href="{{ url_for('serve_damage_photo', filename=r.photo_damage2) }}" target="_blank" class="d-photo-thumb">
+          <img src="{{ url_for('serve_damage_photo', filename=r.photo_damage2) }}" alt="훼손2">
+          <span>훼손2</span>
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if r.admin_reply %}
+      <div class="d-ticket-reply-box"><strong>메모</strong><p>{{ r.admin_reply }}</p></div>
+      {% endif %}
+
+      <div class="d-ticket-form">
+        <form method="post" action="{{ url_for('damage_reply', report_id=r.id) }}" style="display:flex;gap:8px;flex:1;">
+          <select name="status" class="d-input" style="width:90px;">
+            <option value="접수" {% if r.status == '접수' %}selected{% endif %}>접수</option>
+            <option value="확인중" {% if r.status == '확인중' %}selected{% endif %}>확인중</option>
+            <option value="완료" {% if r.status == '완료' %}selected{% endif %}>완료</option>
+          </select>
+          <input name="admin_reply" class="d-input" placeholder="메모 입력" value="{{ r.admin_reply or '' }}" style="flex:1;">
+          <button class="d-btn d-btn-orange" type="submit">저장</button>
+        </form>
+        {% if current_user.is_master %}
+        <form method="post" action="{{ url_for('damage_delete', report_id=r.id) }}"
+              onsubmit="return confirm('이 제보를 삭제할까요?');">
+          <button type="submit" class="d-btn-danger-sm">삭제</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:48px;color:var(--text-secondary);">접수된 제보가 없습니다.</div>
+    {% endfor %}
+  </div>
+</div>
+
+<style>
+.damage-photos {
+  display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;
+}
+.damage-photos a {
+  display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;
+}
+.damage-photos img {
+  width:90px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--border);
+}
+.damage-photos span { font-size:11px;color:var(--text-secondary); }
+
+.d-damage-photos {
+  display:flex;gap:12px;flex-wrap:wrap;margin:10px 0;
+}
+.d-photo-thumb {
+  display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;
+}
+.d-photo-thumb img {
+  width:120px;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border);
+  transition:opacity .15s;
+}
+.d-photo-thumb:hover img { opacity:.85; }
+.d-photo-thumb span { font-size:11px;color:var(--text-secondary); }
+
+#desktop-mode #d-damage-manage { display:block !important; }
+#desktop-mode .app-card.elevated.damage-manage-page { display:none !important; }
+</style>
+{% endblock %}

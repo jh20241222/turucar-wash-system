@@ -1,6 +1,7 @@
 import os
 import shutil
 import sqlite3
+import uuid
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -72,6 +73,7 @@ WASH_DB_PATH = os.path.join(DATA_DIR, "wash.db")
 BAND_MATCHING_PATH = os.path.join(DATA_DIR, "차량소속별_밴드매칭.xlsx")
 UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")
 BACKUP_DIR = os.path.join(DATA_DIR, "backups")
+NOTICE_IMG_DIR = os.path.join(DATA_DIR, "notice_images")
 STORAGE_MARKER_PATH = os.path.join(DATA_DIR, ".turu_wash_persistent_storage")
 
 # Railway에서는 기본적으로 fail-safe를 켠다. DATA_DIR/Volume 설정이 없으면 앱을 시작하지 않는다.
@@ -139,6 +141,7 @@ def bootstrap_storage():
     os.makedirs(DATA_DIR, exist_ok=True)
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     os.makedirs(BACKUP_DIR, exist_ok=True)
+    os.makedirs(NOTICE_IMG_DIR, exist_ok=True)
     _write_storage_marker()
 
     legacy_files = [
@@ -267,7 +270,8 @@ def init_db():
             title TEXT NOT NULL,
             body TEXT,
             author TEXT NOT NULL,
-            created_at TEXT NOT NULL
+            created_at TEXT NOT NULL,
+            image_path TEXT
         )
     """)
     cur.execute("""
@@ -295,6 +299,11 @@ def init_db():
             FOREIGN KEY(ticket_id) REFERENCES support_tickets(id)
         )
     """)
+    # dashboard_notices 테이블에 image_path 컬럼 마이그레이션 (기존 DB 호환)
+    existing_cols = [row[1] for row in cur.execute("PRAGMA table_info(dashboard_notices)").fetchall()]
+    if "image_path" not in existing_cols:
+        cur.execute("ALTER TABLE dashboard_notices ADD COLUMN image_path TEXT")
+
     # 마스터 계정 없으면 자동 생성
     existing = cur.execute("SELECT 1 FROM accounts WHERE username='jeongyeon.kim'").fetchone()
     if not existing:
@@ -994,19 +1003,20 @@ run_daily_once()
 
 
 
-def create_dashboard_notice(title, body, author):
+def create_dashboard_notice(title, body, author, image_path=None):
     conn = get_user_db()
     cur = conn.cursor()
     cur.execute(
         """
-        INSERT INTO dashboard_notices (title, body, author, created_at)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO dashboard_notices (title, body, author, created_at, image_path)
+        VALUES (?, ?, ?, ?, ?)
         """,
         (
             title,
             body,
             author,
-            datetime.now().strftime("%Y-%m-%d %H:%M")
+            datetime.now().strftime("%Y-%m-%d %H:%M"),
+            image_path,
         )
     )
     conn.commit()
@@ -1023,7 +1033,7 @@ def get_dashboard_notices(page=1, per_page=10):
     total = cur.execute("SELECT COUNT(*) AS c FROM dashboard_notices").fetchone()["c"]
     rows = cur.execute(
         """
-        SELECT id, title, body, author, created_at
+        SELECT id, title, body, author, created_at, image_path
         FROM dashboard_notices
         ORDER BY id DESC
         LIMIT ? OFFSET ?
@@ -1045,7 +1055,7 @@ def get_dashboard_notice_by_id(notice_id):
     cur = conn.cursor()
     row = cur.execute(
         """
-        SELECT id, title, body, author, created_at
+        SELECT id, title, body, author, created_at, image_path
         FROM dashboard_notices
         WHERE id=?
         """,
@@ -1055,17 +1065,24 @@ def get_dashboard_notice_by_id(notice_id):
     return row
 
 
-def update_dashboard_notice_item(notice_id, title, body, author):
+def update_dashboard_notice_item(notice_id, title, body, author, image_path=None, clear_image=False):
     conn = get_user_db()
     cur = conn.cursor()
-    cur.execute(
-        """
-        UPDATE dashboard_notices
-        SET title=?, body=?, author=?
-        WHERE id=?
-        """,
-        (title, body, author, notice_id)
-    )
+    if clear_image:
+        cur.execute(
+            "UPDATE dashboard_notices SET title=?, body=?, author=?, image_path=NULL WHERE id=?",
+            (title, body, author, notice_id)
+        )
+    elif image_path is not None:
+        cur.execute(
+            "UPDATE dashboard_notices SET title=?, body=?, author=?, image_path=? WHERE id=?",
+            (title, body, author, image_path, notice_id)
+        )
+    else:
+        cur.execute(
+            "UPDATE dashboard_notices SET title=?, body=?, author=? WHERE id=?",
+            (title, body, author, notice_id)
+        )
     conn.commit()
     conn.close()
 
@@ -1076,6 +1093,37 @@ def delete_dashboard_notice_item(notice_id):
     cur.execute("DELETE FROM dashboard_notices WHERE id=?", (notice_id,))
     conn.commit()
     conn.close()
+
+
+NOTICE_ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp", "pdf"}
+
+def _notice_allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in NOTICE_ALLOWED_EXTENSIONS
+
+def _save_notice_file(file_obj):
+    """파일을 NOTICE_IMG_DIR에 저장하고 파일명을 반환한다."""
+    os.makedirs(NOTICE_IMG_DIR, exist_ok=True)
+    ext = file_obj.filename.rsplit(".", 1)[1].lower()
+    unique_name = f"{uuid.uuid4().hex}.{ext}"
+    file_obj.save(os.path.join(NOTICE_IMG_DIR, unique_name))
+    return unique_name
+
+def _delete_notice_file(filename):
+    """NOTICE_IMG_DIR에서 파일을 삭제한다."""
+    if filename:
+        path = os.path.join(NOTICE_IMG_DIR, filename)
+        try:
+            if os.path.isfile(path):
+                os.remove(path)
+        except OSError:
+            pass
+
+
+@app.route("/notice_file/<path:filename>")
+@login_required
+def notice_file(filename):
+    """공지사항 첨부파일 서빙"""
+    return send_from_directory(NOTICE_IMG_DIR, filename)
 
 
 @app.route("/dashboard/notice", methods=["POST"])
@@ -1089,9 +1137,14 @@ def update_dashboard_notice():
     notice_body = request.form.get("notice_body", "").strip() or "공지사항 내용을 입력해주세요."
     notice_author = request.form.get("notice_author", "").strip() or "투루카 담당자"
 
+    image_path = None
+    file = request.files.get("notice_image")
+    if file and file.filename and _notice_allowed_file(file.filename):
+        image_path = _save_notice_file(file)
+
     set_app_setting("dashboard_notice_title", notice_title)
     set_app_setting("dashboard_notice_body", notice_body)
-    create_dashboard_notice(notice_title, notice_body, notice_author)
+    create_dashboard_notice(notice_title, notice_body, notice_author, image_path)
 
     flash("공지사항이 저장되었습니다.")
     return redirect(url_for("dashboard"))
@@ -1108,8 +1161,25 @@ def edit_dashboard_notice(notice_id):
     notice_title = request.form.get("notice_title", "").strip() or "공지사항"
     notice_body = request.form.get("notice_body", "").strip() or "공지사항 내용을 입력해주세요."
     notice_author = request.form.get("notice_author", "").strip() or "투루카 담당자"
+    clear_image = request.form.get("notice_clear_image") == "1"
 
-    update_dashboard_notice_item(notice_id, notice_title, notice_body, notice_author)
+    existing = get_dashboard_notice_by_id(notice_id)
+    old_image = existing["image_path"] if existing else None
+
+    new_image_path = None
+    file = request.files.get("notice_image")
+    if file and file.filename and _notice_allowed_file(file.filename):
+        new_image_path = _save_notice_file(file)
+        if old_image:
+            _delete_notice_file(old_image)
+    elif clear_image and old_image:
+        _delete_notice_file(old_image)
+
+    update_dashboard_notice_item(
+        notice_id, notice_title, notice_body, notice_author,
+        image_path=new_image_path,
+        clear_image=clear_image and not new_image_path,
+    )
     flash("공지사항이 수정되었습니다.")
     page = request.form.get("notice_page", 1)
     return redirect((url_for("notices", notice_page=page) if request.form.get("return_to") == "notices" else url_for("dashboard") + "#notice-list"))

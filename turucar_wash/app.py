@@ -72,6 +72,7 @@ USER_DB_PATH = os.path.join(DATA_DIR, "db.sqlite3")
 WASH_DB_PATH = os.path.join(DATA_DIR, "wash.db")
 BAND_MATCHING_PATH = os.path.join(DATA_DIR, "차량소속별_밴드매칭.xlsx")
 UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")
+DAMAGE_UPLOAD_DIR = os.path.join(DATA_DIR, "damage_photos")
 BACKUP_DIR = os.path.join(DATA_DIR, "backups")
 NOTICE_IMG_DIR = os.path.join(DATA_DIR, "notice_images")
 STORAGE_MARKER_PATH = os.path.join(DATA_DIR, ".turu_wash_persistent_storage")
@@ -298,6 +299,24 @@ def init_db():
             created_at TEXT NOT NULL,
             FOREIGN KEY(ticket_id) REFERENCES support_tickets(id)
         )
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS damage_reports (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            car_number    TEXT NOT NULL,
+            wash_date     TEXT NOT NULL,
+            damage_location TEXT NOT NULL,
+            description   TEXT,
+            photo_front   TEXT,
+            photo_damage1 TEXT,
+            photo_damage2 TEXT,
+            reporter      TEXT NOT NULL,
+            vendor        TEXT,
+            status        TEXT NOT NULL DEFAULT '접수',
+            admin_reply   TEXT,
+            created_at    TEXT NOT NULL,
+            updated_at    TEXT
+        )
+    """)
     """)
     # dashboard_notices 테이블에 image_path 컬럼 마이그레이션 (기존 DB 호환)
     existing_cols = [row[1] for row in cur.execute("PRAGMA table_info(dashboard_notices)").fetchall()]
@@ -2673,3 +2692,183 @@ def wash_status_delete():
         conn.close()
         flash(f"\u2714 {len(ids)}건 삭제되었습니다.")
     return redirect(url_for("wash_status") + ("?" + return_query if return_query else ""))
+SLACK_DAMAGE_WEBHOOK = os.environ.get("SLACK_DAMAGE_WEBHOOK", "")
+APP_BASE_URL = os.environ.get("APP_BASE_URL", "https://turucar-wash-system-production.up.railway.app")
+ALLOWED_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp"}
+
+
+def _save_damage_photo(file_obj):
+    if not file_obj or not file_obj.filename:
+        return None
+    ext = os.path.splitext(secure_filename(file_obj.filename))[1].lower()
+    if ext not in ALLOWED_IMAGE_EXTS:
+        return None
+    os.makedirs(DAMAGE_UPLOAD_DIR, exist_ok=True)
+    fname = f"{uuid.uuid4().hex}{ext}"
+    file_obj.save(os.path.join(DAMAGE_UPLOAD_DIR, fname))
+    return fname
+
+
+def _send_damage_slack(report, base_url):
+    manage_url = f"{base_url}/damage_manage"
+    photos = []
+    for field in ("photo_front", "photo_damage1", "photo_damage2"):
+        fname = report.get(field)
+        if fname:
+            photos.append(f"{base_url}/damage_photo/{fname}")
+    photo_text = "\n".join([f"📷 <{u}|사진 보기>" for u in photos]) if photos else "_(사진 없음)_"
+    blocks = [
+        {"type": "header", "text": {"type": "plain_text", "text": "🚨 차량 훼손 제보 접수"}},
+        {"type": "section", "fields": [
+            {"type": "mrkdwn", "text": f"*차량번호*\n{report['car_number']}"},
+            {"type": "mrkdwn", "text": f"*세차일자*\n{report['wash_date']}"},
+            {"type": "mrkdwn", "text": f"*훼손 부위*\n{report['damage_location']}"},
+            {"type": "mrkdwn", "text": f"*제보자*\n{report['reporter']} ({report.get('vendor','')})"},
+        ]},
+    ]
+    if report.get("description"):
+        blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": f"*상세 내용*\n{report['description']}"}})
+    blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": f"*첨부 사진*\n{photo_text}"}})
+    blocks.append({"type": "actions", "elements": [{"type": "button", "text": {"type": "plain_text", "text": "제보 관리 페이지 열기"}, "url": manage_url, "style": "primary"}]})
+    try:
+        requests.post(SLACK_DAMAGE_WEBHOOK, json={"blocks": blocks}, timeout=5)
+    except Exception:
+        pass
+
+
+@app.context_processor
+def inject_damage_badge_count():
+    if not current_user.is_authenticated:
+        return {"damage_badge_count": 0}
+    if not (current_user.is_master or getattr(current_user, 'is_admin', False)):
+        return {"damage_badge_count": 0}
+    try:
+        conn = get_user_db()
+        row = conn.execute("SELECT COUNT(*) AS c FROM damage_reports WHERE status='접수'").fetchone()
+        conn.close()
+        return {"damage_badge_count": row["c"] if row else 0}
+    except Exception:
+        return {"damage_badge_count": 0}
+
+
+@app.route("/damage_photo/<filename>")
+def serve_damage_photo(filename):
+    safe = secure_filename(filename)
+    photo_path = os.path.join(DAMAGE_UPLOAD_DIR, safe)
+    if not os.path.exists(photo_path):
+        return "Not found", 404
+    return send_from_directory(DAMAGE_UPLOAD_DIR, safe)
+
+
+@app.route("/support_choice")
+@login_required
+def support_choice():
+    return render_template("support_choice.html")
+
+
+@app.route("/damage_submit", methods=["GET", "POST"])
+@login_required
+def damage_submit():
+    if request.method == "POST":
+        car_number = request.form.get("car_number", "").strip()
+        wash_date = request.form.get("wash_date", "").strip()
+        damage_location = request.form.get("damage_location", "").strip()
+        description = request.form.get("description", "").strip()
+        if not car_number or not wash_date or not damage_location:
+            flash("차량번호, 세차일자, 훼손 부위는 필수입니다.")
+            return redirect(url_for("damage_submit"))
+        photo_front = _save_damage_photo(request.files.get("photo_front"))
+        photo_damage1 = _save_damage_photo(request.files.get("photo_damage1"))
+        photo_damage2 = _save_damage_photo(request.files.get("photo_damage2"))
+        created_at = now_kst().strftime("%Y-%m-%d %H:%M")
+        conn = get_user_db()
+        conn.execute(
+            """INSERT INTO damage_reports
+               (car_number, wash_date, damage_location, description,
+                photo_front, photo_damage1, photo_damage2,
+                reporter, vendor, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (car_number, wash_date, damage_location, description,
+             photo_front, photo_damage1, photo_damage2,
+             current_user.username,
+             getattr(current_user, "vendor", "") or "",
+             created_at)
+        )
+        conn.commit()
+        conn.close()
+        _send_damage_slack({
+            "car_number": car_number, "wash_date": wash_date,
+            "damage_location": damage_location, "description": description,
+            "photo_front": photo_front, "photo_damage1": photo_damage1,
+            "photo_damage2": photo_damage2,
+            "reporter": current_user.username,
+            "vendor": getattr(current_user, "vendor", "") or "",
+        }, APP_BASE_URL)
+        flash("✅ 제보가 접수되었습니다.")
+        return redirect(url_for("damage_submit"))
+    return render_template("damage_submit.html", today=today_kst())
+
+
+@app.route("/damage_manage")
+@login_required
+def damage_manage():
+    if not (current_user.is_master or getattr(current_user, 'is_admin', False)):
+        flash("접근 권한이 없습니다.")
+        return redirect(url_for("dashboard"))
+    status_filter = request.args.get("status", "")
+    conn = get_user_db()
+    if status_filter:
+        rows = conn.execute("SELECT * FROM damage_reports WHERE status=? ORDER BY id DESC", (status_filter,)).fetchall()
+    else:
+        rows = conn.execute("SELECT * FROM damage_reports ORDER BY id DESC").fetchall()
+    conn.close()
+    return render_template("damage_manage.html", rows=rows, selected_status=status_filter)
+
+
+@app.route("/damage_reply/<int:report_id>", methods=["POST"])
+@login_required
+def damage_reply(report_id):
+    if not (current_user.is_master or getattr(current_user, 'is_admin', False)):
+        return "Forbidden", 403
+    status = request.form.get("status", "접수")
+    admin_reply = request.form.get("admin_reply", "")
+    updated_at = now_kst().strftime("%Y-%m-%d %H:%M")
+    conn = get_user_db()
+    conn.execute("UPDATE damage_reports SET status=?, admin_reply=?, updated_at=? WHERE id=?",
+                 (status, admin_reply, updated_at, report_id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("damage_manage"))
+
+
+@app.route("/damage_delete/<int:report_id>", methods=["POST"])
+@login_required
+def damage_delete(report_id):
+    if not current_user.is_master:
+        return "Forbidden", 403
+    conn = get_user_db()
+    row = conn.execute("SELECT * FROM damage_reports WHERE id=?", (report_id,)).fetchone()
+    if row:
+        for field in ("photo_front", "photo_damage1", "photo_damage2"):
+            fname = row[field]
+            if fname:
+                try:
+                    os.remove(os.path.join(DAMAGE_UPLOAD_DIR, fname))
+                except OSError:
+                    pass
+        conn.execute("DELETE FROM damage_reports WHERE id=?", (report_id,))
+        conn.commit()
+    conn.close()
+    return redirect(url_for("damage_manage"))
+
+
+@app.route("/damage_alerts_poll")
+@login_required
+def damage_alerts_poll():
+    if not (current_user.is_master or getattr(current_user, 'is_admin', False)):
+        return jsonify({"count": 0})
+    since_id = request.args.get("since_id", 0, type=int)
+    conn = get_user_db()
+    rows = conn.execute("SELECT id FROM damage_reports WHERE status='접수' AND id > ? ORDER BY id DESC", (since_id,)).fetchall()
+    conn.close()
+    return jsonify({"count": len(rows), "new_ids": [r["id"] for r in rows]})

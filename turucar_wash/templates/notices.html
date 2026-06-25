@@ -13,10 +13,19 @@
     </div>
 
     {% if current_user.is_master or current_user.username == "jeongyeon.kim" %}
-    <form method="post" action="{{ url_for('update_dashboard_notice') }}" class="notice-form notice-create-form notice-page-create-form">
+    <form method="post" action="{{ url_for('update_dashboard_notice') }}" enctype="multipart/form-data" class="notice-form notice-create-form notice-page-create-form">
         <input type="hidden" name="notice_author" value="투루카 담당자">
         <label><span>제목</span><input type="text" name="notice_title" class="app-input" maxlength="80" placeholder="공지사항 제목을 입력하세요"></label>
         <label><span>내용</span><textarea name="notice_body" class="app-input notice-textarea" rows="4" maxlength="500" placeholder="공지사항 내용을 입력하세요"></textarea></label>
+        <div class="notice-file-label">
+            <span>첨부파일 <em class="notice-file-hint">(이미지 또는 PDF)</em></span>
+            <div class="notice-file-input-wrap">
+                <input type="file" name="notice_image" accept="image/*,.pdf" class="notice-file-input" id="notice-create-file">
+                <button type="button" class="notice-file-btn" onclick="document.getElementById('notice-create-file').click()">파일 선택</button>
+                <span class="notice-file-name" id="notice-create-fname">선택된 파일 없음</span>
+            </div>
+            <div class="notice-file-preview" id="notice-create-preview" hidden></div>
+        </div>
         <button type="submit" class="btn-primary notice-save-btn">공지사항 등록</button>
     </form>
     {% endif %}
@@ -30,8 +39,16 @@
                 <tr class="notice-row">
                     <td>{{ notice.id }}</td>
                     <td class="notice-title-cell">
-                        <button type="button" class="notice-title-button" data-title="{{ notice.title|e }}" data-body="{{ notice.body|e }}" data-created="{{ notice.created_at|e }}" data-author="{{ notice.author|e }}" onclick="openNoticeViewer(this)">
-                            <strong>{{ notice.title }}</strong>{% if notice.body %}<small>{{ notice.body }}</small>{% endif %}
+                        <button type="button" class="notice-title-button"
+                            data-title="{{ notice.title|e }}"
+                            data-body="{{ notice.body|e }}"
+                            data-created="{{ notice.created_at|e }}"
+                            data-author="{{ notice.author|e }}"
+                            data-image="{{ notice.image_path or '' }}"
+                            onclick="openNoticeViewer(this)">
+                            <strong>{{ notice.title }}</strong>
+                            {% if notice.body %}<small>{{ notice.body }}</small>{% endif %}
+                            {% if notice.image_path %}<span class="notice-has-attach" title="첨부파일 있음">📎</span>{% endif %}
                         </button>
                     </td>
                     <td>{{ notice.created_at }}</td><td>{{ notice.author }}</td>
@@ -40,7 +57,14 @@
                         <div class="notice-kebab-wrap">
                             <button type="button" class="notice-kebab-btn" onclick="toggleNoticeMenu(event, this)" aria-label="공지사항 관리">⋮</button>
                             <div class="notice-kebab-menu">
-                                <button type="button" data-id="{{ notice.id }}" data-title="{{ notice.title|e }}" data-body="{{ notice.body|e }}" data-author="{{ notice.author|e }}" data-page="{{ notice_page }}" onclick="openNoticeEdit(this)">수정</button>
+                                <button type="button"
+                                    data-id="{{ notice.id }}"
+                                    data-title="{{ notice.title|e }}"
+                                    data-body="{{ notice.body|e }}"
+                                    data-author="{{ notice.author|e }}"
+                                    data-page="{{ notice_page }}"
+                                    data-image="{{ notice.image_path or '' }}"
+                                    onclick="openNoticeEdit(this)">수정</button>
                                 <form method="post" action="{{ url_for('delete_dashboard_notice', notice_id=notice.id) }}" onsubmit="return confirm('이 공지사항을 삭제할까요?');">
                                     <input type="hidden" name="notice_page" value="{{ notice_page }}">
                                     <input type="hidden" name="return_to" value="notices">
@@ -72,9 +96,17 @@
     <section class="notice-modal turu-mini-modal" role="dialog" aria-modal="true" aria-labelledby="notice-viewer-title">
         <button type="button" class="notice-modal-close" onclick="closeNoticeViewer()" aria-label="닫기">×</button>
         <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="notice-modal-logo">
-        <p class="eyebrow">Notice</p><h2 id="notice-viewer-title"></h2>
+        <p class="eyebrow">Notice</p>
+        <h2 id="notice-viewer-title"></h2>
         <div class="notice-modal-meta"><span id="notice-viewer-created"></span><span id="notice-viewer-author"></span></div>
         <p class="notice-modal-body" id="notice-viewer-body"></p>
+        <div id="notice-viewer-attachment" class="notice-attachment-viewer" hidden>
+            <img id="notice-viewer-img" src="" alt="첨부 이미지" class="notice-attach-img" hidden>
+            <div id="notice-viewer-pdf-wrap" class="notice-pdf-wrap" hidden>
+                <a id="notice-viewer-pdf-link" href="#" target="_blank" rel="noopener" class="notice-pdf-open-btn">📄 PDF 파일 열기</a>
+                <iframe id="notice-viewer-pdf-frame" src="" class="notice-pdf-frame" title="PDF 뷰어"></iframe>
+            </div>
+        </div>
     </section>
 </div>
 
@@ -83,26 +115,170 @@
     <section class="notice-modal turu-mini-modal notice-edit-modal" role="dialog" aria-modal="true" aria-labelledby="notice-edit-title">
         <button type="button" class="notice-modal-close" onclick="closeNoticeEdit()" aria-label="닫기">×</button>
         <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="notice-modal-logo">
-        <p class="eyebrow">Edit Notice</p><h2 id="notice-edit-title">공지사항 수정</h2>
-        <form method="post" id="notice-edit-form" class="notice-form notice-edit-form">
+        <p class="eyebrow">Edit Notice</p>
+        <h2 id="notice-edit-title">공지사항 수정</h2>
+        <form method="post" id="notice-edit-form" enctype="multipart/form-data" class="notice-form notice-edit-form">
             <input type="hidden" name="notice_page" id="notice-edit-page" value="{{ notice_page }}">
             <input type="hidden" name="return_to" value="notices">
             <input type="hidden" name="notice_author" id="notice-edit-author" value="투루카 담당자">
+            <input type="hidden" name="notice_clear_image" id="notice-edit-clear-flag" value="0">
             <label><span>제목</span><input type="text" name="notice_title" id="notice-edit-title-input" class="app-input" maxlength="80"></label>
             <label><span>내용</span><textarea name="notice_body" id="notice-edit-body-input" class="app-input notice-textarea" rows="5" maxlength="500"></textarea></label>
+            <div id="notice-edit-current-attach" class="notice-edit-current-attach" hidden>
+                <span class="notice-current-attach-label">현재 첨부:</span>
+                <a id="notice-edit-current-link" href="#" target="_blank" rel="noopener" class="notice-current-attach-link"></a>
+                <button type="button" class="notice-remove-attach-btn" onclick="removeNoticeAttach()">× 삭제</button>
+            </div>
+            <div class="notice-file-label">
+                <span>새 첨부파일 <em class="notice-file-hint">(이미지 또는 PDF · 기존 파일 덮어씀)</em></span>
+                <div class="notice-file-input-wrap">
+                    <input type="file" name="notice_image" accept="image/*,.pdf" class="notice-file-input" id="notice-edit-file">
+                    <button type="button" class="notice-file-btn" onclick="document.getElementById('notice-edit-file').click()">파일 선택</button>
+                    <span class="notice-file-name" id="notice-edit-fname">선택된 파일 없음</span>
+                </div>
+                <div class="notice-file-preview" id="notice-edit-preview" hidden></div>
+            </div>
             <button type="submit" class="btn-primary notice-save-btn">수정 저장</button>
         </form>
     </section>
 </div>
 {% endif %}
 
+<style>
+.notice-file-label{display:flex;flex-direction:column;gap:6px;margin-bottom:4px;}
+.notice-file-hint{font-size:.75rem;font-weight:400;color:var(--text-secondary,#888);}
+.notice-file-input-wrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.notice-file-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
+.notice-file-btn{display:inline-block;padding:5px 12px;border-radius:8px;background:var(--surface-2,#f0f0f0);border:1px solid var(--border,#ddd);font-size:.82rem;cursor:pointer;white-space:nowrap;}
+.notice-file-name{font-size:.82rem;color:var(--text-secondary,#888);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;}
+.notice-file-preview{margin-top:6px;}
+.notice-file-preview img{max-width:100%;max-height:180px;border-radius:8px;border:1px solid var(--border,#ddd);}
+.notice-has-attach{font-size:.85rem;margin-left:4px;}
+.notice-attachment-viewer{margin-top:14px;}
+.notice-attach-img{max-width:100%;border-radius:10px;cursor:zoom-in;border:1px solid var(--border,#e0e0e0);display:block;}
+.notice-pdf-wrap{display:flex;flex-direction:column;gap:8px;}
+.notice-pdf-open-btn{display:inline-block;padding:8px 14px;border-radius:8px;background:var(--surface-2,#f5f5f5);border:1px solid var(--border,#ddd);font-size:.9rem;text-decoration:none;color:inherit;}
+.notice-pdf-frame{width:100%;height:400px;border:1px solid var(--border,#ddd);border-radius:8px;}
+.notice-edit-current-attach{display:flex;align-items:center;gap:8px;font-size:.84rem;padding:4px 0;flex-wrap:wrap;}
+.notice-current-attach-label{color:var(--text-secondary,#888);}
+.notice-current-attach-link{color:var(--accent,#0a7);text-decoration:underline;}
+.notice-remove-attach-btn{background:none;border:none;color:#e55;font-size:.85rem;cursor:pointer;padding:2px 6px;}
+.notice-img-fullscreen{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;cursor:zoom-out;}
+.notice-img-fullscreen img{max-width:96vw;max-height:92vh;border-radius:8px;}
+</style>
+
 <script>
-function openNoticeViewer(button){document.getElementById('notice-viewer-title').textContent=button.dataset.title||'공지사항';document.getElementById('notice-viewer-body').textContent=button.dataset.body||'공지사항 내용이 없습니다.';document.getElementById('notice-viewer-created').textContent=button.dataset.created||'';document.getElementById('notice-viewer-author').textContent=button.dataset.author||'투루카 담당자';document.getElementById('notice-viewer-modal').hidden=false;document.body.classList.add('modal-open');}
-function closeNoticeViewer(){document.getElementById('notice-viewer-modal').hidden=true;document.body.classList.remove('modal-open');}
-function toggleNoticeMenu(event,button){event.stopPropagation();document.querySelectorAll('.notice-kebab-wrap.open').forEach(function(menu){if(menu!==button.closest('.notice-kebab-wrap')){menu.classList.remove('open');}});button.closest('.notice-kebab-wrap').classList.toggle('open');}
-function openNoticeEdit(button){const form=document.getElementById('notice-edit-form');if(!form){return;}form.action=`/dashboard/notice/${button.dataset.id}/edit`;document.getElementById('notice-edit-title-input').value=button.dataset.title||'';document.getElementById('notice-edit-body-input').value=button.dataset.body||'';document.getElementById('notice-edit-author').value=button.dataset.author||'투루카 담당자';document.getElementById('notice-edit-page').value=button.dataset.page||'1';document.querySelectorAll('.notice-kebab-wrap.open').forEach(function(menu){menu.classList.remove('open');});document.getElementById('notice-edit-modal').hidden=false;document.body.classList.add('modal-open');}
-function closeNoticeEdit(){document.getElementById('notice-edit-modal').hidden=true;document.body.classList.remove('modal-open');}
-document.addEventListener('click',function(event){if(!event.target.closest('.notice-kebab-wrap')){document.querySelectorAll('.notice-kebab-wrap.open').forEach(function(menu){menu.classList.remove('open');});}});
-document.addEventListener('keydown',function(event){if(event.key==='Escape'){if(!document.getElementById('notice-viewer-modal').hidden){closeNoticeViewer();}const editModal=document.getElementById('notice-edit-modal');if(editModal&&!editModal.hidden){closeNoticeEdit();}document.querySelectorAll('.notice-kebab-wrap.open').forEach(function(menu){menu.classList.remove('open');});}});
+function setupFileInput(inputId, previewId, fnameId) {
+    var input = document.getElementById(inputId);
+    if (!input) return;
+    input.addEventListener('change', function() {
+        var wrap = document.getElementById(previewId);
+        var nameEl = document.getElementById(fnameId);
+        wrap.innerHTML = ''; wrap.hidden = true;
+        if (!this.files || !this.files[0]) { if (nameEl) nameEl.textContent = '선택된 파일 없음'; return; }
+        var file = this.files[0];
+        if (nameEl) nameEl.textContent = file.name;
+        if (file.type.startsWith('image/')) {
+            var img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            wrap.appendChild(img); wrap.hidden = false;
+        }
+    });
+}
+setupFileInput('notice-create-file', 'notice-create-preview', 'notice-create-fname');
+setupFileInput('notice-edit-file', 'notice-edit-preview', 'notice-edit-fname');
+
+function openNoticeViewer(button) {
+    document.getElementById('notice-viewer-title').textContent = button.dataset.title || '공지사항';
+    document.getElementById('notice-viewer-body').textContent = button.dataset.body || '공지사항 내용이 없습니다.';
+    document.getElementById('notice-viewer-created').textContent = button.dataset.created || '';
+    document.getElementById('notice-viewer-author').textContent = button.dataset.author || '투루카 담당자';
+    var attachWrap = document.getElementById('notice-viewer-attachment');
+    var img = document.getElementById('notice-viewer-img');
+    var pdfWrap = document.getElementById('notice-viewer-pdf-wrap');
+    var pdfFrame = document.getElementById('notice-viewer-pdf-frame');
+    var pdfLink = document.getElementById('notice-viewer-pdf-link');
+    img.hidden = true; img.src = ''; pdfWrap.hidden = true; pdfFrame.src = ''; attachWrap.hidden = true;
+    var imagePath = button.dataset.image;
+    if (imagePath) {
+        var fileUrl = '/notice_file/' + imagePath;
+        var ext = imagePath.split('.').pop().toLowerCase();
+        if (ext === 'pdf') { pdfFrame.src = fileUrl; pdfLink.href = fileUrl; pdfWrap.hidden = false; }
+        else { img.src = fileUrl; img.hidden = false; }
+        attachWrap.hidden = false;
+    }
+    document.getElementById('notice-viewer-modal').hidden = false;
+    document.body.classList.add('modal-open');
+}
+function closeNoticeViewer() {
+    document.getElementById('notice-viewer-modal').hidden = true;
+    document.body.classList.remove('modal-open');
+    document.getElementById('notice-viewer-pdf-frame').src = '';
+}
+document.getElementById('notice-viewer-img').addEventListener('click', function() {
+    if (!this.src) return;
+    var fs = document.createElement('div'); fs.className = 'notice-img-fullscreen';
+    var big = document.createElement('img'); big.src = this.src; fs.appendChild(big);
+    fs.addEventListener('click', function() { fs.remove(); });
+    document.body.appendChild(fs);
+});
+function toggleNoticeMenu(event, button) {
+    event.stopPropagation();
+    document.querySelectorAll('.notice-kebab-wrap.open').forEach(function(menu) {
+        if (menu !== button.closest('.notice-kebab-wrap')) menu.classList.remove('open');
+    });
+    button.closest('.notice-kebab-wrap').classList.toggle('open');
+}
+function openNoticeEdit(button) {
+    var form = document.getElementById('notice-edit-form');
+    if (!form) return;
+    form.action = '/dashboard/notice/' + button.dataset.id + '/edit';
+    document.getElementById('notice-edit-title-input').value = button.dataset.title || '';
+    document.getElementById('notice-edit-body-input').value = button.dataset.body || '';
+    document.getElementById('notice-edit-author').value = button.dataset.author || '투루카 담당자';
+    document.getElementById('notice-edit-page').value = button.dataset.page || '1';
+    document.getElementById('notice-edit-clear-flag').value = '0';
+    var editFile = document.getElementById('notice-edit-file');
+    var editFname = document.getElementById('notice-edit-fname');
+    var editPreview = document.getElementById('notice-edit-preview');
+    if (editFile) editFile.value = '';
+    if (editFname) editFname.textContent = '선택된 파일 없음';
+    if (editPreview) { editPreview.innerHTML = ''; editPreview.hidden = true; }
+    var currentAttach = document.getElementById('notice-edit-current-attach');
+    var currentLink = document.getElementById('notice-edit-current-link');
+    var imagePath = button.dataset.image;
+    if (imagePath) {
+        var ext = imagePath.split('.').pop().toLowerCase();
+        currentLink.textContent = ext === 'pdf' ? '📄 PDF 파일' : '🖼 이미지 파일';
+        currentLink.href = '/notice_file/' + imagePath;
+        currentAttach.hidden = false;
+    } else {
+        currentAttach.hidden = true;
+    }
+    document.querySelectorAll('.notice-kebab-wrap.open').forEach(function(m) { m.classList.remove('open'); });
+    document.getElementById('notice-edit-modal').hidden = false;
+    document.body.classList.add('modal-open');
+}
+function closeNoticeEdit() {
+    document.getElementById('notice-edit-modal').hidden = true;
+    document.body.classList.remove('modal-open');
+}
+function removeNoticeAttach() {
+    document.getElementById('notice-edit-clear-flag').value = '1';
+    document.getElementById('notice-edit-current-attach').hidden = true;
+}
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.notice-kebab-wrap')) {
+        document.querySelectorAll('.notice-kebab-wrap.open').forEach(function(menu) { menu.classList.remove('open'); });
+    }
+});
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        if (!document.getElementById('notice-viewer-modal').hidden) closeNoticeViewer();
+        var editModal = document.getElementById('notice-edit-modal');
+        if (editModal && !editModal.hidden) closeNoticeEdit();
+        document.querySelectorAll('.notice-kebab-wrap.open').forEach(function(menu) { menu.classList.remove('open'); });
+    }
+});
 </script>
 {% endblock %}

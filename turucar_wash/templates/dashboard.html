@@ -17,9 +17,16 @@
             </div>
             <div class="notice-copy-v12">
                 {% if latest_notice %}
-                    <button type="button" class="home-notice-title-button-v12" data-title="{{ latest_notice.title|e }}" data-body="{{ latest_notice.body|e }}" data-created="{{ latest_notice.created_at|e }}" data-author="{{ latest_notice.author|e }}" onclick="openHomeNoticeViewer(this)">
+                    <button type="button" class="home-notice-title-button-v12"
+                        data-title="{{ latest_notice.title|e }}"
+                        data-body="{{ latest_notice.body|e }}"
+                        data-created="{{ latest_notice.created_at|e }}"
+                        data-author="{{ latest_notice.author|e }}"
+                        data-image="{{ latest_notice.image_path or '' }}"
+                        onclick="openHomeNoticeViewer(this)">
                         <strong>{{ latest_notice.title }}</strong>
                         <span>{{ latest_notice.body }}</span>
+                        {% if latest_notice.image_path %}<span class="notice-has-attach" title="첨부파일 있음">📎</span>{% endif %}
                     </button>
                 {% else %}
                     <strong>아직 등록된 공지사항이 없습니다.</strong>
@@ -109,8 +116,25 @@
         <h2 id="home-notice-viewer-title"></h2>
         <div class="notice-modal-meta"><span id="home-notice-viewer-created"></span><span id="home-notice-viewer-author"></span></div>
         <p class="notice-modal-body" id="home-notice-viewer-body"></p>
+        <div id="home-notice-viewer-attachment" class="notice-attachment-viewer" hidden>
+            <img id="home-notice-viewer-img" src="" alt="첨부 이미지" class="notice-attach-img" hidden>
+            <div id="home-notice-viewer-pdf-wrap" class="notice-pdf-wrap" hidden>
+                <a id="home-notice-viewer-pdf-link" href="#" target="_blank" rel="noopener" class="notice-pdf-open-btn">📄 PDF 파일 열기</a>
+                <iframe id="home-notice-viewer-pdf-frame" src="" class="notice-pdf-frame" title="PDF 뷰어"></iframe>
+            </div>
+        </div>
     </section>
 </div>
+<style>
+.notice-has-attach{font-size:.85rem;margin-left:4px;}
+.notice-attachment-viewer{margin-top:14px;}
+.notice-attach-img{max-width:100%;border-radius:10px;cursor:zoom-in;border:1px solid var(--border,#e0e0e0);}
+.notice-pdf-wrap{display:flex;flex-direction:column;gap:8px;}
+.notice-pdf-open-btn{display:inline-block;padding:8px 14px;border-radius:8px;background:var(--surface-2,#f5f5f5);border:1px solid var(--border,#ddd);font-size:.9rem;text-decoration:none;color:inherit;}
+.notice-pdf-frame{width:100%;height:420px;border:1px solid var(--border,#ddd);border-radius:8px;}
+.notice-img-fullscreen{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;cursor:zoom-out;}
+.notice-img-fullscreen img{max-width:96vw;max-height:92vh;border-radius:8px;}
+</style>
 <div class="home-dev-toast-v12" id="home-dev-toast-v12" hidden>해당 기능은 개발중입니다.</div>
 <script>
 function openHomeNoticeViewer(button){
@@ -118,60 +142,7 @@ function openHomeNoticeViewer(button){
   document.getElementById('home-notice-viewer-body').textContent=button.dataset.body||'공지사항 내용이 없습니다.';
   document.getElementById('home-notice-viewer-created').textContent=button.dataset.created||'';
   document.getElementById('home-notice-viewer-author').textContent=button.dataset.author||'투루카 담당자';
-  document.getElementById('home-notice-viewer-modal').hidden=false;
-  document.body.classList.add('modal-open');
-}
-function closeHomeNoticeViewer(){
-  document.getElementById('home-notice-viewer-modal').hidden=true;
-  document.body.classList.remove('modal-open');
-}
-let homeDevToastTimer=null;
-function showHomeDevToast(){
-  const toast=document.getElementById('home-dev-toast-v12');
-  toast.hidden=false;
-  toast.classList.add('show');
-  clearTimeout(homeDevToastTimer);
-  homeDevToastTimer=setTimeout(function(){toast.classList.remove('show');toast.hidden=true;},2200);
-}
-document.addEventListener('keydown',function(event){
-  if(event.key==='Escape'){
-    const modal=document.getElementById('home-notice-viewer-modal');
-    if(modal && !modal.hidden){closeHomeNoticeViewer();}
-  }
-});
-</script>
-
-
-{# ── 데스크탑 전용 ── #}
-<div id="d-home">
-    <div class="d-notice-section">
-        <div class="d-notice-card">
-            <div class="d-notice-head">
-                <h2>공지사항</h2>
-                <a href="{{ url_for('notices') }}" class="d-notice-more">전체보기</a>
-            </div>
-            {% if notice_rows %}
-                {% for n in notice_rows %}
-                <div class="d-notice-row">
-                    <span class="d-notice-title">{{ n.title }}</span>
-                    <span class="d-notice-body-text">{{ n.body }}</span>
-                    <span class="d-notice-date">{{ n.created_at }}</span>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="d-notice-empty">등록된 공지사항이 없습니다.</div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-<style>
-#d-home { display: none; }
-#desktop-mode #d-home { display: block !important; }
-#desktop-mode .turu-home-v12,
-#desktop-mode .home-dev-toast-v12,
-#desktop-mode .notice-modal-backdrop { display: none !important; }
-#desktop-mode #cal-backdrop.open,
-#desktop-mode #status-cal-backdrop.open { display: flex !important; }
-</style>
-
-{% endblock %}
+  const attachWrap=document.getElementById('home-notice-viewer-attachment');
+  const img=document.getElementById('home-notice-viewer-img');
+  const pdfWrap=document.getElementById('home-notice-viewer-pdf-wrap');
+  const pdfFrame=document.getElementById('home-notice-viewer-pdf-frame');

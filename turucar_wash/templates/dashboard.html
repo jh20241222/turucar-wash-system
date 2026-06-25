@@ -146,3 +146,77 @@ function openHomeNoticeViewer(button){
   const img=document.getElementById('home-notice-viewer-img');
   const pdfWrap=document.getElementById('home-notice-viewer-pdf-wrap');
   const pdfFrame=document.getElementById('home-notice-viewer-pdf-frame');
+  const pdfLink=document.getElementById('home-notice-viewer-pdf-link');
+  img.hidden=true;img.src='';pdfWrap.hidden=true;pdfFrame.src='';attachWrap.hidden=true;
+  const imagePath=button.dataset.image;
+  if(imagePath){
+    const fileUrl='/notice_file/'+imagePath;
+    const ext=imagePath.split('.').pop().toLowerCase();
+    if(ext==='pdf'){pdfFrame.src=fileUrl;pdfLink.href=fileUrl;pdfWrap.hidden=false;}
+    else{img.src=fileUrl;img.hidden=false;}
+    attachWrap.hidden=false;
+  }
+  document.getElementById('home-notice-viewer-modal').hidden=false;
+  document.body.classList.add('modal-open');
+}
+function closeHomeNoticeViewer(){
+  document.getElementById('home-notice-viewer-modal').hidden=true;
+  document.body.classList.remove('modal-open');
+  document.getElementById('home-notice-viewer-pdf-frame').src='';
+}
+document.getElementById('home-notice-viewer-img').addEventListener('click',function(){
+  if(!this.src)return;
+  const fs=document.createElement('div');fs.className='notice-img-fullscreen';
+  const big=document.createElement('img');big.src=this.src;fs.appendChild(big);
+  fs.addEventListener('click',()=>fs.remove());document.body.appendChild(fs);
+});
+let homeDevToastTimer=null;
+function showHomeDevToast(){
+  const toast=document.getElementById('home-dev-toast-v12');
+  toast.hidden=false;
+  toast.classList.add('show');
+  clearTimeout(homeDevToastTimer);
+  homeDevToastTimer=setTimeout(function(){toast.classList.remove('show');toast.hidden=true;},2200);
+}
+document.addEventListener('keydown',function(event){
+  if(event.key==='Escape'){
+    const modal=document.getElementById('home-notice-viewer-modal');
+    if(modal && !modal.hidden){closeHomeNoticeViewer();}
+  }
+});
+</script>
+
+
+{# ── 데스크탑 전용 ── #}
+<div id="d-home">
+    <div class="d-notice-section">
+        <div class="d-notice-card">
+            <div class="d-notice-head">
+                <h2>공지사항</h2>
+                <a href="{{ url_for('notices') }}" class="d-notice-more">전체보기</a>
+            </div>
+            {% if notice_rows %}
+                {% for n in notice_rows %}
+                <div class="d-notice-row">
+                    <span class="d-notice-title">{{ n.title }}</span>
+                    <span class="d-notice-body-text">{{ n.body }}</span>
+                    <span class="d-notice-date">{{ n.created_at }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="d-notice-empty">등록된 공지사항이 없습니다.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<style>
+#d-home { display: none; }
+#desktop-mode #d-home { display: block !important; }
+#desktop-mode .turu-home-v12,
+#desktop-mode .home-dev-toast-v12,
+#desktop-mode .notice-modal-backdrop { display: none !important; }
+#desktop-mode #cal-backdrop.open,
+#desktop-mode #status-cal-backdrop.open { display: flex !important; }
+</style>
+
+{% endblock %}

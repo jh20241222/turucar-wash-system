@@ -2295,13 +2295,6 @@ def _send_damage_slack(report, base_url):
     if not SLACK_DAMAGE_WEBHOOK:
         print("[Slack] SLACK_DAMAGE_WEBHOOK 환경변수가 비어있습니다.")
         return
-    manage_url = f"{base_url}/damage_manage"
-    photos = []
-    for field in ("photo_front", "photo_damage1", "photo_damage2"):
-        fname = report.get(field)
-        if fname:
-            photos.append(f"{base_url}/damage_photo/{fname}")
-    photo_text = "\n".join([f"📷 <{u}|사진 보기>" for u in photos]) if photos else "_(사진 없음)_"
     blocks = [
         {"type": "header", "text": {"type": "plain_text", "text": "🚨 차량 훼손 제보 접수"}},
         {"type": "section", "fields": [
@@ -2313,8 +2306,6 @@ def _send_damage_slack(report, base_url):
     ]
     if report.get("description"):
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": f"*상세 내용*\n{report['description']}"}})
-    blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": f"*첨부 사진*\n{photo_text}"}})
-    blocks.append({"type": "actions", "elements": [{"type": "button", "text": {"type": "plain_text", "text": "제보 관리 페이지 열기"}, "url": manage_url, "style": "primary"}]})
     try:
         resp = _requests.post(SLACK_DAMAGE_WEBHOOK, json={"blocks": blocks}, timeout=5)
         print(f"[Slack] status={resp.status_code}, body={resp.text[:200]}")

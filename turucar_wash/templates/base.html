@@ -25,6 +25,14 @@
     .endpoint-damage_submit .mobile-tabbar,
     .endpoint-damage_manage .mobile-tabbar {
         display: flex !important;
+        justify-content: space-around !important;
+        align-items: flex-start !important;
+        width: 100% !important;
+    }
+    /* 탭 아이템 균등 분배 고정 */
+    .turu-mobile-tabbar .tab-item {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
     }
     </style>
     <script>
@@ -47,7 +55,7 @@
             {% if request.endpoint != 'dashboard' %}
             <button type="button" class="icon-btn back-btn" onclick="history.length > 1 ? history.back() : location.href='{{ url_for('dashboard') }}'" aria-label="뒤로가기">‹</button>
             {% endif %}
-            {% if request.endpoint in ['wash_list','wash_status','profile','car_detail','support_choice','damage_submit','damage_manage'] %}
+            {% if request.endpoint in ['wash_list','wash_status','profile','car_detail','support_choice','support_submit','damage_submit','damage_manage'] %}
             <a href="{{ url_for('dashboard') }}" class="topbar-turu-brand-v27" aria-label="TURU CAR 홈">
                 <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=28" alt="TURU CAR">
             </a>

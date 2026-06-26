@@ -17,7 +17,7 @@
   </div>
 
   <form method="post" action="{{ url_for('damage_submit') }}" enctype="multipart/form-data"
-        class="turu-card-list-v24 dmg-form-list">
+        class="turu-card-list-v24 dmg-form-list" id="dmgForm">
 
     {# 차량 정보 섹션 #}
     <div class="dmg-section-card">
@@ -55,37 +55,81 @@
     <div class="dmg-section-card">
       <p class="dmg-section-label">
         <span class="dmg-label-icon"><i class="ti ti-camera"></i></span> 사진 첨부
+        <span style="font-size:11px;font-weight:400;color:var(--text-tertiary);margin-left:4px;">정면 1장 필수 · 훼손사진 최대 5장</span>
       </p>
 
-      <div class="dmg-field-group">
-        <label class="dmg-field-label">차량 정면 사진 <span class="dmg-required">*</span></label>
-        <label class="dmg-photo-btn" id="lbl-front">
-          <input type="file" name="photo_front" accept="image/*" capture="environment"
-                 onchange="previewPhoto(this,'prev-front','lbl-front')" required>
-          <i class="ti ti-camera"></i> 사진 촬영 / 선택
-        </label>
-        <img id="prev-front" class="dmg-photo-preview" style="display:none;">
-      </div>
+      {# 사진 격자 #}
+      <div class="dmg-photo-grid">
 
-      <div class="dmg-field-group" style="margin-top:16px;">
-        <label class="dmg-field-label">훼손 부위 사진 1 <span class="dmg-required">*</span></label>
-        <label class="dmg-photo-btn" id="lbl-d1">
-          <input type="file" name="photo_damage1" accept="image/*" capture="environment"
-                 onchange="previewPhoto(this,'prev-d1','lbl-d1')" required>
-          <i class="ti ti-camera"></i> 사진 촬영 / 선택
-        </label>
-        <img id="prev-d1" class="dmg-photo-preview" style="display:none;">
-      </div>
+        {# 정면 (필수) #}
+        <div class="dmg-photo-slot" id="slot-front" onclick="openPhotoSheet('inp-front','slot-front')">
+          <input type="file" id="inp-front" name="photo_front" accept="image/*"
+                 onchange="previewSlot(this,'slot-front')" required style="display:none;">
+          <div class="dmg-slot-placeholder">
+            <i class="ti ti-camera-plus"></i>
+            <span>정면</span>
+            <em>필수</em>
+          </div>
+          <img class="dmg-slot-thumb" style="display:none;">
+        </div>
 
-      <div class="dmg-field-group" style="margin-top:16px;">
-        <label class="dmg-field-label">훼손 부위 사진 2 <span style="color:var(--text-tertiary);font-weight:400;">(선택)</span></label>
-        <label class="dmg-photo-btn" id="lbl-d2">
-          <input type="file" name="photo_damage2" accept="image/*" capture="environment"
-                 onchange="previewPhoto(this,'prev-d2','lbl-d2')">
-          <i class="ti ti-camera"></i> 사진 촬영 / 선택
-        </label>
-        <img id="prev-d2" class="dmg-photo-preview" style="display:none;">
-      </div>
+        {# 훼손 1 (필수) #}
+        <div class="dmg-photo-slot" id="slot-d1" onclick="openPhotoSheet('inp-d1','slot-d1')">
+          <input type="file" id="inp-d1" name="photo_damage1" accept="image/*"
+                 onchange="previewSlot(this,'slot-d1')" required style="display:none;">
+          <div class="dmg-slot-placeholder">
+            <i class="ti ti-camera-plus"></i>
+            <span>훼손①</span>
+            <em>필수</em>
+          </div>
+          <img class="dmg-slot-thumb" style="display:none;">
+        </div>
+
+        {# 훼손 2 #}
+        <div class="dmg-photo-slot" id="slot-d2" onclick="openPhotoSheet('inp-d2','slot-d2')">
+          <input type="file" id="inp-d2" name="photo_damage2" accept="image/*"
+                 onchange="previewSlot(this,'slot-d2')" style="display:none;">
+          <div class="dmg-slot-placeholder">
+            <i class="ti ti-camera-plus"></i>
+            <span>훼손②</span>
+          </div>
+          <img class="dmg-slot-thumb" style="display:none;">
+        </div>
+
+        {# 훼손 3 #}
+        <div class="dmg-photo-slot" id="slot-d3" onclick="openPhotoSheet('inp-d3','slot-d3')">
+          <input type="file" id="inp-d3" name="photo_damage3" accept="image/*"
+                 onchange="previewSlot(this,'slot-d3')" style="display:none;">
+          <div class="dmg-slot-placeholder">
+            <i class="ti ti-camera-plus"></i>
+            <span>훼손③</span>
+          </div>
+          <img class="dmg-slot-thumb" style="display:none;">
+        </div>
+
+        {# 훼손 4 #}
+        <div class="dmg-photo-slot" id="slot-d4" onclick="openPhotoSheet('inp-d4','slot-d4')">
+          <input type="file" id="inp-d4" name="photo_damage4" accept="image/*"
+                 onchange="previewSlot(this,'slot-d4')" style="display:none;">
+          <div class="dmg-slot-placeholder">
+            <i class="ti ti-camera-plus"></i>
+            <span>훼손④</span>
+          </div>
+          <img class="dmg-slot-thumb" style="display:none;">
+        </div>
+
+        {# 훼손 5 #}
+        <div class="dmg-photo-slot" id="slot-d5" onclick="openPhotoSheet('inp-d5','slot-d5')">
+          <input type="file" id="inp-d5" name="photo_damage5" accept="image/*"
+                 onchange="previewSlot(this,'slot-d5')" style="display:none;">
+          <div class="dmg-slot-placeholder">
+            <i class="ti ti-camera-plus"></i>
+            <span>훼손⑤</span>
+          </div>
+          <img class="dmg-slot-thumb" style="display:none;">
+        </div>
+
+      </div>{# /dmg-photo-grid #}
     </div>
 
     {# 제출 버튼 #}
@@ -95,6 +139,22 @@
 
   </form>
 </section>
+
+{# ══ 카메라/앨범 선택 시트 ══ #}
+<div id="photoSheet" class="photo-sheet-overlay" style="display:none;" onclick="closePhotoSheet(event)">
+  <div class="photo-sheet-panel">
+    <p class="photo-sheet-title">사진 추가</p>
+    <button class="photo-sheet-btn photo-sheet-btn--camera" onclick="pickCamera()">
+      <i class="ti ti-camera"></i> 카메라로 촬영
+    </button>
+    <button class="photo-sheet-btn photo-sheet-btn--album" onclick="pickAlbum()">
+      <i class="ti ti-photo"></i> 앨범에서 선택
+    </button>
+    <button class="photo-sheet-btn photo-sheet-btn--cancel" onclick="closePhotoSheet()">
+      취소
+    </button>
+  </div>
+</div>
 
 {# ══ 데스크탑 ══ #}
 <div id="d-damage-submit" style="display:none;">
@@ -125,34 +185,18 @@
                   placeholder="훼손 상황, 발견 경위 등"></textarea>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+        {% for slot in [('photo_front','정면','required'),('photo_damage1','훼손①','required'),('photo_damage2','훼손②',''),('photo_damage3','훼손③',''),('photo_damage4','훼손④',''),('photo_damage5','훼손⑤','')] %}
         <div class="field-group">
-          <label class="field-label">정면 사진 <span class="required">*</span></label>
-          <label class="photo-upload-btn" id="d-lbl-front">
-            <input type="file" name="photo_front" accept="image/*"
-                   onchange="previewPhoto(this,'d-prev-front','d-lbl-front')" required>
+          <label class="field-label">{{ slot[1] }} {% if slot[2] %}<span class="required">*</span>{% endif %}</label>
+          <label class="photo-upload-btn" id="d-lbl-{{ slot[0] }}">
+            <input type="file" name="{{ slot[0] }}" accept="image/*" {{ slot[2] }}
+                   onchange="previewPhoto(this,'d-prev-{{ slot[0] }}','d-lbl-{{ slot[0] }}')">
             <i class="ti ti-upload"></i> 업로드
           </label>
-          <img id="d-prev-front" class="photo-preview" style="display:none;">
+          <img id="d-prev-{{ slot[0] }}" class="photo-preview" style="display:none;">
         </div>
-        <div class="field-group">
-          <label class="field-label">훼손 사진 1 <span class="required">*</span></label>
-          <label class="photo-upload-btn" id="d-lbl-d1">
-            <input type="file" name="photo_damage1" accept="image/*"
-                   onchange="previewPhoto(this,'d-prev-d1','d-lbl-d1')" required>
-            <i class="ti ti-upload"></i> 업로드
-          </label>
-          <img id="d-prev-d1" class="photo-preview" style="display:none;">
-        </div>
-        <div class="field-group">
-          <label class="field-label">훼손 사진 2</label>
-          <label class="photo-upload-btn" id="d-lbl-d2">
-            <input type="file" name="photo_damage2" accept="image/*"
-                   onchange="previewPhoto(this,'d-prev-d2','d-lbl-d2')">
-            <i class="ti ti-upload"></i> 업로드
-          </label>
-          <img id="d-prev-d2" class="photo-preview" style="display:none;">
-        </div>
+        {% endfor %}
       </div>
 
       <div style="display:flex;gap:8px;justify-content:flex-end;">
@@ -165,10 +209,7 @@
 
 <style>
 /* ── 폼 리스트 ── */
-.dmg-form-list {
-  gap: 12px;
-  padding-bottom: 32px;
-}
+.dmg-form-list { gap: 12px; padding-bottom: 32px; }
 
 /* ── 섹션 카드 ── */
 .dmg-section-card {
@@ -178,25 +219,16 @@
   padding: 18px 16px;
   margin: 0 4px;
 }
-
 .dmg-section-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-secondary, #757575);
-  margin: 0 0 14px;
-  text-transform: uppercase;
-  letter-spacing: .03em;
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 700; color: var(--text-secondary, #757575);
+  margin: 0 0 14px; text-transform: uppercase; letter-spacing: .03em;
 }
 .dmg-label-icon {
-  width: 24px; height: 24px; border-radius: 6px;
-  background: #fff3e0;
-  display: inline-flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
+  width: 22px; height: 22px; border-radius: 5px; background: #fff3e0;
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.dmg-label-icon .ti { font-size: 14px; color: #e65100; }
+.dmg-label-icon .ti { font-size: 13px; color: #e65100; }
 .dmg-label-icon--red { background: #fce4ec; }
 .dmg-label-icon--red .ti { color: #c62828; }
 
@@ -204,69 +236,102 @@
 .dmg-field-group { display: flex; flex-direction: column; gap: 6px; }
 .dmg-field-label  { font-size: 13px; font-weight: 600; color: var(--text-primary, #212121); }
 .dmg-required     { color: #e53935; }
-
 .dmg-input {
-  border: 1.5px solid var(--border, #e0e0e0);
-  border-radius: 10px;
-  padding: 11px 14px;
-  font-size: 15px;
-  background: var(--background, #f5f5f5);
-  color: var(--text-primary, #212121);
-  outline: none;
-  width: 100%;
-  box-sizing: border-box;
-  font-family: inherit;
+  border: 1.5px solid var(--border, #e0e0e0); border-radius: 10px;
+  padding: 11px 14px; font-size: 15px;
+  background: var(--background, #f5f5f5); color: var(--text-primary, #212121);
+  outline: none; width: 100%; box-sizing: border-box; font-family: inherit;
   transition: border-color .15s;
 }
 .dmg-input:focus { border-color: #FF9900; }
 .dmg-textarea { resize: vertical; min-height: 72px; }
 
-/* ── 사진 업로드 ── */
-.dmg-photo-btn {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  background: var(--background, #f5f5f5);
+/* ── 사진 격자 ── */
+.dmg-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.dmg-photo-slot {
+  position: relative;
+  aspect-ratio: 1 / 1;
   border: 2px dashed var(--border, #e0e0e0);
   border-radius: 12px;
-  padding: 16px;
+  background: var(--background, #f5f5f5);
+  display: flex; align-items: center; justify-content: center;
   cursor: pointer;
-  font-size: 14px; font-weight: 600;
-  color: var(--text-secondary, #757575);
+  overflow: hidden;
   transition: border-color .15s;
 }
-.dmg-photo-btn:active { border-color: #FF9900; }
-.dmg-photo-btn input[type=file] { display: none; }
-.dmg-photo-btn .ti { font-size: 20px; }
+.dmg-photo-slot:active { border-color: #FF9900; }
+.dmg-photo-slot.has-photo { border-style: solid; border-color: #43a047; }
 
-.dmg-photo-preview {
-  width: 100%; max-height: 200px;
-  object-fit: cover; border-radius: 10px; margin-top: 8px;
+.dmg-slot-placeholder {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  pointer-events: none;
+}
+.dmg-slot-placeholder .ti { font-size: 22px; color: var(--text-tertiary, #bdbdbd); }
+.dmg-slot-placeholder span { font-size: 11px; font-weight: 600; color: var(--text-secondary, #757575); }
+.dmg-slot-placeholder em {
+  font-size: 10px; font-style: normal; font-weight: 700;
+  color: #e53935; background: #fce4ec; border-radius: 99px; padding: 1px 6px;
+}
+
+.dmg-slot-thumb {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover;
 }
 
 /* ── 제출 버튼 ── */
 .dmg-submit-btn {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   background: linear-gradient(135deg, #e53935, #c62828);
-  color: #fff;
-  border: none; border-radius: 14px;
-  padding: 16px;
-  font-size: 16px; font-weight: 700;
-  cursor: pointer;
-  margin: 4px 4px 0;
-  transition: opacity .15s;
-  font-family: inherit;
+  color: #fff; border: none; border-radius: 14px;
+  padding: 16px; font-size: 16px; font-weight: 700;
+  cursor: pointer; margin: 4px 4px 0;
+  transition: opacity .15s; font-family: inherit;
 }
 .dmg-submit-btn:active { opacity: .85; }
 .dmg-submit-btn .ti { font-size: 18px; }
 
+/* ── 카메라/앨범 액션 시트 ── */
+.photo-sheet-overlay {
+  position: fixed; inset: 0; z-index: 999;
+  background: rgba(0,0,0,.45);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.photo-sheet-panel {
+  background: var(--surface, #fff);
+  border-radius: 20px 20px 0 0;
+  padding: 16px 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
+  width: 100%; max-width: 480px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.photo-sheet-title {
+  font-size: 13px; font-weight: 600; color: var(--text-tertiary, #9e9e9e);
+  text-align: center; margin: 0 0 4px;
+}
+.photo-sheet-btn {
+  display: flex; align-items: center; gap: 12px;
+  padding: 15px 18px; border-radius: 12px; border: none;
+  font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit;
+  transition: opacity .12s;
+}
+.photo-sheet-btn:active { opacity: .7; }
+.photo-sheet-btn .ti { font-size: 20px; }
+.photo-sheet-btn--camera { background: #fff3e0; color: #e65100; }
+.photo-sheet-btn--album  { background: #e8f5e9; color: #2e7d32; }
+.photo-sheet-btn--cancel { background: var(--background, #f5f5f5); color: var(--text-secondary, #757575); justify-content: center; margin-top: 4px; }
+
 /* ── 데스크탑 ── */
 #desktop-mode #d-damage-submit { display: block !important; }
 #desktop-mode .turu-app-page-v24 { display: none !important; }
+#desktop-mode .photo-sheet-overlay { display: none !important; }
 
 .field-group { display: flex; flex-direction: column; gap: 6px; }
 .field-label  { font-size: 13px; font-weight: 600; color: var(--text-primary); }
 .required     { color: #e53935; }
 textarea.d-input { resize: vertical; min-height: 72px; width: 100%; box-sizing: border-box; }
-
 .photo-upload-btn {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   background: var(--surface); border: 2px dashed var(--border); border-radius: 10px;
@@ -275,10 +340,28 @@ textarea.d-input { resize: vertical; min-height: 72px; width: 100%; box-sizing: 
 }
 .photo-upload-btn:hover { border-color: var(--primary); }
 .photo-upload-btn input[type=file] { display: none; }
-.photo-preview { width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin-top: 6px; }
+.photo-preview { width: 100%; max-height: 160px; object-fit: cover; border-radius: 8px; margin-top: 6px; }
 </style>
 
 <script>
+/* ── 슬롯 미리보기 ── */
+function previewSlot(input, slotId) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var slot = document.getElementById(slotId);
+    var thumb = slot.querySelector('.dmg-slot-thumb');
+    var placeholder = slot.querySelector('.dmg-slot-placeholder');
+    thumb.src = e.target.result;
+    thumb.style.display = 'block';
+    placeholder.style.display = 'none';
+    slot.classList.add('has-photo');
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ── 데스크탑 미리보기 ── */
 function previewPhoto(input, previewId, labelId) {
   var file = input.files[0];
   if (!file) return;
@@ -291,6 +374,36 @@ function previewPhoto(input, previewId, labelId) {
     if (lbl) lbl.style.borderColor = '#43a047';
   };
   reader.readAsDataURL(file);
+}
+
+/* ── 카메라/앨범 액션 시트 ── */
+var _activeInputId = null;
+var _activeSlotId  = null;
+
+function openPhotoSheet(inputId, slotId) {
+  _activeInputId = inputId;
+  _activeSlotId  = slotId;
+  document.getElementById('photoSheet').style.display = 'flex';
+}
+
+function closePhotoSheet(e) {
+  if (!e || e.target === document.getElementById('photoSheet')) {
+    document.getElementById('photoSheet').style.display = 'none';
+  }
+}
+
+function pickCamera() {
+  document.getElementById('photoSheet').style.display = 'none';
+  var inp = document.getElementById(_activeInputId);
+  inp.setAttribute('capture', 'environment');
+  inp.click();
+}
+
+function pickAlbum() {
+  document.getElementById('photoSheet').style.display = 'none';
+  var inp = document.getElementById(_activeInputId);
+  inp.removeAttribute('capture');
+  inp.click();
 }
 </script>
 

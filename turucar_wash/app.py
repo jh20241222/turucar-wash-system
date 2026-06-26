@@ -4,17 +4,13 @@ import sqlite3
 import uuid
 from datetime import datetime
 from zoneinfo import ZoneInfo
-
 KST = ZoneInfo("Asia/Seoul")
-
 def now_kst():
     """현재 KST 시각 반환."""
     return datetime.now(KST)
-
 def today_kst():
     """오늘 KST 날짜 문자열 반환 (YYYY-MM-DD)."""
     return datetime.now(KST).strftime("%Y-%m-%d")
-
 import pandas as pd
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import (
@@ -27,18 +23,11 @@ from flask_login import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
-
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-this-secret-key")
-
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-
 def _truthy(value):
     return str(value or "").strip().lower() in ("1", "true", "yes", "y", "on")
-
-
 def _running_on_railway():
     return any(os.environ.get(name) for name in (
         "RAILWAY_ENVIRONMENT",
@@ -46,27 +35,20 @@ def _running_on_railway():
         "RAILWAY_SERVICE_ID",
         "RAILWAY_DEPLOYMENT_ID",
     ))
-
-
 def _resolve_data_dir():
     """Return the only directory where mutable operating data is allowed to live.
-
     계정/지역, 업체, 세차 오더, 완료 현황, 업로드 파일은 모두 DATA_DIR 아래에만 저장한다.
     Railway에서는 반드시 Volume Mount Path와 DATA_DIR을 같은 경로로 맞춰야 한다.
     """
     explicit = os.environ.get("DATA_DIR")
     if explicit:
         return explicit
-
     railway_volume_path = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH")
     if railway_volume_path:
         return railway_volume_path
-
     # 로컬 개발은 기존처럼 프로젝트 내부 data 폴더를 사용한다.
     # Railway 운영에서는 DATA_DIR을 명시하지 않으면 아래 fail-safe가 앱 실행을 막는다.
     return os.path.join(BASE_DIR, "data")
-
-
 DATA_DIR = os.path.abspath(_resolve_data_dir())
 USER_DB_PATH = os.path.join(DATA_DIR, "db.sqlite3")
 WASH_DB_PATH = os.path.join(DATA_DIR, "wash.db")
@@ -76,20 +58,15 @@ DAMAGE_UPLOAD_DIR = os.path.join(DATA_DIR, "damage_photos")
 BACKUP_DIR = os.path.join(DATA_DIR, "backups")
 NOTICE_IMG_DIR = os.path.join(DATA_DIR, "notice_images")
 STORAGE_MARKER_PATH = os.path.join(DATA_DIR, ".turu_wash_persistent_storage")
-
 # Railway에서는 기본적으로 fail-safe를 켠다. DATA_DIR/Volume 설정이 없으면 앱을 시작하지 않는다.
 PERSISTENCE_STRICT = _truthy(os.environ.get("PERSISTENCE_STRICT", "1" if _running_on_railway() else "0"))
-
-
 def _validate_persistent_storage_config():
     """Fail closed rather than run on ephemeral storage in production.
-
     이 검사는 데이터 유실을 막기 위한 안전장치다. Railway에서 DATA_DIR이 명시되지 않은 채
     실행되면 재배포/슬립 후 재시작 시 SQLite 파일이 사라질 수 있으므로 앱 시작을 중단한다.
     """
     if not (_running_on_railway() and PERSISTENCE_STRICT):
         return
-
     has_explicit_data_dir = bool(os.environ.get("DATA_DIR") or os.environ.get("RAILWAY_VOLUME_MOUNT_PATH"))
     if not has_explicit_data_dir:
         raise RuntimeError(
@@ -97,26 +74,20 @@ def _validate_persistent_storage_config():
             "Create a Railway Volume and set DATA_DIR to the volume mount path, e.g. DATA_DIR=/app/data. "
             "This app refuses to start to protect accounts, wash orders, completion history, and vendor data."
         )
-
-
 def _write_storage_marker():
     os.makedirs(DATA_DIR, exist_ok=True)
     if not os.path.exists(STORAGE_MARKER_PATH):
         with open(STORAGE_MARKER_PATH, "w", encoding="utf-8") as f:
             f.write(f"created_at={datetime.now().isoformat(timespec='seconds')}\n")
             f.write(f"data_dir={DATA_DIR}\n")
-
-
 def _backup_sqlite_file(path, label, keep=30):
     """Create a lightweight timestamped backup of an existing SQLite DB in DATA_DIR/backups."""
     if not os.path.exists(path) or os.path.getsize(path) == 0:
         return
-
     os.makedirs(BACKUP_DIR, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     backup_path = os.path.join(BACKUP_DIR, f"{label}-{timestamp}.sqlite3")
     shutil.copy2(path, backup_path)
-
     backups = sorted(
         [os.path.join(BACKUP_DIR, name) for name in os.listdir(BACKUP_DIR) if name.startswith(f"{label}-") and os.path.exists(os.path.join(BACKUP_DIR, name))],
         key=lambda p: os.path.getmtime(p) if os.path.exists(p) else 0,
@@ -127,24 +98,18 @@ def _backup_sqlite_file(path, label, keep=30):
             os.remove(old_backup)
         except OSError:
             pass
-
-
 def backup_databases(reason="startup"):
     """Backup both operating DBs. Safe to call on startup and before destructive imports."""
     _backup_sqlite_file(USER_DB_PATH, f"user-db-{reason}")
     _backup_sqlite_file(WASH_DB_PATH, f"wash-db-{reason}")
-
-
 def bootstrap_storage():
     """Create durable app storage and migrate legacy files into DATA_DIR without overwriting."""
     _validate_persistent_storage_config()
-
     os.makedirs(DATA_DIR, exist_ok=True)
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     os.makedirs(BACKUP_DIR, exist_ok=True)
     os.makedirs(NOTICE_IMG_DIR, exist_ok=True)
     _write_storage_marker()
-
     legacy_files = [
         (os.path.join(BASE_DIR, "wash.db"), WASH_DB_PATH),
         (os.path.join(BASE_DIR, "차량소속별_밴드매칭.xlsx"), BAND_MATCHING_PATH),
@@ -154,25 +119,17 @@ def bootstrap_storage():
         # Never overwrite live data. Legacy files are copied only for first boot of an empty DATA_DIR.
         if os.path.exists(source) and not os.path.exists(target):
             shutil.copy2(source, target)
-
     backup_databases("startup")
-
-
 bootstrap_storage()
-
 print(f"[TuruWash] DATA_DIR = {DATA_DIR}")
 print(f"[TuruWash] WASH_DB  = {WASH_DB_PATH}")
-
-
 def load_band_mapping():
     """차량소속별_밴드매칭.xlsx를 읽어 (차량소속, 담당업체) 복합키 딕셔너리로 반환."""
     if not os.path.exists(BAND_MATCHING_PATH):
         return {}
-
     df = pd.read_excel(BAND_MATCHING_PATH)
     if "차량소속" not in df.columns or "밴드링크" not in df.columns:
         raise ValueError("차량소속별_밴드매칭.xlsx 파일에 '차량소속', '밴드링크' 컬럼이 필요합니다.")
-
     has_vendor_col = "담당업체" in df.columns
     df["차량소속"] = df["차량소속"].astype(str).str.strip()
     df["밴드링크"] = df["밴드링크"].astype(str).str.strip()
@@ -180,16 +137,12 @@ def load_band_mapping():
         df["담당업체"] = df["담당업체"].astype(str).str.strip().replace("nan", "")
     else:
         df["담당업체"] = ""
-
     df = df[(df["차량소속"] != "") & (df["밴드링크"] != "") & (df["밴드링크"].str.lower() != "nan")]
-
     mapping = {}
     for _, row in df.iterrows():
         vendor = str(row["담당업체"]).strip() if str(row["담당업체"]).strip().lower() not in ("nan", "") else ""
         mapping[(row["차량소속"], vendor)] = row["밴드링크"]
     return mapping
-
-
 def find_band_link(band_dict, car_org, vendor=""):
     """복합키(차량소속+담당업체) 우선, 없으면 차량소속 단독으로 폴백."""
     car_org = str(car_org).strip() if car_org and not isinstance(car_org, float) else ""
@@ -207,8 +160,6 @@ def find_band_link(band_dict, car_org, vendor=""):
         if org == car_org:
             return url
     return None
-
-
 # =========================================================
 # DB 연결
 # =========================================================
@@ -216,21 +167,16 @@ def get_user_db():
     conn = sqlite3.connect(USER_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
-
-
 def get_wash_db():
     conn = sqlite3.connect(WASH_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
-
-
 # =========================================================
 # DB 초기화 (테이블 생성 + 마스터 계정 생성)
 # =========================================================
 def init_db():
     os.makedirs(DATA_DIR, exist_ok=True)
     os.makedirs(UPLOAD_DIR, exist_ok=True)
-
     conn = get_user_db()
     cur = conn.cursor()
     cur.execute("""
@@ -264,7 +210,6 @@ def init_db():
             value TEXT
         )
     """)
-
     cur.execute("""
         CREATE TABLE IF NOT EXISTS dashboard_notices (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -288,7 +233,17 @@ def init_db():
             admin_reply TEXT,
             created_at TEXT NOT NULL,
             updated_at TEXT
-               )
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS support_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticket_id INTEGER NOT NULL,
+            sender TEXT NOT NULL,
+            message TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY(ticket_id) REFERENCES support_tickets(id)
+        )
     """)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS damage_reports (
@@ -312,7 +267,6 @@ def init_db():
     existing_cols = [row[1] for row in cur.execute("PRAGMA table_info(dashboard_notices)").fetchall()]
     if "image_path" not in existing_cols:
         cur.execute("ALTER TABLE dashboard_notices ADD COLUMN image_path TEXT")
-
     # 마스터 계정 없으면 자동 생성
     existing = cur.execute("SELECT 1 FROM accounts WHERE username='jeongyeon.kim'").fetchone()
     if not existing:
@@ -322,7 +276,6 @@ def init_db():
         )
     conn.commit()
     conn.close()
-
     conn = get_wash_db()
     cur = conn.cursor()
     cur.execute("""
@@ -373,36 +326,25 @@ def init_db():
     """)
     conn.commit()
     conn.close()
-
 init_db()
-
-
 # =========================================================
 # 계정 스키마 보정
 # =========================================================
 def ensure_user_schema():
     conn = get_user_db()
     cur = conn.cursor()
-
     account_cols = [row[1] for row in cur.execute("PRAGMA table_info(accounts)").fetchall()]
     if "parent_id" not in account_cols:
         cur.execute("ALTER TABLE accounts ADD COLUMN parent_id INTEGER")
-
     region_cols = [row[1] for row in cur.execute("PRAGMA table_info(account_region)").fetchall()]
     if "created_by" not in region_cols:
         cur.execute("ALTER TABLE account_region ADD COLUMN created_by TEXT")
-
     cur.execute("UPDATE accounts SET role='master' WHERE username='jeongyeon.kim'")
     cur.execute("UPDATE accounts SET role='admin' WHERE username!='jeongyeon.kim' AND role='vendor'")
     cur.execute("UPDATE accounts SET parent_id=NULL WHERE role IN ('master', 'admin')")
-
     conn.commit()
     conn.close()
-
-
 ensure_user_schema()
-
-
 # =========================================================
 # 세차 오더 스키마 보정
 # =========================================================
@@ -423,7 +365,6 @@ def ensure_wash_schema():
             cur.execute("ALTER TABLE wash_list ADD COLUMN 세차경과일 INTEGER DEFAULT 0")
             cur.execute("UPDATE wash_list SET 세차경과일 = 0 WHERE 세차경과일 IS NULL")
             print("[TuruWash] wash_list.세차경과일 컬럼 추가됨")
-
         hist_cols = [row[1] for row in cur.execute("PRAGMA table_info(wash_history)").fetchall()]
         if "상태" not in hist_cols:
             cur.execute("ALTER TABLE wash_history ADD COLUMN 상태 TEXT DEFAULT '완료'")
@@ -431,7 +372,6 @@ def ensure_wash_schema():
         if "원본ID" not in hist_cols:
             cur.execute("ALTER TABLE wash_history ADD COLUMN 원본ID INTEGER")
             print("[TuruWash] wash_history.원본ID 컬럼 추가됨")
-
         conn.commit()
         print("[TuruWash] ensure_wash_schema 완료")
     except Exception as e:
@@ -439,11 +379,7 @@ def ensure_wash_schema():
         conn.rollback()
     finally:
         conn.close()
-
-
 ensure_wash_schema()
-
-
 # =========================================================
 # 미완료 오더 이월 처리 (월~금: 세차일 < 오늘 → 오늘로 이월)
 # =========================================================
@@ -478,8 +414,6 @@ def rollover_wash_orders():
         conn.rollback()
     finally:
         conn.close()
-
-
 # =========================================================
 # 토요일 자정 리셋 (미완료 오더 전체 삭제)
 # =========================================================
@@ -501,8 +435,6 @@ def saturday_reset():
         conn.rollback()
     finally:
         conn.close()
-
-
 def run_daily_once():
     """앱 시작 시 오늘 날짜 기준으로 이월/리셋을 딱 한 번만 실행."""
     today_str = today_kst()
@@ -514,8 +446,6 @@ def run_daily_once():
     rollover_wash_orders()
     set_app_setting("last_rollover_date", today_str)
     print(f"[TuruWash] 이월/리셋 실행 완료 — {today_str}")
-
-
 # =========================================================
 # APScheduler: 자정 자동 이월 / 토요일 리셋
 # =========================================================
@@ -525,22 +455,16 @@ def scheduled_daily_job():
     rollover_wash_orders()
     set_app_setting("last_rollover_date", today_kst())
     print(f"[TuruWash] 스케줄러 실행 완료 — {now_kst().strftime('%Y-%m-%d %H:%M:%S')}")
-
-
 _scheduler = BackgroundScheduler(timezone="Asia/Seoul")
 _scheduler.add_job(scheduled_daily_job, "cron", hour=0, minute=0)
 _scheduler.start()
 print("[TuruWash] APScheduler 시작 — 매일 00:00 KST 이월/리셋 자동 실행")
-
-
 # =========================================================
 # 로그인 설정
 # =========================================================
 login_manager = LoginManager()
 login_manager.login_view = "login"
 login_manager.init_app(app)
-
-
 class User(UserMixin):
     def __init__(self, id, username, role, vendor=None, parent_id=None):
         self.id = id
@@ -548,20 +472,15 @@ class User(UserMixin):
         self.role = role
         self.vendor = vendor
         self.parent_id = parent_id
-
     @property
     def is_master(self):
         return self.role == "master"
-
     @property
     def is_admin(self):
         return self.role in ("master", "admin")
-
     @property
     def is_staff(self):
         return self.role == "staff"
-
-
 @login_manager.user_loader
 def load_user(user_id):
     conn = get_user_db()
@@ -577,12 +496,8 @@ def load_user(user_id):
             row["parent_id"]
         )
     return None
-
-
 def can_manage_support(user):
     return bool(user and (getattr(user, 'is_master', False) or getattr(user, 'username', '') == 'jeongyeon.kim'))
-
-
 def get_support_ticket_total_count():
     if not current_user.is_authenticated or not can_manage_support(current_user):
         return 0
@@ -594,8 +509,6 @@ def get_support_ticket_total_count():
         return 0
     finally:
         conn.close()
-
-
 @app.context_processor
 def inject_support_badge_count():
     try:
@@ -603,18 +516,14 @@ def inject_support_badge_count():
     except Exception:
         count = 0
     return {"support_badge_count": count}
-
-
 # =========================================================
 # 공통 권한 함수
 # =========================================================
 def scoped_condition(table_name, user):
     if user.is_master:
         return "", []
-
     clauses = [f"{table_name}.업체 = ?"]
     params = [user.vendor]
-
     if user.is_staff:
         conn = get_user_db()
         cur = conn.cursor()
@@ -623,24 +532,17 @@ def scoped_condition(table_name, user):
             (user.username,)
         ).fetchall()
         conn.close()
-
         if not regions:
             return " AND 1=0", params
-
         region_clause = " OR ".join([f"({table_name}.지역시도 = ? AND {table_name}.지역구군 = ?)"] * len(regions))
         clauses.append(f"({region_clause})")
         for region in regions:
             params.extend([region["city"], region["district"]])
-
     return " AND " + " AND ".join(clauses), params
-
-
 def filter_distinct_values(cur, table_name, column_name, base_query, base_params):
     query = f"SELECT DISTINCT {column_name} AS value FROM {table_name} WHERE 1=1{base_query} ORDER BY {column_name}"
     rows = cur.execute(query, base_params).fetchall()
     return [r["value"] for r in rows if r["value"] not in (None, "", "None")]
-
-
 def can_manage_target(target_row):
     if current_user.is_master:
         return True
@@ -650,16 +552,12 @@ def can_manage_target(target_row):
         and target_row["parent_id"] == current_user.id
         and target_row["vendor"] == current_user.vendor
     )
-
-
 # =========================================================
 # PWA 앱 설치 / 오프라인 지원
 # =========================================================
 @app.route("/offline")
 def offline():
     return render_template("offline.html")
-
-
 @app.route("/service-worker.js")
 def service_worker():
     response = send_from_directory(
@@ -670,8 +568,6 @@ def service_worker():
     response.headers["Cache-Control"] = "no-cache"
     response.headers["Service-Worker-Allowed"] = "/"
     return response
-
-
 # =========================================================
 # 기본 라우트
 # =========================================================
@@ -679,8 +575,6 @@ def service_worker():
 @login_required
 def home():
     return redirect(url_for("dashboard"))
-
-
 # =========================================================
 # 로그인
 # =========================================================
@@ -689,22 +583,16 @@ def login():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         pw = request.form.get("password", "")
-
         conn = get_user_db()
         cur = conn.cursor()
         user = cur.execute("SELECT * FROM accounts WHERE username=?", (username,)).fetchone()
         conn.close()
-
         if user and check_password_hash(user["password"], pw):
             login_user(User(user["id"], user["username"], user["role"], user["vendor"], user["parent_id"]))
             return redirect(url_for("dashboard"))
-
         flash("❌ 아이디 또는 비밀번호가 잘못되었습니다.")
         return redirect(url_for("login"))
-
     return render_template("login.html")
-
-
 # =========================================================
 # 로그아웃
 # =========================================================
@@ -713,21 +601,15 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for("login"))
-
-
-
-
 # =========================================================
 # 내정보 / 앱 설정
 # =========================================================
-
 @app.route("/storage-status")
 @login_required
 def storage_status():
     if not current_user.is_master:
         flash("❌ 마스터 계정만 저장소 상태를 확인할 수 있습니다.")
         return redirect(url_for("dashboard"))
-
     def safe_count(db_path, table):
         if not os.path.exists(db_path):
             return None
@@ -739,7 +621,6 @@ def storage_status():
             return value
         except Exception:
             return None
-
     payload = {
         "data_dir": DATA_DIR,
         "strict_mode": PERSISTENCE_STRICT,
@@ -763,8 +644,6 @@ def storage_status():
         },
     }
     return jsonify(payload)
-
-
 @app.route("/profile")
 @login_required
 def profile():
@@ -779,14 +658,12 @@ def profile():
         """,
         (current_user.username,)
     ).fetchall()
-
     child_count = 0
     if current_user.is_admin:
         child_count = cur.execute(
             "SELECT COUNT(*) AS c FROM accounts WHERE parent_id=?",
             (current_user.id,)
         ).fetchone()["c"]
-
     # 비밀번호 초기화 대상 계정 (admin: 본인 소속 staff, master: 모든 계정)
     reset_targets = []
     if current_user.is_master:
@@ -799,9 +676,7 @@ def profile():
             "SELECT username, role, vendor FROM accounts WHERE parent_id=? ORDER BY username",
             (current_user.id,)
         ).fetchall()
-
     conn.close()
-
     # 담당 지역 기준 차량 리스트 (staff/admin 모두)
     assigned_vehicles = []
     if region_rows and not current_user.is_master:
@@ -824,7 +699,6 @@ def profile():
         """
         assigned_vehicles = wash_cur.execute(query, region_params + vendor_param).fetchall()
         wash_conn.close()
-
     return render_template(
         "profile.html",
         region_rows=region_rows,
@@ -832,8 +706,6 @@ def profile():
         reset_targets=reset_targets,
         assigned_vehicles=assigned_vehicles,
     )
-
-
 # =========================================================
 # 내 담당 차량 현황
 # =========================================================
@@ -843,7 +715,6 @@ def my_vehicles():
     if current_user.is_master:
         flash("❌ 담당자/관리자 계정만 접근할 수 있습니다.")
         return redirect(url_for("dashboard"))
-
     conn = get_user_db()
     cur = conn.cursor()
     region_rows = cur.execute(
@@ -851,29 +722,23 @@ def my_vehicles():
         (current_user.username,)
     ).fetchall()
     conn.close()
-
     vehicles = []
     region_stats = []
-
     if region_rows:
         wash_conn = get_wash_db()
         wash_cur = wash_conn.cursor()
-
         region_clauses = " OR ".join(["(지역시도 = ? AND 지역구군 = ?)"] * len(region_rows))
         region_params = []
         for r in region_rows:
             region_params.extend([r["city"], r["district"]])
-
         vendor_clause = " AND 담당업체 = ?" if current_user.vendor else ""
         vendor_param = [current_user.vendor] if current_user.vendor else []
-
         vehicles = wash_cur.execute(f"""
             SELECT 차량번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 담당업체, 최근세차일, 세차경과일
             FROM vehicle_master
             WHERE ({region_clauses}){vendor_clause}
             ORDER BY 세차경과일 DESC, 차량번호
         """, region_params + vendor_param).fetchall()
-
         for r in region_rows:
             rows = [v for v in vehicles if v["지역시도"] == r["city"] and v["지역구군"] == r["district"]]
             urgent = [v for v in rows if (v["세차경과일"] or 0) >= 14]
@@ -884,15 +749,11 @@ def my_vehicles():
                 "urgent": len(urgent),
                 "regular": len(rows) - len(urgent),
             })
-
         wash_conn.close()
-
     total = len(vehicles)
     urgent_count = sum(1 for v in vehicles if (v["세차경과일"] or 0) >= 14)
     regular_count = total - urgent_count
-
     vehicles_list = [dict(v) for v in vehicles]
-
     return render_template(
         "my_vehicles.html",
         region_rows=region_rows,
@@ -902,8 +763,6 @@ def my_vehicles():
         urgent_count=urgent_count,
         regular_count=regular_count,
     )
-
-
 # =========================================================
 # 본인 비밀번호 변경
 # =========================================================
@@ -913,33 +772,26 @@ def change_password():
     current_pw = request.form.get("current_password", "")
     new_pw = request.form.get("new_password", "").strip()
     confirm_pw = request.form.get("confirm_password", "").strip()
-
     conn = get_user_db()
     cur = conn.cursor()
     user = cur.execute("SELECT * FROM accounts WHERE id=?", (current_user.id,)).fetchone()
-
     if not check_password_hash(user["password"], current_pw):
         flash("❌ 현재 비밀번호가 일치하지 않습니다.")
         conn.close()
         return redirect(url_for("profile"))
-
     if not new_pw:
         flash("❌ 새 비밀번호를 입력하세요.")
         conn.close()
         return redirect(url_for("profile"))
-
     if new_pw != confirm_pw:
         flash("❌ 새 비밀번호가 일치하지 않습니다.")
         conn.close()
         return redirect(url_for("profile"))
-
     cur.execute("UPDATE accounts SET password=? WHERE id=?", (generate_password_hash(new_pw), current_user.id))
     conn.commit()
     conn.close()
     flash("✔ 비밀번호가 변경되었습니다.")
     return redirect(url_for("profile"))
-
-
 # =========================================================
 # 계정 비밀번호 초기화 (admin: 소속 staff, master: 모든 계정)
 # =========================================================
@@ -949,42 +801,33 @@ def reset_password():
     if not current_user.is_admin:
         flash("❌ 접근 권한이 없습니다.")
         return redirect(url_for("profile"))
-
     target_username = request.form.get("target_username", "").strip()
     if not target_username:
         flash("❌ 초기화할 계정을 선택하세요.")
         return redirect(url_for("profile"))
-
     RESET_PW = "0325"
-
     conn = get_user_db()
     cur = conn.cursor()
     target = cur.execute("SELECT * FROM accounts WHERE username=?", (target_username,)).fetchone()
-
     if not target:
         flash("❌ 계정을 찾을 수 없습니다.")
         conn.close()
         return redirect(url_for("profile"))
-
     # master는 모든 계정 초기화 가능, admin은 본인 소속 staff만
     if not current_user.is_master:
         if target["role"] != "staff" or target["parent_id"] != current_user.id:
             flash("❌ 해당 계정의 비밀번호를 초기화할 권한이 없습니다.")
             conn.close()
             return redirect(url_for("profile"))
-
     if target["role"] == "master":
         flash("❌ 마스터 계정은 초기화할 수 없습니다.")
         conn.close()
         return redirect(url_for("profile"))
-
     cur.execute("UPDATE accounts SET password=? WHERE username=?", (generate_password_hash(RESET_PW), target_username))
     conn.commit()
     conn.close()
     flash(f"✔ {target_username} 비밀번호가 {RESET_PW}(으)로 초기화되었습니다.")
     return redirect(url_for("profile"))
-
-
 # =========================================================
 # 앱 설정 / 공지사항
 # =========================================================
@@ -994,8 +837,6 @@ def get_app_setting(key, default=""):
     row = cur.execute("SELECT value FROM app_settings WHERE key=?", (key,)).fetchone()
     conn.close()
     return row["value"] if row and row["value"] is not None else default
-
-
 def set_app_setting(key, value):
     conn = get_user_db()
     cur = conn.cursor()
@@ -1005,13 +846,8 @@ def set_app_setting(key, value):
     )
     conn.commit()
     conn.close()
-
-
 # get_app_setting/set_app_setting 정의 이후 실행 — 순서 중요
 run_daily_once()
-
-
-
 def create_dashboard_notice(title, body, author, image_path=None):
     conn = get_user_db()
     cur = conn.cursor()
@@ -1030,13 +866,10 @@ def create_dashboard_notice(title, body, author, image_path=None):
     )
     conn.commit()
     conn.close()
-
-
 def get_dashboard_notices(page=1, per_page=10):
     page = max(int(page or 1), 1)
     per_page = max(int(per_page or 10), 1)
     offset = (page - 1) * per_page
-
     conn = get_user_db()
     cur = conn.cursor()
     total = cur.execute("SELECT COUNT(*) AS c FROM dashboard_notices").fetchone()["c"]
@@ -1050,15 +883,10 @@ def get_dashboard_notices(page=1, per_page=10):
         (per_page, offset)
     ).fetchall()
     conn.close()
-
     total_pages = max((total + per_page - 1) // per_page, 1)
     if page > total_pages:
         page = total_pages
-
     return rows, total, page, total_pages
-
-
-
 def get_dashboard_notice_by_id(notice_id):
     conn = get_user_db()
     cur = conn.cursor()
@@ -1072,8 +900,6 @@ def get_dashboard_notice_by_id(notice_id):
     ).fetchone()
     conn.close()
     return row
-
-
 def update_dashboard_notice_item(notice_id, title, body, author, image_path=None, clear_image=False):
     conn = get_user_db()
     cur = conn.cursor()
@@ -1094,21 +920,15 @@ def update_dashboard_notice_item(notice_id, title, body, author, image_path=None
         )
     conn.commit()
     conn.close()
-
-
 def delete_dashboard_notice_item(notice_id):
     conn = get_user_db()
     cur = conn.cursor()
     cur.execute("DELETE FROM dashboard_notices WHERE id=?", (notice_id,))
     conn.commit()
     conn.close()
-
-
 NOTICE_ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp", "pdf"}
-
 def _notice_allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in NOTICE_ALLOWED_EXTENSIONS
-
 def _save_notice_file(file_obj):
     """파일을 NOTICE_IMG_DIR에 저장하고 파일명을 반환한다."""
     os.makedirs(NOTICE_IMG_DIR, exist_ok=True)
@@ -1116,7 +936,6 @@ def _save_notice_file(file_obj):
     unique_name = f"{uuid.uuid4().hex}.{ext}"
     file_obj.save(os.path.join(NOTICE_IMG_DIR, unique_name))
     return unique_name
-
 def _delete_notice_file(filename):
     """NOTICE_IMG_DIR에서 파일을 삭제한다."""
     if filename:
@@ -1126,55 +945,41 @@ def _delete_notice_file(filename):
                 os.remove(path)
         except OSError:
             pass
-
-
 @app.route("/notice_file/<path:filename>")
 @login_required
 def notice_file(filename):
     """공지사항 첨부파일 서빙"""
     return send_from_directory(NOTICE_IMG_DIR, filename)
-
-
 @app.route("/dashboard/notice", methods=["POST"])
 @login_required
 def update_dashboard_notice():
     if not can_manage_support(current_user):
         flash("❌ 마스터 계정만 공지사항을 수정할 수 있습니다.")
         return redirect(url_for("dashboard"))
-
     notice_title = request.form.get("notice_title", "").strip() or "공지사항"
     notice_body = request.form.get("notice_body", "").strip() or "공지사항 내용을 입력해주세요."
     notice_author = request.form.get("notice_author", "").strip() or "투루카 담당자"
-
     image_path = None
     file = request.files.get("notice_image")
     if file and file.filename and _notice_allowed_file(file.filename):
         image_path = _save_notice_file(file)
-
     set_app_setting("dashboard_notice_title", notice_title)
     set_app_setting("dashboard_notice_body", notice_body)
     create_dashboard_notice(notice_title, notice_body, notice_author, image_path)
-
     flash("공지사항이 저장되었습니다.")
     return redirect(url_for("dashboard"))
-
-
-
 @app.route("/dashboard/notice/<int:notice_id>/edit", methods=["POST"])
 @login_required
 def edit_dashboard_notice(notice_id):
     if not can_manage_support(current_user):
         flash("❌ 마스터 계정만 공지사항을 수정할 수 있습니다.")
         return redirect(url_for("dashboard"))
-
     notice_title = request.form.get("notice_title", "").strip() or "공지사항"
     notice_body = request.form.get("notice_body", "").strip() or "공지사항 내용을 입력해주세요."
     notice_author = request.form.get("notice_author", "").strip() or "투루카 담당자"
     clear_image = request.form.get("notice_clear_image") == "1"
-
     existing = get_dashboard_notice_by_id(notice_id)
     old_image = existing["image_path"] if existing else None
-
     new_image_path = None
     file = request.files.get("notice_image")
     if file and file.filename and _notice_allowed_file(file.filename):
@@ -1183,7 +988,6 @@ def edit_dashboard_notice(notice_id):
             _delete_notice_file(old_image)
     elif clear_image and old_image:
         _delete_notice_file(old_image)
-
     update_dashboard_notice_item(
         notice_id, notice_title, notice_body, notice_author,
         image_path=new_image_path,
@@ -1192,23 +996,16 @@ def edit_dashboard_notice(notice_id):
     flash("공지사항이 수정되었습니다.")
     page = request.form.get("notice_page", 1)
     return redirect((url_for("notices", notice_page=page) if request.form.get("return_to") == "notices" else url_for("dashboard") + "#notice-list"))
-
-
 @app.route("/dashboard/notice/<int:notice_id>/delete", methods=["POST"])
 @login_required
 def delete_dashboard_notice(notice_id):
     if not can_manage_support(current_user):
         flash("❌ 마스터 계정만 공지사항을 삭제할 수 있습니다.")
         return redirect(url_for("dashboard"))
-
     delete_dashboard_notice_item(notice_id)
     flash("공지사항이 삭제되었습니다.")
     page = request.form.get("notice_page", 1)
     return redirect((url_for("notices", notice_page=page) if request.form.get("return_to") == "notices" else url_for("dashboard") + "#notice-list"))
-
-
-
-
 # =========================================================
 # 대시보드
 # =========================================================
@@ -1218,7 +1015,6 @@ def dashboard():
     today = today_kst()
     conn = get_wash_db()
     cur = conn.cursor()
-
     scope_sql, scope_params = scoped_condition("wash_list", current_user)
     total_count = cur.execute(
         f"SELECT COUNT(*) AS c FROM wash_list WHERE 세차일 = ? AND 완료 = 0{scope_sql}",
@@ -1233,15 +1029,12 @@ def dashboard():
         [today] + scope_params
     ).fetchall()
     conn.close()
-
     notice_title = get_app_setting("dashboard_notice_title", "오늘의 세차관리")
     notice_body = get_app_setting(
         "dashboard_notice_body",
         f"{current_user.username} 계정으로 접속 중입니다. 오더 확인, 완료 처리까지 앱처럼 빠르게 확인하세요."
     )
-
     notice_rows, notice_total, _, _ = get_dashboard_notices(1, 3)
-
     return render_template(
         "dashboard.html",
         total_count=total_count,
@@ -1254,9 +1047,6 @@ def dashboard():
         notice_page=1,
         notice_total_pages=1,
     )
-
-
-
 @app.route("/notices")
 @login_required
 def notices():
@@ -1269,8 +1059,6 @@ def notices():
         notice_page=notice_page,
         notice_total_pages=notice_total_pages,
     )
-
-
 # =========================================================
 # 업체 관리 (마스터 전용)
 # =========================================================
@@ -1280,13 +1068,10 @@ def vendor_manage():
     if not current_user.is_master:
         flash("❌ 접근 권한이 없습니다.")
         return redirect(url_for("dashboard"))
-
     conn = get_user_db()
     cur = conn.cursor()
-
     if request.method == "POST":
         action = request.form.get("action")
-
         if action == "create_vendor":
             name = request.form.get("name", "").strip()
             if not name:
@@ -1299,20 +1084,15 @@ def vendor_manage():
             except sqlite3.IntegrityError:
                 flash("❌ 이미 존재하는 업체명입니다.")
             return redirect(url_for("vendor_manage"))
-
         if action == "delete_vendor":
             vendor_id = request.form.get("vendor_id", "").strip()
             cur.execute("DELETE FROM vendors WHERE id=?", (vendor_id,))
             conn.commit()
             flash("✔ 업체가 삭제되었습니다.")
             return redirect(url_for("vendor_manage"))
-
     vendors = cur.execute("SELECT * FROM vendors ORDER BY name").fetchall()
     conn.close()
-
     return render_template("vendor_manage.html", vendors=vendors)
-
-
 # =========================================================
 # 계정/지역 관리
 # =========================================================
@@ -1322,36 +1102,28 @@ def account_manage():
     if not current_user.is_admin:
         flash("❌ 접근 권한이 없습니다.")
         return redirect(url_for("dashboard"))
-
     conn = get_user_db()
     cur = conn.cursor()
-
     if request.method == "POST":
         action = request.form.get("action")
-
         if action == "create_account":
             username = request.form.get("username", "").strip()
             password = request.form.get("password", "").strip()
             city = request.form.get("city", "").strip()
             district = request.form.get("district", "").strip()
-
             requested_role = request.form.get("role", "staff")
             if current_user.is_master and requested_role in ("admin", "staff"):
                 new_role = requested_role
             else:
                 new_role = "staff"
-
             if not username or not password:
                 flash("❌ 아이디와 비밀번호를 입력하세요.")
                 return redirect(url_for("account_manage"))
-
             vendor = request.form.get("vendor", "").strip() if current_user.is_master else current_user.vendor
             if new_role != "master" and not vendor:
                 flash("❌ 업체 정보가 필요합니다.")
                 return redirect(url_for("account_manage"))
-
             parent_id = None if new_role == "admin" else current_user.id
-
             try:
                 cur.execute(
                     "INSERT INTO accounts (username, password, role, vendor, parent_id) VALUES (?, ?, ?, ?, ?)",
@@ -1366,23 +1138,18 @@ def account_manage():
                 flash("✔ 계정이 등록되었습니다.")
             except sqlite3.IntegrityError:
                 flash("❌ 이미 존재하는 아이디입니다.")
-
             return redirect(url_for("account_manage"))
-
         if action == "assign_region":
             username = request.form.get("region_username", "").strip()
             city = request.form.get("region_city", "").strip()
             district = request.form.get("region_district", "").strip()
-
             target = cur.execute("SELECT * FROM accounts WHERE username=?", (username,)).fetchone()
             if not target or not can_manage_target(target):
                 flash("❌ 해당 계정에 지역을 지정할 권한이 없습니다.")
                 return redirect(url_for("account_manage"))
-
             if not city or not district:
                 flash("❌ 시/도와 구/군을 모두 선택하세요.")
                 return redirect(url_for("account_manage"))
-
             exists = cur.execute(
                 "SELECT 1 FROM account_region WHERE username=? AND city=? AND district=?",
                 (username, city, district)
@@ -1396,43 +1163,35 @@ def account_manage():
                 )
                 conn.commit()
                 flash("✔ 지역이 등록되었습니다.")
-
             return redirect(url_for("account_manage"))
-
         if action == "delete_account":
             username = request.form.get("delete_username", "").strip()
             target = cur.execute("SELECT * FROM accounts WHERE username=?", (username,)).fetchone()
-
             if not target:
                 flash("❌ 계정을 찾을 수 없습니다.")
                 return redirect(url_for("account_manage"))
             if target["role"] == "master":
                 flash("❌ 마스터 계정은 삭제할 수 없습니다.")
                 return redirect(url_for("account_manage"))
-
             allowed = False
             if current_user.is_master:
                 allowed = target["role"] in ("admin", "staff")
             else:
                 allowed = can_manage_target(target)
-
             if not allowed:
                 flash("❌ 해당 계정을 삭제할 권한이 없습니다.")
                 return redirect(url_for("account_manage"))
-
             child_rows = cur.execute("SELECT username FROM accounts WHERE parent_id=?", (target["id"],)).fetchall()
             child_usernames = [r["username"] for r in child_rows]
             if child_usernames:
                 placeholders = ",".join(["?"] * len(child_usernames))
                 cur.execute(f"DELETE FROM account_region WHERE username IN ({placeholders})", child_usernames)
                 cur.execute(f"DELETE FROM accounts WHERE username IN ({placeholders})", child_usernames)
-
             cur.execute("DELETE FROM account_region WHERE username=?", (username,))
             cur.execute("DELETE FROM accounts WHERE username=?", (username,))
             conn.commit()
             flash("✔ 계정이 삭제되었습니다.")
             return redirect(url_for("account_manage"))
-
         if action == "delete_region":
             region_id = request.form.get("region_id", "").strip()
             region_row = cur.execute(
@@ -1444,20 +1203,16 @@ def account_manage():
                 """,
                 (region_id,)
             ).fetchone()
-
             if not region_row:
                 flash("❌ 지역 정보를 찾을 수 없습니다.")
                 return redirect(url_for("account_manage"))
-
             if not can_manage_target(region_row) and not current_user.is_master:
                 flash("❌ 해당 지역을 삭제할 권한이 없습니다.")
                 return redirect(url_for("account_manage"))
-
             cur.execute("DELETE FROM account_region WHERE id=?", (region_id,))
             conn.commit()
             flash("✔ 지역이 삭제되었습니다.")
             return redirect(url_for("account_manage"))
-
     if current_user.is_master:
         accounts = cur.execute(
             "SELECT * FROM accounts ORDER BY CASE role WHEN 'master' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END, username"
@@ -1476,7 +1231,6 @@ def account_manage():
             (current_user.id,)
         ).fetchall()
         vendors = []
-
     region_list = cur.execute(
         """
         SELECT ar.id, ar.username, ar.city, ar.district, a.vendor, a.role, a.parent_id
@@ -1491,7 +1245,6 @@ def account_manage():
         ),
         () if current_user.is_master else (current_user.id,)
     ).fetchall()
-
     # 전국 고정 시/도 + 구/군 데이터 (세차 오더 업로드 없이도 지역 배정 가능)
     KOREA_REGIONS = {
         "서울특별시": [
@@ -1557,12 +1310,9 @@ def account_manage():
         ],
         "제주특별자치도": ["서귀포시","제주시"],
     }
-
     city_options = list(KOREA_REGIONS.keys())
     region_map = KOREA_REGIONS
-
     conn.close()
-
     return render_template(
         "account_manage.html",
         accounts=accounts,
@@ -1572,8 +1322,6 @@ def account_manage():
         city_options=city_options,
         region_map=region_map
     )
-
-
 # =========================================================
 # 차량 마스터 업로드 (마스터 전용)
 # =========================================================
@@ -1583,26 +1331,21 @@ def upload_vehicle_master():
     if not current_user.is_master:
         flash("❌ 마스터 계정만 업로드할 수 있습니다.")
         return redirect(url_for("upload_wash_list"))
-
     file = request.files.get("vehicle_file")
     if not file or not file.filename.endswith(".xlsx"):
         flash("❌ .xlsx 파일을 선택하세요.")
         return redirect(url_for("upload_wash_list"))
-
     try:
         df = pd.read_excel(file)
         df.columns = df.columns.str.strip()
-
         required = ["차량번호", "차종명", "차량소속"]
         for col in required:
             if col not in df.columns:
                 flash(f"❌ '{col}' 컬럼이 없습니다.")
                 return redirect(url_for("upload_wash_list"))
-
         today_str = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
         conn = get_wash_db()
         cur = conn.cursor()
-
         inserted = 0
         updated = 0
         for _, r in df.iterrows():
@@ -1613,7 +1356,6 @@ def upload_vehicle_master():
             스팟체크 = str(r.get("현재스팟명", "")).strip()
             if not 스팟체크 or 스팟체크.lower() == "nan":
                 continue
-
             차대번호 = str(r.get("차대번호", "")).strip() or None
             차종명 = str(r.get("차종명", "")).strip() or None
             차량소속 = str(r.get("차량소속", "")).strip() or None
@@ -1623,18 +1365,15 @@ def upload_vehicle_master():
             지역구군 = str(r.get("지역(구/군)", "")).strip() or None
             담당업체_raw = r.get("담당업체", None)
             담당업체 = str(담당업체_raw).strip() if 담당업체_raw and str(담당업체_raw).strip().lower() not in ("nan", "") else None
-
             최근세차일_raw = r.get("최근세차일", None) or r.get("세차일", None)
             최근세차일 = None
             if 최근세차일_raw and str(최근세차일_raw).strip().lower() not in ("nan", ""):
                 최근세차일 = str(최근세차일_raw).strip()
-
             세차경과일_raw = r.get("세차경과일", 0)
             try:
                 세차경과일 = int(float(세차경과일_raw)) if 세차경과일_raw and str(세차경과일_raw).lower() != "nan" else 0
             except:
                 세차경과일 = 0
-
             existing = cur.execute("SELECT id FROM vehicle_master WHERE 차량번호=?", (차량번호,)).fetchone()
             if existing:
                 cur.execute("""
@@ -1651,16 +1390,12 @@ def upload_vehicle_master():
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (차량번호, 차대번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 담당업체, 최근세차일, 세차경과일, today_str))
                 inserted += 1
-
         conn.commit()
         conn.close()
         flash(f"✔ 차량 마스터 업데이트 완료 — 신규 {inserted}대 / 업데이트 {updated}대")
     except Exception as e:
         flash(f"❌ 업로드 실패: {e}")
-
     return redirect(url_for("upload_wash_list"))
-
-
 # =========================================================
 # 밴드매칭 파일 업로드 (마스터 전용)
 # =========================================================
@@ -1669,12 +1404,10 @@ def upload_vehicle_master():
 def upload_band_matching():
     if not current_user.is_master:
         return jsonify({"ok": False, "message": "마스터 계정만 업로드할 수 있습니다."}), 403
-
     file = request.files.get("file")
     if not file or not file.filename.endswith(".xlsx"):
         flash("❌ .xlsx 파일을 선택하세요.")
         return redirect(url_for("upload_wash_list"))
-
     try:
         df = pd.read_excel(file)
         if "차량소속" not in df.columns or "밴드링크" not in df.columns:
@@ -1686,10 +1419,7 @@ def upload_band_matching():
         flash(f"✔ 밴드매칭 파일이 업데이트되었습니다. ({len(df)}개 항목)")
     except Exception as e:
         flash(f"❌ 업로드 실패: {e}")
-
     return redirect(url_for("upload_wash_list"))
-
-
 # =========================================================
 # 세차 대상 업로드
 # =========================================================
@@ -1699,23 +1429,19 @@ def upload_wash_list():
     if not current_user.is_master:
         flash("❌ 접근 권한이 없습니다.")
         return redirect(url_for("dashboard"))
-
     if request.method == "POST":
         wash_date = request.form.get("wash_date")
         if not wash_date:
             flash("❌ 세차일자를 선택하세요.")
             return redirect(url_for("upload_wash_list"))
-
         file = request.files.get("file")
         if not file:
             flash("❌ 업로드할 파일을 선택하세요.")
             return redirect(url_for("upload_wash_list"))
-
         filename = secure_filename(file.filename)
         os.makedirs(UPLOAD_DIR, exist_ok=True)
         filepath = os.path.join(UPLOAD_DIR, filename)
         file.save(filepath)
-
         df = pd.read_excel(filepath)
         required = [
             "차량번호", "차종명", "차량소속", "현재스팟명",
@@ -1725,7 +1451,6 @@ def upload_wash_list():
             if col not in df.columns:
                 flash(f"❌ '{col}' 컬럼이 없습니다.")
                 return redirect(url_for("upload_wash_list"))
-
         # 밴드링크: 엑셀 컬럼 우선, 없으면 밴드매칭 파일에서 조회
         has_band_col = "밴드링크" in df.columns
         band_dict = {}
@@ -1735,7 +1460,6 @@ def upload_wash_list():
             except Exception as e:
                 flash(f"❌ 밴드매칭 파일 오류: {e}")
                 return redirect(url_for("upload_wash_list"))
-
         has_elapsed_col = "세차경과일" in df.columns
         today_str = today_kst()
         conn = get_wash_db()
@@ -1749,7 +1473,6 @@ def upload_wash_list():
                 band = band_val if band_val and band_val.lower() not in ("nan", "") else None
             else:
                 band = find_band_link(band_dict, r["차량소속"], r.get("담당업체", ""))
-
             # 세차경과일 저장
             if has_elapsed_col:
                 try:
@@ -1758,9 +1481,7 @@ def upload_wash_list():
                     elapsed_days = 0
             else:
                 elapsed_days = 0
-
             차량번호 = str(r["차량번호"]).strip()
-
             # 같은 날짜에 같은 차량번호가 미완료로 이미 있으면 정보 업데이트 (이월된 오더 포함)
             existing = cur.execute(
                 "SELECT id FROM wash_list WHERE 차량번호=? AND 세차일=? AND 완료=0",
@@ -1800,13 +1521,11 @@ def upload_wash_list():
                 inserted += 1
         conn.commit()
         conn.close()
-
         if skipped:
             flash(f"✔ 업로드 완료 — {inserted}건 신규등록, {skipped}건 정보 업데이트")
         else:
             flash(f"✔ 업로드 완료 — {inserted}건 등록")
         return redirect(url_for("upload_wash_list"))
-
     # 날짜 목록 조회 (삭제 UI용)
     conn = get_wash_db()
     date_list = conn.execute(
@@ -1814,10 +1533,7 @@ def upload_wash_list():
     ).fetchall()
     total_count = conn.execute("SELECT COUNT(*) AS c FROM wash_list WHERE 완료=0").fetchone()["c"]
     conn.close()
-
     return render_template("upload_wash_list.html", date_list=date_list, total_count=total_count)
-
-
 # =========================================================
 # 기존 오더 중복 제거 (마스터 전용)
 # =========================================================
@@ -1827,7 +1543,6 @@ def wash_deduplicate():
     if not current_user.is_master:
         flash("❌ 마스터 계정만 실행할 수 있습니다.")
         return redirect(url_for("upload_wash_list"))
-
     conn = get_wash_db()
     cur = conn.cursor()
     cur.execute("""
@@ -1843,11 +1558,8 @@ def wash_deduplicate():
     deleted = cur.rowcount
     conn.commit()
     conn.close()
-
     flash(f"✔ 중복 오더 {deleted}건 삭제 완료")
     return redirect(url_for("upload_wash_list"))
-
-
 @app.route("/wash_force_rollover", methods=["POST"])
 @login_required
 def wash_force_rollover():
@@ -1855,7 +1567,6 @@ def wash_force_rollover():
     if not current_user.is_master:
         flash("❌ 마스터 계정만 실행할 수 있습니다.")
         return redirect(url_for("upload_wash_list"))
-
     today_str = today_kst()
     conn = get_wash_db()
     cur = conn.cursor()
@@ -1876,10 +1587,7 @@ def wash_force_rollover():
         flash(f"❌ 이월 오류: {e}")
     finally:
         conn.close()
-
     return redirect(url_for("upload_wash_list"))
-
-
 # =========================================================
 # 세차 스케줄 삭제 (날짜별 or 전체)
 # =========================================================
@@ -1889,10 +1597,8 @@ def wash_schedule_delete():
     if not current_user.is_master:
         flash("❌ 마스터 계정만 삭제할 수 있습니다.")
         return redirect(url_for("upload_wash_list"))
-
     delete_type = request.form.get("delete_type")
     conn = get_wash_db()
-
     if delete_type == "all":
         conn.execute("DELETE FROM wash_list")
         conn.commit()
@@ -1911,10 +1617,7 @@ def wash_schedule_delete():
     else:
         conn.close()
         flash("❌ 올바른 삭제 방식을 선택하세요.")
-
     return redirect(url_for("upload_wash_list"))
-
-
 # =========================================================
 # 세차 대상 리스트
 # =========================================================
@@ -1923,24 +1626,19 @@ def wash_schedule_delete():
 def wash_list():
     conn = get_wash_db()
     cur = conn.cursor()
-
     today = today_kst()
     selected_date = request.args.get("date", today)
-
     query = "SELECT * FROM wash_list WHERE 세차일 = ? AND 완료 = 0"
     params = [selected_date]
-
     scope_sql, scope_params = scoped_condition("wash_list", current_user)
     query += scope_sql
     params += scope_params
-
     search = request.args.get("s", "")
     r1 = request.args.get("r1", "")
     r2 = request.args.get("r2", "")
     org = request.args.get("org", "")
     spot = request.args.get("spot", "")
     vendor = request.args.get("vendor", "")
-
     if search:
         query += " AND (차량번호 LIKE ? OR 스팟 LIKE ? OR 차량소속 LIKE ?)"
         params += [f"%{search}%", f"%{search}%", f"%{search}%"]
@@ -1959,28 +1657,22 @@ def wash_list():
     if vendor and current_user.is_master:
         query += " AND 업체 = ?"
         params.append(vendor)
-
     query += " ORDER BY 세차경과일 DESC, 이월횟수 DESC, id DESC"
     rows = cur.execute(query, params).fetchall()
-
     # 세차경과일 컬럼 기준으로 장기/정기 분류
     LONG_WASH_DAYS = 14
-
     rows_with_days = []
     for r in rows:
         elapsed = r["세차경과일"] or 0
         rows_with_days.append({"row": r, "elapsed": elapsed})
-
     long_wash_rows = [x for x in rows_with_days if x["elapsed"] >= LONG_WASH_DAYS]
     regular_rows = [x for x in rows_with_days if x["elapsed"] < LONG_WASH_DAYS]
-
     filter_scope_sql, filter_scope_params = scoped_condition("wash_list", current_user)
     region1 = filter_distinct_values(cur, "wash_list", "지역시도", filter_scope_sql, filter_scope_params)
     region2 = filter_distinct_values(cur, "wash_list", "지역구군", filter_scope_sql, filter_scope_params)
     org_list = filter_distinct_values(cur, "wash_list", "차량소속", filter_scope_sql, filter_scope_params)
     spot_list = filter_distinct_values(cur, "wash_list", "스팟", filter_scope_sql, filter_scope_params)
     vendor_list = filter_distinct_values(cur, "wash_list", "업체", filter_scope_sql, filter_scope_params)
-
     order_count = len(rows)
     history_scope_sql, history_scope_params = scoped_condition("wash_history", current_user)
     completed_count = cur.execute(
@@ -1988,9 +1680,7 @@ def wash_list():
         [selected_date] + history_scope_params
     ).fetchone()["c"]
     total_target_count = order_count + completed_count
-
     conn.close()
-
     KOREA_REGIONS = {
         "서울특별시": ["강남구","강동구","강북구","강서구","관악구","광진구","구로구","금천구","노원구","도봉구","동대문구","동작구","마포구","서대문구","서초구","성동구","성북구","송파구","양천구","영등포구","용산구","은평구","종로구","중구","중랑구"],
         "부산광역시": ["강서구","금정구","기장군","남구","동구","동래구","부산진구","북구","사상구","사하구","서구","수영구","연제구","영도구","중구","해운대구"],
@@ -2010,7 +1700,6 @@ def wash_list():
         "경상남도": ["거제시","거창군","고성군","김해시","남해군","밀양시","사천시","산청군","양산시","의령군","진주시","창녕군","창원시","통영시","하동군","함안군","함양군","합천군"],
         "제주특별자치도": ["서귀포시","제주시"],
     }
-
     return render_template(
         "wash_list.html",
         rows=rows,
@@ -2035,9 +1724,6 @@ def wash_list():
         completed_count=completed_count,
         total_target_count=total_target_count
     )
-
-
-
 # =========================================================
 # 세차 오더 엑셀 다운로드
 # =========================================================
@@ -2045,7 +1731,6 @@ def wash_list():
 @login_required
 def wash_list_excel():
     from io import BytesIO
-
     today = today_kst()
     selected_date = request.args.get("date", today)
     search = request.args.get("s", "")
@@ -2054,15 +1739,12 @@ def wash_list_excel():
     org = request.args.get("org", "")
     spot = request.args.get("spot", "")
     vendor = request.args.get("vendor", "")
-
     conn = get_wash_db()
     query = "SELECT * FROM wash_list WHERE 세차일 = ? AND 완료 = 0"
     params = [selected_date]
-
     scope_sql, scope_params = scoped_condition("wash_list", current_user)
     query += scope_sql
     params += scope_params
-
     if search:
         query += " AND (차량번호 LIKE ? OR 스팟 LIKE ? OR 차량소속 LIKE ?)"
         params += [f"%{search}%", f"%{search}%", f"%{search}%"]
@@ -2081,12 +1763,9 @@ def wash_list_excel():
     if vendor and current_user.is_master:
         query += " AND 업체 = ?"
         params.append(vendor)
-
     query += " ORDER BY id DESC"
-
     df = pd.read_sql_query(query, conn, params=params)
     conn.close()
-
     preferred_cols = [
         "id", "차량번호", "차종명", "차량소속", "스팟", "주소",
         "지역시도", "지역구군", "업체", "세차일"
@@ -2095,7 +1774,6 @@ def wash_list_excel():
     extra_cols = [col for col in df.columns if col not in existing_cols]
     if existing_cols:
         df = df[existing_cols + extra_cols]
-
     output = BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, sheet_name="세차오더")
@@ -2107,20 +1785,14 @@ def wash_list_excel():
                 value = "" if cell.value is None else str(cell.value)
                 max_length = max(max_length, min(len(value) + 2, 40))
             worksheet.column_dimensions[column_letter].width = max_length
-
     output.seek(0)
     filename = f"wash_orders_{selected_date}.xlsx"
-
     return send_file(
         output,
         as_attachment=True,
         download_name=filename,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
-
-
-
 # =========================================================
 # 차량 상세 입력 페이지
 # =========================================================
@@ -2129,27 +1801,21 @@ def wash_list_excel():
 def car_detail(id):
     conn = get_wash_db()
     cur = conn.cursor()
-
     query = "SELECT * FROM wash_list WHERE id=?"
     params = [id]
     scope_sql, scope_params = scoped_condition("wash_list", current_user)
     query += scope_sql
     params += scope_params
-
     car = cur.execute(query, params).fetchone()
-
     terminal = None
     if car:
         terminal = cur.execute(
             "SELECT * FROM terminal_devices WHERE 차량번호=?",
             (car["차량번호"],)
         ).fetchone()
-
     conn.close()
-
     if not car:
         return "❌ 차량 정보를 찾을 수 없습니다.", 404
-
     from datetime import date as _date
     try:
         reg_date = (car["등록일"] or car["세차일"] or today_kst())[:10]
@@ -2157,22 +1823,17 @@ def car_detail(id):
     except Exception:
         elapsed = 0
     is_long_wash = elapsed >= 14
-
     return render_template("car_detail.html", car=car, elapsed=elapsed, is_long_wash=is_long_wash, terminal=terminal)
-
-
 # =========================================================
 # 오토플러그 차량 제어
 # =========================================================
 import os as _os_env, requests as _requests
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 _CLIENT_ID_MAP = {
     "PEOPLECAR-CAR123-PROD": _os_env.environ.get("CLIENT_ID_CAR123", "44d0cc23b8ea5a36f11aeaa69d6baeda"),
     "PEOPLECAR-PROD": _os_env.environ.get("CLIENT_ID_GENERAL", "dbd8e7fc563e462781c24b39d4378568"),
 }
-
 def _otoplug_session(car_org):
     if car_org == "카일이삼제스퍼":
         acc_id = _os_env.environ.get("OTOPLUG_ID_CAR123", "PPCC123PROD")
@@ -2193,15 +1854,12 @@ def _otoplug_session(car_org):
     except Exception:
         pass
     return None
-
-
 @app.route("/car_control/<int:wash_id>", methods=["POST"])
 @login_required
 def car_control(wash_id):
     command = request.json.get("command")
     if command not in ("lock", "unlock", "hazard"):
         return jsonify({"ok": False, "message": "잘못된 명령"}), 400
-
     conn = get_wash_db()
     car = conn.execute(
         "SELECT 차량번호, 차량소속 FROM wash_list WHERE id=?", (wash_id,)
@@ -2213,16 +1871,13 @@ def car_control(wash_id):
             (car["차량번호"],)
         ).fetchone()
     conn.close()
-
     if not car:
         return jsonify({"ok": False, "message": "차량 없음"}), 404
     if not terminal:
         return jsonify({"ok": False, "message": "단말기 정보 없음. 관리자에게 문의하세요."}), 404
-
     sess = _otoplug_session(car["차량소속"])
     if not sess:
         return jsonify({"ok": False, "message": "오토플러그 로그인 실패"}), 500
-
     url_map = {
         "unlock": "https://maintenance.otoplug.com:40443/tl/doorunlock",
         "lock":   "https://maintenance.otoplug.com:40443/tl/doorlock",
@@ -2230,7 +1885,6 @@ def car_control(wash_id):
     }
     hex_client   = _CLIENT_ID_MAP.get(terminal["client_id"].strip(), terminal["client_id"].strip().lower())
     hex_terminal = terminal["terminal_id"].strip().lower()
-
     try:
         resp = sess.post(
             url_map[command],
@@ -2246,15 +1900,11 @@ def car_control(wash_id):
             return jsonify({"ok": False, "message": f"서버 거부: {result}"})
     except Exception as e:
         return jsonify({"ok": False, "message": f"통신 오류: {str(e)}"})
-
-
 @app.route("/door_control", methods=["GET"])
 @login_required
 def door_control():
     """차량번호 직접 입력 도어 제어 페이지"""
     return render_template("door_control.html")
-
-
 @app.route("/door_control_action", methods=["POST"])
 @login_required
 def door_control_action():
@@ -2262,26 +1912,21 @@ def door_control_action():
     data = request.json
     car_no  = (data.get("car_no") or "").strip()
     command = data.get("command")
-
     if not car_no:
         return jsonify({"ok": False, "message": "차량번호를 입력해주세요."})
     if command not in ("lock", "unlock", "hazard"):
         return jsonify({"ok": False, "message": "잘못된 명령"})
-
     conn = get_wash_db()
     terminal = conn.execute(
         "SELECT terminal_id, client_id, 차량소속 FROM terminal_devices WHERE 차량번호=?",
         (car_no,)
     ).fetchone()
     conn.close()
-
     if not terminal:
         return jsonify({"ok": False, "message": f"'{car_no}' 단말기 정보 없음. 단말기 등록 여부를 확인하세요."})
-
     sess = _otoplug_session(terminal["차량소속"])
     if not sess:
         return jsonify({"ok": False, "message": "오토플러그 로그인 실패"})
-
     url_map = {
         "unlock": "https://maintenance.otoplug.com:40443/tl/doorunlock",
         "lock":   "https://maintenance.otoplug.com:40443/tl/doorlock",
@@ -2289,7 +1934,6 @@ def door_control_action():
     }
     hex_client   = _CLIENT_ID_MAP.get(terminal["client_id"].strip(), terminal["client_id"].strip().lower())
     hex_terminal = terminal["terminal_id"].strip().lower()
-
     try:
         resp = sess.post(
             url_map[command],
@@ -2305,8 +1949,6 @@ def door_control_action():
             return jsonify({"ok": False, "message": f"서버 거부: {result}"})
     except Exception as e:
         return jsonify({"ok": False, "message": f"통신 오류: {str(e)}"})
-
-
 # =========================================================
 # 단말기 엑셀 업로드
 # =========================================================
@@ -2316,18 +1958,15 @@ def upload_terminal():
     if not current_user.is_master:
         flash("❌ 마스터 계정만 접근 가능합니다.")
         return redirect(url_for("upload_wash_list"))
-
     if request.method == "POST":
         file = request.files.get("file")
         if not file or not file.filename.lower().endswith(".xls"):
             flash("❌ .xls 파일만 업로드 가능합니다.")
             return redirect(url_for("upload_terminal"))
-
         import xlrd, tempfile
         with tempfile.NamedTemporaryFile(delete=False, suffix=".xls") as tmp:
             file.save(tmp.name)
             tmp_path = tmp.name
-
         try:
             wb = xlrd.open_workbook(tmp_path)
             sheet = wb.sheet_by_index(0)
@@ -2359,15 +1998,11 @@ def upload_terminal():
         finally:
             import os as _ot
             _ot.unlink(tmp_path)
-
         return redirect(url_for("upload_terminal"))
-
     conn = get_wash_db()
     total = conn.execute("SELECT COUNT(*) AS c FROM terminal_devices").fetchone()["c"]
     conn.close()
     return render_template("upload_terminal.html", total=total)
-
-
 # =========================================================
 # 밴드 링크 조회
 # =========================================================
@@ -2386,40 +2021,30 @@ def car_history():
     ).fetchall()
     conn.close()
     return jsonify({"rows": [dict(r) for r in rows]})
-
-
 @app.route("/band_link/<int:id>", methods=["GET"])
 @login_required
 def band_link(id):
     conn = get_wash_db()
     cur = conn.cursor()
-
     query = "SELECT * FROM wash_list WHERE id=?"
     params = [id]
     scope_sql, scope_params = scoped_condition("wash_list", current_user)
     query += scope_sql
     params += scope_params
-
     car = cur.execute(query, params).fetchone()
     conn.close()
-
     if not car:
         return jsonify({"ok": False, "message": "차량 정보를 찾을 수 없습니다."}), 404
-
     try:
         band_dict = load_band_mapping()
     except Exception as e:
         return jsonify({"ok": False, "message": f"밴드매칭 파일 오류: {e}"}), 500
-
     car_org = str(car["차량소속"]).strip()
     vendor = str(car["업체"] or "").strip()
     band = find_band_link(band_dict, car_org, vendor)
     if not band:
         return jsonify({"ok": False, "message": f"'{car_org}' 차량소속의 밴드 링크가 없습니다."}), 404
-
     return jsonify({"ok": True, "band_link": band, "car_org": car_org})
-
-
 # =========================================================
 # 세차 완료 처리
 # =========================================================
@@ -2428,19 +2053,16 @@ def band_link(id):
 def wash_complete(id):
     conn = get_wash_db()
     cur = conn.cursor()
-
     query = "SELECT * FROM wash_list WHERE id=? AND 완료=0"
     params = [id]
     scope_sql, scope_params = scoped_condition("wash_list", current_user)
     query += scope_sql
     params += scope_params
     row = cur.execute(query, params).fetchone()
-
     if not row:
         conn.close()
         flash("❌ 이미 완료 처리됐거나 존재하지 않는 오더입니다.")
         return redirect(url_for("wash_list"))
-
     done_date = today_kst()
     try:
         cur.execute(
@@ -2466,11 +2088,8 @@ def wash_complete(id):
         conn.close()
         flash(f"❌ 완료 처리 오류: {e}")
         return redirect(url_for("wash_list"))
-
     conn.close()
     return redirect(url_for("wash_status"))
-
-
 # =========================================================
 # 세차 현황
 # =========================================================
@@ -2487,16 +2106,13 @@ def wash_status():
     end = request.args.get("end", "")
     today_str = today_kst()
     selected_date = request.args.get("date", today_str)
-
     conn = get_wash_db()
     cur = conn.cursor()
-
     query = "SELECT * FROM wash_history WHERE 1=1"
     params = []
     scope_sql, scope_params = scoped_condition("wash_history", current_user)
     query += scope_sql
     params += scope_params
-
     if s:
         query += " AND (차량번호 LIKE ? OR 스팟 LIKE ?)"
         params += [f"%{s}%", f"%{s}%"]
@@ -2522,16 +2138,13 @@ def wash_status():
         # 날짜 네비게이터 기준 단일 날짜 필터
         query += " AND 세차완료일=?"
         params.append(selected_date)
-
     query += " ORDER BY id DESC"
     rows = cur.execute(query, params).fetchall()
-
     region1 = filter_distinct_values(cur, "wash_history", "지역시도", scope_sql, scope_params)
     region2 = filter_distinct_values(cur, "wash_history", "지역구군", scope_sql, scope_params)
     car_org_list = filter_distinct_values(cur, "wash_history", "차량소속", scope_sql, scope_params)
     spot_list = filter_distinct_values(cur, "wash_history", "스팟", scope_sql, scope_params)
     vendor_list = filter_distinct_values(cur, "wash_history", "업체", scope_sql, scope_params)
-
     today_completed_count = cur.execute(
         "SELECT COUNT(*) AS c FROM wash_history WHERE 세차완료일 = ?" + scope_sql,
         [today_str] + scope_params
@@ -2545,9 +2158,7 @@ def wash_status():
         scope_params
     ).fetchone()["c"]
     filtered_count = len(rows)
-
     conn.close()
-
     return render_template(
         "wash_status.html",
         rows=rows,
@@ -2571,10 +2182,7 @@ def wash_status():
         total_completed_count=total_completed_count,
         filtered_count=filtered_count
     )
-
-
 # =============================================
-
 # =========================================================
 # 누락 라우트 스텁 / 기능 추가
 # =========================================================
@@ -2597,8 +2205,6 @@ def support_manage():
         ).fetchall()
     conn.close()
     return render_template("support_manage.html", rows=rows, selected_status=selected_status)
-
-
 @app.route("/support_reply/<int:ticket_id>", methods=["POST"])
 @login_required
 def support_reply(ticket_id):
@@ -2616,8 +2222,6 @@ def support_reply(ticket_id):
     conn.close()
     flash("\u2714 저장되었습니다.")
     return redirect(url_for("support_manage"))
-
-
 @app.route("/support_delete/<int:ticket_id>", methods=["POST"])
 @login_required
 def support_delete(ticket_id):
@@ -2630,20 +2234,14 @@ def support_delete(ticket_id):
     conn.close()
     flash("\u2714 삭제되었습니다.")
     return redirect(url_for("support_manage"))
-
-
 @app.route("/support_chat", methods=["GET", "POST"])
 @login_required
 def support_chat():
     return redirect(url_for("dashboard"))
-
-
 @app.route("/api/support_alerts_poll")
 @login_required
 def support_alerts_poll():
     return jsonify({"alerts": [], "count": 0})
-
-
 @app.route("/wash_list_delete", methods=["POST"])
 @login_required
 def wash_list_delete():
@@ -2662,8 +2260,6 @@ def wash_list_delete():
         conn.close()
         flash(f"\u2714 {len(ids)}건 삭제되었습니다.")
     return redirect(url_for("wash_list") + ("?" + return_query if return_query else ""))
-
-
 @app.route("/wash_status_delete", methods=["POST"])
 @login_required
 def wash_status_delete():
@@ -2685,8 +2281,6 @@ def wash_status_delete():
 SLACK_DAMAGE_WEBHOOK = os.environ.get("SLACK_DAMAGE_WEBHOOK", "")
 APP_BASE_URL = os.environ.get("APP_BASE_URL", "https://turucar-wash-system-production.up.railway.app")
 ALLOWED_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp"}
-
-
 def _save_damage_photo(file_obj):
     if not file_obj or not file_obj.filename:
         return None
@@ -2697,24 +2291,183 @@ def _save_damage_photo(file_obj):
     fname = f"{uuid.uuid4().hex}{ext}"
     file_obj.save(os.path.join(DAMAGE_UPLOAD_DIR, fname))
     return fname
-
-
 def _send_damage_slack(report, base_url):
     if not SLACK_DAMAGE_WEBHOOK:
         print("[Slack] SLACK_DAMAGE_WEBHOOK 환경변수가 비어있습니다.")
         return
     manage_url = f"{base_url}/damage_manage"
-    text = (
-        f"🚨 *차량 훼손 제보 접수*\n"
-        f"• 차량번호: {report['car_number']}\n"
-        f"• 세차일자: {report['wash_date']}\n"
-        f"• 훼손 부위: {report['damage_location']}\n"
-        f"• 제보자: {report['reporter']} ({report.get('vendor', '')})\n"
-        f"• 상세: {report.get('description') or '-'}\n"
-        f"<{manage_url}|제보 관리 페이지 열기>"
-    )
+    photos = []
+    for field in ("photo_front", "photo_damage1", "photo_damage2"):
+        fname = report.get(field)
+        if fname:
+            photos.append(f"{base_url}/damage_photo/{fname}")
+    photo_text = "\n".join([f"📷 <{u}|사진 보기>" for u in photos]) if photos else "_(사진 없음)_"
+    blocks = [
+        {"type": "header", "text": {"type": "plain_text", "text": "🚨 차량 훼손 제보 접수"}},
+        {"type": "section", "fields": [
+            {"type": "mrkdwn", "text": f"*차량번호*\n{report['car_number']}"},
+            {"type": "mrkdwn", "text": f"*세차일자*\n{report['wash_date']}"},
+            {"type": "mrkdwn", "text": f"*훼손 부위*\n{report['damage_location']}"},
+            {"type": "mrkdwn", "text": f"*제보자*\n{report['reporter']} ({report.get('vendor','')})"},
+        ]},
+    ]
+    if report.get("description"):
+        blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": f"*상세 내용*\n{report['description']}"}})
+    blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": f"*첨부 사진*\n{photo_text}"}})
+    blocks.append({"type": "actions", "elements": [{"type": "button", "text": {"type": "plain_text", "text": "제보 관리 페이지 열기"}, "url": manage_url, "style": "primary"}]})
     try:
-        resp = _requests.post(SLACK_DAMAGE_WEBHOOK, json={"text": text}, timeout=5)
+        resp = _requests.post(SLACK_DAMAGE_WEBHOOK, json={"blocks": blocks}, timeout=5)
         print(f"[Slack] status={resp.status_code}, body={resp.text[:200]}")
     except Exception as e:
         print(f"[Slack] 전송 오류: {e}")
+@app.context_processor
+def inject_damage_badge_count():
+    if not current_user.is_authenticated:
+        return {"damage_badge_count": 0}
+    if not (current_user.is_master or getattr(current_user, 'is_admin', False)):
+        return {"damage_badge_count": 0}
+    try:
+        conn = get_user_db()
+        row = conn.execute("SELECT COUNT(*) AS c FROM damage_reports WHERE status='접수'").fetchone()
+        conn.close()
+        return {"damage_badge_count": row["c"] if row else 0}
+    except Exception:
+        return {"damage_badge_count": 0}
+@app.route("/damage_photo/<filename>")
+def serve_damage_photo(filename):
+    safe = secure_filename(filename)
+    photo_path = os.path.join(DAMAGE_UPLOAD_DIR, safe)
+    if not os.path.exists(photo_path):
+        return "Not found", 404
+    return send_from_directory(DAMAGE_UPLOAD_DIR, safe)
+@app.route("/support_submit", methods=["GET", "POST"])
+@login_required
+def support_submit():
+    if request.method == "POST":
+        car_number = request.form.get("car_number", "").strip()
+        category = request.form.get("category", "").strip()
+        message = request.form.get("message", "").strip()
+        if not car_number or not category or not message:
+            flash("차량번호, 문의 유형, 문의 내용은 필수입니다.")
+            return redirect(url_for("support_submit"))
+        created_at = now_kst().strftime("%Y-%m-%d %H:%M")
+        conn = get_user_db()
+        conn.execute(
+            """INSERT INTO support_tickets
+               (category, car_number, message, requester, requester_role, vendor, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (category, car_number, message,
+             current_user.username,
+             getattr(current_user, "role", "staff"),
+             getattr(current_user, "vendor", "") or "",
+             created_at)
+        )
+        conn.commit()
+        conn.close()
+        flash("✅ 문의가 접수되었습니다.")
+        return redirect(url_for("support_submit"))
+    return render_template("support_submit.html")
+
+
+@app.route("/support_choice")
+@login_required
+def support_choice():
+    return render_template("support_choice.html")
+@app.route("/damage_submit", methods=["GET", "POST"])
+@login_required
+def damage_submit():
+    if request.method == "POST":
+        car_number = request.form.get("car_number", "").strip()
+        wash_date = request.form.get("wash_date", "").strip()
+        damage_location = request.form.get("damage_location", "").strip()
+        description = request.form.get("description", "").strip()
+        if not car_number or not wash_date or not damage_location:
+            flash("차량번호, 세차일자, 훼손 부위는 필수입니다.")
+            return redirect(url_for("damage_submit"))
+        photo_front = _save_damage_photo(request.files.get("photo_front"))
+        photo_damage1 = _save_damage_photo(request.files.get("photo_damage1"))
+        photo_damage2 = _save_damage_photo(request.files.get("photo_damage2"))
+        created_at = now_kst().strftime("%Y-%m-%d %H:%M")
+        conn = get_user_db()
+        conn.execute(
+            """INSERT INTO damage_reports
+               (car_number, wash_date, damage_location, description,
+                photo_front, photo_damage1, photo_damage2,
+                reporter, vendor, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (car_number, wash_date, damage_location, description,
+             photo_front, photo_damage1, photo_damage2,
+             current_user.username,
+             getattr(current_user, "vendor", "") or "",
+             created_at)
+        )
+        conn.commit()
+        conn.close()
+        _send_damage_slack({
+            "car_number": car_number, "wash_date": wash_date,
+            "damage_location": damage_location, "description": description,
+            "photo_front": photo_front, "photo_damage1": photo_damage1,
+            "photo_damage2": photo_damage2,
+            "reporter": current_user.username,
+            "vendor": getattr(current_user, "vendor", "") or "",
+        }, APP_BASE_URL)
+        flash("✅ 제보가 접수되었습니다.")
+        return redirect(url_for("damage_submit"))
+    return render_template("damage_submit.html", today=today_kst())
+@app.route("/damage_manage")
+@login_required
+def damage_manage():
+    if not (current_user.is_master or getattr(current_user, 'is_admin', False)):
+        flash("접근 권한이 없습니다.")
+        return redirect(url_for("dashboard"))
+    status_filter = request.args.get("status", "")
+    conn = get_user_db()
+    if status_filter:
+        rows = conn.execute("SELECT * FROM damage_reports WHERE status=? ORDER BY id DESC", (status_filter,)).fetchall()
+    else:
+        rows = conn.execute("SELECT * FROM damage_reports ORDER BY id DESC").fetchall()
+    conn.close()
+    return render_template("damage_manage.html", rows=rows, selected_status=status_filter)
+@app.route("/damage_reply/<int:report_id>", methods=["POST"])
+@login_required
+def damage_reply(report_id):
+    if not (current_user.is_master or getattr(current_user, 'is_admin', False)):
+        return "Forbidden", 403
+    status = request.form.get("status", "접수")
+    admin_reply = request.form.get("admin_reply", "")
+    updated_at = now_kst().strftime("%Y-%m-%d %H:%M")
+    conn = get_user_db()
+    conn.execute("UPDATE damage_reports SET status=?, admin_reply=?, updated_at=? WHERE id=?",
+                 (status, admin_reply, updated_at, report_id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("damage_manage"))
+@app.route("/damage_delete/<int:report_id>", methods=["POST"])
+@login_required
+def damage_delete(report_id):
+    if not current_user.is_master:
+        return "Forbidden", 403
+    conn = get_user_db()
+    row = conn.execute("SELECT * FROM damage_reports WHERE id=?", (report_id,)).fetchone()
+    if row:
+        for field in ("photo_front", "photo_damage1", "photo_damage2"):
+            fname = row[field]
+            if fname:
+                try:
+                    os.remove(os.path.join(DAMAGE_UPLOAD_DIR, fname))
+                except OSError:
+                    pass
+        conn.execute("DELETE FROM damage_reports WHERE id=?", (report_id,))
+        conn.commit()
+    conn.close()
+    return redirect(url_for("damage_manage"))
+@app.route("/damage_alerts_poll")
+@login_required
+def damage_alerts_poll():
+    if not (current_user.is_master or getattr(current_user, 'is_admin', False)):
+        return jsonify({"count": 0})
+    since_id = request.args.get("since_id", 0, type=int)
+    conn = get_user_db()
+    rows = conn.execute("SELECT id FROM damage_reports WHERE status='접수' AND id > ? ORDER BY id DESC", (since_id,)).fetchall()
+    conn.close()
+    return jsonify({"count": len(rows), "new_ids": [r["id"] for r in rows]})

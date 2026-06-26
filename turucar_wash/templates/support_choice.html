@@ -3,59 +3,71 @@
 {% block content %}
 
 {# ══ 모바일 ══ #}
-<div class="sc-page">
-  <div class="sc-hero">
-    <div class="sc-hero-icon">
-      <i class="ti ti-headset"></i>
+<section class="turu-app-page-v24 turu-order-page-v24">
+
+  <header class="turu-page-brand-v24 turu-page-brand-v26">
+    <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=1" alt="TURU CAR">
+  </header>
+
+  <div class="turu-page-head-v24 turu-page-head--single-v25">
+    <div>
+      <h1>문의 / 제보</h1>
+      <p>아래 메뉴를 선택해주세요</p>
     </div>
-    <h1>문의 / 제보</h1>
-    <p>아래 메뉴를 선택해 주세요</p>
   </div>
 
-  <div class="sc-cards">
+  <div class="turu-card-list-v24" style="gap:12px;">
+
     {% if current_user.is_master or current_user.is_admin %}
-    <a href="{{ url_for('support_manage') }}" class="sc-card sc-card--orange">
-      <div class="sc-card-icon"><i class="ti ti-message-dots"></i></div>
-      <div class="sc-card-body">
-        <strong>문의 관리</strong>
-        <span>접수된 문의 확인 및 답변</span>
-        {% if support_badge_count %}
-        <em class="sc-badge">{{ support_badge_count }}건 미확인</em>
-        {% endif %}
+
+    <a href="{{ url_for('support_manage') }}" class="turu-order-card-v24 sc-choice-card">
+      <div class="turu-card-copy-v24">
+        <p class="turu-card-title-v24">
+          <strong>문의 관리</strong>
+          {% if support_badge_count %}
+          <span class="sc-chip sc-chip--orange">{{ support_badge_count }}건 미확인</span>
+          {% endif %}
+        </p>
+        <p><span class="sc-icon-wrap sc-icon-wrap--orange"><i class="ti ti-message-dots"></i></span> 접수된 문의 확인 및 답변</p>
       </div>
-      <i class="ti ti-chevron-right sc-card-arrow"></i>
+      <div class="turu-row-arrow-v24">›</div>
     </a>
-    <a href="{{ url_for('damage_manage') }}" class="sc-card sc-card--red">
-      <div class="sc-card-icon"><i class="ti ti-alert-triangle"></i></div>
-      <div class="sc-card-body">
-        <strong>훼손 제보 관리</strong>
-        <span>차량 훼손 제보 내역 확인</span>
-        {% if damage_badge_count %}
-        <em class="sc-badge">{{ damage_badge_count }}건 미확인</em>
-        {% endif %}
+
+    <a href="{{ url_for('damage_manage') }}" class="turu-order-card-v24 sc-choice-card">
+      <div class="turu-card-copy-v24">
+        <p class="turu-card-title-v24">
+          <strong>훼손 제보 관리</strong>
+          {% if damage_badge_count %}
+          <span class="sc-chip sc-chip--red">{{ damage_badge_count }}건 미확인</span>
+          {% endif %}
+        </p>
+        <p><span class="sc-icon-wrap sc-icon-wrap--red"><i class="ti ti-alert-triangle"></i></span> 차량 훼손 제보 내역 확인</p>
       </div>
-      <i class="ti ti-chevron-right sc-card-arrow"></i>
+      <div class="turu-row-arrow-v24">›</div>
     </a>
+
     {% else %}
-    <a href="{{ url_for('support_submit') }}" class="sc-card sc-card--orange">
-      <div class="sc-card-icon"><i class="ti ti-message-dots"></i></div>
-      <div class="sc-card-body">
-        <strong>문의하기</strong>
-        <span>세차 업무 관련 문의 접수</span>
+
+    <a href="{{ url_for('support_submit') }}" class="turu-order-card-v24 sc-choice-card">
+      <div class="turu-card-copy-v24">
+        <p class="turu-card-title-v24"><strong>문의하기</strong></p>
+        <p><span class="sc-icon-wrap sc-icon-wrap--orange"><i class="ti ti-message-dots"></i></span> 세차 업무 관련 문의 접수</p>
       </div>
-      <i class="ti ti-chevron-right sc-card-arrow"></i>
+      <div class="turu-row-arrow-v24">›</div>
     </a>
-    <a href="{{ url_for('damage_submit') }}" class="sc-card sc-card--red">
-      <div class="sc-card-icon"><i class="ti ti-alert-triangle"></i></div>
-      <div class="sc-card-body">
-        <strong>차량 훼손 제보</strong>
-        <span>세차 중 발견한 차량 외관 훼손 제출</span>
+
+    <a href="{{ url_for('damage_submit') }}" class="turu-order-card-v24 sc-choice-card">
+      <div class="turu-card-copy-v24">
+        <p class="turu-card-title-v24"><strong>차량 훼손 제보</strong></p>
+        <p><span class="sc-icon-wrap sc-icon-wrap--red"><i class="ti ti-alert-triangle"></i></span> 세차 중 발견한 차량 외관 훼손 제출</p>
       </div>
-      <i class="ti ti-chevron-right sc-card-arrow"></i>
+      <div class="turu-row-arrow-v24">›</div>
     </a>
+
     {% endif %}
+
   </div>
-</div>
+</section>
 
 {# ══ 데스크탑 ══ #}
 <div id="d-support-choice" style="display:none;">
@@ -101,106 +113,36 @@
 </div>
 
 <style>
-/* ── 모바일 페이지 래퍼 ── */
-.sc-page {
-  padding: 0 0 32px;
-}
-.sc-hero {
-  display: flex;
-  flex-direction: column;
+/* 선택 카드 아이콘 뱃지 */
+.sc-chip {
+  display: inline-flex;
   align-items: center;
-  padding: 36px 20px 24px;
-  text-align: center;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 9px;
+  margin-left: 6px;
+  vertical-align: middle;
 }
-.sc-hero-icon {
-  width: 64px; height: 64px; border-radius: 18px;
-  background: linear-gradient(135deg, #FF9900, #ff6b35);
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 16px rgba(255,153,0,.3);
-}
-.sc-hero-icon .ti { font-size: 32px; color: #fff; }
-.sc-hero h1 { font-size: 22px; font-weight: 800; margin: 0 0 6px; }
-.sc-hero p  { font-size: 14px; color: var(--text-secondary); margin: 0; }
+.sc-chip--orange { background: #fff3e0; color: #e65100; }
+.sc-chip--red    { background: #fce4ec; color: #c62828; }
 
-.sc-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 0 16px;
-}
-
-.sc-card {
-  display: flex;
+.sc-icon-wrap {
+  display: inline-flex;
   align-items: center;
-  gap: 14px;
-  padding: 18px 16px;
-  border-radius: 16px;
-  text-decoration: none;
-  color: inherit;
-  transition: transform .12s, box-shadow .12s;
-  border: 1.5px solid transparent;
+  justify-content: center;
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  margin-right: 4px;
+  font-size: 14px;
+  vertical-align: middle;
 }
-.sc-card:active { transform: scale(.98); }
-.sc-card--orange {
-  background: #fff8f0;
-  border-color: #ffe0b2;
-}
-.sc-card--red {
-  background: #fff5f5;
-  border-color: #ffcdd2;
-}
-.sc-card--large {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 24px 20px;
-}
-.sc-card-icon {
-  width: 48px; height: 48px; border-radius: 12px;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.sc-card--orange .sc-card-icon { background: #fff3e0; }
-.sc-card--orange .sc-card-icon .ti { font-size: 24px; color: #e65100; }
-.sc-card--red .sc-card-icon { background: #fce4ec; }
-.sc-card--red .sc-card-icon .ti { font-size: 24px; color: #c62828; }
+.sc-icon-wrap--orange { background: #fff3e0; color: #e65100; }
+.sc-icon-wrap--red    { background: #fce4ec; color: #c62828; }
 
-.sc-card-icon-lg {
-  width: 56px; height: 56px; border-radius: 14px;
-  background: linear-gradient(135deg, #e53935, #c62828);
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 3px 10px rgba(229,57,53,.3);
-}
-.sc-card-icon-lg .ti { font-size: 28px; color: #fff; }
-
-.sc-card-body { flex: 1; display: flex; flex-direction: column; gap: 3px; }
-.sc-card-body strong { font-size: 16px; font-weight: 700; }
-.sc-card-body span   { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
-.sc-card-arrow { font-size: 18px; color: var(--text-tertiary); flex-shrink: 0; }
-
-.sc-badge {
-  display: inline-block; margin-top: 5px;
-  background: #e53935; color: #fff; border-radius: 99px;
-  font-size: 11px; font-weight: 700; padding: 2px 9px; width: fit-content;
-}
-.sc-cta {
-  display: inline-block; margin-top: 8px;
-  font-size: 13px; font-weight: 700;
-  color: #c62828;
-}
-
-.sc-notice {
-  display: flex; gap: 10px; align-items: flex-start;
-  background: #f5f5f5; border-radius: 12px;
-  padding: 14px 16px;
-  color: var(--text-secondary);
-  font-size: 13px; line-height: 1.6;
-}
-.sc-notice .ti { font-size: 18px; color: #9e9e9e; flex-shrink: 0; margin-top: 1px; }
-
-/* ── 데스크탑 ── */
+/* 데스크탑 */
 #desktop-mode #d-support-choice { display: block !important; }
-#desktop-mode .sc-page { display: none !important; }
+#desktop-mode .turu-app-page-v24 { display: none !important; }
 
 .d-choice-card {
   display: flex; align-items: center; gap: 16px;
@@ -209,7 +151,6 @@
   transition: background .15s; cursor: pointer;
 }
 .d-choice-card:hover { background: var(--surface-hover); }
-.d-choice-card--large { align-items: flex-start; }
 .d-choice-icon {
   width: 48px; height: 48px; border-radius: 12px;
   background: #fff3e0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
@@ -226,4 +167,5 @@
   font-size: 11px; font-weight: 700; padding: 2px 8px; width: fit-content;
 }
 </style>
+
 {% endblock %}

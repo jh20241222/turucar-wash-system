@@ -1,73 +1,102 @@
 {% extends "base.html" %}
 {% block document_title %}Turu Wash · 차량 훼손 제보{% endblock %}
 {% block content %}
-<section class="app-card elevated damage-submit-page">
-  <div style="padding:24px 20px 8px;">
-    <p class="eyebrow">제보</p>
-    <h1>차량 훼손 제보</h1>
-    <p style="color:var(--text-secondary);margin-top:4px;">세차 중 발견한 차량 훼손 내용을 제출해주세요.</p>
+
+{# ══ 모바일 ══ #}
+<section class="turu-app-page-v24 turu-order-page-v24">
+
+  <header class="turu-page-brand-v24 turu-page-brand-v26">
+    <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=1" alt="TURU CAR">
+  </header>
+
+  <div class="turu-page-head-v24 turu-page-head--single-v25">
+    <div>
+      <h1>차량 훼손 제보</h1>
+      <p>세차 중 발견한 차량 훼손 내용을 제출해주세요</p>
+    </div>
   </div>
 
   <form method="post" action="{{ url_for('damage_submit') }}" enctype="multipart/form-data"
-        style="padding:16px 20px 32px;display:flex;flex-direction:column;gap:16px;">
+        class="turu-card-list-v24 dmg-form-list">
 
-    <div class="field-group">
-      <label class="field-label">차량번호 <span class="required">*</span></label>
-      <input type="text" name="car_number" class="app-input" placeholder="예: 12가 3456" required>
+    {# 차량 정보 섹션 #}
+    <div class="dmg-section-card">
+      <p class="dmg-section-label">
+        <span class="dmg-label-icon"><i class="ti ti-car"></i></span> 차량 정보
+      </p>
+      <div class="dmg-field-group">
+        <label class="dmg-field-label">차량번호 <span class="dmg-required">*</span></label>
+        <input type="text" name="car_number" class="dmg-input" placeholder="예: 12가 3456" required>
+      </div>
+      <div class="dmg-field-group" style="margin-top:12px;">
+        <label class="dmg-field-label">세차일자 <span class="dmg-required">*</span></label>
+        <input type="date" name="wash_date" class="dmg-input" value="{{ today }}" required>
+      </div>
     </div>
 
-    <div class="field-group">
-      <label class="field-label">세차일자 <span class="required">*</span></label>
-      <input type="date" name="wash_date" class="app-input" value="{{ today }}" required>
+    {# 훼손 내용 섹션 #}
+    <div class="dmg-section-card">
+      <p class="dmg-section-label">
+        <span class="dmg-label-icon dmg-label-icon--red"><i class="ti ti-alert-triangle"></i></span> 훼손 내용
+      </p>
+      <div class="dmg-field-group">
+        <label class="dmg-field-label">훼손 부위 <span class="dmg-required">*</span></label>
+        <input type="text" name="damage_location" class="dmg-input"
+               placeholder="예: 운전석 도어 스크래치, 범퍼 찌그러짐" required>
+      </div>
+      <div class="dmg-field-group" style="margin-top:12px;">
+        <label class="dmg-field-label">상세 내용</label>
+        <textarea name="description" class="dmg-input dmg-textarea"
+                  placeholder="훼손 상황, 발견 경위 등 추가 설명"></textarea>
+      </div>
     </div>
 
-    <div class="field-group">
-      <label class="field-label">훼손 부위 <span class="required">*</span></label>
-      <input type="text" name="damage_location" class="app-input"
-             placeholder="예: 운전석 도어 스크래치, 범퍼 찌그러짐" required>
+    {# 사진 첨부 섹션 #}
+    <div class="dmg-section-card">
+      <p class="dmg-section-label">
+        <span class="dmg-label-icon"><i class="ti ti-camera"></i></span> 사진 첨부
+      </p>
+
+      <div class="dmg-field-group">
+        <label class="dmg-field-label">차량 정면 사진 <span class="dmg-required">*</span></label>
+        <label class="dmg-photo-btn" id="lbl-front">
+          <input type="file" name="photo_front" accept="image/*" capture="environment"
+                 onchange="previewPhoto(this,'prev-front','lbl-front')" required>
+          <i class="ti ti-camera"></i> 사진 촬영 / 선택
+        </label>
+        <img id="prev-front" class="dmg-photo-preview" style="display:none;">
+      </div>
+
+      <div class="dmg-field-group" style="margin-top:16px;">
+        <label class="dmg-field-label">훼손 부위 사진 1 <span class="dmg-required">*</span></label>
+        <label class="dmg-photo-btn" id="lbl-d1">
+          <input type="file" name="photo_damage1" accept="image/*" capture="environment"
+                 onchange="previewPhoto(this,'prev-d1','lbl-d1')" required>
+          <i class="ti ti-camera"></i> 사진 촬영 / 선택
+        </label>
+        <img id="prev-d1" class="dmg-photo-preview" style="display:none;">
+      </div>
+
+      <div class="dmg-field-group" style="margin-top:16px;">
+        <label class="dmg-field-label">훼손 부위 사진 2 <span style="color:var(--text-tertiary);font-weight:400;">(선택)</span></label>
+        <label class="dmg-photo-btn" id="lbl-d2">
+          <input type="file" name="photo_damage2" accept="image/*" capture="environment"
+                 onchange="previewPhoto(this,'prev-d2','lbl-d2')">
+          <i class="ti ti-camera"></i> 사진 촬영 / 선택
+        </label>
+        <img id="prev-d2" class="dmg-photo-preview" style="display:none;">
+      </div>
     </div>
 
-    <div class="field-group">
-      <label class="field-label">상세 내용</label>
-      <textarea name="description" class="app-input" rows="3"
-                placeholder="훼손 상황, 발견 경위 등 추가 설명"></textarea>
-    </div>
+    {# 제출 버튼 #}
+    <button type="submit" class="dmg-submit-btn">
+      <i class="ti ti-send"></i> 제보 제출
+    </button>
 
-    <div class="field-group">
-      <label class="field-label">차량 정면 사진 <span class="required">*</span></label>
-      <label class="photo-upload-btn" id="lbl-front">
-        <input type="file" name="photo_front" accept="image/*" capture="environment"
-               onchange="previewPhoto(this,'prev-front','lbl-front')" required>
-        <i class="ti ti-camera"></i> 사진 촬영 / 선택
-      </label>
-      <img id="prev-front" class="photo-preview" style="display:none;">
-    </div>
-
-    <div class="field-group">
-      <label class="field-label">훼손 부위 사진 1 <span class="required">*</span></label>
-      <label class="photo-upload-btn" id="lbl-d1">
-        <input type="file" name="photo_damage1" accept="image/*" capture="environment"
-               onchange="previewPhoto(this,'prev-d1','lbl-d1')" required>
-        <i class="ti ti-camera"></i> 사진 촬영 / 선택
-      </label>
-      <img id="prev-d1" class="photo-preview" style="display:none;">
-    </div>
-
-    <div class="field-group">
-      <label class="field-label">훼손 부위 사진 2</label>
-      <label class="photo-upload-btn" id="lbl-d2">
-        <input type="file" name="photo_damage2" accept="image/*" capture="environment"
-               onchange="previewPhoto(this,'prev-d2','lbl-d2')">
-        <i class="ti ti-camera"></i> 사진 촬영 / 선택
-      </label>
-      <img id="prev-d2" class="photo-preview" style="display:none;">
-    </div>
-
-    <button type="submit" class="primary-btn" style="margin-top:8px;">제보 제출</button>
   </form>
 </section>
 
-{# 데스크탑 #}
+{# ══ 데스크탑 ══ #}
 <div id="d-damage-submit" style="display:none;">
   <div class="d-wrap" style="max-width:600px;">
     <form method="post" action="{{ url_for('damage_submit') }}" enctype="multipart/form-data"
@@ -135,41 +164,134 @@
 </div>
 
 <style>
-.field-group { display:flex;flex-direction:column;gap:6px; }
-.field-label { font-size:13px;font-weight:600;color:var(--text-primary); }
-.required { color:#e53935; }
-textarea.app-input { resize:vertical;min-height:72px; }
-textarea.d-input { resize:vertical;min-height:72px;width:100%;box-sizing:border-box; }
+/* ── 폼 리스트 ── */
+.dmg-form-list {
+  gap: 12px;
+  padding-bottom: 32px;
+}
+
+/* ── 섹션 카드 ── */
+.dmg-section-card {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: 16px;
+  padding: 18px 16px;
+  margin: 0 4px;
+}
+
+.dmg-section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary, #757575);
+  margin: 0 0 14px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+.dmg-label-icon {
+  width: 24px; height: 24px; border-radius: 6px;
+  background: #fff3e0;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.dmg-label-icon .ti { font-size: 14px; color: #e65100; }
+.dmg-label-icon--red { background: #fce4ec; }
+.dmg-label-icon--red .ti { color: #c62828; }
+
+/* ── 필드 ── */
+.dmg-field-group { display: flex; flex-direction: column; gap: 6px; }
+.dmg-field-label  { font-size: 13px; font-weight: 600; color: var(--text-primary, #212121); }
+.dmg-required     { color: #e53935; }
+
+.dmg-input {
+  border: 1.5px solid var(--border, #e0e0e0);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 15px;
+  background: var(--background, #f5f5f5);
+  color: var(--text-primary, #212121);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: border-color .15s;
+}
+.dmg-input:focus { border-color: #FF9900; }
+.dmg-textarea { resize: vertical; min-height: 72px; }
+
+/* ── 사진 업로드 ── */
+.dmg-photo-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--background, #f5f5f5);
+  border: 2px dashed var(--border, #e0e0e0);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  font-size: 14px; font-weight: 600;
+  color: var(--text-secondary, #757575);
+  transition: border-color .15s;
+}
+.dmg-photo-btn:active { border-color: #FF9900; }
+.dmg-photo-btn input[type=file] { display: none; }
+.dmg-photo-btn .ti { font-size: 20px; }
+
+.dmg-photo-preview {
+  width: 100%; max-height: 200px;
+  object-fit: cover; border-radius: 10px; margin-top: 8px;
+}
+
+/* ── 제출 버튼 ── */
+.dmg-submit-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: linear-gradient(135deg, #e53935, #c62828);
+  color: #fff;
+  border: none; border-radius: 14px;
+  padding: 16px;
+  font-size: 16px; font-weight: 700;
+  cursor: pointer;
+  margin: 4px 4px 0;
+  transition: opacity .15s;
+  font-family: inherit;
+}
+.dmg-submit-btn:active { opacity: .85; }
+.dmg-submit-btn .ti { font-size: 18px; }
+
+/* ── 데스크탑 ── */
+#desktop-mode #d-damage-submit { display: block !important; }
+#desktop-mode .turu-app-page-v24 { display: none !important; }
+
+.field-group { display: flex; flex-direction: column; gap: 6px; }
+.field-label  { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.required     { color: #e53935; }
+textarea.d-input { resize: vertical; min-height: 72px; width: 100%; box-sizing: border-box; }
 
 .photo-upload-btn {
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  background:var(--surface);border:2px dashed var(--border);border-radius:10px;
-  padding:14px;cursor:pointer;font-size:14px;font-weight:600;color:var(--text-secondary);
-  transition:border-color .15s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--surface); border: 2px dashed var(--border); border-radius: 10px;
+  padding: 14px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--text-secondary);
+  transition: border-color .15s;
 }
-.photo-upload-btn:hover { border-color:var(--primary); }
-.photo-upload-btn input[type=file] { display:none; }
-.photo-preview {
-  width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:6px;
-}
-
-#desktop-mode #d-damage-submit { display:block !important; }
-#desktop-mode .app-card.elevated.damage-submit-page { display:none !important; }
+.photo-upload-btn:hover { border-color: var(--primary); }
+.photo-upload-btn input[type=file] { display: none; }
+.photo-preview { width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin-top: 6px; }
 </style>
 
 <script>
 function previewPhoto(input, previewId, labelId) {
-  const file = input.files[0];
+  var file = input.files[0];
   if (!file) return;
-  const reader = new FileReader();
+  var reader = new FileReader();
   reader.onload = function(e) {
-    const img = document.getElementById(previewId);
+    var img = document.getElementById(previewId);
     img.src = e.target.result;
     img.style.display = 'block';
-    const lbl = document.getElementById(labelId);
+    var lbl = document.getElementById(labelId);
     if (lbl) lbl.style.borderColor = '#43a047';
   };
   reader.readAsDataURL(file);
 }
 </script>
+
 {% endblock %}

@@ -17,6 +17,16 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/desktop.css') }}?v=20">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <style>
+    /* 문의/제보 페이지에서 하단 탭바 항상 표시 */
+    .endpoint-support_choice .mobile-tabbar,
+    .endpoint-support_submit .mobile-tabbar,
+    .endpoint-support_manage .mobile-tabbar,
+    .endpoint-damage_submit .mobile-tabbar,
+    .endpoint-damage_manage .mobile-tabbar {
+        display: flex !important;
+    }
+    </style>
     <script>
     // FOUC 방지
     (function(){
@@ -37,7 +47,7 @@
             {% if request.endpoint != 'dashboard' %}
             <button type="button" class="icon-btn back-btn" onclick="history.length > 1 ? history.back() : location.href='{{ url_for('dashboard') }}'" aria-label="뒤로가기">‹</button>
             {% endif %}
-            {% if request.endpoint in ['wash_list','wash_status','profile','car_detail'] %}
+            {% if request.endpoint in ['wash_list','wash_status','profile','car_detail','support_choice','damage_submit','damage_manage'] %}
             <a href="{{ url_for('dashboard') }}" class="topbar-turu-brand-v27" aria-label="TURU CAR 홈">
                 <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=28" alt="TURU CAR">
             </a>
@@ -211,19 +221,19 @@
     <!-- ══ 모바일 하단 탭바 ══ -->
     <nav class="mobile-tabbar turu-mobile-tabbar" aria-label="주요 메뉴">
         <a href="{{ url_for('dashboard') }}" class="tab-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
-            <span><!-- home SVG --></span><b>홈</b>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M3.5 11.2 12 4.3l8.5 6.9"/><path d="M6.5 10.3v9.4h11v-9.4"/><path d="M10 19.7v-5h4v5"/></svg></span><b>홈</b>
         </a>
         <a href="{{ url_for('wash_list') }}" class="tab-item {% if request.endpoint in ['wash_list','car_detail'] %}active{% endif %}">
-            <span><!-- order SVG --></span><b>오더</b>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M8 5h8l1 3H7l1-3Z"/><rect x="5.5" y="7" width="13" height="14" rx="2"/><path d="M8.5 12h7M8.5 16h5"/></svg></span><b>오더</b>
         </a>
         <a href="https://pm.peoplecar.co.kr:8082/#" class="tab-item admin-app-tab">
-            <span><!-- control SVG --></span><b>제어</b>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2"/><circle cx="15" cy="17" r="2"/></svg></span><b>제어</b>
         </a>
         <a href="{{ url_for('wash_status') }}" class="tab-item {% if request.endpoint == 'wash_status' %}active{% endif %}">
-            <span><!-- done SVG --></span><b>완료</b>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><rect x="5.5" y="4.5" width="13" height="16" rx="2"/><path d="M9 9h6M9 13h4M9.5 17l2 2 4-5"/></svg></span><b>완료</b>
         </a>
-        <a href="{{ url_for('profile') }}" class="tab-item {% if request.endpoint in ['profile','account_manage','vendor_manage','upload_wash_list','my_vehicles'] %}active{% endif %}">
-            <span><!-- profile SVG --></span><b>내정보</b>
+        <a href="{{ url_for('profile') }}" class="tab-item {% if request.endpoint in ['profile','account_manage','vendor_manage','upload_wash_list','my_vehicles','support_choice','support_submit','support_manage','damage_submit','damage_manage'] %}active{% endif %}">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1.5-5 13.5-5 15 0"/></svg></span><b>내정보</b>
         </a>
     </nav>
 

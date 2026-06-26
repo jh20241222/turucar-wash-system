@@ -9,63 +9,90 @@
     <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=1" alt="TURU CAR">
   </header>
 
-  <div class="turu-page-head-v24 turu-page-head--single-v25">
-    <div>
+  <div class="sc2-wrap">
+
+    <div class="sc2-head">
       <h1>문의 / 제보</h1>
       <p>아래 메뉴를 선택해주세요</p>
     </div>
-  </div>
 
-  <div class="turu-card-list-v24" style="gap:12px;">
+    <div class="sc2-cards">
 
-    {% if current_user.is_master or current_user.is_admin %}
+      {% if current_user.is_master or current_user.is_admin %}
 
-    <a href="{{ url_for('support_manage') }}" class="turu-order-card-v24 sc-choice-card">
-      <div class="turu-card-copy-v24">
-        <p class="turu-card-title-v24">
+      <a href="{{ url_for('support_manage') }}" class="sc2-card sc2-card--orange">
+        <div class="sc2-card-icon">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="40" height="40">
+            <rect width="48" height="48" rx="14" fill="#FF9900" fill-opacity=".15"/>
+            <path d="M14 16h20a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H26l-5 4v-4h-7a2 2 0 0 1-2-2V18a2 2 0 0 1 2-2z" stroke="#FF9900" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M20 24h8M20 28h5" stroke="#FF9900" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="sc2-card-body">
           <strong>문의 관리</strong>
+          <span>접수된 문의 확인 및 답변</span>
           {% if support_badge_count %}
-          <span class="sc-chip sc-chip--orange">{{ support_badge_count }}건 미확인</span>
+          <em class="sc2-badge">{{ support_badge_count }}건 미확인</em>
           {% endif %}
-        </p>
-        <p><span class="sc-icon-wrap sc-icon-wrap--orange"><i class="ti ti-message-dots"></i></span> 접수된 문의 확인 및 답변</p>
-      </div>
-      <div class="turu-row-arrow-v24">›</div>
-    </a>
+        </div>
+        <div class="sc2-card-arrow">›</div>
+      </a>
 
-    <a href="{{ url_for('damage_manage') }}" class="turu-order-card-v24 sc-choice-card">
-      <div class="turu-card-copy-v24">
-        <p class="turu-card-title-v24">
+      <a href="{{ url_for('damage_manage') }}" class="sc2-card sc2-card--red">
+        <div class="sc2-card-icon">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="40" height="40">
+            <rect width="48" height="48" rx="14" fill="#e53935" fill-opacity=".12"/>
+            <path d="M24 15l9 15.5H15L24 15z" stroke="#e53935" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M24 25v-5" stroke="#e53935" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="24" cy="28" r="1.2" fill="#e53935"/>
+          </svg>
+        </div>
+        <div class="sc2-card-body">
           <strong>훼손 제보 관리</strong>
+          <span>차량 훼손 제보 내역 확인</span>
           {% if damage_badge_count %}
-          <span class="sc-chip sc-chip--red">{{ damage_badge_count }}건 미확인</span>
+          <em class="sc2-badge">{{ damage_badge_count }}건 미확인</em>
           {% endif %}
-        </p>
-        <p><span class="sc-icon-wrap sc-icon-wrap--red"><i class="ti ti-alert-triangle"></i></span> 차량 훼손 제보 내역 확인</p>
-      </div>
-      <div class="turu-row-arrow-v24">›</div>
-    </a>
+        </div>
+        <div class="sc2-card-arrow">›</div>
+      </a>
 
-    {% else %}
+      {% else %}
 
-    <a href="{{ url_for('support_submit') }}" class="turu-order-card-v24 sc-choice-card">
-      <div class="turu-card-copy-v24">
-        <p class="turu-card-title-v24"><strong>문의하기</strong></p>
-        <p><span class="sc-icon-wrap sc-icon-wrap--orange"><i class="ti ti-message-dots"></i></span> 세차 업무 관련 문의 접수</p>
-      </div>
-      <div class="turu-row-arrow-v24">›</div>
-    </a>
+      <a href="{{ url_for('support_submit') }}" class="sc2-card sc2-card--orange">
+        <div class="sc2-card-icon">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="40" height="40">
+            <rect width="48" height="48" rx="14" fill="#FF9900" fill-opacity=".15"/>
+            <path d="M14 16h20a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H26l-5 4v-4h-7a2 2 0 0 1-2-2V18a2 2 0 0 1 2-2z" stroke="#FF9900" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M20 24h8M20 28h5" stroke="#FF9900" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="sc2-card-body">
+          <strong>문의하기</strong>
+          <span>세차 업무 관련 문의 접수</span>
+        </div>
+        <div class="sc2-card-arrow">›</div>
+      </a>
 
-    <a href="{{ url_for('damage_submit') }}" class="turu-order-card-v24 sc-choice-card">
-      <div class="turu-card-copy-v24">
-        <p class="turu-card-title-v24"><strong>차량 훼손 제보</strong></p>
-        <p><span class="sc-icon-wrap sc-icon-wrap--red"><i class="ti ti-alert-triangle"></i></span> 세차 중 발견한 차량 외관 훼손 제출</p>
-      </div>
-      <div class="turu-row-arrow-v24">›</div>
-    </a>
+      <a href="{{ url_for('damage_submit') }}" class="sc2-card sc2-card--red">
+        <div class="sc2-card-icon">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="40" height="40">
+            <rect width="48" height="48" rx="14" fill="#e53935" fill-opacity=".12"/>
+            <path d="M24 15l9 15.5H15L24 15z" stroke="#e53935" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M24 25v-5" stroke="#e53935" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="24" cy="28" r="1.2" fill="#e53935"/>
+          </svg>
+        </div>
+        <div class="sc2-card-body">
+          <strong>차량 훼손 제보</strong>
+          <span>세차 중 발견한 차량 외관 훼손 제출</span>
+        </div>
+        <div class="sc2-card-arrow">›</div>
+      </a>
 
-    {% endif %}
+      {% endif %}
 
+    </div>
   </div>
 </section>
 
@@ -113,34 +140,119 @@
 </div>
 
 <style>
-/* 선택 카드 아이콘 뱃지 */
-.sc-chip {
-  display: inline-flex;
+/* ── 모바일 래퍼 ── */
+.sc2-wrap {
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  padding: 8px 20px 32px;
+  gap: 24px;
+}
+
+/* ── 제목 (중앙 정렬) ── */
+.sc2-head {
+  text-align: center;
+}
+.sc2-head h1 {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 6px;
+  color: var(--text-primary, #212121);
+}
+.sc2-head p {
+  font-size: 14px;
+  color: var(--text-secondary, #757575);
+  margin: 0;
+}
+
+/* ── 카드 리스트 ── */
+.sc2-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 400px;
+}
+
+/* ── 개별 카드 ── */
+.sc2-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 18px 18px 16px;
+  border-radius: 18px;
+  text-decoration: none;
+  color: inherit;
+  border: 1.5px solid transparent;
+  transition: transform .12s, box-shadow .12s;
+  position: relative;
+  overflow: hidden;
+}
+.sc2-card:active {
+  transform: scale(.97);
+}
+
+.sc2-card--orange {
+  background: #fffaf3;
+  border-color: #ffe5b0;
+  box-shadow: 0 2px 12px rgba(255,153,0,.10);
+}
+.sc2-card--red {
+  background: #fff5f5;
+  border-color: #ffc9c9;
+  box-shadow: 0 2px 12px rgba(229,57,53,.08);
+}
+
+/* ── 카드 아이콘 ── */
+.sc2-card-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── 카드 텍스트 ── */
+.sc2-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.sc2-card-body strong {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary, #212121);
+}
+.sc2-card-body span {
+  font-size: 13px;
+  color: var(--text-secondary, #757575);
+  line-height: 1.4;
+}
+
+/* ── 배지 ── */
+.sc2-badge {
+  display: inline-block;
+  margin-top: 5px;
+  background: #e53935;
+  color: #fff;
   border-radius: 99px;
   font-size: 11px;
   font-weight: 700;
   padding: 2px 9px;
-  margin-left: 6px;
-  vertical-align: middle;
+  width: fit-content;
+  font-style: normal;
 }
-.sc-chip--orange { background: #fff3e0; color: #e65100; }
-.sc-chip--red    { background: #fce4ec; color: #c62828; }
 
-.sc-icon-wrap {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px; height: 22px;
-  border-radius: 6px;
-  margin-right: 4px;
-  font-size: 14px;
-  vertical-align: middle;
+/* ── 화살표 ── */
+.sc2-card-arrow {
+  font-size: 22px;
+  color: var(--text-tertiary, #bdbdbd);
+  flex-shrink: 0;
+  font-weight: 300;
+  line-height: 1;
 }
-.sc-icon-wrap--orange { background: #fff3e0; color: #e65100; }
-.sc-icon-wrap--red    { background: #fce4ec; color: #c62828; }
 
-/* 데스크탑 */
+/* ── 데스크탑 ── */
 #desktop-mode #d-support-choice { display: block !important; }
 #desktop-mode .turu-app-page-v24 { display: none !important; }
 

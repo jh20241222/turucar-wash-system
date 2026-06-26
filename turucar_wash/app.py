@@ -255,6 +255,9 @@ def init_db():
             photo_front   TEXT,
             photo_damage1 TEXT,
             photo_damage2 TEXT,
+            photo_damage3 TEXT,
+            photo_damage4 TEXT,
+            photo_damage5 TEXT,
             reporter      TEXT NOT NULL,
             vendor        TEXT,
             status        TEXT NOT NULL DEFAULT '접수',
@@ -263,6 +266,11 @@ def init_db():
             updated_at    TEXT
         )
     """)
+    # damage_reports 컬럼 마이그레이션 (기존 DB 호환)
+    _dr_cols = [row[1] for row in cur.execute("PRAGMA table_info(damage_reports)").fetchall()]
+    for _col in ("photo_damage3", "photo_damage4", "photo_damage5"):
+        if _col not in _dr_cols:
+            cur.execute(f"ALTER TABLE damage_reports ADD COLUMN {_col} TEXT")
     # dashboard_notices 테이블에 image_path 컬럼 마이그레이션 (기존 DB 호환)
     existing_cols = [row[1] for row in cur.execute("PRAGMA table_info(dashboard_notices)").fetchall()]
     if "image_path" not in existing_cols:
@@ -2375,19 +2383,24 @@ def damage_submit():
         if not car_number or not wash_date or not damage_location:
             flash("차량번호, 세차일자, 훼손 부위는 필수입니다.")
             return redirect(url_for("damage_submit"))
-        photo_front = _save_damage_photo(request.files.get("photo_front"))
+        photo_front   = _save_damage_photo(request.files.get("photo_front"))
         photo_damage1 = _save_damage_photo(request.files.get("photo_damage1"))
         photo_damage2 = _save_damage_photo(request.files.get("photo_damage2"))
+        photo_damage3 = _save_damage_photo(request.files.get("photo_damage3"))
+        photo_damage4 = _save_damage_photo(request.files.get("photo_damage4"))
+        photo_damage5 = _save_damage_photo(request.files.get("photo_damage5"))
         created_at = now_kst().strftime("%Y-%m-%d %H:%M")
         conn = get_user_db()
         conn.execute(
             """INSERT INTO damage_reports
                (car_number, wash_date, damage_location, description,
                 photo_front, photo_damage1, photo_damage2,
+                photo_damage3, photo_damage4, photo_damage5,
                 reporter, vendor, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (car_number, wash_date, damage_location, description,
              photo_front, photo_damage1, photo_damage2,
+             photo_damage3, photo_damage4, photo_damage5,
              current_user.username,
              getattr(current_user, "vendor", "") or "",
              created_at)
@@ -2397,8 +2410,6 @@ def damage_submit():
         _send_damage_slack({
             "car_number": car_number, "wash_date": wash_date,
             "damage_location": damage_location, "description": description,
-            "photo_front": photo_front, "photo_damage1": photo_damage1,
-            "photo_damage2": photo_damage2,
             "reporter": current_user.username,
             "vendor": getattr(current_user, "vendor", "") or "",
         }, APP_BASE_URL)
@@ -2441,7 +2452,7 @@ def damage_delete(report_id):
     conn = get_user_db()
     row = conn.execute("SELECT * FROM damage_reports WHERE id=?", (report_id,)).fetchone()
     if row:
-        for field in ("photo_front", "photo_damage1", "photo_damage2"):
+        for field in ("photo_front", "photo_damage1", "photo_damage2", "photo_damage3", "photo_damage4", "photo_damage5"):
             fname = row[field]
             if fname:
                 try:

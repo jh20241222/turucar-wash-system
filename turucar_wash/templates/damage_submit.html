@@ -2,7 +2,7 @@
 {% block document_title %}Turu Wash · 차량 훼손 제보{% endblock %}
 {% block content %}
 
-<div class="dmg-page">
+<div class="d-wrap dmg-page" style="width:100%;min-width:0;box-sizing:border-box;padding:16px;">
 
   {# 모바일 헤더 #}
   <header class="dmg-mobile-header turu-page-brand-v24 turu-page-brand-v26">
@@ -17,7 +17,7 @@
 
   {# 폼 (모바일·데스크탑 공용) #}
   <form method="post" action="{{ url_for('damage_submit') }}" enctype="multipart/form-data"
-        class="dmg-form" id="dmgForm">
+        class="dmg-form" id="dmgForm" style="width:100%;min-width:0;box-sizing:border-box;">
 
     {# 차량 정보 #}
     <div class="dmg-card">

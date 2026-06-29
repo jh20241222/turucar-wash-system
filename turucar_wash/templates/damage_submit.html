@@ -50,13 +50,13 @@
         <span class="dmg-label-icon"><i class="ti ti-camera"></i></span> 사진 첨부
         <span style="font-size:11px;font-weight:400;color:var(--text-tertiary);margin-left:4px;">정면 1장 필수 · 훼손사진 최대 5장</span>
       </p>
-      {# 사진 격자 #}
+      {# 사진 격자 — input을 슬롯 전체에 투명하게 깔아서 JS .click() 없이 직접 탭 #}
       <div class="dmg-photo-grid">
         {# 정면 (필수) #}
-        <div class="dmg-photo-slot" id="slot-front" onclick="openPhotoSheet('inp-front','slot-front')">
-          <input type="file" id="inp-front" name="photo_front" accept="image/*"
+        <div class="dmg-photo-slot" id="slot-front">
+          <input type="file" name="photo_front" accept="image/*"
                  onchange="previewSlot(this,'slot-front')" required
-                 style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;overflow:hidden;">
+                 class="dmg-slot-input">
           <div class="dmg-slot-placeholder">
             <i class="ti ti-camera-plus"></i>
             <span>정면</span>
@@ -65,10 +65,10 @@
           <img class="dmg-slot-thumb" style="display:none;">
         </div>
         {# 훼손 1 (필수) #}
-        <div class="dmg-photo-slot" id="slot-d1" onclick="openPhotoSheet('inp-d1','slot-d1')">
-          <input type="file" id="inp-d1" name="photo_damage1" accept="image/*"
+        <div class="dmg-photo-slot" id="slot-d1">
+          <input type="file" name="photo_damage1" accept="image/*"
                  onchange="previewSlot(this,'slot-d1')" required
-                 style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;overflow:hidden;">
+                 class="dmg-slot-input">
           <div class="dmg-slot-placeholder">
             <i class="ti ti-camera-plus"></i>
             <span>훼손①</span>
@@ -77,10 +77,10 @@
           <img class="dmg-slot-thumb" style="display:none;">
         </div>
         {# 훼손 2 #}
-        <div class="dmg-photo-slot" id="slot-d2" onclick="openPhotoSheet('inp-d2','slot-d2')">
-          <input type="file" id="inp-d2" name="photo_damage2" accept="image/*"
+        <div class="dmg-photo-slot" id="slot-d2">
+          <input type="file" name="photo_damage2" accept="image/*"
                  onchange="previewSlot(this,'slot-d2')"
-                 style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;overflow:hidden;">
+                 class="dmg-slot-input">
           <div class="dmg-slot-placeholder">
             <i class="ti ti-camera-plus"></i>
             <span>훼손②</span>
@@ -88,10 +88,10 @@
           <img class="dmg-slot-thumb" style="display:none;">
         </div>
         {# 훼손 3 #}
-        <div class="dmg-photo-slot" id="slot-d3" onclick="openPhotoSheet('inp-d3','slot-d3')">
-          <input type="file" id="inp-d3" name="photo_damage3" accept="image/*"
+        <div class="dmg-photo-slot" id="slot-d3">
+          <input type="file" name="photo_damage3" accept="image/*"
                  onchange="previewSlot(this,'slot-d3')"
-                 style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;overflow:hidden;">
+                 class="dmg-slot-input">
           <div class="dmg-slot-placeholder">
             <i class="ti ti-camera-plus"></i>
             <span>훼손③</span>
@@ -99,10 +99,10 @@
           <img class="dmg-slot-thumb" style="display:none;">
         </div>
         {# 훼손 4 #}
-        <div class="dmg-photo-slot" id="slot-d4" onclick="openPhotoSheet('inp-d4','slot-d4')">
-          <input type="file" id="inp-d4" name="photo_damage4" accept="image/*"
+        <div class="dmg-photo-slot" id="slot-d4">
+          <input type="file" name="photo_damage4" accept="image/*"
                  onchange="previewSlot(this,'slot-d4')"
-                 style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;overflow:hidden;">
+                 class="dmg-slot-input">
           <div class="dmg-slot-placeholder">
             <i class="ti ti-camera-plus"></i>
             <span>훼손④</span>
@@ -110,10 +110,10 @@
           <img class="dmg-slot-thumb" style="display:none;">
         </div>
         {# 훼손 5 #}
-        <div class="dmg-photo-slot" id="slot-d5" onclick="openPhotoSheet('inp-d5','slot-d5')">
-          <input type="file" id="inp-d5" name="photo_damage5" accept="image/*"
+        <div class="dmg-photo-slot" id="slot-d5">
+          <input type="file" name="photo_damage5" accept="image/*"
                  onchange="previewSlot(this,'slot-d5')"
-                 style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;overflow:hidden;">
+                 class="dmg-slot-input">
           <div class="dmg-slot-placeholder">
             <i class="ti ti-camera-plus"></i>
             <span>훼손⑤</span>
@@ -128,21 +128,6 @@
     </button>
   </form>
 </section>
-{# ══ 카메라/앨범 선택 시트 ══ #}
-<div id="photoSheet" class="photo-sheet-overlay" style="display:none;" onclick="closePhotoSheet(event)">
-  <div class="photo-sheet-panel">
-    <p class="photo-sheet-title">사진 추가</p>
-    <button class="photo-sheet-btn photo-sheet-btn--camera" onclick="pickCamera()">
-      <i class="ti ti-camera"></i> 카메라로 촬영
-    </button>
-    <button class="photo-sheet-btn photo-sheet-btn--album" onclick="pickAlbum()">
-      <i class="ti ti-photo"></i> 앨범에서 선택
-    </button>
-    <button class="photo-sheet-btn photo-sheet-btn--cancel" onclick="closePhotoSheet()">
-      취소
-    </button>
-  </div>
-</div>
 {# ══ 데스크탑 ══ #}
 <div id="d-damage-submit" style="display:none;">
   <div class="d-wrap" style="max-width:600px;">
@@ -243,9 +228,19 @@
 }
 .dmg-photo-slot:active { border-color: #FF9900; }
 .dmg-photo-slot.has-photo { border-style: solid; border-color: #43a047; }
+/* 핵심 수정: input을 슬롯 전체에 투명하게 깔기. display:none 사용 안 함 */
+.dmg-slot-input {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
 .dmg-slot-placeholder {
   display: flex; flex-direction: column; align-items: center; gap: 3px;
   pointer-events: none;
+  z-index: 1;
 }
 .dmg-slot-placeholder .ti { font-size: 22px; color: var(--text-tertiary, #bdbdbd); }
 .dmg-slot-placeholder span { font-size: 11px; font-weight: 600; color: var(--text-secondary, #757575); }
@@ -256,6 +251,7 @@
 .dmg-slot-thumb {
   position: absolute; inset: 0;
   width: 100%; height: 100%; object-fit: cover;
+  z-index: 0;
 }
 /* ── 제출 버튼 ── */
 .dmg-submit-btn {
@@ -268,38 +264,9 @@
 }
 .dmg-submit-btn:active { opacity: .85; }
 .dmg-submit-btn .ti { font-size: 18px; }
-/* ── 카메라/앨범 액션 시트 ── */
-.photo-sheet-overlay {
-  position: fixed; inset: 0; z-index: 999;
-  background: rgba(0,0,0,.45);
-  display: flex; align-items: flex-end; justify-content: center;
-}
-.photo-sheet-panel {
-  background: var(--surface, #fff);
-  border-radius: 20px 20px 0 0;
-  padding: 16px 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
-  width: 100%; max-width: 480px;
-  display: flex; flex-direction: column; gap: 8px;
-}
-.photo-sheet-title {
-  font-size: 13px; font-weight: 600; color: var(--text-tertiary, #9e9e9e);
-  text-align: center; margin: 0 0 4px;
-}
-.photo-sheet-btn {
-  display: flex; align-items: center; gap: 12px;
-  padding: 15px 18px; border-radius: 12px; border: none;
-  font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit;
-  transition: opacity .12s;
-}
-.photo-sheet-btn:active { opacity: .7; }
-.photo-sheet-btn .ti { font-size: 20px; }
-.photo-sheet-btn--camera { background: #fff3e0; color: #e65100; }
-.photo-sheet-btn--album  { background: #e8f5e9; color: #2e7d32; }
-.photo-sheet-btn--cancel { background: var(--background, #f5f5f5); color: var(--text-secondary, #757575); justify-content: center; margin-top: 4px; }
 /* ── 데스크탑 ── */
 #desktop-mode #d-damage-submit { display: block !important; }
 #desktop-mode .turu-app-page-v24 { display: none !important; }
-#desktop-mode .photo-sheet-overlay { display: none !important; }
 .field-group { display: flex; flex-direction: column; gap: 6px; }
 .field-label  { font-size: 13px; font-weight: 600; color: var(--text-primary); }
 .required     { color: #e53935; }
@@ -344,35 +311,6 @@ function previewPhoto(input, previewId, labelId) {
     if (lbl) lbl.style.borderColor = '#43a047';
   };
   reader.readAsDataURL(file);
-}
-/* ── 카메라/앨범 액션 시트 ── */
-var _activeInputId = null;
-var _activeSlotId  = null;
-function openPhotoSheet(inputId, slotId) {
-  _activeInputId = inputId;
-  _activeSlotId  = slotId;
-  document.getElementById('photoSheet').style.display = 'flex';
-}
-function closePhotoSheet(e) {
-  if (!e || e.target === document.getElementById('photoSheet')) {
-    document.getElementById('photoSheet').style.display = 'none';
-  }
-}
-function pickCamera() {
-  document.getElementById('photoSheet').style.display = 'none';
-  var inp = document.getElementById(_activeInputId);
-  inp.setAttribute('capture', 'environment');
-  inp.style.pointerEvents = 'auto';
-  inp.click();
-  setTimeout(function() { inp.style.pointerEvents = 'none'; }, 300);
-}
-function pickAlbum() {
-  document.getElementById('photoSheet').style.display = 'none';
-  var inp = document.getElementById(_activeInputId);
-  inp.removeAttribute('capture');
-  inp.style.pointerEvents = 'auto';
-  inp.click();
-  setTimeout(function() { inp.style.pointerEvents = 'none'; }, 300);
 }
 </script>
 {% endblock %}

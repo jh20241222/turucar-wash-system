@@ -2314,6 +2314,18 @@ def _send_damage_slack(report, base_url):
     ]
     if report.get("description"):
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": f"*상세 내용*\n{report['description']}"}})
+
+    # ↓↓↓ 추가: 사진 이미지 블록
+    photos = [p for p in report.get("photos", []) if p]
+    if photos:
+        blocks.append({"type": "divider"})
+    labels = ["정면", "훼손①", "훼손②", "훼손③", "훼손④", "훼손⑤"]
+    for i, photo in enumerate(photos):
+        blocks.append({
+            "type": "image",
+            "image_url": f"{base_url}/damage_photo/{photo}",
+            "alt_text": labels[i] if i < len(labels) else f"사진{i+1}"
+        })
     try:
         resp = _requests.post(SLACK_DAMAGE_WEBHOOK, json={"blocks": blocks}, timeout=5)
         print(f"[Slack] status={resp.status_code}, body={resp.text[:200]}")
@@ -2408,11 +2420,13 @@ def damage_submit():
         conn.commit()
         conn.close()
         _send_damage_slack({
-            "car_number": car_number, "wash_date": wash_date,
-            "damage_location": damage_location, "description": description,
-            "reporter": current_user.username,
-            "vendor": getattr(current_user, "vendor", "") or "",
-        }, APP_BASE_URL)
+    "car_number": car_number, "wash_date": wash_date,
+    "damage_location": damage_location, "description": description,
+    "reporter": current_user.username,
+    "vendor": getattr(current_user, "vendor", "") or "",
+    "photos": [photo_front, photo_damage1, photo_damage2,
+               photo_damage3, photo_damage4, photo_damage5],
+}, APP_BASE_URL)
         flash("✅ 제보가 접수되었습니다.")
         return redirect(url_for("damage_submit"))
     return render_template("damage_submit.html", today=today_kst())

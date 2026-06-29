@@ -267,6 +267,10 @@
 /* ── 데스크탑 ── */
 #desktop-mode #d-damage-submit { display: block !important; }
 #desktop-mode .turu-app-page-v24 { display: none !important; }
+@media (min-width: 768px) {
+  #d-damage-submit { display: block !important; }
+  .turu-app-page-v24 { display: none !important; }
+}
 .field-group { display: flex; flex-direction: column; gap: 6px; }
 .field-label  { font-size: 13px; font-weight: 600; color: var(--text-primary); }
 .required     { color: #e53935; }

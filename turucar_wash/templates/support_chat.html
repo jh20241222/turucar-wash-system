@@ -65,44 +65,35 @@
 </section>
 
 <style>
-/* 탭바 강제 숨김 — 이 페이지는 자체 헤더/풋터 사용 */
 .mobile-tabbar { display: none !important; }
 .app-topbar { display: none !important; }
-
-/* 로고 */
-.support-topbar-v36 {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px 8px;
-  gap: 12px;
-}
-.support-back-btn-v36 {
-  font-size: 28px;
-  color: var(--text-primary, #212121);
-  text-decoration: none;
-  line-height: 1;
-  padding: 4px 8px 4px 0;
-}
-.support-top-logo-v36 {
-  display: block;
-  height: 22px;
-  width: auto;
-  object-fit: contain;
-}
+.support-topbar-v36 { display:flex; align-items:center; padding:12px 16px 8px; gap:12px; }
+.support-back-btn-v36 { font-size:28px; color:var(--text-primary,#212121); text-decoration:none; line-height:1; padding:4px 8px 4px 0; }
+.support-top-logo-v36 { display:block; height:22px; width:auto; object-fit:contain; }
 </style>
 
 <script>
-/* tabbar 강제 숨김 (inline !important 오버라이드) */
+/* tabbar 완전 차단 — MutationObserver로 inline style 재설정 감지 후 즉시 override */
 (function() {
-  function hideMobileUI() {
-    var tb = document.querySelector('.mobile-tabbar');
-    if (tb) tb.style.setProperty('display', 'none', 'important');
-    var topbar = document.querySelector('.app-topbar');
-    if (topbar) topbar.style.setProperty('display', 'none', 'important');
+  function lockHide(el) {
+    if (!el) return;
+    el.style.setProperty('display', 'none', 'important');
+    new MutationObserver(function() {
+      if (el.style.getPropertyValue('display') !== 'none') {
+        el.style.setProperty('display', 'none', 'important');
+      }
+    }).observe(el, { attributes: true, attributeFilter: ['style'] });
   }
-  hideMobileUI();
-  document.addEventListener('DOMContentLoaded', hideMobileUI);
-  window.addEventListener('load', hideMobileUI);
+  function applyFix() {
+    lockHide(document.querySelector('.mobile-tabbar'));
+    lockHide(document.querySelector('.app-topbar'));
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyFix);
+  } else {
+    applyFix();
+  }
+  window.addEventListener('load', applyFix);
 })();
 
 const chatState = { category: "", ticketId: null, started: false };
@@ -118,17 +109,15 @@ function escapeHtml(text){ const div = document.createElement("div"); div.textCo
 function appendUser(text){ const row = document.createElement("div"); row.className = "user-row"; row.innerHTML = `<div class="user-message">${escapeHtml(text)}</div>`; body.appendChild(row); scrollChat(); }
 function appendBot(html){ const row = document.createElement("div"); row.className = "bot-row"; row.innerHTML = `<span class="bot-avatar wordmark-avatar"><img src="{{ url_for('static', filename='img/brand_t_mark.png') }}" alt="TuruCar"></span><div class="bot-message">${html}</div>`; body.appendChild(row); scrollChat(); }
 function selectCategory(category){
-  chatState.category = category;
-  chatState.started = true;
+  chatState.category = category; chatState.started = true;
   document.querySelectorAll("#issue-options button").forEach(btn => btn.classList.toggle("selected", btn.dataset.category === category));
   appendUser(category);
   appendBot(`<strong>문의 항목이 선택되었습니다.</strong><p><b>${escapeHtml(category)}</b> 문의를 선택했어요.<br>이제 상황을 자유롭게 입력해주세요.</p>`);
-  input.placeholder = "메시지를 입력해주세요.";
-  input.focus();
+  input.placeholder = "메시지를 입력해주세요."; input.focus();
 }
 async function sendMessage(){
   const value = input.value.trim();
-  if(!value){ return; }
+  if(!value) return;
   if(!chatState.category){ appendBot("<strong>문의 유형 선택</strong><p>먼저 문의 유형을 선택해주세요.</p>"); return; }
   appendUser(value); input.value = "";
   try {
@@ -137,19 +126,17 @@ async function sendMessage(){
       body: JSON.stringify({ category: chatState.category, message: value, ticket_id: chatState.ticketId })
     });
     const data = await response.json();
-    if(!response.ok || !data.ok){ appendBot(`<strong>전송 실패</strong><p>${escapeHtml(data.message || "문의 전송 중 오류가 발생했습니다.")}</p>`); return; }
+    if(!response.ok || !data.ok){ appendBot(`<strong>전송 실패</strong><p>${escapeHtml(data.message || "오류가 발생했습니다.")}</p>`); return; }
     if(!chatState.ticketId){
       chatState.ticketId = data.ticket_id;
       appendBot(`<strong>문의가 접수되었습니다.</strong><p>담당자가 확인 후 답변드리겠습니다.</p><p class="ticket-number">접수번호 #${data.ticket_id}</p>`);
     } else {
       appendBot("<strong>메시지 전달 완료</strong><p>추가 내용이 있으면 계속 입력해주세요.</p>");
     }
-  } catch(error) {
-    appendBot("<strong>네트워크 오류</strong><p>메시지를 전송하지 못했습니다.</p>");
-  }
+  } catch(e) { appendBot("<strong>네트워크 오류</strong><p>메시지를 전송하지 못했습니다.</p>"); }
 }
-options.addEventListener("click", function(event){ const button = event.target.closest("button[data-category]"); if(!button){ return; } selectCategory(button.dataset.category); });
+options.addEventListener("click", function(e){ const btn = e.target.closest("button[data-category]"); if(btn) selectCategory(btn.dataset.category); });
 sendBtn.addEventListener("click", sendMessage);
-input.addEventListener("keydown", function(event){ if(event.key === "Enter"){ event.preventDefault(); sendMessage(); } });
+input.addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); sendMessage(); } });
 </script>
 {% endblock %}

@@ -129,7 +129,7 @@
   </form>
 </section>
 {# ══ 데스크탑 ══ #}
-<div id="d-damage-submit" style="display:none;">
+<div id="d-damage-submit">
   <div class="d-wrap" style="max-width:600px;">
     <form method="post" action="{{ url_for('damage_submit') }}" enctype="multipart/form-data"
           style="display:flex;flex-direction:column;gap:16px;">
@@ -264,12 +264,10 @@
 }
 .dmg-submit-btn:active { opacity: .85; }
 .dmg-submit-btn .ti { font-size: 18px; }
-/* ── 데스크탑 ── */
-#desktop-mode #d-damage-submit { display: block !important; }
-#desktop-mode .turu-app-page-v24 { display: none !important; }
-@media (min-width: 768px) {
-  #d-damage-submit { display: block !important; }
-  .turu-app-page-v24 { display: none !important; }
+/* ── 데스크탑: 항상 표시 (inline display:none 제거로 CSS 의존 불필요) ── */
+/* 모바일에서만 데스크탑 폼 숨김 */
+@media (max-width: 767px) {
+  #d-damage-submit { display: none !important; }
 }
 .field-group { display: flex; flex-direction: column; gap: 6px; }
 .field-label  { font-size: 13px; font-weight: 600; color: var(--text-primary); }

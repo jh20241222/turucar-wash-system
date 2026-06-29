@@ -264,8 +264,7 @@
 }
 .dmg-submit-btn:active { opacity: .85; }
 .dmg-submit-btn .ti { font-size: 18px; }
-/* ── 데스크탑: 항상 표시 (inline display:none 제거로 CSS 의존 불필요) ── */
-/* 모바일에서만 데스크탑 폼 숨김 */
+/* ── 데스크탑: desktop.css에서 제어, 모바일에서만 숨김 ── */
 @media (max-width: 767px) {
   #d-damage-submit { display: none !important; }
 }

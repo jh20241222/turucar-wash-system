@@ -64,7 +64,47 @@
     </footer>
 </section>
 
+<style>
+/* 탭바 강제 숨김 — 이 페이지는 자체 헤더/풋터 사용 */
+.mobile-tabbar { display: none !important; }
+.app-topbar { display: none !important; }
+
+/* 로고 */
+.support-topbar-v36 {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px 8px;
+  gap: 12px;
+}
+.support-back-btn-v36 {
+  font-size: 28px;
+  color: var(--text-primary, #212121);
+  text-decoration: none;
+  line-height: 1;
+  padding: 4px 8px 4px 0;
+}
+.support-top-logo-v36 {
+  display: block;
+  height: 22px;
+  width: auto;
+  object-fit: contain;
+}
+</style>
+
 <script>
+/* tabbar 강제 숨김 (inline !important 오버라이드) */
+(function() {
+  function hideMobileUI() {
+    var tb = document.querySelector('.mobile-tabbar');
+    if (tb) tb.style.setProperty('display', 'none', 'important');
+    var topbar = document.querySelector('.app-topbar');
+    if (topbar) topbar.style.setProperty('display', 'none', 'important');
+  }
+  hideMobileUI();
+  document.addEventListener('DOMContentLoaded', hideMobileUI);
+  window.addEventListener('load', hideMobileUI);
+})();
+
 const chatState = { category: "", ticketId: null, started: false };
 const body = document.getElementById("chatbot-body");
 const input = document.getElementById("chat-input");

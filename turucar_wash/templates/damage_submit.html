@@ -1,193 +1,197 @@
 {% extends "base.html" %}
 {% block document_title %}Turu Wash · 차량 훼손 제보{% endblock %}
 {% block content %}
-{# ══ 모바일 ══ #}
-<section class="turu-app-page-v24 turu-order-page-v24">
-  <header class="turu-page-brand-v24 turu-page-brand-v26">
+
+<div class="dmg-page">
+
+  {# 모바일 헤더 #}
+  <header class="dmg-mobile-header turu-page-brand-v24 turu-page-brand-v26">
     <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=1" alt="TURU CAR">
   </header>
-  <div class="turu-page-head-v24 turu-page-head--single-v25">
+  <div class="dmg-mobile-title turu-page-head-v24 turu-page-head--single-v25">
     <div>
       <h1>차량 훼손 제보</h1>
       <p>세차 중 발견한 차량 훼손 내용을 제출해주세요</p>
     </div>
   </div>
+
+  {# 폼 (모바일·데스크탑 공용) #}
   <form method="post" action="{{ url_for('damage_submit') }}" enctype="multipart/form-data"
-        class="turu-card-list-v24 dmg-form-list" id="dmgForm">
-    {# 차량 정보 섹션 #}
-    <div class="dmg-section-card">
-      <p class="dmg-section-label">
+        class="dmg-form" id="dmgForm">
+
+    {# 차량 정보 #}
+    <div class="dmg-card">
+      <p class="dmg-card-label">
         <span class="dmg-label-icon"><i class="ti ti-car"></i></span> 차량 정보
       </p>
-      <div class="dmg-field-group">
-        <label class="dmg-field-label">차량번호 <span class="dmg-required">*</span></label>
-        <input type="text" name="car_number" class="dmg-input" placeholder="예: 12가 3456" required>
-      </div>
-      <div class="dmg-field-group" style="margin-top:12px;">
-        <label class="dmg-field-label">세차일자 <span class="dmg-required">*</span></label>
-        <input type="date" name="wash_date" class="dmg-input" value="{{ today }}" required>
+      <div class="dmg-row-2">
+        <div class="dmg-field">
+          <label class="dmg-field-label">차량번호 <span class="dmg-req">*</span></label>
+          <input type="text" name="car_number" class="dmg-input" placeholder="예: 12가 3456" required>
+        </div>
+        <div class="dmg-field">
+          <label class="dmg-field-label">세차일자 <span class="dmg-req">*</span></label>
+          <input type="date" name="wash_date" class="dmg-input" value="{{ today }}" required>
+        </div>
       </div>
     </div>
-    {# 훼손 내용 섹션 #}
-    <div class="dmg-section-card">
-      <p class="dmg-section-label">
+
+    {# 훼손 내용 #}
+    <div class="dmg-card">
+      <p class="dmg-card-label">
         <span class="dmg-label-icon dmg-label-icon--red"><i class="ti ti-alert-triangle"></i></span> 훼손 내용
       </p>
-      <div class="dmg-field-group">
-        <label class="dmg-field-label">훼손 부위 <span class="dmg-required">*</span></label>
+      <div class="dmg-field">
+        <label class="dmg-field-label">훼손 부위 <span class="dmg-req">*</span></label>
         <input type="text" name="damage_location" class="dmg-input"
                placeholder="예: 운전석 도어 스크래치, 범퍼 찌그러짐" required>
       </div>
-      <div class="dmg-field-group" style="margin-top:12px;">
+      <div class="dmg-field" style="margin-top:12px;">
         <label class="dmg-field-label">상세 내용</label>
         <textarea name="description" class="dmg-input dmg-textarea"
                   placeholder="훼손 상황, 발견 경위 등 추가 설명"></textarea>
       </div>
     </div>
-    {# 사진 첨부 섹션 #}
-    <div class="dmg-section-card">
-      <p class="dmg-section-label">
+
+    {# 사진 첨부 #}
+    <div class="dmg-card">
+      <p class="dmg-card-label">
         <span class="dmg-label-icon"><i class="ti ti-camera"></i></span> 사진 첨부
-        <span style="font-size:11px;font-weight:400;color:var(--text-tertiary);margin-left:4px;">정면 1장 필수 · 훼손사진 최대 5장</span>
+        <span class="dmg-card-label-hint">정면 1장 필수 · 훼손사진 최대 5장</span>
       </p>
-      {# 사진 격자 — input을 슬롯 전체에 투명하게 깔아서 JS .click() 없이 직접 탭 #}
       <div class="dmg-photo-grid">
-        {# 정면 (필수) #}
+
         <div class="dmg-photo-slot" id="slot-front">
           <input type="file" name="photo_front" accept="image/*"
-                 onchange="previewSlot(this,'slot-front')" required
-                 class="dmg-slot-input">
+                 onchange="previewSlot(this,'slot-front')" required class="dmg-slot-input">
           <div class="dmg-slot-placeholder">
             <i class="ti ti-camera-plus"></i>
-            <span>정면</span>
-            <em>필수</em>
+            <span>정면</span><em>필수</em>
           </div>
           <img class="dmg-slot-thumb" style="display:none;">
         </div>
-        {# 훼손 1 (필수) #}
+
         <div class="dmg-photo-slot" id="slot-d1">
           <input type="file" name="photo_damage1" accept="image/*"
-                 onchange="previewSlot(this,'slot-d1')" required
-                 class="dmg-slot-input">
+                 onchange="previewSlot(this,'slot-d1')" required class="dmg-slot-input">
           <div class="dmg-slot-placeholder">
             <i class="ti ti-camera-plus"></i>
-            <span>훼손①</span>
-            <em>필수</em>
+            <span>훼손①</span><em>필수</em>
           </div>
           <img class="dmg-slot-thumb" style="display:none;">
         </div>
-        {# 훼손 2 #}
+
         <div class="dmg-photo-slot" id="slot-d2">
           <input type="file" name="photo_damage2" accept="image/*"
-                 onchange="previewSlot(this,'slot-d2')"
-                 class="dmg-slot-input">
+                 onchange="previewSlot(this,'slot-d2')" class="dmg-slot-input">
           <div class="dmg-slot-placeholder">
             <i class="ti ti-camera-plus"></i>
             <span>훼손②</span>
           </div>
           <img class="dmg-slot-thumb" style="display:none;">
         </div>
-        {# 훼손 3 #}
+
         <div class="dmg-photo-slot" id="slot-d3">
           <input type="file" name="photo_damage3" accept="image/*"
-                 onchange="previewSlot(this,'slot-d3')"
-                 class="dmg-slot-input">
+                 onchange="previewSlot(this,'slot-d3')" class="dmg-slot-input">
           <div class="dmg-slot-placeholder">
             <i class="ti ti-camera-plus"></i>
             <span>훼손③</span>
           </div>
           <img class="dmg-slot-thumb" style="display:none;">
         </div>
-        {# 훼손 4 #}
+
         <div class="dmg-photo-slot" id="slot-d4">
           <input type="file" name="photo_damage4" accept="image/*"
-                 onchange="previewSlot(this,'slot-d4')"
-                 class="dmg-slot-input">
+                 onchange="previewSlot(this,'slot-d4')" class="dmg-slot-input">
           <div class="dmg-slot-placeholder">
             <i class="ti ti-camera-plus"></i>
             <span>훼손④</span>
           </div>
           <img class="dmg-slot-thumb" style="display:none;">
         </div>
-        {# 훼손 5 #}
+
         <div class="dmg-photo-slot" id="slot-d5">
           <input type="file" name="photo_damage5" accept="image/*"
-                 onchange="previewSlot(this,'slot-d5')"
-                 class="dmg-slot-input">
+                 onchange="previewSlot(this,'slot-d5')" class="dmg-slot-input">
           <div class="dmg-slot-placeholder">
             <i class="ti ti-camera-plus"></i>
             <span>훼손⑤</span>
           </div>
           <img class="dmg-slot-thumb" style="display:none;">
         </div>
-      </div>{# /dmg-photo-grid #}
+
+      </div>
     </div>
+
     {# 제출 버튼 #}
-    <button type="submit" class="dmg-submit-btn">
-      <i class="ti ti-send"></i> 제보 제출
-    </button>
+    <div class="dmg-actions">
+      <a href="{{ url_for('support_choice') }}" class="dmg-btn dmg-btn-cancel">취소</a>
+      <button type="submit" class="dmg-btn dmg-btn-submit">
+        <i class="ti ti-send"></i> 제보 제출
+      </button>
+    </div>
+
   </form>
-</section>
-{# ══ 데스크탑 ══ #}
-<div id="d-damage-submit">
-  <div class="d-wrap" style="max-width:600px;">
-    <form method="post" action="{{ url_for('damage_submit') }}" enctype="multipart/form-data"
-          style="display:flex;flex-direction:column;gap:16px;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="field-group">
-          <label class="field-label">차량번호 <span class="required">*</span></label>
-          <input type="text" name="car_number" class="d-input" placeholder="예: 12가 3456" required>
-        </div>
-        <div class="field-group">
-          <label class="field-label">세차일자 <span class="required">*</span></label>
-          <input type="date" name="wash_date" class="d-input" value="{{ today }}" required>
-        </div>
-      </div>
-      <div class="field-group">
-        <label class="field-label">훼손 부위 <span class="required">*</span></label>
-        <input type="text" name="damage_location" class="d-input"
-               placeholder="예: 운전석 도어 스크래치" required>
-      </div>
-      <div class="field-group">
-        <label class="field-label">상세 내용</label>
-        <textarea name="description" class="d-input" rows="3"
-                  placeholder="훼손 상황, 발견 경위 등"></textarea>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
-        {% for slot in [('photo_front','정면','required'),('photo_damage1','훼손①','required'),('photo_damage2','훼손②',''),('photo_damage3','훼손③',''),('photo_damage4','훼손④',''),('photo_damage5','훼손⑤','')] %}
-        <div class="field-group">
-          <label class="field-label">{{ slot[1] }} {% if slot[2] %}<span class="required">*</span>{% endif %}</label>
-          <label class="photo-upload-btn" id="d-lbl-{{ slot[0] }}">
-            <input type="file" name="{{ slot[0] }}" accept="image/*" {{ slot[2] }}
-                   onchange="previewPhoto(this,'d-prev-{{ slot[0] }}','d-lbl-{{ slot[0] }}')">
-            <i class="ti ti-upload"></i> 업로드
-          </label>
-          <img id="d-prev-{{ slot[0] }}" class="photo-preview" style="display:none;">
-        </div>
-        {% endfor %}
-      </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;">
-        <a href="{{ url_for('support_choice') }}" class="d-btn d-btn-gray">취소</a>
-        <button type="submit" class="d-btn d-btn-orange">제보 제출</button>
-      </div>
-    </form>
-  </div>
 </div>
+
 <style>
-/* ── 폼 리스트 ── */
-.dmg-form-list { gap: 12px; padding-bottom: 32px; }
-/* ── 섹션 카드 ── */
-.dmg-section-card {
+/* ══ 페이지 래퍼 ══ */
+.dmg-page {
+  width: 100%;
+  box-sizing: border-box;
+  padding-bottom: 40px;
+}
+
+/* ══ 모바일 헤더 (데스크탑에서 숨김) ══ */
+@media (min-width: 901px) {
+  .dmg-mobile-header,
+  .dmg-mobile-title { display: none !important; }
+}
+
+/* ══ 폼 ══ */
+.dmg-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 4px;
+}
+@media (min-width: 901px) {
+  .dmg-form {
+    max-width: 680px;
+    padding: 24px;
+    gap: 20px;
+  }
+}
+
+/* ══ 카드 ══ */
+.dmg-card {
   background: var(--surface, #fff);
   border: 1px solid var(--border, #e0e0e0);
   border-radius: 16px;
   padding: 18px 16px;
-  margin: 0 4px;
 }
-.dmg-section-label {
+@media (min-width: 901px) {
+  .dmg-card {
+    border-radius: 10px;
+    padding: 22px;
+    background: var(--d-surface, #fff);
+    border-color: var(--d-border, #e5e8ec);
+  }
+}
+
+/* ══ 카드 레이블 ══ */
+.dmg-card-label {
   display: flex; align-items: center; gap: 6px;
-  font-size: 12px; font-weight: 700; color: var(--text-secondary, #757575);
-  margin: 0 0 14px; text-transform: uppercase; letter-spacing: .03em;
+  font-size: 12px; font-weight: 700;
+  color: var(--text-secondary, #757575);
+  margin: 0 0 14px;
+  text-transform: uppercase; letter-spacing: .03em;
+}
+.dmg-card-label-hint {
+  font-size: 11px; font-weight: 400;
+  color: var(--text-tertiary, #bdbdbd);
+  margin-left: 4px; text-transform: none; letter-spacing: 0;
 }
 .dmg-label-icon {
   width: 22px; height: 22px; border-radius: 5px; background: #fff3e0;
@@ -196,10 +200,18 @@
 .dmg-label-icon .ti { font-size: 13px; color: #e65100; }
 .dmg-label-icon--red { background: #fce4ec; }
 .dmg-label-icon--red .ti { color: #c62828; }
-/* ── 필드 ── */
-.dmg-field-group { display: flex; flex-direction: column; gap: 6px; }
-.dmg-field-label  { font-size: 13px; font-weight: 600; color: var(--text-primary, #212121); }
-.dmg-required     { color: #e53935; }
+
+/* ══ 2열 레이아웃 ══ */
+.dmg-row-2 { display: flex; flex-direction: column; gap: 12px; }
+@media (min-width: 560px) {
+  .dmg-row-2 { flex-direction: row; gap: 12px; }
+  .dmg-row-2 .dmg-field { flex: 1; }
+}
+
+/* ══ 필드 ══ */
+.dmg-field { display: flex; flex-direction: column; gap: 6px; }
+.dmg-field-label { font-size: 13px; font-weight: 600; color: var(--text-primary, #212121); }
+.dmg-req { color: #e53935; }
 .dmg-input {
   border: 1.5px solid var(--border, #e0e0e0); border-radius: 10px;
   padding: 11px 14px; font-size: 15px;
@@ -209,12 +221,30 @@
 }
 .dmg-input:focus { border-color: #FF9900; }
 .dmg-textarea { resize: vertical; min-height: 72px; }
-/* ── 사진 격자 ── */
+@media (min-width: 901px) {
+  .dmg-input {
+    background: var(--d-input, #fff);
+    border-color: var(--d-border, #e5e8ec);
+    color: var(--d-text, #111827);
+    border-radius: 8px;
+    font-size: 14px;
+    padding: 9px 13px;
+  }
+  .dmg-input:focus { border-color: #FF5F00; box-shadow: 0 0 0 3px rgba(255,95,0,.1); }
+  .dmg-field-label { color: var(--d-text, #111827); }
+}
+
+/* ══ 사진 격자 ══ */
 .dmg-photo-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
+@media (min-width: 560px) {
+  .dmg-photo-grid { grid-template-columns: repeat(6, 1fr); }
+}
+
+/* ══ 슬롯 ══ */
 .dmg-photo-slot {
   position: relative;
   aspect-ratio: 1 / 1;
@@ -228,7 +258,8 @@
 }
 .dmg-photo-slot:active { border-color: #FF9900; }
 .dmg-photo-slot.has-photo { border-style: solid; border-color: #43a047; }
-/* 핵심 수정: input을 슬롯 전체에 투명하게 깔기. display:none 사용 안 함 */
+
+/* 핵심: input이 슬롯 전체를 덮음 — JS .click() 없이 직접 탭 (iOS 호환) */
 .dmg-slot-input {
   position: absolute;
   top: 0; left: 0;
@@ -239,8 +270,7 @@
 }
 .dmg-slot-placeholder {
   display: flex; flex-direction: column; align-items: center; gap: 3px;
-  pointer-events: none;
-  z-index: 1;
+  pointer-events: none; z-index: 1;
 }
 .dmg-slot-placeholder .ti { font-size: 22px; color: var(--text-tertiary, #bdbdbd); }
 .dmg-slot-placeholder span { font-size: 11px; font-weight: 600; color: var(--text-secondary, #757575); }
@@ -250,40 +280,44 @@
 }
 .dmg-slot-thumb {
   position: absolute; inset: 0;
-  width: 100%; height: 100%; object-fit: cover;
-  z-index: 0;
+  width: 100%; height: 100%; object-fit: cover; z-index: 0;
 }
-/* ── 제출 버튼 ── */
-.dmg-submit-btn {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
+
+/* ══ 버튼 ══ */
+.dmg-actions {
+  display: flex; gap: 10px; justify-content: flex-end;
+  margin-top: 4px;
+}
+.dmg-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border-radius: 14px; padding: 14px 24px;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  font-family: inherit; border: none; text-decoration: none;
+  transition: opacity .15s;
+}
+.dmg-btn:active { opacity: .8; }
+.dmg-btn-submit {
   background: linear-gradient(135deg, #e53935, #c62828);
-  color: #fff; border: none; border-radius: 14px;
-  padding: 16px; font-size: 16px; font-weight: 700;
-  cursor: pointer; margin: 4px 4px 0;
-  transition: opacity .15s; font-family: inherit;
+  color: #fff;
+  flex: 1;
 }
-.dmg-submit-btn:active { opacity: .85; }
-.dmg-submit-btn .ti { font-size: 18px; }
-/* ── 데스크탑: desktop.css에서 제어, 모바일에서만 숨김 ── */
-@media (max-width: 767px) {
-  #d-damage-submit { display: none !important; }
+.dmg-btn-cancel {
+  background: var(--background, #f0f0f0);
+  color: var(--text-secondary, #757575);
+  border: 1px solid var(--border, #e0e0e0);
 }
-.field-group { display: flex; flex-direction: column; gap: 6px; }
-.field-label  { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-.required     { color: #e53935; }
-textarea.d-input { resize: vertical; min-height: 72px; width: 100%; box-sizing: border-box; }
-.photo-upload-btn {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  background: var(--surface); border: 2px dashed var(--border); border-radius: 10px;
-  padding: 14px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--text-secondary);
-  transition: border-color .15s;
+@media (min-width: 901px) {
+  .dmg-btn { border-radius: 8px; padding: 10px 20px; font-size: 14px; }
+  .dmg-btn-submit { flex: none; }
+  .dmg-btn-cancel {
+    background: var(--d-bg, #f4f6f8);
+    color: var(--d-text, #111827);
+    border-color: var(--d-border, #e5e8ec);
+  }
 }
-.photo-upload-btn:hover { border-color: var(--primary); }
-.photo-upload-btn input[type=file] { display: none; }
-.photo-preview { width: 100%; max-height: 160px; object-fit: cover; border-radius: 8px; margin-top: 6px; }
 </style>
+
 <script>
-/* ── 슬롯 미리보기 ── */
 function previewSlot(input, slotId) {
   var file = input.files[0];
   if (!file) return;
@@ -299,19 +333,6 @@ function previewSlot(input, slotId) {
   };
   reader.readAsDataURL(file);
 }
-/* ── 데스크탑 미리보기 ── */
-function previewPhoto(input, previewId, labelId) {
-  var file = input.files[0];
-  if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var img = document.getElementById(previewId);
-    img.src = e.target.result;
-    img.style.display = 'block';
-    var lbl = document.getElementById(labelId);
-    if (lbl) lbl.style.borderColor = '#43a047';
-  };
-  reader.readAsDataURL(file);
-}
 </script>
+
 {% endblock %}

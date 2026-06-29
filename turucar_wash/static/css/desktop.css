@@ -502,6 +502,7 @@
 }
 
 /* ══ 어드민 공통 ══ */
+#desktop-mode #d-damage-submit { display: block !important; width: 100% !important; box-sizing: border-box !important; }
 #desktop-mode .d-wrap { padding: 24px !important; display: flex !important; flex-direction: column !important; gap: 20px !important; width: 100% !important; box-sizing: border-box !important; background: var(--d-bg) !important; }
 #desktop-mode .d-grid-2 { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 24px !important; }
 #desktop-mode .d-grid-3 { display: grid !important; grid-template-columns: 1fr 1fr 1fr !important; gap: 24px !important; }

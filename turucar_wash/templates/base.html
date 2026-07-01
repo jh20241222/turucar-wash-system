@@ -95,10 +95,16 @@
             <a href="{{ url_for('vendor_manage') }}" class="side-link {% if request.endpoint == 'vendor_manage' %}active{% endif %}">
                 <i class="ti ti-building"></i><b>업체 관리</b>
             </a>
-            <a href="{{ url_for('support_choice') }}" class="side-link side-link-with-badge {% if request.endpoint in ['support_manage', 'support_choice', 'damage_manage'] %}active{% endif %}">
-                <i class="ti ti-message"></i><b>문의/제보</b>
-                <em class="side-menu-bubble support-menu-badge{% if not (support_badge_count or damage_badge_count) %} is-hidden{% endif %}" data-support-badge>
-                    {{ (support_badge_count or 0) + (damage_badge_count or 0) }}
+            <a href="{{ url_for('support_manage') }}" class="side-link side-link-with-badge {% if request.endpoint in ['support_manage', 'support_choice'] %}active{% endif %}">
+                <i class="ti ti-message-dots"></i><b>문의 관리</b>
+                <em class="side-menu-bubble{% if not support_badge_count %} is-hidden{% endif %}">
+                    {{ support_badge_count or 0 }}
+                </em>
+            </a>
+            <a href="{{ url_for('damage_manage') }}" class="side-link side-link-with-badge {% if request.endpoint == 'damage_manage' %}active{% endif %}">
+                <i class="ti ti-alert-triangle"></i><b>훼손 제보 관리</b>
+                <em class="side-menu-bubble{% if not damage_badge_count %} is-hidden{% endif %}">
+                    {{ damage_badge_count or 0 }}
                 </em>
             </a>
             {% endif %}
@@ -108,10 +114,16 @@
             <a href="{{ url_for('account_manage') }}" class="side-link {% if request.endpoint == 'account_manage' %}active{% endif %}">
                 <i class="ti ti-users"></i><b>계정/지역</b>
             </a>
-            <a href="{{ url_for('support_choice') }}" class="side-link side-link-with-badge {% if request.endpoint in ['support_manage', 'support_choice', 'damage_manage'] %}active{% endif %}">
-                <i class="ti ti-message"></i><b>문의/제보</b>
-                <em class="side-menu-bubble support-menu-badge{% if not (support_badge_count or damage_badge_count) %} is-hidden{% endif %}" data-support-badge>
-                    {{ (support_badge_count or 0) + (damage_badge_count or 0) }}
+            <a href="{{ url_for('support_manage') }}" class="side-link side-link-with-badge {% if request.endpoint in ['support_manage', 'support_choice'] %}active{% endif %}">
+                <i class="ti ti-message-dots"></i><b>문의 관리</b>
+                <em class="side-menu-bubble{% if not support_badge_count %} is-hidden{% endif %}">
+                    {{ support_badge_count or 0 }}
+                </em>
+            </a>
+            <a href="{{ url_for('damage_manage') }}" class="side-link side-link-with-badge {% if request.endpoint == 'damage_manage' %}active{% endif %}">
+                <i class="ti ti-alert-triangle"></i><b>훼손 제보 관리</b>
+                <em class="side-menu-bubble{% if not damage_badge_count %} is-hidden{% endif %}">
+                    {{ damage_badge_count or 0 }}
                 </em>
             </a>
             <p class="side-nav-group" style="margin-top:4px;">차량 제어</p>

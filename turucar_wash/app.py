@@ -11,7 +11,13 @@ def now_kst():
 def today_kst():
     """오늘 KST 날짜 문자열 반환 (YYYY-MM-DD)."""
     return datetime.now(KST).strftime("%Y-%m-%d")
+import io
 import pandas as pd
+try:
+    from PIL import Image as _PILImage, ExifTags as _ExifTags
+    _PIL_AVAILABLE = True
+except ImportError:
+    _PIL_AVAILABLE = False
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import (
     Flask, flash, jsonify, redirect, render_template,
@@ -258,6 +264,7 @@ def init_db():
             photo_damage3 TEXT,
             photo_damage4 TEXT,
             photo_damage5 TEXT,
+            slack_ts      TEXT,
             reporter      TEXT NOT NULL,
             vendor        TEXT,
             status        TEXT NOT NULL DEFAULT '접수',
@@ -268,7 +275,7 @@ def init_db():
     """)
     # damage_reports 컬럼 마이그레이션 (기존 DB 호환)
     _dr_cols = [row[1] for row in cur.execute("PRAGMA table_info(damage_reports)").fetchall()]
-    for _col in ("photo_damage3", "photo_damage4", "photo_damage5"):
+    for _col in ("photo_damage3", "photo_damage4", "photo_damage5", "slack_ts"):
         if _col not in _dr_cols:
             cur.execute(f"ALTER TABLE damage_reports ADD COLUMN {_col} TEXT")
     # dashboard_notices 테이블에 image_path 컬럼 마이그레이션 (기존 DB 호환)
@@ -2287,22 +2294,67 @@ def wash_status_delete():
         flash(f"\u2714 {len(ids)}건 삭제되었습니다.")
     return redirect(url_for("wash_status") + ("?" + return_query if return_query else ""))
 SLACK_DAMAGE_WEBHOOK = os.environ.get("SLACK_DAMAGE_WEBHOOK", "")
+SLACK_BOT_TOKEN      = os.environ.get("SLACK_BOT_TOKEN", "")
+SLACK_CHANNEL_ID     = os.environ.get("SLACK_CHANNEL_ID", "")
 APP_BASE_URL = os.environ.get("APP_BASE_URL", "https://turucar-wash-system-production.up.railway.app")
 ALLOWED_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp"}
+_PHOTO_MAX_PX = 1600   # 최대 해상도 (px)
+_PHOTO_QUALITY = 75    # JPEG 압축 품질 (%)
+
 def _save_damage_photo(file_obj):
+    """사진 저장 — Pillow 사용 시 리사이즈+압축 후 저장 (용량 절감)."""
     if not file_obj or not file_obj.filename:
         return None
     ext = os.path.splitext(secure_filename(file_obj.filename))[1].lower()
     if ext not in ALLOWED_IMAGE_EXTS:
         return None
     os.makedirs(DAMAGE_UPLOAD_DIR, exist_ok=True)
+
+    if _PIL_AVAILABLE:
+        try:
+            img = _PILImage.open(file_obj.stream)
+
+            # EXIF 회전 보정 (핸드폰 세로 사진)
+            try:
+                for tag, val in img._getexif().items():
+                    if _ExifTags.TAGS.get(tag) == "Orientation":
+                        if val == 3:
+                            img = img.rotate(180, expand=True)
+                        elif val == 6:
+                            img = img.rotate(270, expand=True)
+                        elif val == 8:
+                            img = img.rotate(90, expand=True)
+                        break
+            except Exception:
+                pass
+
+            # RGBA / 팔레트 → RGB 변환
+            if img.mode in ("RGBA", "P", "LA"):
+                img = img.convert("RGB")
+            elif img.mode != "RGB":
+                img = img.convert("RGB")
+
+            # 리사이즈 (긴 변이 _PHOTO_MAX_PX 초과 시)
+            w, h = img.size
+            if max(w, h) > _PHOTO_MAX_PX:
+                ratio = _PHOTO_MAX_PX / max(w, h)
+                img = img.resize((int(w * ratio), int(h * ratio)), _PILImage.LANCZOS)
+
+            # 항상 .jpg 로 저장
+            fname = f"{uuid.uuid4().hex}.jpg"
+            img.save(os.path.join(DAMAGE_UPLOAD_DIR, fname),
+                     format="JPEG", quality=_PHOTO_QUALITY, optimize=True)
+            return fname
+        except Exception as e:
+            print(f"[Photo] Pillow 압축 실패, 원본 저장: {e}")
+            file_obj.stream.seek(0)
+
+    # Pillow 없거나 실패 시 원본 그대로 저장
     fname = f"{uuid.uuid4().hex}{ext}"
     file_obj.save(os.path.join(DAMAGE_UPLOAD_DIR, fname))
     return fname
 def _send_damage_slack(report, base_url):
-    if not SLACK_DAMAGE_WEBHOOK:
-        print("[Slack] SLACK_DAMAGE_WEBHOOK 환경변수가 비어있습니다.")
-        return
+    """슬랙으로 훼손 제보 알림 전송. Bot Token 사용 시 ts 반환 (삭제용)."""
     blocks = [
         {"type": "header", "text": {"type": "plain_text", "text": "🚨 차량 훼손 제보 접수"}},
         {"type": "section", "fields": [
@@ -2315,22 +2367,36 @@ def _send_damage_slack(report, base_url):
     if report.get("description"):
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": f"*상세 내용*\n{report['description']}"}})
 
-    # ↓↓↓ 추가: 사진 이미지 블록
-    photos = [p for p in report.get("photos", []) if p]
-    if photos:
-        blocks.append({"type": "divider"})
-    labels = ["정면", "훼손①", "훼손②", "훼손③", "훼손④", "훼손⑤"]
-    for i, photo in enumerate(photos):
-        blocks.append({
-            "type": "image",
-            "image_url": f"{base_url}/damage_photo/{photo}",
-            "alt_text": labels[i] if i < len(labels) else f"사진{i+1}"
-        })
-    try:
-        resp = _requests.post(SLACK_DAMAGE_WEBHOOK, json={"blocks": blocks}, timeout=5)
-        print(f"[Slack] status={resp.status_code}, body={resp.text[:200]}")
-    except Exception as e:
-        print(f"[Slack] 전송 오류: {e}")
+    # Bot Token 방식 (ts 반환 — 삭제 가능)
+    if SLACK_BOT_TOKEN and SLACK_CHANNEL_ID:
+        try:
+            resp = _requests.post(
+                "https://slack.com/api/chat.postMessage",
+                headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}",
+                         "Content-Type": "application/json"},
+                json={"channel": SLACK_CHANNEL_ID, "blocks": blocks},
+                timeout=5
+            )
+            data = resp.json()
+            if data.get("ok"):
+                print(f"[Slack Bot] 전송 성공 ts={data.get('ts')}")
+                return data.get("ts")
+            else:
+                print(f"[Slack Bot] 오류: {data.get('error')}")
+        except Exception as e:
+            print(f"[Slack Bot] 전송 오류: {e}")
+        return None
+
+    # Webhook 방식 (fallback — ts 없음)
+    if SLACK_DAMAGE_WEBHOOK:
+        try:
+            resp = _requests.post(SLACK_DAMAGE_WEBHOOK, json={"blocks": blocks}, timeout=5)
+            print(f"[Slack Webhook] status={resp.status_code}")
+        except Exception as e:
+            print(f"[Slack Webhook] 전송 오류: {e}")
+    else:
+        print("[Slack] SLACK_BOT_TOKEN 또는 SLACK_DAMAGE_WEBHOOK 환경변수가 비어있습니다.")
+    return None
 @app.context_processor
 def inject_damage_badge_count():
     if not current_user.is_authenticated:
@@ -2403,7 +2469,7 @@ def damage_submit():
         photo_damage5 = _save_damage_photo(request.files.get("photo_damage5"))
         created_at = now_kst().strftime("%Y-%m-%d %H:%M")
         conn = get_user_db()
-        conn.execute(
+        cur = conn.execute(
             """INSERT INTO damage_reports
                (car_number, wash_date, damage_location, description,
                 photo_front, photo_damage1, photo_damage2,
@@ -2417,16 +2483,19 @@ def damage_submit():
              getattr(current_user, "vendor", "") or "",
              created_at)
         )
+        report_id = cur.lastrowid
         conn.commit()
+        # 슬랙 전송 후 ts 저장 (Bot Token 사용 시)
+        slack_ts = _send_damage_slack({
+            "car_number": car_number, "wash_date": wash_date,
+            "damage_location": damage_location, "description": description,
+            "reporter": current_user.username,
+            "vendor": getattr(current_user, "vendor", "") or "",
+        }, APP_BASE_URL)
+        if slack_ts:
+            conn.execute("UPDATE damage_reports SET slack_ts=? WHERE id=?", (slack_ts, report_id))
+            conn.commit()
         conn.close()
-        _send_damage_slack({
-    "car_number": car_number, "wash_date": wash_date,
-    "damage_location": damage_location, "description": description,
-    "reporter": current_user.username,
-    "vendor": getattr(current_user, "vendor", "") or "",
-    "photos": [photo_front, photo_damage1, photo_damage2,
-               photo_damage3, photo_damage4, photo_damage5],
-}, APP_BASE_URL)
         flash("✅ 제보가 접수되었습니다.")
         return redirect(url_for("damage_submit"))
     return render_template("damage_submit.html", today=today_kst())
@@ -2475,6 +2544,74 @@ def damage_delete(report_id):
                     pass
         conn.execute("DELETE FROM damage_reports WHERE id=?", (report_id,))
         conn.commit()
+    conn.close()
+    return redirect(url_for("damage_manage"))
+@app.route("/damage_bulk_delete", methods=["POST"])
+@login_required
+def damage_bulk_delete():
+    if not current_user.is_master:
+        return "Forbidden", 403
+    ids = request.form.getlist("ids")
+    if not ids:
+        flash("선택된 항목이 없습니다.")
+        return redirect(url_for("damage_manage"))
+    deleted = 0
+    conn = get_user_db()
+    for raw_id in ids:
+        try:
+            rid = int(raw_id)
+        except (ValueError, TypeError):
+            continue
+        row = conn.execute("SELECT * FROM damage_reports WHERE id=?", (rid,)).fetchone()
+        if row:
+            for field in ("photo_front", "photo_damage1", "photo_damage2",
+                          "photo_damage3", "photo_damage4", "photo_damage5"):
+                try:
+                    fname = row[field]
+                except (IndexError, KeyError):
+                    fname = None
+                if fname:
+                    try:
+                        os.remove(os.path.join(DAMAGE_UPLOAD_DIR, fname))
+                    except OSError:
+                        pass
+            conn.execute("DELETE FROM damage_reports WHERE id=?", (rid,))
+            deleted += 1
+    conn.commit()
+    conn.close()
+    flash(f"✅ {deleted}건이 삭제되었습니다.")
+    return redirect(url_for("damage_manage"))
+@app.route("/damage_slack_delete/<int:report_id>", methods=["POST"])
+@login_required
+def damage_slack_delete(report_id):
+    if not (current_user.is_master or getattr(current_user, 'is_admin', False)):
+        return "Forbidden", 403
+    if not (SLACK_BOT_TOKEN and SLACK_CHANNEL_ID):
+        flash("⚠️ SLACK_BOT_TOKEN 또는 SLACK_CHANNEL_ID 환경변수가 설정되지 않았습니다.")
+        return redirect(url_for("damage_manage"))
+    conn = get_user_db()
+    row = conn.execute("SELECT slack_ts FROM damage_reports WHERE id=?", (report_id,)).fetchone()
+    if not row or not row["slack_ts"]:
+        flash("삭제할 Slack 메시지가 없습니다.")
+        conn.close()
+        return redirect(url_for("damage_manage"))
+    try:
+        resp = _requests.post(
+            "https://slack.com/api/chat.delete",
+            headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}",
+                     "Content-Type": "application/json"},
+            json={"channel": SLACK_CHANNEL_ID, "ts": row["slack_ts"]},
+            timeout=5
+        )
+        data = resp.json()
+        if data.get("ok"):
+            conn.execute("UPDATE damage_reports SET slack_ts=NULL WHERE id=?", (report_id,))
+            conn.commit()
+            flash("✅ Slack 메시지가 삭제되었습니다.")
+        else:
+            flash(f"Slack 삭제 실패: {data.get('error', '알 수 없음')}")
+    except Exception as e:
+        flash(f"Slack 삭제 오류: {e}")
     conn.close()
     return redirect(url_for("damage_manage"))
 @app.route("/damage_alerts_poll")

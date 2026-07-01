@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block document_title %}Turu Wash · 훼손 제보 관리{% endblock %}
 {% block content %}
+
+{# ══ 모바일 ══ #}
 <section class="app-card elevated damage-manage-page">
   <div class="support-manage-head">
     <div>
@@ -34,26 +36,24 @@
       <p class="ticket-message"><b>훼손 부위:</b> {{ r.damage_location }}</p>
       {% if r.description %}<p class="ticket-message">{{ r.description }}</p>{% endif %}
 
-      {% if r.photo_front or r.photo_damage1 or r.photo_damage2 %}
+      {% set photo_slots = [
+        (r.photo_front, '정면'),
+        (r.photo_damage1, '훼손①'),
+        (r.photo_damage2, '훼손②'),
+        (r.photo_damage3, '훼손③'),
+        (r.photo_damage4, '훼손④'),
+        (r.photo_damage5, '훼손⑤'),
+      ] %}
+      {% if photo_slots | selectattr(0) | list %}
       <div class="damage-photos">
-        {% if r.photo_front %}
-        <a href="{{ url_for('serve_damage_photo', filename=r.photo_front) }}" target="_blank">
-          <img src="{{ url_for('serve_damage_photo', filename=r.photo_front) }}" alt="정면">
-          <span>정면</span>
+        {% for fname, label in photo_slots %}
+        {% if fname %}
+        <a href="{{ url_for('serve_damage_photo', filename=fname) }}" target="_blank">
+          <img src="{{ url_for('serve_damage_photo', filename=fname) }}" alt="{{ label }}">
+          <span>{{ label }}</span>
         </a>
         {% endif %}
-        {% if r.photo_damage1 %}
-        <a href="{{ url_for('serve_damage_photo', filename=r.photo_damage1) }}" target="_blank">
-          <img src="{{ url_for('serve_damage_photo', filename=r.photo_damage1) }}" alt="훼손1">
-          <span>훼손1</span>
-        </a>
-        {% endif %}
-        {% if r.photo_damage2 %}
-        <a href="{{ url_for('serve_damage_photo', filename=r.photo_damage2) }}" target="_blank">
-          <img src="{{ url_for('serve_damage_photo', filename=r.photo_damage2) }}" alt="훼손2">
-          <span>훼손2</span>
-        </a>
-        {% endif %}
+        {% endfor %}
       </div>
       {% endif %}
 
@@ -71,6 +71,14 @@
         <button class="primary-btn" type="submit">저장</button>
       </form>
 
+      {% if r.slack_ts %}
+      <form method="post" action="{{ url_for('damage_slack_delete', report_id=r.id) }}"
+            onsubmit="return confirm('Slack 메시지를 삭제할까요?');" class="ticket-delete-form">
+        <button type="submit" class="slack-delete-btn">
+          <i class="ti ti-brand-slack"></i> Slack 삭제
+        </button>
+      </form>
+      {% endif %}
       {% if current_user.is_master %}
       <form method="post" action="{{ url_for('damage_delete', report_id=r.id) }}"
             onsubmit="return confirm('이 제보를 삭제할까요?');" class="ticket-delete-form">
@@ -87,107 +95,305 @@
   </div>
 </section>
 
-{# ── 데스크탑 ── #}
-<div id="d-damage-manage" style="display:none;">
-  <div class="d-wrap">
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-      <a class="d-btn d-btn-{% if not selected_status %}orange{% else %}gray{% endif %}" href="{{ url_for('damage_manage') }}">전체</a>
-      <a class="d-btn d-btn-{% if selected_status == '접수' %}orange{% else %}gray{% endif %}" href="{{ url_for('damage_manage', status='접수') }}">접수</a>
-      <a class="d-btn d-btn-{% if selected_status == '확인중' %}orange{% else %}gray{% endif %}" href="{{ url_for('damage_manage', status='확인중') }}">확인중</a>
-      <a class="d-btn d-btn-{% if selected_status == '완료' %}orange{% else %}gray{% endif %}" href="{{ url_for('damage_manage', status='완료') }}">완료</a>
-    </div>
+{# ══ 데스크탑 ══ #}
+<div id="d-damage-manage">
+  <div class="d-wrap" style="max-width:100%;">
 
-    {% for r in rows %}
-    <div class="d-ticket">
-      <div class="d-ticket-head">
-        <span class="d-ticket-badge">{{ r.status }}</span>
-        <span class="d-ticket-title">{{ r.car_number }} — {{ r.damage_location }}</span>
-        <span class="d-ticket-time">{{ r.created_at }}</span>
-      </div>
-      <div class="d-ticket-meta">
-        <span>세차일 {{ r.wash_date }}</span>
-        <span>제보자 {{ r.reporter }}</span>
-        {% if r.vendor %}<span>업체 {{ r.vendor }}</span>{% endif %}
-      </div>
-      {% if r.description %}<p class="d-ticket-msg">{{ r.description }}</p>{% endif %}
-
-      {% if r.photo_front or r.photo_damage1 or r.photo_damage2 %}
-      <div class="d-damage-photos">
-        {% if r.photo_front %}
-        <a href="{{ url_for('serve_damage_photo', filename=r.photo_front) }}" target="_blank" class="d-photo-thumb">
-          <img src="{{ url_for('serve_damage_photo', filename=r.photo_front) }}" alt="정면">
-          <span>정면</span>
-        </a>
-        {% endif %}
-        {% if r.photo_damage1 %}
-        <a href="{{ url_for('serve_damage_photo', filename=r.photo_damage1) }}" target="_blank" class="d-photo-thumb">
-          <img src="{{ url_for('serve_damage_photo', filename=r.photo_damage1) }}" alt="훼손1">
-          <span>훼손1</span>
-        </a>
-        {% endif %}
-        {% if r.photo_damage2 %}
-        <a href="{{ url_for('serve_damage_photo', filename=r.photo_damage2) }}" target="_blank" class="d-photo-thumb">
-          <img src="{{ url_for('serve_damage_photo', filename=r.photo_damage2) }}" alt="훼손2">
-          <span>훼손2</span>
-        </a>
-        {% endif %}
-      </div>
-      {% endif %}
-
-      {% if r.admin_reply %}
-      <div class="d-ticket-reply-box"><strong>메모</strong><p>{{ r.admin_reply }}</p></div>
-      {% endif %}
-
-      <div class="d-ticket-form">
-        <form method="post" action="{{ url_for('damage_reply', report_id=r.id) }}" style="display:flex;gap:8px;flex:1;">
-          <select name="status" class="d-input" style="width:90px;">
-            <option value="접수" {% if r.status == '접수' %}selected{% endif %}>접수</option>
-            <option value="확인중" {% if r.status == '확인중' %}selected{% endif %}>확인중</option>
-            <option value="완료" {% if r.status == '완료' %}selected{% endif %}>완료</option>
-          </select>
-          <input name="admin_reply" class="d-input" placeholder="메모 입력" value="{{ r.admin_reply or '' }}" style="flex:1;">
-          <button class="d-btn d-btn-orange" type="submit">저장</button>
-        </form>
-        {% if current_user.is_master %}
-        <form method="post" action="{{ url_for('damage_delete', report_id=r.id) }}"
-              onsubmit="return confirm('이 제보를 삭제할까요?');">
-          <button type="submit" class="d-btn-danger-sm">삭제</button>
-        </form>
-        {% endif %}
+    {# 헤더 #}
+    <div class="dmg-d-header">
+      <div>
+        <h2 class="dmg-d-title">훼손 제보 관리</h2>
+        <p class="dmg-d-subtitle">총 {{ rows|length }}건</p>
       </div>
     </div>
-    {% else %}
-    <div style="text-align:center;padding:48px;color:var(--text-secondary);">접수된 제보가 없습니다.</div>
-    {% endfor %}
+
+    {# 필터 + 일괄 액션 바 #}
+    <div class="dmg-d-toolbar">
+      <div class="dmg-d-filters">
+        <a class="dmg-d-filter-btn {% if not selected_status %}active{% endif %}" href="{{ url_for('damage_manage') }}">전체</a>
+        <a class="dmg-d-filter-btn {% if selected_status == '접수' %}active{% endif %}" href="{{ url_for('damage_manage', status='접수') }}">접수</a>
+        <a class="dmg-d-filter-btn {% if selected_status == '확인중' %}active{% endif %}" href="{{ url_for('damage_manage', status='확인중') }}">확인중</a>
+        <a class="dmg-d-filter-btn {% if selected_status == '완료' %}active{% endif %}" href="{{ url_for('damage_manage', status='완료') }}">완료</a>
+      </div>
+      {% if current_user.is_master %}
+      <div class="dmg-d-bulk-actions" id="bulkActions" style="display:none;">
+        <span class="dmg-d-selected-count" id="selectedCount">0건 선택</span>
+        <form method="post" action="{{ url_for('damage_bulk_delete') }}" id="bulkDeleteForm"
+              onsubmit="return confirmBulkDelete();">
+          <button type="submit" class="dmg-d-bulk-delete-btn">
+            <i class="ti ti-trash"></i> 일괄 삭제
+          </button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+
+    {# 테이블 #}
+    <div class="dmg-d-table-wrap">
+      <table class="dmg-d-table">
+        <thead>
+          <tr>
+            {% if current_user.is_master %}
+            <th class="dmg-d-th-check">
+              <input type="checkbox" id="checkAll" onchange="toggleAll(this)">
+            </th>
+            {% endif %}
+            <th>차량번호</th>
+            <th>훼손 부위</th>
+            <th>제보자</th>
+            <th>업체</th>
+            <th>세차일</th>
+            <th>상태</th>
+            <th>사진</th>
+            <th>접수일</th>
+            <th>액션</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+          <tr class="dmg-d-row" id="row-{{ r.id }}">
+            {% if current_user.is_master %}
+            <td class="dmg-d-td-check">
+              <input type="checkbox" class="row-check" value="{{ r.id }}" onchange="updateBulkBar()">
+            </td>
+            {% endif %}
+            <td><strong>{{ r.car_number }}</strong></td>
+            <td>{{ r.damage_location }}</td>
+            <td>{{ r.reporter }}</td>
+            <td>{{ r.vendor or '-' }}</td>
+            <td>{{ r.wash_date }}</td>
+            <td>
+              <span class="dmg-d-badge dmg-d-badge--{{ r.status }}">{{ r.status }}</span>
+            </td>
+            <td>
+              {% set d_photo_slots = [
+                (r.photo_front,'정면'),(r.photo_damage1,'훼손①'),
+                (r.photo_damage2,'훼손②'),(r.photo_damage3,'훼손③'),
+                (r.photo_damage4,'훼손④'),(r.photo_damage5,'훼손⑤')
+              ] %}
+              <div class="dmg-d-photo-strip">
+                {% for fname, label in d_photo_slots %}
+                {% if fname %}
+                <a href="{{ url_for('serve_damage_photo', filename=fname) }}" target="_blank" title="{{ label }}">
+                  <img src="{{ url_for('serve_damage_photo', filename=fname) }}" alt="{{ label }}">
+                </a>
+                {% endif %}
+                {% endfor %}
+              </div>
+            </td>
+            <td class="dmg-d-td-date">{{ r.created_at }}</td>
+            <td>
+              <div class="dmg-d-actions">
+                <button type="button" class="dmg-d-action-btn dmg-d-action-edit"
+                        onclick="toggleEdit({{ r.id }})" title="편집">
+                  <i class="ti ti-pencil"></i>
+                </button>
+                {% if r.slack_ts %}
+                <form method="post" action="{{ url_for('damage_slack_delete', report_id=r.id) }}"
+                      onsubmit="return confirm('Slack 메시지를 삭제할까요?');" style="display:inline;">
+                  <button type="submit" class="dmg-d-action-btn dmg-d-action-slack" title="Slack 삭제">
+                    <i class="ti ti-brand-slack"></i>
+                  </button>
+                </form>
+                {% endif %}
+                {% if current_user.is_master %}
+                <form method="post" action="{{ url_for('damage_delete', report_id=r.id) }}"
+                      onsubmit="return confirm('삭제할까요?');" style="display:inline;">
+                  <button type="submit" class="dmg-d-action-btn dmg-d-action-delete" title="삭제">
+                    <i class="ti ti-trash"></i>
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+
+              {# 인라인 편집 패널 #}
+              <div class="dmg-d-edit-panel" id="edit-{{ r.id }}" style="display:none;">
+                <form method="post" action="{{ url_for('damage_reply', report_id=r.id) }}"
+                      style="display:flex;flex-direction:column;gap:6px;">
+                  <select name="status" class="d-input" style="font-size:13px;">
+                    <option value="접수" {% if r.status=='접수' %}selected{% endif %}>접수</option>
+                    <option value="확인중" {% if r.status=='확인중' %}selected{% endif %}>확인중</option>
+                    <option value="완료" {% if r.status=='완료' %}selected{% endif %}>완료</option>
+                  </select>
+                  <input name="admin_reply" class="d-input" placeholder="메모"
+                         value="{{ r.admin_reply or '' }}" style="font-size:13px;">
+                  <button class="d-btn d-btn-orange" type="submit" style="font-size:13px;">저장</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="10" style="text-align:center;padding:48px;color:var(--text-secondary);">
+              접수된 제보가 없습니다.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
   </div>
 </div>
 
 <style>
-.damage-photos {
-  display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;
-}
-.damage-photos a {
-  display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;
-}
-.damage-photos img {
-  width:90px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--border);
-}
+/* ── 모바일 ── */
+.damage-photos { display:flex;gap:8px;flex-wrap:wrap;margin:10px 0; }
+.damage-photos a { display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none; }
+.damage-photos img { width:90px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--border); }
 .damage-photos span { font-size:11px;color:var(--text-secondary); }
+.slack-delete-btn {
+  display:inline-flex;align-items:center;gap:5px;
+  background:#f5f0ff;color:#4a154b;border:1px solid #c9b8e8;
+  border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:background .15s;
+}
+.slack-delete-btn:hover { background:#ede5ff; }
 
-.d-damage-photos {
-  display:flex;gap:12px;flex-wrap:wrap;margin:10px 0;
-}
-.d-photo-thumb {
-  display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;
-}
-.d-photo-thumb img {
-  width:120px;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border);
-  transition:opacity .15s;
-}
-.d-photo-thumb:hover img { opacity:.85; }
-.d-photo-thumb span { font-size:11px;color:var(--text-secondary); }
-
+/* ── 데스크탑 기본 숨김 ── */
+#d-damage-manage { display:none; }
 #desktop-mode #d-damage-manage { display:block !important; }
 #desktop-mode .app-card.elevated.damage-manage-page { display:none !important; }
+
+/* ── 데스크탑 헤더 ── */
+.dmg-d-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:16px; }
+.dmg-d-title { font-size:20px;font-weight:700;color:var(--d-text,#111827);margin:0 0 2px; }
+.dmg-d-subtitle { font-size:13px;color:var(--text-secondary);margin:0; }
+
+/* ── 툴바 ── */
+.dmg-d-toolbar {
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px;gap:12px;flex-wrap:wrap;
+}
+.dmg-d-filters { display:flex;gap:6px; }
+.dmg-d-filter-btn {
+  padding:6px 14px;border-radius:8px;font-size:13px;font-weight:600;
+  color:var(--text-secondary);background:var(--d-bg,#f4f6f8);
+  border:1px solid var(--d-border,#e5e8ec);text-decoration:none;transition:all .15s;
+}
+.dmg-d-filter-btn:hover { background:#e9ecef; }
+.dmg-d-filter-btn.active { background:#FF9900;color:#fff;border-color:#FF9900; }
+
+/* ── 일괄 삭제 바 ── */
+.dmg-d-bulk-actions {
+  display:flex;align-items:center;gap:10px;
+  background:#fff3e0;border:1px solid #ffe0b2;border-radius:10px;padding:6px 14px;
+}
+.dmg-d-selected-count { font-size:13px;font-weight:700;color:#e65100; }
+.dmg-d-bulk-delete-btn {
+  display:inline-flex;align-items:center;gap:5px;
+  background:#e53935;color:#fff;border:none;
+  border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;
+  cursor:pointer;font-family:inherit;transition:background .15s;
+}
+.dmg-d-bulk-delete-btn:hover { background:#c62828; }
+
+/* ── 테이블 ── */
+.dmg-d-table-wrap {
+  background:var(--d-surface,#fff);border:1px solid var(--d-border,#e5e8ec);
+  border-radius:12px;overflow:hidden;overflow-x:auto;
+}
+.dmg-d-table { width:100%;border-collapse:collapse;font-size:13px; }
+.dmg-d-table thead th {
+  background:var(--d-bg,#f4f6f8);padding:10px 14px;
+  text-align:left;font-size:12px;font-weight:700;color:var(--text-secondary);
+  border-bottom:1px solid var(--d-border,#e5e8ec);white-space:nowrap;
+}
+.dmg-d-th-check,.dmg-d-td-check { width:36px;text-align:center; }
+.dmg-d-table tbody tr {
+  border-bottom:1px solid var(--d-border,#e5e8ec);transition:background .1s;
+}
+.dmg-d-table tbody tr:last-child { border-bottom:none; }
+.dmg-d-table tbody tr:hover { background:var(--d-bg,#f9fafb); }
+.dmg-d-table tbody tr.selected { background:#fff8f0; }
+.dmg-d-table td { padding:10px 14px;vertical-align:top; }
+.dmg-d-td-date { white-space:nowrap;font-size:12px;color:var(--text-secondary); }
+
+/* ── 상태 배지 ── */
+.dmg-d-badge {
+  display:inline-block;padding:3px 10px;border-radius:99px;
+  font-size:12px;font-weight:700;white-space:nowrap;
+}
+.dmg-d-badge--접수 { background:#fff3e0;color:#e65100; }
+.dmg-d-badge--확인중 { background:#e3f2fd;color:#1565c0; }
+.dmg-d-badge--완료 { background:#e8f5e9;color:#2e7d32; }
+
+/* ── 사진 스트립 ── */
+.dmg-d-photo-strip { display:flex;gap:4px;flex-wrap:wrap; }
+.dmg-d-photo-strip a img {
+  width:48px;height:38px;object-fit:cover;
+  border-radius:6px;border:1px solid var(--d-border,#e5e8ec);
+  transition:opacity .15s;display:block;
+}
+.dmg-d-photo-strip a:hover img { opacity:.8; }
+
+/* ── 액션 버튼 ── */
+.dmg-d-actions { display:flex;gap:4px;align-items:center; }
+.dmg-d-action-btn {
+  width:30px;height:30px;border-radius:7px;border:1px solid var(--d-border,#e5e8ec);
+  background:var(--d-bg,#f4f6f8);color:var(--text-secondary);
+  display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:15px;transition:all .15s;
+}
+.dmg-d-action-edit:hover { background:#fff3e0;color:#e65100;border-color:#ffe0b2; }
+.dmg-d-action-slack:hover { background:#f5f0ff;color:#4a154b;border-color:#c9b8e8; }
+.dmg-d-action-delete:hover { background:#fce4ec;color:#c62828;border-color:#f48fb1; }
+
+/* ── 인라인 편집 패널 ── */
+.dmg-d-edit-panel {
+  margin-top:8px;padding:10px;
+  background:var(--d-bg,#f4f6f8);border-radius:8px;
+  border:1px solid var(--d-border,#e5e8ec);min-width:200px;
+}
 </style>
+
+<script>
+function toggleAll(cb) {
+  document.querySelectorAll('.row-check').forEach(function(c) {
+    c.checked = cb.checked;
+    c.closest('tr').classList.toggle('selected', cb.checked);
+  });
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  var checked = document.querySelectorAll('.row-check:checked');
+  var bar = document.getElementById('bulkActions');
+  var countEl = document.getElementById('selectedCount');
+  if (!bar) return;
+  bar.style.display = checked.length > 0 ? 'flex' : 'none';
+  if (countEl) countEl.textContent = checked.length + '건 선택';
+  var all = document.querySelectorAll('.row-check');
+  var allCb = document.getElementById('checkAll');
+  if (allCb) {
+    allCb.indeterminate = checked.length > 0 && checked.length < all.length;
+    allCb.checked = all.length > 0 && checked.length === all.length;
+  }
+  document.querySelectorAll('.row-check').forEach(function(c) {
+    c.closest('tr').classList.toggle('selected', c.checked);
+  });
+}
+
+function confirmBulkDelete() {
+  var checked = document.querySelectorAll('.row-check:checked');
+  if (checked.length === 0) { alert('선택된 항목이 없습니다.'); return false; }
+  if (!confirm(checked.length + '건을 삭제할까요?\n사진 파일도 함께 삭제됩니다.')) return false;
+  var form = document.getElementById('bulkDeleteForm');
+  form.querySelectorAll('input[name="ids"]').forEach(function(el) { el.remove(); });
+  checked.forEach(function(c) {
+    var inp = document.createElement('input');
+    inp.type = 'hidden'; inp.name = 'ids'; inp.value = c.value;
+    form.appendChild(inp);
+  });
+  return true;
+}
+
+function toggleEdit(id) {
+  var panel = document.getElementById('edit-' + id);
+  var isVisible = panel.style.display !== 'none';
+  document.querySelectorAll('.dmg-d-edit-panel').forEach(function(p) { p.style.display = 'none'; });
+  if (!isVisible) panel.style.display = 'block';
+}
+</script>
+
 {% endblock %}

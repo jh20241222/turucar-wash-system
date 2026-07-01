@@ -139,6 +139,21 @@
   </div>
 </div>
 
+<script>
+(function() {
+  function applyLayout() {
+    var isDesktop = window.innerWidth >= 901;
+    var desktopDiv = document.getElementById('d-support-choice');
+    var mobileSection = document.querySelector('section.turu-app-page-v24');
+    if (desktopDiv) desktopDiv.style.setProperty('display', isDesktop ? 'block' : 'none', 'important');
+    if (mobileSection) mobileSection.style.setProperty('display', isDesktop ? 'none' : '', 'important');
+  }
+  document.addEventListener('DOMContentLoaded', applyLayout);
+  window.addEventListener('resize', applyLayout);
+  applyLayout();
+})();
+</script>
+
 <style>
 /* ── 모바일 래퍼 ── */
 .sc2-wrap {

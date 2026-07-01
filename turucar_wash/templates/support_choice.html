@@ -97,8 +97,7 @@
 </section>
 
 {# ══ 데스크탑 ══ #}
-<div id="d-support-choice" style="display:none;">
-  <div class="d-wrap" style="max-width:560px;">
+<div id="d-support-choice" style="display:none;padding:32px;max-width:560px;">
     {% if current_user.is_master or current_user.is_admin %}
     <a href="{{ url_for('support_manage') }}" class="d-choice-card">
       <div class="d-choice-icon"><i class="ti ti-message-dots"></i></div>
@@ -136,7 +135,6 @@
       <i class="ti ti-chevron-right" style="color:var(--text-tertiary);"></i>
     </a>
     {% endif %}
-  </div>
 </div>
 
 <script>

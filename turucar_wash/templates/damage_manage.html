@@ -96,8 +96,7 @@
 </section>
 
 {# ══ 데스크탑 ══ #}
-<div id="d-damage-manage">
-  <div class="d-wrap" style="max-width:100%;">
+<div class="d-wrap dmg-desktop-wrap">
 
     {# 헤더 #}
     <div class="dmg-d-header">
@@ -236,21 +235,6 @@
   </div>
 </div>
 
-<script>
-(function() {
-  function applyLayout() {
-    var isDesktop = window.innerWidth >= 901;
-    var desktopDiv = document.getElementById('d-damage-manage');
-    var mobileSection = document.querySelector('section.damage-manage-page');
-    if (desktopDiv) desktopDiv.style.setProperty('display', isDesktop ? 'block' : 'none', 'important');
-    if (mobileSection) mobileSection.style.setProperty('display', isDesktop ? 'none' : '', 'important');
-  }
-  document.addEventListener('DOMContentLoaded', applyLayout);
-  window.addEventListener('resize', applyLayout);
-  applyLayout();
-})();
-</script>
-
 <style>
 /* ── 모바일 ── */
 .damage-photos { display:flex;gap:8px;flex-wrap:wrap;margin:10px 0; }
@@ -265,9 +249,9 @@
 }
 .slack-delete-btn:hover { background:#ede5ff; }
 
-/* ── 데스크탑 기본 숨김 ── */
-#d-damage-manage { display:none; }
-#desktop-mode #d-damage-manage { display:block !important; }
+/* ── 데스크탑 / 모바일 전환 ── */
+.dmg-desktop-wrap { display:none; }
+#desktop-mode .dmg-desktop-wrap { display:block !important; }
 #desktop-mode .app-card.elevated.damage-manage-page { display:none !important; }
 
 /* ── 데스크탑 헤더 ── */

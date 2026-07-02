@@ -2402,7 +2402,7 @@ def _send_damage_slack(report, base_url):
             )
             data = resp.json()
             if not data.get("ok"):
-                print(f"[Slack Bot] 메시지 오류: {data.get('error')} — webhook으로 fallback")
+                print(f"[Slack Bot] 메시지 오류: {data.get('error')} needed={data.get('needed')} provided={data.get('provided')} — webhook으로 fallback")
                 raise RuntimeError("bot_failed")
             slack_ts = data.get("ts")
             print(f"[Slack Bot] 메시지 전송 성공 ts={slack_ts}")

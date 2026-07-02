@@ -260,6 +260,9 @@
         function setMode(){
             if(window.innerWidth >= 901){
                 document.body.id = 'desktop-mode';
+                // 인라인 style="display:flex!important"이 CSS !important를 이기는 문제 해결
+                var tabbar = document.querySelector('.mobile-tabbar');
+                if(tabbar) tabbar.removeAttribute('style');
             } else {
                 document.body.id = '';
             }

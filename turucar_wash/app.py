@@ -2389,27 +2389,10 @@ def _send_damage_slack(report, base_url):
     if report.get("description"):
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": f"*상세 내용*\n{report['description']}"}})
 
-    # photos: [(field, filename, filepath), ...] 형태 — image 블록으로 임베드
-    photos = report.get("photos", [])
-    label_map = {
-        "photo_front": "전면 사진",
-        "photo_damage1": "훼손 사진 1", "photo_damage2": "훼손 사진 2",
-        "photo_damage3": "훼손 사진 3", "photo_damage4": "훼손 사진 4",
-        "photo_damage5": "훼손 사진 5",
-    }
-    for field, fname, _fpath in photos:
-        photo_url = f"{base_url.rstrip('/')}/damage_photo/{fname}"
-        label = label_map.get(field, "사진")
-        blocks.append({
-            "type": "image",
-            "title": {"type": "plain_text", "text": label},
-            "image_url": photo_url,
-            "alt_text": label,
-        })
-
-    # Bot Token 방식 (ts 반환 — 삭제 가능)
+    # Bot Token 방식: 텍스트 메시지 전송 후 사진을 Slack에 직접 업로드 (Railway 파일 삭제해도 Slack에 영구 보존)
     if SLACK_BOT_TOKEN and SLACK_CHANNEL_ID:
         try:
+            # 1. 텍스트/정보 메시지 먼저 전송 → ts 획득
             resp = _requests.post(
                 "https://slack.com/api/chat.postMessage",
                 headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}",
@@ -2418,17 +2401,87 @@ def _send_damage_slack(report, base_url):
                 timeout=10
             )
             data = resp.json()
-            if data.get("ok"):
-                print(f"[Slack Bot] 전송 성공 ts={data.get('ts')}")
-                return data.get("ts")
-            else:
-                print(f"[Slack Bot] 오류: {data.get('error')}")
+            if not data.get("ok"):
+                print(f"[Slack Bot] 메시지 오류: {data.get('error')}")
+                return None
+            slack_ts = data.get("ts")
+            print(f"[Slack Bot] 메시지 전송 성공 ts={slack_ts}")
+
+            # 2. 사진 파일 Slack에 직접 업로드 (새 API: getUploadURLExternal → upload → complete)
+            photos = report.get("photos", [])
+            label_map = {
+                "photo_front": "전면 사진",
+                "photo_damage1": "훼손 사진 1", "photo_damage2": "훼손 사진 2",
+                "photo_damage3": "훼손 사진 3", "photo_damage4": "훼손 사진 4",
+                "photo_damage5": "훼손 사진 5",
+            }
+            file_ids = []
+            for field, fname, fpath in photos:
+                if not os.path.exists(fpath):
+                    continue
+                label = label_map.get(field, "사진")
+                file_size = os.path.getsize(fpath)
+                # Step A: 업로드 URL 요청
+                url_resp = _requests.post(
+                    "https://slack.com/api/files.getUploadURLExternal",
+                    headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}"},
+                    data={"filename": fname, "length": file_size},
+                    timeout=10
+                )
+                url_data = url_resp.json()
+                if not url_data.get("ok"):
+                    print(f"[Slack Bot] URL 요청 오류: {url_data.get('error')}")
+                    continue
+                upload_url = url_data["upload_url"]
+                file_id   = url_data["file_id"]
+                # Step B: 파일 업로드
+                with open(fpath, "rb") as f:
+                    put_resp = _requests.post(upload_url, data=f, timeout=30)
+                if put_resp.status_code != 200:
+                    print(f"[Slack Bot] 파일 업로드 실패: {fname}")
+                    continue
+                file_ids.append({"id": file_id, "title": label})
+            # Step C: 업로드 완료 — 채널 스레드에 첨부
+            if file_ids:
+                comp_resp = _requests.post(
+                    "https://slack.com/api/files.completeUploadExternal",
+                    headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}",
+                             "Content-Type": "application/json"},
+                    json={
+                        "files": file_ids,
+                        "channel_id": SLACK_CHANNEL_ID,
+                        "thread_ts": slack_ts,
+                    },
+                    timeout=10
+                )
+                comp_data = comp_resp.json()
+                if comp_data.get("ok"):
+                    print(f"[Slack Bot] 사진 {len(file_ids)}장 업로드 완료")
+                else:
+                    print(f"[Slack Bot] 사진 완료 오류: {comp_data.get('error')}")
+            return slack_ts
         except Exception as e:
             print(f"[Slack Bot] 전송 오류: {e}")
         return None
 
-    # Webhook 방식 (image 블록 포함 — 사진 인라인 표시)
+    # Webhook fallback (Bot Token 없을 때 — 사진은 URL 링크)
     if SLACK_DAMAGE_WEBHOOK:
+        photos = report.get("photos", [])
+        label_map = {
+            "photo_front": "전면 사진",
+            "photo_damage1": "훼손 사진 1", "photo_damage2": "훼손 사진 2",
+            "photo_damage3": "훼손 사진 3", "photo_damage4": "훼손 사진 4",
+            "photo_damage5": "훼손 사진 5",
+        }
+        for field, fname, _fpath in photos:
+            photo_url = f"{base_url.rstrip('/')}/damage_photo/{fname}"
+            label = label_map.get(field, "사진")
+            blocks.append({
+                "type": "image",
+                "title": {"type": "plain_text", "text": label},
+                "image_url": photo_url,
+                "alt_text": label,
+            })
         try:
             resp = _requests.post(SLACK_DAMAGE_WEBHOOK, json={"blocks": blocks}, timeout=10)
             print(f"[Slack Webhook] status={resp.status_code}")
@@ -2585,6 +2638,18 @@ def damage_delete(report_id):
     conn = get_user_db()
     row = conn.execute("SELECT * FROM damage_reports WHERE id=?", (report_id,)).fetchone()
     if row:
+        # Slack 메시지 자동 삭제
+        if row["slack_ts"] and SLACK_BOT_TOKEN and SLACK_CHANNEL_ID:
+            try:
+                _requests.post(
+                    "https://slack.com/api/chat.delete",
+                    headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}",
+                             "Content-Type": "application/json"},
+                    json={"channel": SLACK_CHANNEL_ID, "ts": row["slack_ts"]},
+                    timeout=5
+                )
+            except Exception:
+                pass
         for field in ("photo_front", "photo_damage1", "photo_damage2", "photo_damage3", "photo_damage4", "photo_damage5"):
             fname = row[field]
             if fname:
@@ -2614,6 +2679,18 @@ def damage_bulk_delete():
             continue
         row = conn.execute("SELECT * FROM damage_reports WHERE id=?", (rid,)).fetchone()
         if row:
+            # Slack 메시지 자동 삭제
+            if row["slack_ts"] and SLACK_BOT_TOKEN and SLACK_CHANNEL_ID:
+                try:
+                    _requests.post(
+                        "https://slack.com/api/chat.delete",
+                        headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}",
+                                 "Content-Type": "application/json"},
+                        json={"channel": SLACK_CHANNEL_ID, "ts": row["slack_ts"]},
+                        timeout=5
+                    )
+                except Exception:
+                    pass
             for field in ("photo_front", "photo_damage1", "photo_damage2",
                           "photo_damage3", "photo_damage4", "photo_damage5"):
                 try:

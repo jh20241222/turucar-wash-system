@@ -2367,60 +2367,48 @@ def _send_damage_slack(report, base_url):
     if report.get("description"):
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": f"*상세 내용*\n{report['description']}"}})
 
-    # photos: [(filename, filepath), ...] 형태
+    # photos: [(field, filename, filepath), ...] 형태 — image 블록으로 임베드
     photos = report.get("photos", [])
+    label_map = {
+        "photo_front": "전면 사진",
+        "photo_damage1": "훼손 사진 1", "photo_damage2": "훼손 사진 2",
+        "photo_damage3": "훼손 사진 3", "photo_damage4": "훼손 사진 4",
+        "photo_damage5": "훼손 사진 5",
+    }
+    for field, fname, _fpath in photos:
+        photo_url = f"{base_url.rstrip('/')}/damage_photo/{fname}"
+        label = label_map.get(field, "사진")
+        blocks.append({
+            "type": "image",
+            "title": {"type": "plain_text", "text": label},
+            "image_url": photo_url,
+            "alt_text": label,
+        })
 
-    # Bot Token 방식 (ts 반환 — 삭제 가능, 사진 업로드 가능)
+    # Bot Token 방식 (ts 반환 — 삭제 가능)
     if SLACK_BOT_TOKEN and SLACK_CHANNEL_ID:
-        ts = None
         try:
             resp = _requests.post(
                 "https://slack.com/api/chat.postMessage",
                 headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}",
                          "Content-Type": "application/json"},
                 json={"channel": SLACK_CHANNEL_ID, "blocks": blocks},
-                timeout=5
+                timeout=10
             )
             data = resp.json()
             if data.get("ok"):
-                ts = data.get("ts")
-                print(f"[Slack Bot] 전송 성공 ts={ts}")
+                print(f"[Slack Bot] 전송 성공 ts={data.get('ts')}")
+                return data.get("ts")
             else:
                 print(f"[Slack Bot] 오류: {data.get('error')}")
         except Exception as e:
             print(f"[Slack Bot] 전송 오류: {e}")
+        return None
 
-        # 사진 파일 업로드 (스레드로)
-        for fname, fpath in photos:
-            if not fpath or not os.path.exists(fpath):
-                continue
-            try:
-                with open(fpath, "rb") as f:
-                    upload_resp = _requests.post(
-                        "https://slack.com/api/files.upload",
-                        headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}"},
-                        data={
-                            "channels": SLACK_CHANNEL_ID,
-                            "filename": fname,
-                            **({"thread_ts": ts} if ts else {}),
-                        },
-                        files={"file": (fname, f, "image/jpeg")},
-                        timeout=30
-                    )
-                    udata = upload_resp.json()
-                    if udata.get("ok"):
-                        print(f"[Slack Bot] 사진 업로드 성공: {fname}")
-                    else:
-                        print(f"[Slack Bot] 사진 업로드 오류: {fname} → {udata.get('error')}")
-            except Exception as e:
-                print(f"[Slack Bot] 사진 업로드 예외: {fname} → {e}")
-
-        return ts
-
-    # Webhook 방식 (fallback — ts 없음, 사진 불가)
+    # Webhook 방식 (image 블록 포함 — 사진 인라인 표시)
     if SLACK_DAMAGE_WEBHOOK:
         try:
-            resp = _requests.post(SLACK_DAMAGE_WEBHOOK, json={"blocks": blocks}, timeout=5)
+            resp = _requests.post(SLACK_DAMAGE_WEBHOOK, json={"blocks": blocks}, timeout=10)
             print(f"[Slack Webhook] status={resp.status_code}")
         except Exception as e:
             print(f"[Slack Webhook] 전송 오류: {e}")
@@ -2515,7 +2503,7 @@ def damage_submit():
         )
         report_id = cur.lastrowid
         conn.commit()
-        # 슬랙 전송 - 사진 경로 포함
+        # 슬랙 전송 - 사진 경로 포함 (field, fname, fpath)
         photos_for_slack = []
         for field, fname in [
             ("photo_front", photo_front), ("photo_damage1", photo_damage1),
@@ -2524,7 +2512,7 @@ def damage_submit():
         ]:
             if fname:
                 fpath = os.path.join(DAMAGE_UPLOAD_DIR, fname)
-                photos_for_slack.append((fname, fpath))
+                photos_for_slack.append((field, fname, fpath))
         slack_ts = _send_damage_slack({
             "car_number": car_number, "wash_date": wash_date,
             "damage_location": damage_location, "description": description,

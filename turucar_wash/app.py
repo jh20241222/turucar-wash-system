@@ -2249,6 +2249,28 @@ def support_delete(ticket_id):
     conn.close()
     flash("\u2714 삭제되었습니다.")
     return redirect(url_for("support_manage"))
+@app.route("/support_bulk_delete", methods=["POST"])
+@login_required
+def support_bulk_delete():
+    if not current_user.is_master:
+        return "Forbidden", 403
+    ids = request.form.getlist("ids")
+    if not ids:
+        flash("선택된 항목이 없습니다.")
+        return redirect(url_for("support_manage"))
+    deleted = 0
+    conn = get_user_db()
+    for raw_id in ids:
+        try:
+            rid = int(raw_id)
+        except (ValueError, TypeError):
+            continue
+        conn.execute("DELETE FROM support_tickets WHERE id=?", (rid,))
+        deleted += 1
+    conn.commit()
+    conn.close()
+    flash(f"✅ {deleted}건이 삭제되었습니다.")
+    return redirect(url_for("support_manage"))
 @app.route("/support_chat", methods=["GET", "POST"])
 @login_required
 def support_chat():

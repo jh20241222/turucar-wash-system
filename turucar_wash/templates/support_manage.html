@@ -129,71 +129,46 @@
           <th class="sm-col-vendor">업체</th>
           <th class="sm-col-status">상태</th>
           <th class="sm-col-at">접수일</th>
-          <th class="sm-col-act">액션</th>
         </tr>
       </thead>
       <tbody>
         {% for t in rows %}
-        <tr class="sm-row" id="sm-row-{{ t.id }}">
+        <tr class="sm-row sm-row-clickable" id="sm-row-{{ t.id }}"
+            onclick="smOpenModal({{ t.id }})"
+            data-id="{{ t.id }}"
+            data-car="{{ t.car_number }}"
+            data-cat="{{ t.category }}"
+            data-msg="{{ t.message | replace('"', '&quot;') }}"
+            data-who="{{ t.requester }}"
+            data-vendor="{{ t.vendor or '' }}"
+            data-status="{{ t.status }}"
+            data-reply="{{ t.admin_reply or '' }}"
+            data-reply-url="{{ url_for('support_reply', ticket_id=t.id) }}"
+            data-del-url="{{ url_for('support_delete', ticket_id=t.id) }}"
+            data-is-master="{{ 'true' if current_user.is_master else 'false' }}">
           {% if current_user.is_master %}
-          <td class="sm-col-chk">
+          <td class="sm-col-chk" onclick="event.stopPropagation()">
             <input type="checkbox" class="sm-checkbox sm-row-check" value="{{ t.id }}" onchange="smUpdateBulkBar()">
           </td>
           {% endif %}
-          <td class="sm-col-car">
-            <span class="sm-car-num">{{ t.car_number }}</span>
-          </td>
-          <td class="sm-col-cat">
-            <span class="sm-cat-text">{{ t.category }}</span>
-          </td>
+          <td class="sm-col-car"><span class="sm-car-num">{{ t.car_number }}</span></td>
+          <td class="sm-col-cat"><span class="sm-cat-text">{{ t.category }}</span></td>
           <td class="sm-col-msg">
             <span class="sm-msg-text">{{ t.message }}</span>
             {% if t.admin_reply %}<p class="sm-reply-preview">↳ {{ t.admin_reply }}</p>{% endif %}
           </td>
-          <td class="sm-col-who">
-            <span class="sm-requester">{{ t.requester }}</span>
-          </td>
-          <td class="sm-col-vendor">
-            <span class="sm-vendor">{{ t.vendor or '—' }}</span>
-          </td>
+          <td class="sm-col-who"><span class="sm-requester">{{ t.requester }}</span></td>
+          <td class="sm-col-vendor"><span class="sm-vendor">{{ t.vendor or '—' }}</span></td>
           <td class="sm-col-status">
             <span class="sm-badge sm-badge--{{ t.status }}">
               <i class="sm-badge-dot"></i>{{ t.status }}
             </span>
           </td>
           <td class="sm-col-at">{{ t.created_at[:10] if t.created_at else '—' }}</td>
-          <td class="sm-col-act">
-            <div class="sm-action-row">
-              <button type="button" class="sm-act-btn sm-act-edit" onclick="smToggleEdit({{ t.id }})" title="상태/답변 편집">
-                <i class="ti ti-pencil"></i>
-              </button>
-              {% if current_user.is_master %}
-              <form method="post" action="{{ url_for('support_delete', ticket_id=t.id) }}" onsubmit="return confirm('삭제할까요?');" style="display:contents;">
-                <button type="submit" class="sm-act-btn sm-act-del" title="삭제"><i class="ti ti-trash"></i></button>
-              </form>
-              {% endif %}
-            </div>
-            <div class="sm-edit-panel" id="sm-edit-{{ t.id }}" style="display:none;">
-              <form method="post" action="{{ url_for('support_reply', ticket_id=t.id) }}">
-                <label class="sm-edit-label">상태</label>
-                <select name="status" class="sm-edit-select">
-                  <option value="접수" {% if t.status=='접수' %}selected{% endif %}>접수</option>
-                  <option value="확인중" {% if t.status=='확인중' %}selected{% endif %}>확인중</option>
-                  <option value="완료" {% if t.status=='완료' %}selected{% endif %}>완료</option>
-                </select>
-                <label class="sm-edit-label">답변</label>
-                <input name="admin_reply" class="sm-edit-input" placeholder="답변 입력" value="{{ t.admin_reply or '' }}">
-                <div class="sm-edit-footer">
-                  <button type="button" onclick="smToggleEdit({{ t.id }})" class="sm-edit-cancel">취소</button>
-                  <button type="submit" class="sm-edit-save">저장</button>
-                </div>
-              </form>
-            </div>
-          </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="9" class="sm-empty-cell">
+          <td colspan="8" class="sm-empty-cell">
             <div class="sm-empty-state">
               <i class="ti ti-inbox"></i>
               <p>접수된 문의가 없습니다.</p>
@@ -207,6 +182,42 @@
 
 </div>
 
+{# ── 팝업 모달 ── #}
+<div id="smModal" class="sm-modal-overlay" onclick="smCloseModal(event)">
+  <div class="sm-modal" onclick="event.stopPropagation()">
+    <div class="sm-modal-header">
+      <div>
+        <p id="smModalMeta" class="sm-modal-meta"></p>
+        <h3 id="smModalTitle" class="sm-modal-title"></h3>
+      </div>
+      <button class="sm-modal-close" onclick="smCloseModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="sm-modal-body">
+      <div id="smModalMsg" class="sm-modal-msg"></div>
+      <form id="smModalForm" method="post">
+        <label class="sm-edit-label">상태</label>
+        <select name="status" id="smModalStatus" class="sm-edit-select">
+          <option value="접수">접수</option>
+          <option value="확인중">확인중</option>
+          <option value="완료">완료</option>
+        </select>
+        <label class="sm-edit-label">답변</label>
+        <textarea name="admin_reply" id="smModalReply" class="sm-edit-textarea" placeholder="답변 입력..."></textarea>
+        <div class="sm-modal-footer">
+          <button type="button" id="smModalDelBtn" class="sm-modal-del-btn" style="display:none;" onclick="smDeleteTicket()">
+            <i class="ti ti-trash"></i> 삭제
+          </button>
+          <div style="display:flex;gap:8px;">
+            <button type="button" class="sm-edit-cancel" onclick="smCloseModal()">취소</button>
+            <button type="submit" class="sm-edit-save">저장</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<form id="smDelForm" method="post" style="display:none;"></form>
+
 <style>
 /* ════════════════════════════════
    데스크탑 / 모바일 전환
@@ -218,9 +229,7 @@
 /* ════════════════════════════════
    요약 카드
 ════════════════════════════════ */
-.sm-stat-row {
-  display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px;
-}
+.sm-stat-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
 .sm-stat-card {
   display:flex; align-items:center; gap:14px;
   background:var(--surface,#fff); border:1.5px solid var(--d-border,#e5e8ec);
@@ -250,15 +259,8 @@
   display:flex; align-items:center; justify-content:space-between;
   margin-bottom:12px; min-height:36px;
 }
-.sm-toolbar-title {
-  font-size:15px; font-weight:700; color:#111827; margin:0;
-  display:flex; align-items:center; gap:8px;
-}
-.sm-toolbar-count {
-  font-size:12px; font-weight:600;
-  background:#f4f6f8; color:var(--text-secondary);
-  border-radius:20px; padding:2px 10px;
-}
+.sm-toolbar-title { font-size:15px; font-weight:700; color:#111827; margin:0; display:flex; align-items:center; gap:8px; }
+.sm-toolbar-count { font-size:12px; font-weight:600; background:#f4f6f8; color:var(--text-secondary); border-radius:20px; padding:2px 10px; }
 .sm-bulk-bar {
   display:flex; align-items:center; gap:10px;
   background:#fff8f0; border:1.5px solid #ffe0b2;
@@ -289,48 +291,31 @@
   color:#6b7280; letter-spacing:.04em; text-transform:uppercase;
   border-bottom:1px solid var(--d-border,#e5e8ec); white-space:nowrap;
 }
-.sm-table tbody tr {
-  border-bottom:1px solid #f0f2f5; transition:background .1s;
-}
+.sm-table tbody tr { border-bottom:1px solid #f0f2f5; transition:background .1s; }
 .sm-table tbody tr:last-child { border-bottom:none; }
-.sm-table tbody tr:hover { background:#fafbfc; }
+.sm-row-clickable { cursor:pointer; }
+.sm-row-clickable:hover { background:#f5f8ff !important; }
 .sm-table tbody tr.sm-row-selected { background:#fff8f0 !important; }
 .sm-table td { padding:12px 14px; vertical-align:middle; }
 
-/* 컬럼 너비 — 전체 합계 ~880px 이하 */
+/* 컬럼 너비 */
 .sm-col-chk    { width:36px; text-align:center; }
 .sm-col-car    { width:100px; white-space:nowrap; }
 .sm-col-cat    { width:100px; white-space:nowrap; }
-.sm-col-msg    { min-width:160px; max-width:260px; }
+.sm-col-msg    { min-width:180px; max-width:300px; }
 .sm-col-who    { width:80px; white-space:nowrap; }
 .sm-col-vendor { width:72px; white-space:nowrap; }
-.sm-col-status { width:72px; }
-.sm-col-at     { width:72px; white-space:nowrap; color:#9ca3af; font-size:12px; }
-.sm-col-act    { width:88px; }
+.sm-col-status { width:80px; }
+.sm-col-at     { width:80px; white-space:nowrap; color:#9ca3af; font-size:12px; }
 
 /* 체크박스 */
 .sm-checkbox { width:15px; height:15px; cursor:pointer; accent-color:#FF9900; }
 
-/* 차량번호 */
-.sm-car-num {
-  font-size:14px; font-weight:800; color:#111827;
-  font-family:'Courier New',monospace; letter-spacing:.02em;
-}
-
-/* 문의 유형 */
+/* 셀 내용 */
+.sm-car-num { font-size:14px; font-weight:800; color:#111827; font-family:'Courier New',monospace; letter-spacing:.02em; }
 .sm-cat-text { font-weight:600; color:#374151; }
-
-/* 문의 내용 */
-.sm-msg-text {
-  display:block; font-size:13px; color:#374151;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px;
-}
-.sm-reply-preview {
-  font-size:11px; color:#9ca3af; margin:3px 0 0;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px;
-}
-
-/* 작업자/업체 */
+.sm-msg-text { display:block; font-size:13px; color:#374151; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:300px; }
+.sm-reply-preview { font-size:11px; color:#9ca3af; margin:3px 0 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:300px; }
 .sm-requester { font-weight:600; color:#374151; }
 .sm-vendor    { color:#6b7280; font-size:12px; }
 
@@ -348,58 +333,124 @@
 .sm-badge--완료  { background:#f0fdf4; color:#15803d; }
 .sm-badge--완료  .sm-badge-dot  { background:#22c55e; }
 
-/* 액션 버튼 */
-.sm-action-row { display:flex; gap:4px; align-items:center; }
-.sm-act-btn {
-  width:30px; height:30px; border-radius:8px;
-  border:1px solid #e5e8ec; background:#f8f9fb;
-  color:#9ca3af; display:inline-flex; align-items:center;
-  justify-content:center; cursor:pointer; font-size:14px;
-  transition:all .15s;
-}
-.sm-act-edit:hover { background:#fff7ed; color:#ea580c; border-color:#fdba74; }
-.sm-act-del:hover  { background:#fef2f2; color:#dc2626; border-color:#fca5a5; }
-
-/* 인라인 편집 패널 */
-.sm-edit-panel {
-  margin-top:10px; padding:14px;
-  background:#f8f9fb; border-radius:10px;
-  border:1.5px solid #e5e8ec; min-width:220px;
-}
-.sm-edit-label {
-  display:block; font-size:11px; font-weight:700;
-  color:#6b7280; text-transform:uppercase; letter-spacing:.04em;
-  margin:0 0 4px;
-}
-.sm-edit-select, .sm-edit-input {
-  width:100%; padding:7px 10px; font-size:13px;
-  border:1px solid #d1d5db; border-radius:7px;
-  background:#fff; color:#111827; font-family:inherit;
-  margin-bottom:10px; outline:none; box-sizing:border-box;
-}
-.sm-edit-select:focus, .sm-edit-input:focus { border-color:#FF9900; box-shadow:0 0 0 2px rgba(255,153,0,.12); }
-.sm-edit-footer { display:flex; gap:6px; justify-content:flex-end; }
-.sm-edit-cancel {
-  padding:6px 14px; border-radius:7px; font-size:13px; font-weight:600;
-  background:#fff; border:1px solid #d1d5db; color:#6b7280;
-  cursor:pointer; font-family:inherit; transition:all .15s;
-}
-.sm-edit-cancel:hover { background:#f4f6f8; }
-.sm-edit-save {
-  padding:6px 16px; border-radius:7px; font-size:13px; font-weight:700;
-  background:#FF9900; border:none; color:#fff;
-  cursor:pointer; font-family:inherit; transition:background .15s;
-}
-.sm-edit-save:hover { background:#e68900; }
-
 /* 빈 상태 */
 .sm-empty-cell { text-align:center; padding:64px 20px !important; }
 .sm-empty-state { display:flex; flex-direction:column; align-items:center; gap:10px; color:#9ca3af; }
 .sm-empty-state .ti { font-size:36px; }
 .sm-empty-state p   { font-size:14px; font-weight:600; margin:0; }
+
+/* ════════════════════════════════
+   팝업 모달
+════════════════════════════════ */
+.sm-modal-overlay {
+  display:none; position:fixed; inset:0; z-index:9000;
+  background:rgba(0,0,0,.35);
+  align-items:center; justify-content:center;
+}
+.sm-modal-overlay.open { display:flex; }
+.sm-modal {
+  background:#fff; border-radius:16px;
+  width:440px; max-width:calc(100vw - 32px);
+  box-shadow:0 8px 40px rgba(0,0,0,.18);
+  animation:smModalIn .18s cubic-bezier(.34,1.2,.64,1);
+  overflow:hidden;
+}
+@keyframes smModalIn {
+  from { opacity:0; transform:translateY(12px) scale(.97); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+.sm-modal-header {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  padding:20px 20px 14px;
+  border-bottom:1px solid #f0f2f5;
+}
+.sm-modal-meta { font-size:11px; color:#9ca3af; font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin:0 0 4px; }
+.sm-modal-title { font-size:16px; font-weight:800; color:#111827; margin:0; }
+.sm-modal-close {
+  width:32px; height:32px; border-radius:8px; border:none;
+  background:#f4f6f8; color:#6b7280; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; font-size:16px;
+  transition:all .15s; flex-shrink:0; margin-left:10px;
+}
+.sm-modal-close:hover { background:#e5e8ec; color:#111827; }
+.sm-modal-body { padding:16px 20px 20px; }
+.sm-modal-msg {
+  background:#f8f9fb; border-radius:10px; padding:12px 14px;
+  font-size:13px; color:#374151; line-height:1.6;
+  margin-bottom:16px; border:1px solid #f0f2f5;
+  max-height:80px; overflow-y:auto;
+}
+.sm-edit-label { display:block; font-size:11px; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:.04em; margin:0 0 4px; }
+.sm-edit-select {
+  width:100%; padding:8px 10px; font-size:13px;
+  border:1px solid #d1d5db; border-radius:8px;
+  background:#fff; color:#111827; font-family:inherit;
+  margin-bottom:12px; outline:none; box-sizing:border-box;
+}
+.sm-edit-select:focus { border-color:#FF9900; box-shadow:0 0 0 2px rgba(255,153,0,.12); }
+.sm-edit-textarea {
+  width:100%; padding:8px 10px; font-size:13px;
+  border:1px solid #d1d5db; border-radius:8px;
+  background:#fff; color:#111827; font-family:inherit;
+  margin-bottom:14px; outline:none; box-sizing:border-box;
+  resize:vertical; min-height:72px;
+}
+.sm-edit-textarea:focus { border-color:#FF9900; box-shadow:0 0 0 2px rgba(255,153,0,.12); }
+.sm-modal-footer { display:flex; align-items:center; justify-content:space-between; }
+.sm-modal-del-btn {
+  display:inline-flex; align-items:center; gap:5px;
+  background:#fef2f2; color:#dc2626; border:1px solid #fca5a5;
+  border-radius:8px; padding:7px 14px; font-size:13px; font-weight:600;
+  cursor:pointer; font-family:inherit; transition:all .15s;
+}
+.sm-modal-del-btn:hover { background:#fee2e2; }
+.sm-edit-cancel {
+  padding:7px 16px; border-radius:8px; font-size:13px; font-weight:600;
+  background:#fff; border:1px solid #d1d5db; color:#6b7280;
+  cursor:pointer; font-family:inherit; transition:all .15s;
+}
+.sm-edit-cancel:hover { background:#f4f6f8; }
+.sm-edit-save {
+  padding:7px 18px; border-radius:8px; font-size:13px; font-weight:700;
+  background:#FF9900; border:none; color:#fff;
+  cursor:pointer; font-family:inherit; transition:background .15s;
+}
+.sm-edit-save:hover { background:#e68900; }
 </style>
 
 <script>
+/* ── 모달 ── */
+var _smDelUrl = '';
+function smOpenModal(id) {
+  var row = document.getElementById('sm-row-' + id);
+  if (!row) return;
+  var d = row.dataset;
+  document.getElementById('smModalMeta').textContent = d.car + ' · ' + d.who + (d.vendor ? ' · ' + d.vendor : '') + ' · ' + (row.querySelector('.sm-col-at') ? row.querySelector('.sm-col-at').textContent.trim() : '');
+  document.getElementById('smModalTitle').textContent = '[' + d.cat + '] ' + d.msg;
+  document.getElementById('smModalMsg').textContent = d.msg;
+  document.getElementById('smModalStatus').value = d.status;
+  document.getElementById('smModalReply').value = d.reply;
+  document.getElementById('smModalForm').action = d.replyUrl;
+  _smDelUrl = d.delUrl;
+  var delBtn = document.getElementById('smModalDelBtn');
+  if (delBtn) delBtn.style.display = d.isMaster === 'true' ? 'inline-flex' : 'none';
+  document.getElementById('smModal').classList.add('open');
+  setTimeout(function() { document.getElementById('smModalReply').focus(); }, 80);
+}
+function smCloseModal(e) {
+  if (e && e.target !== document.getElementById('smModal')) return;
+  document.getElementById('smModal').classList.remove('open');
+}
+function smDeleteTicket() {
+  if (!confirm('이 문의 내역을 삭제할까요?')) return;
+  var f = document.getElementById('smDelForm');
+  f.action = _smDelUrl;
+  f.submit();
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') document.getElementById('smModal').classList.remove('open');
+});
+
 /* ── 체크박스 ── */
 function smToggleAll(cb) {
   document.querySelectorAll('.sm-row-check').forEach(function(c) {
@@ -437,17 +488,6 @@ function smConfirmBulkDelete() {
     form.appendChild(inp);
   });
   return true;
-}
-
-/* ── 인라인 편집 ── */
-function smToggleEdit(id) {
-  var panel = document.getElementById('sm-edit-' + id);
-  var isVisible = panel.style.display !== 'none';
-  document.querySelectorAll('.sm-edit-panel').forEach(function(p) { p.style.display = 'none'; });
-  if (!isVisible) {
-    panel.style.display = 'block';
-    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
 }
 </script>
 

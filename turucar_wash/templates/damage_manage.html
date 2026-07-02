@@ -143,7 +143,7 @@
             <th>업체</th>
             <th>세차일</th>
             <th>상태</th>
-            <th>사진</th>
+            <th class="dmg-d-th-photo">사진</th>
             <th>접수일</th>
             <th>액션</th>
           </tr>
@@ -164,7 +164,7 @@
             <td>
               <span class="dmg-d-badge dmg-d-badge--{{ r.status }}">{{ r.status }}</span>
             </td>
-            <td>
+            <td class="dmg-d-td-photo">
               {% set d_photo_slots = [
                 (r.photo_front,'정면'),(r.photo_damage1,'훼손①'),
                 (r.photo_damage2,'훼손②'),(r.photo_damage3,'훼손③'),
@@ -317,10 +317,13 @@
 .dmg-d-badge--확인중 { background:#e3f2fd;color:#1565c0; }
 .dmg-d-badge--완료 { background:#e8f5e9;color:#2e7d32; }
 
+/* ── 사진 컬럼 너비 ── */
+.dmg-d-th-photo, .dmg-d-td-photo { min-width:220px; }
+
 /* ── 사진 스트립 ── */
-.dmg-d-photo-strip { display:flex;gap:4px;flex-wrap:wrap; }
+.dmg-d-photo-strip { display:flex;gap:6px;flex-wrap:wrap; }
 .dmg-d-photo-strip a img {
-  width:48px;height:38px;object-fit:cover;
+  width:60px;height:48px;object-fit:cover;
   border-radius:6px;border:1px solid var(--d-border,#e5e8ec);
   transition:opacity .15s;display:block;
 }

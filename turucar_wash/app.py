@@ -2367,8 +2367,12 @@ def _send_damage_slack(report, base_url):
     if report.get("description"):
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": f"*상세 내용*\n{report['description']}"}})
 
-    # Bot Token 방식 (ts 반환 — 삭제 가능)
+    # photos: [(filename, filepath), ...] 형태
+    photos = report.get("photos", [])
+
+    # Bot Token 방식 (ts 반환 — 삭제 가능, 사진 업로드 가능)
     if SLACK_BOT_TOKEN and SLACK_CHANNEL_ID:
+        ts = None
         try:
             resp = _requests.post(
                 "https://slack.com/api/chat.postMessage",
@@ -2379,15 +2383,41 @@ def _send_damage_slack(report, base_url):
             )
             data = resp.json()
             if data.get("ok"):
-                print(f"[Slack Bot] 전송 성공 ts={data.get('ts')}")
-                return data.get("ts")
+                ts = data.get("ts")
+                print(f"[Slack Bot] 전송 성공 ts={ts}")
             else:
                 print(f"[Slack Bot] 오류: {data.get('error')}")
         except Exception as e:
             print(f"[Slack Bot] 전송 오류: {e}")
-        return None
 
-    # Webhook 방식 (fallback — ts 없음)
+        # 사진 파일 업로드 (스레드로)
+        for fname, fpath in photos:
+            if not fpath or not os.path.exists(fpath):
+                continue
+            try:
+                with open(fpath, "rb") as f:
+                    upload_resp = _requests.post(
+                        "https://slack.com/api/files.upload",
+                        headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}"},
+                        data={
+                            "channels": SLACK_CHANNEL_ID,
+                            "filename": fname,
+                            **({"thread_ts": ts} if ts else {}),
+                        },
+                        files={"file": (fname, f, "image/jpeg")},
+                        timeout=30
+                    )
+                    udata = upload_resp.json()
+                    if udata.get("ok"):
+                        print(f"[Slack Bot] 사진 업로드 성공: {fname}")
+                    else:
+                        print(f"[Slack Bot] 사진 업로드 오류: {fname} → {udata.get('error')}")
+            except Exception as e:
+                print(f"[Slack Bot] 사진 업로드 예외: {fname} → {e}")
+
+        return ts
+
+    # Webhook 방식 (fallback — ts 없음, 사진 불가)
     if SLACK_DAMAGE_WEBHOOK:
         try:
             resp = _requests.post(SLACK_DAMAGE_WEBHOOK, json={"blocks": blocks}, timeout=5)
@@ -2485,12 +2515,22 @@ def damage_submit():
         )
         report_id = cur.lastrowid
         conn.commit()
-        # 슬랙 전송 후 ts 저장 (Bot Token 사용 시)
+        # 슬랙 전송 - 사진 경로 포함
+        photos_for_slack = []
+        for field, fname in [
+            ("photo_front", photo_front), ("photo_damage1", photo_damage1),
+            ("photo_damage2", photo_damage2), ("photo_damage3", photo_damage3),
+            ("photo_damage4", photo_damage4), ("photo_damage5", photo_damage5),
+        ]:
+            if fname:
+                fpath = os.path.join(DAMAGE_UPLOAD_DIR, fname)
+                photos_for_slack.append((fname, fpath))
         slack_ts = _send_damage_slack({
             "car_number": car_number, "wash_date": wash_date,
             "damage_location": damage_location, "description": description,
             "reporter": current_user.username,
             "vendor": getattr(current_user, "vendor", "") or "",
+            "photos": photos_for_slack,
         }, APP_BASE_URL)
         if slack_ts:
             conn.execute("UPDATE damage_reports SET slack_ts=? WHERE id=?", (slack_ts, report_id))

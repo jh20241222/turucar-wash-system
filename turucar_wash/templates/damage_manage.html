@@ -179,15 +179,12 @@
           <td class="dmg-col-photo">
             {% if ps %}
             <div class="dmg-photo-strip">
-              <a href="{{ url_for('serve_damage_photo', filename=ps[0]) }}" target="_blank" class="dmg-photo-thumb">
+              <a href="{{ url_for('serve_damage_photo', filename=ps[0]) }}"
+                 class="dmg-photo-thumb"
+                 data-files="{{ ps | join(',') }}">
                 <img src="{{ url_for('serve_damage_photo', filename=ps[0]) }}" alt="사진" loading="lazy">
-                {% if ps|length > 1 %}<span class="dmg-photo-more">+{{ ps|length - 1 }}</span>{% endif %}
+                {% if ps|length > 1 %}<span class="dmg-photo-more">+{{ ps|length }}</span>{% endif %}
               </a>
-              {% for fname in ps[1:] %}
-              <a href="{{ url_for('serve_damage_photo', filename=fname) }}" target="_blank" class="dmg-photo-thumb dmg-photo-thumb--sm">
-                <img src="{{ url_for('serve_damage_photo', filename=fname) }}" alt="사진" loading="lazy">
-              </a>
-              {% endfor %}
             </div>
             {% else %}
             <span class="dmg-no-photo">—</span>
@@ -353,17 +350,17 @@
 .dmg-table tbody tr.row-selected { background:#fff8f0 !important; }
 .dmg-table td { padding:12px 14px; vertical-align:middle; }
 
-/* 컬럼 너비 */
-.dmg-col-chk    { width:40px; text-align:center; }
-.dmg-col-car    { width:110px; white-space:nowrap; }
-.dmg-col-loc    { min-width:140px; }
-.dmg-col-who    { width:100px; white-space:nowrap; }
-.dmg-col-vendor { width:90px; white-space:nowrap; }
-.dmg-col-date   { width:90px; white-space:nowrap; }
-.dmg-col-status { width:80px; }
-.dmg-col-photo  { min-width:200px; }
-.dmg-col-at     { width:80px; white-space:nowrap; color:#9ca3af; font-size:12px; }
-.dmg-col-act    { width:120px; }
+/* 컬럼 너비 — 전체 합계 ~900px 이하 */
+.dmg-col-chk    { width:36px; text-align:center; }
+.dmg-col-car    { width:100px; white-space:nowrap; }
+.dmg-col-loc    { min-width:120px; max-width:200px; }
+.dmg-col-who    { width:80px; white-space:nowrap; }
+.dmg-col-vendor { width:72px; white-space:nowrap; }
+.dmg-col-date   { width:80px; white-space:nowrap; }
+.dmg-col-status { width:72px; }
+.dmg-col-photo  { width:72px; }
+.dmg-col-at     { width:72px; white-space:nowrap; color:#9ca3af; font-size:12px; }
+.dmg-col-act    { width:88px; }
 
 /* 체크박스 */
 .dmg-checkbox {
@@ -401,25 +398,23 @@
 .dmg-badge--완료  { background:#f0fdf4; color:#15803d; }
 .dmg-badge--완료  .dmg-badge-dot  { background:#22c55e; }
 
-/* 사진 스트립 */
-.dmg-photo-strip { display:flex; gap:5px; flex-wrap:wrap; align-items:center; }
+/* 사진 스트립 — 썸네일 1장 + 뱃지 */
+.dmg-photo-strip { display:flex; align-items:center; }
 .dmg-photo-thumb {
-  position:relative; display:block; flex-shrink:0;
-  border-radius:8px; overflow:hidden;
+  position:relative; display:inline-block; flex-shrink:0;
+  border-radius:7px; overflow:hidden;
   border:1.5px solid #e5e8ec; cursor:zoom-in;
   transition:all .15s;
 }
-.dmg-photo-thumb:hover { border-color:#FF9900; box-shadow:0 2px 8px rgba(0,0,0,.12); transform:scale(1.04); }
+.dmg-photo-thumb:hover { border-color:#FF9900; box-shadow:0 2px 8px rgba(0,0,0,.15); transform:scale(1.06); }
 .dmg-photo-thumb img {
-  width:64px; height:52px; object-fit:cover; display:block;
+  width:56px; height:44px; object-fit:cover; display:block;
 }
-.dmg-photo-thumb--sm img { width:46px; height:36px; }
 .dmg-photo-more {
-  position:absolute; inset:0;
-  background:rgba(0,0,0,.45); color:#fff;
-  font-size:11px; font-weight:800;
-  display:flex; align-items:center; justify-content:center;
-  border-radius:6px;
+  position:absolute; bottom:3px; right:3px;
+  background:rgba(0,0,0,.62); color:#fff;
+  font-size:10px; font-weight:800; line-height:1;
+  padding:2px 5px; border-radius:4px;
 }
 .dmg-no-photo { color:#d1d5db; font-size:18px; }
 
@@ -587,14 +582,13 @@ document.getElementById('dmgLbNext').onclick = function(e) { e.stopPropagation()
 
 /* 사진 클릭 → 라이트박스 */
 document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('.dmg-photo-strip').forEach(function(strip) {
-    var links = strip.querySelectorAll('a');
-    var srcs = Array.from(links).map(function(a) { return a.href; });
-    links.forEach(function(a, i) {
-      a.addEventListener('click', function(e) {
-        e.preventDefault();
-        openLightbox(srcs, i);
-      });
+  document.querySelectorAll('.dmg-photo-thumb').forEach(function(a) {
+    a.addEventListener('click', function(e) {
+      e.preventDefault();
+      var files = (a.dataset.files || '').split(',').filter(Boolean);
+      var srcs = files.map(function(f) { return '/damage_photo/' + f.trim(); });
+      if (!srcs.length) srcs = [a.href];
+      openLightbox(srcs, 0);
     });
   });
 });

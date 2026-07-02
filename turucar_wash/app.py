@@ -2402,8 +2402,8 @@ def _send_damage_slack(report, base_url):
             )
             data = resp.json()
             if not data.get("ok"):
-                print(f"[Slack Bot] 메시지 오류: {data.get('error')}")
-                return None
+                print(f"[Slack Bot] 메시지 오류: {data.get('error')} — webhook으로 fallback")
+                raise RuntimeError("bot_failed")
             slack_ts = data.get("ts")
             print(f"[Slack Bot] 메시지 전송 성공 ts={slack_ts}")
 
@@ -2461,10 +2461,9 @@ def _send_damage_slack(report, base_url):
                     print(f"[Slack Bot] 사진 완료 오류: {comp_data.get('error')}")
             return slack_ts
         except Exception as e:
-            print(f"[Slack Bot] 전송 오류: {e}")
-        return None
+            print(f"[Slack Bot] 전송 오류: {e} — webhook으로 fallback")
 
-    # Webhook fallback (Bot Token 없을 때 — 사진은 URL 링크)
+    # Webhook fallback (Bot Token 없거나 실패 시 — 사진은 URL 링크)
     if SLACK_DAMAGE_WEBHOOK:
         photos = report.get("photos", [])
         label_map = {

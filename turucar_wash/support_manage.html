@@ -1,0 +1,494 @@
+{% extends "base.html" %}
+{% block document_title %}Turu Wash · 문의 관리{% endblock %}
+{% block content %}
+
+{# ══ 모바일 ══ #}
+<section class="app-card elevated support-manage-page">
+  <div class="support-manage-head">
+    <div>
+      <p class="eyebrow">Support</p>
+      <h1>문의 관리</h1>
+      <p>작업자가 접수한 문의를 확인하고 답변합니다.</p>
+    </div>
+    <a href="{{ url_for('dashboard') }}" class="notice-more-btn">홈으로</a>
+  </div>
+  <div class="support-filter">
+    <a class="{% if not selected_status %}active{% endif %}" href="{{ url_for('support_manage') }}">전체</a>
+    <a class="{% if selected_status == '접수' %}active{% endif %}" href="{{ url_for('support_manage', status='접수') }}">접수</a>
+    <a class="{% if selected_status == '확인중' %}active{% endif %}" href="{{ url_for('support_manage', status='확인중') }}">확인중</a>
+    <a class="{% if selected_status == '완료' %}active{% endif %}" href="{{ url_for('support_manage', status='완료') }}">완료</a>
+  </div>
+  <div class="support-ticket-list">
+    {% for t in rows %}
+    <article class="support-ticket-card">
+      <div class="ticket-title-row">
+        <span class="ticket-status">{{ t.status }}</span>
+        <strong>{{ t.category }}</strong>
+        <small>{{ t.created_at }}</small>
+      </div>
+      <div class="ticket-meta">
+        <span>차량번호 {{ t.car_number }}</span>
+        <span>작업자 {{ t.requester }}</span>
+        {% if t.vendor %}<span>업체 {{ t.vendor }}</span>{% endif %}
+      </div>
+      <p class="ticket-message">{{ t.message }}</p>
+      {% if t.admin_reply %}
+      <div class="ticket-reply"><strong>답변</strong><p>{{ t.admin_reply }}</p></div>
+      {% endif %}
+      <form method="post" action="{{ url_for('support_reply', ticket_id=t.id) }}" class="ticket-reply-form">
+        <select name="status" class="app-input">
+          <option value="접수" {% if t.status == '접수' %}selected{% endif %}>접수</option>
+          <option value="확인중" {% if t.status == '확인중' %}selected{% endif %}>확인중</option>
+          <option value="완료" {% if t.status == '완료' %}selected{% endif %}>완료</option>
+        </select>
+        <input name="admin_reply" class="app-input" placeholder="답변 입력" value="{{ t.admin_reply or '' }}">
+        <button class="primary-btn" type="submit">저장</button>
+      </form>
+      {% if current_user.is_master %}
+      <form method="post" action="{{ url_for('support_delete', ticket_id=t.id) }}" onsubmit="return confirm('이 문의 내역을 삭제할까요?');" class="ticket-delete-form">
+        <button type="submit" class="danger-delete-btn">문의 삭제</button>
+      </form>
+      {% endif %}
+    </article>
+    {% else %}
+    <div class="notice-empty"><strong>접수된 문의가 없습니다.</strong><span>작업자가 문의하면 이곳에 표시됩니다.</span></div>
+    {% endfor %}
+  </div>
+</section>
+
+{# ══ 데스크탑 ══ #}
+<div class="d-wrap sm-desktop-wrap">
+
+  {# ── 상단 요약 카드 ── #}
+  {% set cnt_total = rows|length %}
+  {% set cnt_new   = rows|selectattr('status','eq','접수')|list|length %}
+  {% set cnt_mid   = rows|selectattr('status','eq','확인중')|list|length %}
+  {% set cnt_done  = rows|selectattr('status','eq','완료')|list|length %}
+  <div class="sm-stat-row">
+    <a class="sm-stat-card sm-stat-card--all {% if not selected_status %}sm-stat-card--active{% endif %}"
+       href="{{ url_for('support_manage') }}">
+      <span class="sm-stat-icon"><i class="ti ti-message-circle"></i></span>
+      <div>
+        <p class="sm-stat-num">{{ cnt_total }}</p>
+        <p class="sm-stat-label">전체</p>
+      </div>
+    </a>
+    <a class="sm-stat-card sm-stat-card--new {% if selected_status=='접수' %}sm-stat-card--active{% endif %}"
+       href="{{ url_for('support_manage', status='접수') }}">
+      <span class="sm-stat-icon sm-stat-icon--new"><i class="ti ti-alert-circle"></i></span>
+      <div>
+        <p class="sm-stat-num sm-stat-num--new">{{ cnt_new }}</p>
+        <p class="sm-stat-label">접수</p>
+      </div>
+    </a>
+    <a class="sm-stat-card sm-stat-card--mid {% if selected_status=='확인중' %}sm-stat-card--active{% endif %}"
+       href="{{ url_for('support_manage', status='확인중') }}">
+      <span class="sm-stat-icon sm-stat-icon--mid"><i class="ti ti-loader"></i></span>
+      <div>
+        <p class="sm-stat-num sm-stat-num--mid">{{ cnt_mid }}</p>
+        <p class="sm-stat-label">확인중</p>
+      </div>
+    </a>
+    <a class="sm-stat-card sm-stat-card--done {% if selected_status=='완료' %}sm-stat-card--active{% endif %}"
+       href="{{ url_for('support_manage', status='완료') }}">
+      <span class="sm-stat-icon sm-stat-icon--done"><i class="ti ti-circle-check"></i></span>
+      <div>
+        <p class="sm-stat-num sm-stat-num--done">{{ cnt_done }}</p>
+        <p class="sm-stat-label">완료</p>
+      </div>
+    </a>
+  </div>
+
+  {# ── 툴바 ── #}
+  <div class="sm-toolbar">
+    <p class="sm-toolbar-title">
+      {% if selected_status %}{{ selected_status }}{% else %}전체{% endif %} 문의
+      <span class="sm-toolbar-count">{{ rows|length }}건</span>
+    </p>
+    {% if current_user.is_master %}
+    <div class="sm-bulk-bar" id="smBulkActions" style="display:none;">
+      <i class="ti ti-checkbox" style="color:#e65100;font-size:16px;"></i>
+      <span id="smSelectedCount" style="font-size:13px;font-weight:700;color:#e65100;">0건 선택됨</span>
+      <form method="post" action="{{ url_for('support_bulk_delete') }}" id="smBulkDeleteForm" onsubmit="return smConfirmBulkDelete();">
+        <button type="submit" class="sm-bulk-del-btn"><i class="ti ti-trash"></i> 일괄 삭제</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  {# ── 테이블 ── #}
+  <div class="sm-table-wrap">
+    <table class="sm-table">
+      <thead>
+        <tr>
+          {% if current_user.is_master %}<th class="sm-col-chk"><input type="checkbox" id="smCheckAll" onchange="smToggleAll(this)" class="sm-checkbox"></th>{% endif %}
+          <th class="sm-col-car">차량번호</th>
+          <th class="sm-col-cat">문의 유형</th>
+          <th class="sm-col-msg">문의 내용</th>
+          <th class="sm-col-who">작업자</th>
+          <th class="sm-col-vendor">업체</th>
+          <th class="sm-col-status">상태</th>
+          <th class="sm-col-at">접수일</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in rows %}
+        <tr class="sm-row sm-row-clickable" id="sm-row-{{ t.id }}"
+            onclick="smOpenModal({{ t.id }})"
+            data-id="{{ t.id }}"
+            data-car="{{ t.car_number }}"
+            data-cat="{{ t.category }}"
+            data-msg="{{ t.message | replace('"', '&quot;') }}"
+            data-who="{{ t.requester }}"
+            data-vendor="{{ t.vendor or '' }}"
+            data-status="{{ t.status }}"
+            data-reply="{{ t.admin_reply or '' }}"
+            data-reply-url="{{ url_for('support_reply', ticket_id=t.id) }}"
+            data-del-url="{{ url_for('support_delete', ticket_id=t.id) }}"
+            data-is-master="{{ 'true' if current_user.is_master else 'false' }}">
+          {% if current_user.is_master %}
+          <td class="sm-col-chk" onclick="event.stopPropagation()">
+            <input type="checkbox" class="sm-checkbox sm-row-check" value="{{ t.id }}" onchange="smUpdateBulkBar()">
+          </td>
+          {% endif %}
+          <td class="sm-col-car"><span class="sm-car-num">{{ t.car_number }}</span></td>
+          <td class="sm-col-cat"><span class="sm-cat-text">{{ t.category }}</span></td>
+          <td class="sm-col-msg">
+            <span class="sm-msg-text">{{ t.message }}</span>
+            {% if t.admin_reply %}<p class="sm-reply-preview">↳ {{ t.admin_reply }}</p>{% endif %}
+          </td>
+          <td class="sm-col-who"><span class="sm-requester">{{ t.requester }}</span></td>
+          <td class="sm-col-vendor"><span class="sm-vendor">{{ t.vendor or '—' }}</span></td>
+          <td class="sm-col-status">
+            <span class="sm-badge sm-badge--{{ t.status }}">
+              <i class="sm-badge-dot"></i>{{ t.status }}
+            </span>
+          </td>
+          <td class="sm-col-at">{{ t.created_at[:10] if t.created_at else '—' }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" class="sm-empty-cell">
+            <div class="sm-empty-state">
+              <i class="ti ti-inbox"></i>
+              <p>접수된 문의가 없습니다.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+{# ── 팝업 모달 ── #}
+<div id="smModal" class="sm-modal-overlay" onclick="smCloseModal(event)">
+  <div class="sm-modal" onclick="event.stopPropagation()">
+    <div class="sm-modal-header">
+      <div>
+        <p id="smModalMeta" class="sm-modal-meta"></p>
+        <h3 id="smModalTitle" class="sm-modal-title"></h3>
+      </div>
+      <button class="sm-modal-close" onclick="smCloseModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="sm-modal-body">
+      <div id="smModalMsg" class="sm-modal-msg"></div>
+      <form id="smModalForm" method="post">
+        <label class="sm-edit-label">상태</label>
+        <select name="status" id="smModalStatus" class="sm-edit-select">
+          <option value="접수">접수</option>
+          <option value="확인중">확인중</option>
+          <option value="완료">완료</option>
+        </select>
+        <label class="sm-edit-label">답변</label>
+        <textarea name="admin_reply" id="smModalReply" class="sm-edit-textarea" placeholder="답변 입력..."></textarea>
+        <div class="sm-modal-footer">
+          <button type="button" id="smModalDelBtn" class="sm-modal-del-btn" style="display:none;" onclick="smDeleteTicket()">
+            <i class="ti ti-trash"></i> 삭제
+          </button>
+          <div style="display:flex;gap:8px;">
+            <button type="button" class="sm-edit-cancel" onclick="smCloseModal()">취소</button>
+            <button type="submit" class="sm-edit-save">저장</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<form id="smDelForm" method="post" style="display:none;"></form>
+
+<style>
+/* ════════════════════════════════
+   데스크탑 / 모바일 전환
+════════════════════════════════ */
+.sm-desktop-wrap { display:none; }
+#desktop-mode .sm-desktop-wrap { display:block !important; }
+#desktop-mode .app-card.elevated.support-manage-page { display:none !important; }
+
+/* ════════════════════════════════
+   요약 카드
+════════════════════════════════ */
+.sm-stat-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+.sm-stat-card {
+  display:flex; align-items:center; gap:14px;
+  background:var(--surface,#fff); border:1.5px solid var(--d-border,#e5e8ec);
+  border-radius:14px; padding:16px 20px; text-decoration:none; color:inherit;
+  transition:all .15s; cursor:pointer;
+}
+.sm-stat-card:hover { border-color:#FF9900; box-shadow:0 2px 12px rgba(255,153,0,.10); }
+.sm-stat-card--active { border-color:#FF9900 !important; background:#fffaf3 !important; box-shadow:0 2px 16px rgba(255,153,0,.15) !important; }
+.sm-stat-icon {
+  width:42px; height:42px; border-radius:12px;
+  background:#f4f6f8; display:flex; align-items:center; justify-content:center;
+  font-size:20px; color:var(--text-secondary); flex-shrink:0;
+}
+.sm-stat-icon--new  { background:#fff3e0; color:#e65100; }
+.sm-stat-icon--mid  { background:#e3f2fd; color:#1565c0; }
+.sm-stat-icon--done { background:#e8f5e9; color:#2e7d32; }
+.sm-stat-num { font-size:24px; font-weight:800; color:#111827; margin:0 0 2px; line-height:1; }
+.sm-stat-num--new  { color:#e65100; }
+.sm-stat-num--mid  { color:#1565c0; }
+.sm-stat-num--done { color:#2e7d32; }
+.sm-stat-label { font-size:12px; font-weight:600; color:var(--text-secondary); margin:0; }
+
+/* ════════════════════════════════
+   툴바
+════════════════════════════════ */
+.sm-toolbar {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:12px; min-height:36px;
+}
+.sm-toolbar-title { font-size:15px; font-weight:700; color:#111827; margin:0; display:flex; align-items:center; gap:8px; }
+.sm-toolbar-count { font-size:12px; font-weight:600; background:#f4f6f8; color:var(--text-secondary); border-radius:20px; padding:2px 10px; }
+.sm-bulk-bar {
+  display:flex; align-items:center; gap:10px;
+  background:#fff8f0; border:1.5px solid #ffe0b2;
+  border-radius:10px; padding:7px 14px;
+  animation: smFadeIn .15s ease;
+}
+@keyframes smFadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+.sm-bulk-del-btn {
+  display:inline-flex; align-items:center; gap:6px;
+  background:#ef4444; color:#fff; border:none;
+  border-radius:8px; padding:6px 14px; font-size:13px; font-weight:700;
+  cursor:pointer; font-family:inherit; transition:background .15s;
+}
+.sm-bulk-del-btn:hover { background:#dc2626; }
+
+/* ════════════════════════════════
+   테이블
+════════════════════════════════ */
+.sm-table-wrap {
+  background:#fff; border:1px solid var(--d-border,#e5e8ec);
+  border-radius:14px; overflow:hidden; overflow-x:auto;
+  box-shadow:0 1px 4px rgba(0,0,0,.04);
+}
+.sm-table { width:100%; border-collapse:collapse; font-size:13px; }
+.sm-table thead th {
+  background:#f8f9fb; padding:11px 14px;
+  text-align:left; font-size:11px; font-weight:700;
+  color:#6b7280; letter-spacing:.04em; text-transform:uppercase;
+  border-bottom:1px solid var(--d-border,#e5e8ec); white-space:nowrap;
+}
+.sm-table tbody tr { border-bottom:1px solid #f0f2f5; transition:background .1s; }
+.sm-table tbody tr:last-child { border-bottom:none; }
+.sm-row-clickable { cursor:pointer; }
+.sm-row-clickable:hover { background:#f5f8ff !important; }
+.sm-table tbody tr.sm-row-selected { background:#fff8f0 !important; }
+.sm-table td { padding:12px 14px; vertical-align:middle; }
+
+/* 컬럼 너비 */
+.sm-col-chk    { width:36px; text-align:center; }
+.sm-col-car    { width:100px; white-space:nowrap; }
+.sm-col-cat    { width:100px; white-space:nowrap; }
+.sm-col-msg    { min-width:180px; max-width:300px; }
+.sm-col-who    { width:80px; white-space:nowrap; }
+.sm-col-vendor { width:72px; white-space:nowrap; }
+.sm-col-status { width:80px; }
+.sm-col-at     { width:80px; white-space:nowrap; color:#9ca3af; font-size:12px; }
+
+/* 체크박스 */
+.sm-checkbox { width:15px; height:15px; cursor:pointer; accent-color:#FF9900; }
+
+/* 셀 내용 */
+.sm-car-num { font-size:14px; font-weight:800; color:#111827; font-family:'Courier New',monospace; letter-spacing:.02em; }
+.sm-cat-text { font-weight:600; color:#374151; }
+.sm-msg-text { display:block; font-size:13px; color:#374151; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:300px; }
+.sm-reply-preview { font-size:11px; color:#9ca3af; margin:3px 0 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:300px; }
+.sm-requester { font-weight:600; color:#374151; }
+.sm-vendor    { color:#6b7280; font-size:12px; }
+
+/* 상태 배지 */
+.sm-badge {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:4px 10px; border-radius:20px;
+  font-size:12px; font-weight:700; white-space:nowrap;
+}
+.sm-badge-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.sm-badge--접수  { background:#fff7ed; color:#c2410c; }
+.sm-badge--접수  .sm-badge-dot  { background:#f97316; }
+.sm-badge--확인중 { background:#eff6ff; color:#1d4ed8; }
+.sm-badge--확인중 .sm-badge-dot { background:#3b82f6; }
+.sm-badge--완료  { background:#f0fdf4; color:#15803d; }
+.sm-badge--완료  .sm-badge-dot  { background:#22c55e; }
+
+/* 빈 상태 */
+.sm-empty-cell { text-align:center; padding:64px 20px !important; }
+.sm-empty-state { display:flex; flex-direction:column; align-items:center; gap:10px; color:#9ca3af; }
+.sm-empty-state .ti { font-size:36px; }
+.sm-empty-state p   { font-size:14px; font-weight:600; margin:0; }
+
+/* ════════════════════════════════
+   팝업 모달
+════════════════════════════════ */
+.sm-modal-overlay {
+  display:none; position:fixed; inset:0; z-index:9000;
+  background:rgba(0,0,0,.35);
+  align-items:center; justify-content:center;
+}
+.sm-modal-overlay.open { display:flex; }
+.sm-modal {
+  background:#fff; border-radius:16px;
+  width:440px; max-width:calc(100vw - 32px);
+  box-shadow:0 8px 40px rgba(0,0,0,.18);
+  animation:smModalIn .18s cubic-bezier(.34,1.2,.64,1);
+  overflow:hidden;
+}
+@keyframes smModalIn {
+  from { opacity:0; transform:translateY(12px) scale(.97); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+.sm-modal-header {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  padding:20px 20px 14px;
+  border-bottom:1px solid #f0f2f5;
+}
+.sm-modal-meta { font-size:11px; color:#9ca3af; font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin:0 0 4px; }
+.sm-modal-title { font-size:16px; font-weight:800; color:#111827; margin:0; }
+.sm-modal-close {
+  width:32px; height:32px; border-radius:8px; border:none;
+  background:#f4f6f8; color:#6b7280; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; font-size:16px;
+  transition:all .15s; flex-shrink:0; margin-left:10px;
+}
+.sm-modal-close:hover { background:#e5e8ec; color:#111827; }
+.sm-modal-body { padding:16px 20px 20px; }
+.sm-modal-msg {
+  background:#f8f9fb; border-radius:10px; padding:12px 14px;
+  font-size:13px; color:#374151; line-height:1.6;
+  margin-bottom:16px; border:1px solid #f0f2f5;
+  max-height:80px; overflow-y:auto;
+}
+.sm-edit-label { display:block; font-size:11px; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:.04em; margin:0 0 4px; }
+.sm-edit-select {
+  width:100%; padding:8px 10px; font-size:13px;
+  border:1px solid #d1d5db; border-radius:8px;
+  background:#fff; color:#111827; font-family:inherit;
+  margin-bottom:12px; outline:none; box-sizing:border-box;
+}
+.sm-edit-select:focus { border-color:#FF9900; box-shadow:0 0 0 2px rgba(255,153,0,.12); }
+.sm-edit-textarea {
+  width:100%; padding:8px 10px; font-size:13px;
+  border:1px solid #d1d5db; border-radius:8px;
+  background:#fff; color:#111827; font-family:inherit;
+  margin-bottom:14px; outline:none; box-sizing:border-box;
+  resize:vertical; min-height:72px;
+}
+.sm-edit-textarea:focus { border-color:#FF9900; box-shadow:0 0 0 2px rgba(255,153,0,.12); }
+.sm-modal-footer { display:flex; align-items:center; justify-content:space-between; }
+.sm-modal-del-btn {
+  display:inline-flex; align-items:center; gap:5px;
+  background:#fef2f2; color:#dc2626; border:1px solid #fca5a5;
+  border-radius:8px; padding:7px 14px; font-size:13px; font-weight:600;
+  cursor:pointer; font-family:inherit; transition:all .15s;
+}
+.sm-modal-del-btn:hover { background:#fee2e2; }
+.sm-edit-cancel {
+  padding:7px 16px; border-radius:8px; font-size:13px; font-weight:600;
+  background:#fff; border:1px solid #d1d5db; color:#6b7280;
+  cursor:pointer; font-family:inherit; transition:all .15s;
+}
+.sm-edit-cancel:hover { background:#f4f6f8; }
+.sm-edit-save {
+  padding:7px 18px; border-radius:8px; font-size:13px; font-weight:700;
+  background:#FF9900; border:none; color:#fff;
+  cursor:pointer; font-family:inherit; transition:background .15s;
+}
+.sm-edit-save:hover { background:#e68900; }
+</style>
+
+<script>
+/* ── 모달 ── */
+var _smDelUrl = '';
+function smOpenModal(id) {
+  var row = document.getElementById('sm-row-' + id);
+  if (!row) return;
+  var d = row.dataset;
+  document.getElementById('smModalMeta').textContent = d.car + ' · ' + d.who + (d.vendor ? ' · ' + d.vendor : '') + ' · ' + (row.querySelector('.sm-col-at') ? row.querySelector('.sm-col-at').textContent.trim() : '');
+  document.getElementById('smModalTitle').textContent = '[' + d.cat + '] ' + d.msg;
+  document.getElementById('smModalMsg').textContent = d.msg;
+  document.getElementById('smModalStatus').value = d.status;
+  document.getElementById('smModalReply').value = d.reply;
+  document.getElementById('smModalForm').action = d.replyUrl;
+  _smDelUrl = d.delUrl;
+  var delBtn = document.getElementById('smModalDelBtn');
+  if (delBtn) delBtn.style.display = d.isMaster === 'true' ? 'inline-flex' : 'none';
+  document.getElementById('smModal').classList.add('open');
+  setTimeout(function() { document.getElementById('smModalReply').focus(); }, 80);
+}
+function smCloseModal(e) {
+  if (e && e.target !== document.getElementById('smModal')) return;
+  document.getElementById('smModal').classList.remove('open');
+}
+function smDeleteTicket() {
+  if (!confirm('이 문의 내역을 삭제할까요?')) return;
+  var f = document.getElementById('smDelForm');
+  f.action = _smDelUrl;
+  f.submit();
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') document.getElementById('smModal').classList.remove('open');
+});
+
+/* ── 체크박스 ── */
+function smToggleAll(cb) {
+  document.querySelectorAll('.sm-row-check').forEach(function(c) {
+    c.checked = cb.checked;
+    c.closest('tr').classList.toggle('sm-row-selected', cb.checked);
+  });
+  smUpdateBulkBar();
+}
+function smUpdateBulkBar() {
+  var checked = document.querySelectorAll('.sm-row-check:checked');
+  var bar = document.getElementById('smBulkActions');
+  var countEl = document.getElementById('smSelectedCount');
+  if (!bar) return;
+  bar.style.display = checked.length > 0 ? 'flex' : 'none';
+  if (countEl) countEl.textContent = checked.length + '건 선택됨';
+  var all = document.querySelectorAll('.sm-row-check');
+  var allCb = document.getElementById('smCheckAll');
+  if (allCb) {
+    allCb.indeterminate = checked.length > 0 && checked.length < all.length;
+    allCb.checked = all.length > 0 && checked.length === all.length;
+  }
+  document.querySelectorAll('.sm-row-check').forEach(function(c) {
+    c.closest('tr').classList.toggle('sm-row-selected', c.checked);
+  });
+}
+function smConfirmBulkDelete() {
+  var checked = document.querySelectorAll('.sm-row-check:checked');
+  if (checked.length === 0) { alert('선택된 항목이 없습니다.'); return false; }
+  if (!confirm(checked.length + '건을 삭제할까요?')) return false;
+  var form = document.getElementById('smBulkDeleteForm');
+  form.querySelectorAll('input[name="ids"]').forEach(function(el) { el.remove(); });
+  checked.forEach(function(c) {
+    var inp = document.createElement('input');
+    inp.type = 'hidden'; inp.name = 'ids'; inp.value = c.value;
+    form.appendChild(inp);
+  });
+  return true;
+}
+</script>
+
+{% endblock %}

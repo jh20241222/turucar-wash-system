@@ -87,6 +87,9 @@
             <a href="{{ url_for('door_control') }}" class="side-link {% if request.endpoint == 'door_control' %}active{% endif %}">
                 <i class="ti ti-lock-open"></i><b>도어 제어</b>
             </a>
+            <a href="{{ url_for('door_control_log_page') }}" class="side-link {% if request.endpoint == 'door_control_log_page' %}active{% endif %}">
+                <i class="ti ti-list-details"></i><b>도어 제어 로그</b>
+            </a>
             <!-- 계정 관리 -->
             <p class="side-nav-group" style="margin-top:4px;">계정 관리</p>
             <a href="{{ url_for('account_manage') }}" class="side-link {% if request.endpoint == 'account_manage' %}active{% endif %}">

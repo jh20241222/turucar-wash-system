@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block document_title %}Turu Wash · 도어 제어 로그{% endblock %}
+{% block content %}
+<div class="turu-app-page-v24">
+
+    <div class="turu-page-header-v24" style="margin-bottom:20px;">
+        <h2 style="font-size:20px;font-weight:900;color:#111;margin:0;">🔐 도어 제어 로그</h2>
+        <p style="font-size:13px;color:#888;margin:6px 0 0;">누가 언제 어떤 차량에 잠금/해제/비상등 명령을 보냈는지 기록입니다. (마스터 전용)</p>
+    </div>
+
+    <form method="get" class="app-card" style="padding:14px 16px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;">
+        <input type="text" name="car_no" value="{{ filter_car_no or '' }}" placeholder="차량번호 검색"
+               class="app-input" style="flex:1;min-width:140px;">
+        <input type="text" name="username" value="{{ filter_username or '' }}" placeholder="계정 검색"
+               class="app-input" style="flex:1;min-width:140px;">
+        <button type="submit" class="primary-btn" style="padding:10px 18px;">검색</button>
+        {% if filter_car_no or filter_username %}
+        <a href="{{ url_for('door_control_log_page') }}" style="align-self:center;font-size:13px;color:#888;text-decoration:none;">초기화</a>
+        {% endif %}
+    </form>
+
+    <div class="app-card" style="padding:0;overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:640px;">
+            <thead>
+                <tr style="background:#fafafa;">
+                    <th style="text-align:left;padding:10px 14px;color:#888;font-weight:700;white-space:nowrap;">시간</th>
+                    <th style="text-align:left;padding:10px 14px;color:#888;font-weight:700;">계정</th>
+                    <th style="text-align:left;padding:10px 14px;color:#888;font-weight:700;">차량번호</th>
+                    <th style="text-align:left;padding:10px 14px;color:#888;font-weight:700;">명령</th>
+                    <th style="text-align:left;padding:10px 14px;color:#888;font-weight:700;">결과</th>
+                    <th style="text-align:left;padding:10px 14px;color:#888;font-weight:700;">메시지</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in logs %}
+                <tr style="border-top:1px solid #f0f0f0;">
+                    <td style="padding:10px 14px;white-space:nowrap;color:#555;">{{ (r.created_at or '')[:19].replace('T',' ') }}</td>
+                    <td style="padding:10px 14px;font-weight:700;color:#111;">
+                        {{ r.username }}{% if r.role %}<span style="color:#aaa;font-weight:400;"> · {{ r.role }}</span>{% endif %}
+                    </td>
+                    <td style="padding:10px 14px;">{{ r.차량번호 or '-' }}</td>
+                    <td style="padding:10px 14px;">{{ cmd_label.get(r.command, r.command) }}</td>
+                    <td style="padding:10px 14px;">
+                        {% if r.ok %}
+                        <span style="color:#166534;background:#dcfce7;padding:2px 10px;border-radius:8px;font-weight:700;">성공</span>
+                        {% else %}
+                        <span style="color:#991b1b;background:#fee2e2;padding:2px 10px;border-radius:8px;font-weight:700;">실패</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding:10px 14px;color:#666;">{{ r.message }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" style="padding:28px;text-align:center;color:#999;">기록이 없습니다.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p style="font-size:12px;color:#aaa;margin-top:10px;">최근 500건까지 표시됩니다.</p>
+</div>
+{% endblock %}

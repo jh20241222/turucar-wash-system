@@ -30,7 +30,26 @@ from flask_login import (
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "change-this-secret-key")
+def _configure_secret_key():
+    """SECRET_KEY를 하드코딩하지 않는다. 운영(Railway)에서는 환경변수 필수,
+    로컬 개발에서만 매 실행마다 임시 랜덤 키를 생성한다(재시작 시 기존 세션 만료)."""
+    import secrets
+    env_key = os.environ.get("SECRET_KEY")
+    if env_key:
+        return env_key
+    is_railway = any(os.environ.get(name) for name in (
+        "RAILWAY_ENVIRONMENT", "RAILWAY_PROJECT_ID",
+        "RAILWAY_SERVICE_ID", "RAILWAY_DEPLOYMENT_ID",
+    ))
+    if is_railway:
+        raise RuntimeError(
+            "SECRET_KEY 환경변수가 설정되지 않았습니다. Railway 환경변수에 SECRET_KEY를 추가한 뒤 "
+            "다시 배포하세요. 이 값이 없으면 로그인 세션이 위조될 수 있어 앱 시작을 중단합니다."
+        )
+    print("[TuruWash] 경고: SECRET_KEY 환경변수가 없어 임시 랜덤 키로 실행합니다. "
+          "서버 재시작 시 기존 로그인 세션은 모두 만료됩니다. 운영 환경에서는 SECRET_KEY를 반드시 설정하세요.")
+    return secrets.token_hex(32)
+app.secret_key = _configure_secret_key()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 def _truthy(value):
     return str(value or "").strip().lower() in ("1", "true", "yes", "y", "on")
@@ -1843,7 +1862,12 @@ def car_detail(id):
 # =========================================================
 import os as _os_env, requests as _requests
 import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+# SSL 인증서 검증은 기본적으로 켜둔다(보안). 오토플러그 서버 인증서 문제로 급히 우회해야 하는
+# 경우에만 배포 환경변수 OTOPLUG_VERIFY_SSL=0 으로 임시 비활성화한다(권장하지 않음).
+_OTOPLUG_VERIFY_SSL = _truthy(_os_env.environ.get("OTOPLUG_VERIFY_SSL", "1"))
+if not _OTOPLUG_VERIFY_SSL:
+    print("[TuruWash] 경고: OTOPLUG_VERIFY_SSL=0 — 오토플러그 통신 SSL 인증서 검증이 꺼져 있습니다 (MITM 위험).")
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 _CLIENT_ID_MAP = {
     "PEOPLECAR-CAR123-PROD": _os_env.environ.get("CLIENT_ID_CAR123", "44d0cc23b8ea5a36f11aeaa69d6baeda"),
     "PEOPLECAR-PROD": _os_env.environ.get("CLIENT_ID_GENERAL", "dbd8e7fc563e462781c24b39d4378568"),
@@ -1861,7 +1885,7 @@ def _otoplug_session(car_org):
             "https://maintenance.otoplug.com:40443/login",
             files={"adminId": (None, acc_id), "adminPw": (None, acc_pw)},
             headers={"User-Agent": "Mozilla/5.0", "Origin": "https://maintenance.otoplug.com:40443"},
-            timeout=8, verify=False
+            timeout=8, verify=_OTOPLUG_VERIFY_SSL
         )
         if resp.status_code == 200:
             return sess
@@ -1905,7 +1929,7 @@ def car_control(wash_id):
             json={"clientID": hex_client, "terminalID": hex_terminal},
             headers={"content-type": "application/json", "User-Agent": "Mozilla/5.0",
                      "Origin": "https://maintenance.otoplug.com:40443"},
-            timeout=8, verify=False
+            timeout=8, verify=_OTOPLUG_VERIFY_SSL
         )
         result = resp.json()
         if result.get("smsIdx", 0) > 0:
@@ -1954,7 +1978,7 @@ def door_control_action():
             json={"clientID": hex_client, "terminalID": hex_terminal},
             headers={"content-type": "application/json", "User-Agent": "Mozilla/5.0",
                      "Origin": "https://maintenance.otoplug.com:40443"},
-            timeout=8, verify=False
+            timeout=8, verify=_OTOPLUG_VERIFY_SSL
         )
         result = resp.json()
         if result.get("smsIdx", 0) > 0:

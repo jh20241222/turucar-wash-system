@@ -208,8 +208,6 @@ async function carControl(command) {
 .cdp-toggle.is-open{border-color:#D85A30;color:#D85A30;}
 .cdp-toggle .cdp-arrow{font-size:12px;}
 .cdp-panel{margin-bottom:12px;}
-.cdp-row{display:flex;gap:10px;margin-bottom:14px;}
-.cdp-col{flex:1;}
 .cdp-view-label{font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.04em;text-align:center;margin:0 0 6px;font-weight:700;}
 .cdp-dir-row{display:flex;align-items:center;justify-content:space-between;margin:0 0 6px;}
 .cdp-dir-row .cdp-view-label{margin:0;}
@@ -281,12 +279,10 @@ function renderCarDamagePicker(rootId, textareaId){
   const IMG='{{ url_for("static", filename="img/") }}';
   function photo(name, alt){ return '<img class="cdp-photo" src="'+IMG+name+'" alt="'+alt+'">'; }
   root.innerHTML =
-    '<div class="cdp-row">'
-    + '<div class="cdp-col"><p class="cdp-view-label">앞모습</p>'
-    + '<div class="cdp-frame" style="aspect-ratio:704/332;">' + photo('cdp_front.png','앞모습') + cdpFrontSVG() + cdpTagsHTML(frontTags) + '</div></div>'
-    + '<div class="cdp-col"><p class="cdp-view-label">뒷모습</p>'
-    + '<div class="cdp-frame" style="aspect-ratio:704/332;">' + photo('cdp_rear.png','뒷모습') + cdpRearSVG() + cdpTagsHTML(rearTags) + '</div></div>'
-    + '</div>'
+    '<p class="cdp-view-label">앞모습</p>'
+    + '<div class="cdp-frame" style="aspect-ratio:704/332;">' + photo('cdp_front.png','앞모습') + cdpFrontSVG() + cdpTagsHTML(frontTags) + '</div>'
+    + '<p class="cdp-view-label">뒷모습</p>'
+    + '<div class="cdp-frame" style="aspect-ratio:704/332;">' + photo('cdp_rear.png','뒷모습') + cdpRearSVG() + cdpTagsHTML(rearTags) + '</div>'
     + '<div class="cdp-dir-row"><span>◀ 앞쪽</span><p class="cdp-view-label">운전석 쪽</p><span>뒤쪽 ▶</span></div>'
     + '<div class="cdp-frame" style="aspect-ratio:704/264;">' + photo('cdp_driver.png','운전석 쪽') + cdpSideSVG('운','운전석 쪽') + cdpTagsHTML(cdpSideTags('운')) + '</div>'
     + '<div class="cdp-dir-row"><span>◀ 뒤쪽</span><p class="cdp-view-label">조수석 쪽</p><span>앞쪽 ▶</span></div>'

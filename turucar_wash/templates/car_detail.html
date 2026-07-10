@@ -214,7 +214,8 @@ async function carControl(command) {
 .cdp-dir-row{display:flex;align-items:center;justify-content:space-between;margin:0 0 6px;}
 .cdp-dir-row .cdp-view-label{margin:0;}
 .cdp-dir-row span{font-size:10px;color:#999;font-weight:700;white-space:nowrap;}
-.cdp-frame{position:relative;width:100%;margin-bottom:14px;}
+.cdp-frame{position:relative;width:100%;margin-bottom:14px;background:#f7f7f5;border-radius:10px;overflow:hidden;}
+.cdp-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;display:block;}
 .cdp-svg{position:absolute;inset:0;width:100%;height:100%;}
 .cdp-zone{fill:transparent;stroke:none;cursor:pointer;transition:fill .1s;}
 .cdp-zone.is-on{fill:rgba(216,90,48,0.35);stroke:#D85A30;stroke-width:2;}
@@ -224,78 +225,38 @@ async function carControl(command) {
 .cdp-tag input[type=checkbox]{width:13px;height:13px;margin:0;accent-color:#D85A30;}
 </style>
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-<defs>
-  <linearGradient id="cdpBody" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#f4f4f2"></stop>
-    <stop offset="0.45" stop-color="#dcdbd6"></stop>
-    <stop offset="1" stop-color="#b9b8b2"></stop>
-  </linearGradient>
-  <linearGradient id="cdpGlass" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#dbeafe"></stop>
-    <stop offset="1" stop-color="#93b8dd"></stop>
-  </linearGradient>
-  <radialGradient id="cdpTire" cx="0.35" cy="0.35" r="0.75">
-    <stop offset="0" stop-color="#57564f"></stop>
-    <stop offset="0.7" stop-color="#2c2c2a"></stop>
-    <stop offset="1" stop-color="#1a1a19"></stop>
-  </radialGradient>
-  <radialGradient id="cdpHub" cx="0.35" cy="0.35" r="0.75">
-    <stop offset="0" stop-color="#f4f4f2"></stop>
-    <stop offset="1" stop-color="#b4b2a9"></stop>
-  </radialGradient>
-</defs>
-</svg>
-
 <script>
+function cdpZonesSVG(label, zones){
+  const rects = zones.map(function(z){
+    return '<rect class="cdp-zone" data-part="'+z.part+'" x="'+z.x+'" y="'+z.y+'" width="'+z.w+'" height="'+z.h+'"></rect>';
+  }).join('');
+  return '<svg viewBox="0 0 100 100" preserveAspectRatio="none" class="cdp-svg" role="img" aria-label="'+label+'"><g class="cdp-zones">'+rects+'</g></svg>';
+}
 function cdpFrontSVG(){
-  return `<svg viewBox="0 0 220 145" class="cdp-svg" role="img" aria-label="앞모습">
-    <ellipse cx="110" cy="139" rx="92" ry="4" fill="rgba(0,0,0,0.12)"></ellipse>
-    <path d="M50,4 C40,4 36,14 36,24 L36,42 C36,54 26,54 24,66 L24,96 C24,106 16,106 16,116 L16,136 L204,136 L204,116 C204,106 196,106 196,96 L196,66 C194,54 184,54 184,42 L184,24 C184,14 180,4 170,4 Z" fill="url(#cdpBody)" stroke="#8a8983" stroke-width="1.5" style="filter:drop-shadow(0 3px 4px rgba(0,0,0,0.18));"></path>
-    <rect x="40" y="4" width="140" height="30" rx="6" fill="url(#cdpGlass)"></rect>
-    <ellipse cx="46" cy="102" rx="11" ry="7" fill="#ffe9b0" stroke="#d9a33f" stroke-width="1"></ellipse>
-    <ellipse cx="174" cy="102" rx="11" ry="7" fill="#ffe9b0" stroke="#d9a33f" stroke-width="1"></ellipse>
-    <g class="cdp-zones">
-      <rect class="cdp-zone" data-part="운)전범퍼" x="16" y="90" width="94" height="46"></rect>
-      <rect class="cdp-zone" data-part="조)전범퍼" x="110" y="90" width="94" height="46"></rect>
-      <rect class="cdp-zone" data-part="보닛(후드)" x="24" y="34" width="172" height="56"></rect>
-      <rect class="cdp-zone" data-part="전면유리" x="36" y="0" width="148" height="34"></rect>
-    </g>
-  </svg>`;
+  return cdpZonesSVG('앞모습', [
+    {part:'조)전범퍼', x:25, y:55, w:15, h:35},
+    {part:'운)전범퍼', x:60, y:55, w:15, h:35},
+    {part:'보닛(후드)', x:28, y:38, w:44, h:17},
+    {part:'전면유리', x:28, y:15, w:44, h:23}
+  ]);
 }
 function cdpRearSVG(){
-  return `<svg viewBox="0 0 220 145" class="cdp-svg" role="img" aria-label="뒷모습">
-    <ellipse cx="110" cy="139" rx="92" ry="4" fill="rgba(0,0,0,0.12)"></ellipse>
-    <path d="M50,4 C40,4 36,14 36,24 L36,42 C36,54 26,54 24,66 L24,96 C24,106 16,106 16,116 L16,136 L204,136 L204,116 C204,106 196,106 196,96 L196,66 C194,54 184,54 184,42 L184,24 C184,14 180,4 170,4 Z" fill="url(#cdpBody)" stroke="#8a8983" stroke-width="1.5" style="filter:drop-shadow(0 3px 4px rgba(0,0,0,0.18));"></path>
-    <rect x="40" y="4" width="140" height="30" rx="6" fill="url(#cdpGlass)"></rect>
-    <rect x="34" y="96" width="26" height="10" rx="3" fill="#f6b3ab" stroke="#c94f43" stroke-width="1"></rect>
-    <rect x="160" y="96" width="26" height="10" rx="3" fill="#f6b3ab" stroke="#c94f43" stroke-width="1"></rect>
-    <g class="cdp-zones">
-      <rect class="cdp-zone" data-part="운)후범퍼" x="16" y="90" width="94" height="46"></rect>
-      <rect class="cdp-zone" data-part="조)후범퍼" x="110" y="90" width="94" height="46"></rect>
-      <rect class="cdp-zone" data-part="트렁크" x="24" y="34" width="172" height="56"></rect>
-      <rect class="cdp-zone" data-part="후면유리" x="36" y="0" width="148" height="34"></rect>
-    </g>
-  </svg>`;
+  return cdpZonesSVG('뒷모습', [
+    {part:'운)후범퍼', x:25, y:58, w:15, h:32},
+    {part:'조)후범퍼', x:60, y:58, w:15, h:32},
+    {part:'트렁크', x:28, y:35, w:44, h:23},
+    {part:'후면유리', x:30, y:15, w:40, h:20}
+  ]);
 }
 function cdpSideSVG(prefix, label){
-  return `<svg viewBox="0 0 300 135" class="cdp-svg" role="img" aria-label="${label}">
-    <ellipse cx="60" cy="124" rx="27" ry="4" fill="rgba(0,0,0,0.12)"></ellipse>
-    <ellipse cx="240" cy="124" rx="27" ry="4" fill="rgba(0,0,0,0.12)"></ellipse>
-    <path d="M25,90 C25,75 32,68 45,68 L85,68 C95,45 115,32 150,32 C185,32 205,45 215,68 L255,68 C268,68 275,75 275,90 L275,108 L25,108 Z" fill="url(#cdpBody)" stroke="#8a8983" stroke-width="1.5" style="filter:drop-shadow(0 3px 4px rgba(0,0,0,0.18));"></path>
-    <path d="M95,66 C104,48 125,36 150,36 C175,36 196,48 205,66 Z" fill="url(#cdpGlass)"></path>
-    <circle cx="60" cy="100" r="22" fill="url(#cdpTire)"></circle>
-    <circle cx="60" cy="100" r="9" fill="url(#cdpHub)"></circle>
-    <circle cx="240" cy="100" r="22" fill="url(#cdpTire)"></circle>
-    <circle cx="240" cy="100" r="9" fill="url(#cdpHub)"></circle>
-    <g class="cdp-zones">
-      <rect class="cdp-zone" data-part="${prefix})전휀더" x="25" y="68" width="70" height="40"></rect>
-      <rect class="cdp-zone" data-part="${prefix})전도어" x="95" y="66" width="55" height="34"></rect>
-      <rect class="cdp-zone" data-part="${prefix})후도어" x="150" y="66" width="55" height="34"></rect>
-      <rect class="cdp-zone" data-part="${prefix})후휀더" x="205" y="68" width="70" height="40"></rect>
-      <rect class="cdp-zone" data-part="${prefix})스텝" x="95" y="100" width="110" height="8"></rect>
-    </g>
-  </svg>`;
+  // 운전석 쪽 사진은 차 앞부분이 왼쪽, 조수석 쪽 사진은 차 앞부분이 오른쪽(반대편에서 찍은 사진이라 좌우가 바뀜)
+  const mirrored = prefix === '조';
+  const order = mirrored
+    ? [{k:'후휀더',x:8,w:22},{k:'후도어',x:30,w:20},{k:'전도어',x:50,w:23},{k:'전휀더',x:73,w:19}]
+    : [{k:'전휀더',x:8,w:19},{k:'전도어',x:27,w:23},{k:'후도어',x:50,w:20},{k:'후휀더',x:70,w:20}];
+  const zones = order.map(function(o){ return {part:prefix+')'+o.k, x:o.x, y:25, w:o.w, h:33}; });
+  zones.push({part:prefix+')스텝', x:20, y:58, w:60, h:12});
+  return cdpZonesSVG(label, zones);
 }
 function cdpTagsHTML(list){
   return list.map(function(t){
@@ -303,27 +264,33 @@ function cdpTagsHTML(list){
   }).join('');
 }
 function cdpSideTags(prefix){
-  const pos=[{x:20,y:65.2},{x:40.7,y:62.2},{x:59.3,y:62.2},{x:80,y:65.2},{x:50,y:77}];
-  const keys=['전휀더','전도어','후도어','후휀더','스텝'];
-  return keys.map(function(k,i){ return {part: prefix+')'+k, x:pos[i].x, y:pos[i].y}; });
+  const mirrored = prefix === '조';
+  const order = mirrored
+    ? [{k:'후휀더',cx:19},{k:'후도어',cx:40},{k:'전도어',cx:61.5},{k:'전휀더',cx:82.5}]
+    : [{k:'전휀더',cx:17.5},{k:'전도어',cx:38.5},{k:'후도어',cx:60},{k:'후휀더',cx:80}];
+  const tags = order.map(function(o){ return {part: prefix+')'+o.k, x:o.cx, y:41.5}; });
+  tags.push({part: prefix+')스텝', x:50, y:64});
+  return tags;
 }
 function renderCarDamagePicker(rootId, textareaId){
   const root = document.getElementById(rootId);
   const textarea = document.getElementById(textareaId);
   if(!root || !textarea) return;
-  const frontTags=[{part:'운)전범퍼',x:28.6,y:77.9},{part:'조)전범퍼',x:71.4,y:77.9},{part:'보닛(후드)',x:50,y:41.4},{part:'전면유리',x:50,y:10.3}];
-  const rearTags=[{part:'운)후범퍼',x:28.6,y:77.9},{part:'조)후범퍼',x:71.4,y:77.9},{part:'트렁크',x:50,y:41.4},{part:'후면유리',x:50,y:10.3}];
+  const frontTags=[{part:'조)전범퍼',x:32.5,y:72.5},{part:'운)전범퍼',x:67.5,y:72.5},{part:'보닛(후드)',x:50,y:46.5},{part:'전면유리',x:50,y:26.5}];
+  const rearTags=[{part:'운)후범퍼',x:32.5,y:74},{part:'조)후범퍼',x:67.5,y:74},{part:'트렁크',x:50,y:46.5},{part:'후면유리',x:50,y:25}];
+  const IMG='{{ url_for("static", filename="img/") }}';
+  function photo(name, alt){ return '<img class="cdp-photo" src="'+IMG+name+'" alt="'+alt+'">'; }
   root.innerHTML =
     '<div class="cdp-row">'
     + '<div class="cdp-col"><p class="cdp-view-label">앞모습</p>'
-    + '<div class="cdp-frame" style="aspect-ratio:220/145;">' + cdpFrontSVG() + cdpTagsHTML(frontTags) + '</div></div>'
+    + '<div class="cdp-frame" style="aspect-ratio:704/332;">' + photo('cdp_front.png','앞모습') + cdpFrontSVG() + cdpTagsHTML(frontTags) + '</div></div>'
     + '<div class="cdp-col"><p class="cdp-view-label">뒷모습</p>'
-    + '<div class="cdp-frame" style="aspect-ratio:220/145;">' + cdpRearSVG() + cdpTagsHTML(rearTags) + '</div></div>'
+    + '<div class="cdp-frame" style="aspect-ratio:704/332;">' + photo('cdp_rear.png','뒷모습') + cdpRearSVG() + cdpTagsHTML(rearTags) + '</div></div>'
     + '</div>'
     + '<div class="cdp-dir-row"><span>◀ 앞쪽</span><p class="cdp-view-label">운전석 쪽</p><span>뒤쪽 ▶</span></div>'
-    + '<div class="cdp-frame" style="aspect-ratio:300/135;">' + cdpSideSVG('운','운전석 쪽') + cdpTagsHTML(cdpSideTags('운')) + '</div>'
-    + '<div class="cdp-dir-row"><span>◀ 앞쪽</span><p class="cdp-view-label">조수석 쪽</p><span>뒤쪽 ▶</span></div>'
-    + '<div class="cdp-frame" style="aspect-ratio:300/135;">' + cdpSideSVG('조','조수석 쪽') + cdpTagsHTML(cdpSideTags('조')) + '</div>';
+    + '<div class="cdp-frame" style="aspect-ratio:704/264;">' + photo('cdp_driver.png','운전석 쪽') + cdpSideSVG('운','운전석 쪽') + cdpTagsHTML(cdpSideTags('운')) + '</div>'
+    + '<div class="cdp-dir-row"><span>◀ 뒤쪽</span><p class="cdp-view-label">조수석 쪽</p><span>앞쪽 ▶</span></div>'
+    + '<div class="cdp-frame" style="aspect-ratio:704/264;">' + photo('cdp_passenger.png','조수석 쪽') + cdpSideSVG('조','조수석 쪽') + cdpTagsHTML(cdpSideTags('조')) + '</div>';
 
   const selected = new Set();
   let lastAuto = '';

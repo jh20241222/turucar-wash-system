@@ -211,6 +211,9 @@ async function carControl(command) {
 .cdp-row{display:flex;gap:10px;margin-bottom:14px;}
 .cdp-col{flex:1;}
 .cdp-view-label{font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.04em;text-align:center;margin:0 0 6px;font-weight:700;}
+.cdp-dir-row{display:flex;align-items:center;justify-content:space-between;margin:0 0 6px;}
+.cdp-dir-row .cdp-view-label{margin:0;}
+.cdp-dir-row span{font-size:10px;color:#999;font-weight:700;white-space:nowrap;}
 .cdp-frame{position:relative;width:100%;margin-bottom:14px;}
 .cdp-svg{position:absolute;inset:0;width:100%;height:100%;}
 .cdp-zone{fill:transparent;stroke:none;cursor:pointer;transition:fill .1s;}
@@ -317,9 +320,9 @@ function renderCarDamagePicker(rootId, textareaId){
     + '<div class="cdp-col"><p class="cdp-view-label">뒷모습</p>'
     + '<div class="cdp-frame" style="aspect-ratio:220/145;">' + cdpRearSVG() + cdpTagsHTML(rearTags) + '</div></div>'
     + '</div>'
-    + '<p class="cdp-view-label">운전석 쪽</p>'
+    + '<div class="cdp-dir-row"><span>◀ 앞쪽</span><p class="cdp-view-label">운전석 쪽</p><span>뒤쪽 ▶</span></div>'
     + '<div class="cdp-frame" style="aspect-ratio:300/135;">' + cdpSideSVG('운','운전석 쪽') + cdpTagsHTML(cdpSideTags('운')) + '</div>'
-    + '<p class="cdp-view-label">조수석 쪽</p>'
+    + '<div class="cdp-dir-row"><span>◀ 앞쪽</span><p class="cdp-view-label">조수석 쪽</p><span>뒤쪽 ▶</span></div>'
     + '<div class="cdp-frame" style="aspect-ratio:300/135;">' + cdpSideSVG('조','조수석 쪽') + cdpTagsHTML(cdpSideTags('조')) + '</div>';
 
   const selected = new Set();

@@ -266,8 +266,8 @@ function cdpSideTags(prefix){
   const order = mirrored
     ? [{k:'후휀더',cx:19},{k:'후도어',cx:40},{k:'전도어',cx:61.5},{k:'전휀더',cx:82.5}]
     : [{k:'전휀더',cx:17.5},{k:'전도어',cx:38.5},{k:'후도어',cx:60},{k:'후휀더',cx:80}];
-  const tags = order.map(function(o){ return {part: prefix+')'+o.k, x:o.cx, y:41.5}; });
-  tags.push({part: prefix+')스텝', x:50, y:64});
+  const tags = order.map(function(o){ return {part: prefix+')'+o.k, x:o.cx, y:61.5}; });
+  tags.push({part: prefix+')스텝', x:50, y:84});
   return tags;
 }
 function renderCarDamagePicker(rootId, textareaId){

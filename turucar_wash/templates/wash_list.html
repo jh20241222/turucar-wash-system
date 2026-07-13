@@ -92,6 +92,7 @@
                     </div>
                     <div class="wash-urgent-warn">{{ elapsed }}일째 미완료 — 우선 처리 필요</div>
                     <p><span>📍</span>{{ r['스팟'] or '-' }}</p>
+                    <p><span>🚗</span>{{ r['차량소속'] or '-' }}</p>
                     <p><span>👤</span>{{ r['업체'] or current_user.vendor or '담당자 미지정' }}</p>
                 </div>
                 <span class="turu-row-arrow-v24">&#8250;</span>
@@ -119,6 +120,7 @@
                         {% if elapsed > 0 %}<em class="chip-day">D+{{ elapsed }}</em>{% else %}<em class="chip-day chip-day--new">신규</em>{% endif %}
                     </div>
                     <p><span>📍</span>{{ r['스팟'] or '-' }}</p>
+                    <p><span>🚗</span>{{ r['차량소속'] or '-' }}</p>
                     <p><span>🗓</span>{{ r['세차일'] or selected_date }}</p>
                     <p><span>👤</span>{{ r['업체'] or current_user.vendor or '담당자 미지정' }}</p>
                 </div>

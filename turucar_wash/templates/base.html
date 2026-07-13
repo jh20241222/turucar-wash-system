@@ -79,17 +79,6 @@
             <a href="{{ url_for('upload_wash_list') }}" class="side-link {% if request.endpoint == 'upload_wash_list' %}active{% endif %}">
                 <i class="ti ti-upload"></i><b>오더 업로드</b>
             </a>
-            <a href="{{ url_for('upload_terminal') }}" class="side-link {% if request.endpoint == 'upload_terminal' %}active{% endif %}">
-                <i class="ti ti-cpu"></i><b>단말기 등록</b>
-            </a>
-            <!-- 도어 제어 -->
-            <p class="side-nav-group" style="margin-top:4px;">차량 제어</p>
-            <a href="{{ url_for('door_control') }}" class="side-link {% if request.endpoint == 'door_control' %}active{% endif %}">
-                <i class="ti ti-lock-open"></i><b>도어 제어</b>
-            </a>
-            <a href="{{ url_for('door_control_log_page') }}" class="side-link {% if request.endpoint == 'door_control_log_page' %}active{% endif %}">
-                <i class="ti ti-list-details"></i><b>도어 제어 로그</b>
-            </a>
             <!-- 계정 관리 -->
             <p class="side-nav-group" style="margin-top:4px;">계정 관리</p>
             <a href="{{ url_for('account_manage') }}" class="side-link {% if request.endpoint == 'account_manage' %}active{% endif %}">
@@ -128,10 +117,6 @@
                 <em class="side-menu-bubble{% if not damage_badge_count %} is-hidden{% endif %}">
                     {{ damage_badge_count or 0 }}
                 </em>
-            </a>
-            <p class="side-nav-group" style="margin-top:4px;">차량 제어</p>
-            <a href="{{ url_for('door_control') }}" class="side-link {% if request.endpoint == 'door_control' %}active{% endif %}">
-                <i class="ti ti-lock-open"></i><b>도어 제어</b>
             </a>
             {% endif %}
 

@@ -12,6 +12,7 @@ def today_kst():
     """오늘 KST 날짜 문자열 반환 (YYYY-MM-DD)."""
     return datetime.now(KST).strftime("%Y-%m-%d")
 import io
+import requests as _requests
 import pandas as pd
 try:
     from PIL import Image as _PILImage, ExifTags as _ExifTags

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block document_title %}Turu Wash · 긴급세차{% endblock %}
+{% block content %}
+
+<section class="page-hero app-card elevated brand-line-card">
+    <div class="hero-copy-block">
+        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo">
+        <h1>긴급세차</h1>
+        <p class="hero-copy">
+            {% if current_user.is_master %}전체 긴급세차 요청을 확인하고 새 요청을 등록합니다.
+            {% elif current_user.role == 'admin' %}우리 업체 소속 작업자들의 긴급세차 요청을 모두 확인합니다.
+            {% else %}내가 처리해야 할 긴급세차 차량을 확인합니다.{% endif %}
+        </p>
+    </div>
+    <div class="hero-chip-stack"><span>{{ pending|length }}</span><strong>대기중</strong></div>
+</section>
+
+{% if current_user.is_admin %}
+<section class="admin-card app-card">
+    <div class="admin-card-head"><div><p class="eyebrow">New</p><h2>새 긴급세차 요청</h2></div><span class="badge">등록</span></div>
+    <form method="POST" action="{{ url_for('urgent_wash') }}" class="stack-form">
+        <label class="field-label">차량번호 (선택)</label>
+        <input type="text" name="car_number" class="app-input" placeholder="예: 12가 3456">
+        <div class="form-grid two">
+            <div>
+                <label class="field-label">시/도</label>
+                <select name="city" id="uw_city" class="app-input" required>
+                    <option value="">시/도 선택</option>
+                    {% for city in city_options %}<option value="{{ city }}">{{ city }}</option>{% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="field-label">구/군</label>
+                <select name="district" id="uw_district" class="app-input" required>
+                    <option value="">구/군 선택</option>
+                </select>
+            </div>
+        </div>
+        <label class="field-label">메모</label>
+        <textarea name="note" class="app-input" rows="3" placeholder="요청 내용을 입력해주세요."></textarea>
+        <button class="primary-btn tall full" type="submit">긴급세차 요청 보내기</button>
+    </form>
+</section>
+{% endif %}
+
+<section class="app-section table-panel app-card">
+    <div class="table-title-row"><h2>대기중인 요청</h2><span>{{ pending|length }}건</span></div>
+    <div class="stack-form" style="gap:12px;">
+        {% for r in pending %}
+        <article class="admin-card app-card" style="padding:14px 16px;">
+            <div class="ticket-title-row">
+                <span class="ticket-status">{{ '슬랙 VOC' if r.source == 'voc' else '긴급세차' }}</span>
+                <strong>{{ r.car_number or (r.city + ' ' + r.district) }}</strong>
+                <small>{{ r.created_at }}</small>
+            </div>
+            <div class="ticket-meta">
+                <span>지역 {{ r.city }} {{ r.district }}</span>
+                {% if r.vendor %}<span>업체 {{ r.vendor }}</span>{% endif %}
+                <span>요청자 {{ r.created_by }}</span>
+            </div>
+            {% if r.note %}<p class="ticket-message" style="white-space:pre-line;">{{ r.note }}</p>{% endif %}
+            <form method="post" action="{{ url_for('urgent_wash_complete', req_id=r.id) }}" style="margin-top:10px;">
+                <button type="submit" class="primary-btn">완료 처리</button>
+            </form>
+        </article>
+        {% else %}
+        <div class="notice-empty"><strong>대기중인 긴급세차 요청이 없습니다.</strong><span>요청이 등록되면 이곳에 표시됩니다.</span></div>
+        {% endfor %}
+    </div>
+</section>
+
+{% if done %}
+<section class="app-section table-panel app-card">
+    <div class="table-title-row"><h2>최근 완료</h2><span>{{ done|length }}건</span></div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>구분</th><th>차량/지역</th><th>업체</th><th>완료자</th><th>완료일시</th></tr></thead>
+            <tbody>
+                {% for r in done %}
+                <tr>
+                    <td>{{ '슬랙 VOC' if r.source == 'voc' else '긴급세차' }}</td>
+                    <td>{{ r.car_number or (r.city + ' ' + r.district) }}</td>
+                    <td>{{ r.vendor or '-' }}</td>
+                    <td>{{ r.completed_by or '-' }}</td>
+                    <td>{{ r.completed_at or '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+
+<script>
+const uwRegionMap = {{ region_map | tojson }};
+(function () {
+    const city = document.getElementById('uw_city');
+    const district = document.getElementById('uw_district');
+    if (!city || !district) return;
+    city.addEventListener('change', function () {
+        district.innerHTML = '<option value="">구/군 선택</option>';
+        (uwRegionMap[city.value] || []).forEach(function (d) {
+            const opt = document.createElement('option');
+            opt.value = d; opt.textContent = d;
+            district.appendChild(opt);
+        });
+    });
+})();
+</script>
+
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block document_title %}Turu Wash · VOC 관리{% endblock %}
+{% block content %}
+
+<section class="page-hero app-card elevated brand-line-card">
+    <div class="hero-copy-block">
+        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo">
+        <h1>VOC 관리</h1>
+        <p class="hero-copy">#피플카-차량청결VOC 슬랙 채널과 연동됩니다. 지역을 지정해 담당 작업자의 긴급세차 목록으로 전달할 수 있습니다.</p>
+    </div>
+    <form method="post" action="{{ url_for('voc_sync') }}">
+        <button type="submit" class="blue-btn tall">지금 동기화</button>
+    </form>
+</section>
+
+{% if not slack_configured %}
+<div class="notice-empty">
+    <strong>슬랙 연동이 아직 설정되지 않았습니다.</strong>
+    <span>서버 환경변수 SLACK_BOT_TOKEN이 필요하고, 봇이 #피플카-차량청결voc(private) 채널에 초대되어 있어야 하며 groups:history / users:read 권한이 있어야 합니다.</span>
+</div>
+{% endif %}
+
+<section class="app-section table-panel app-card">
+    <div class="table-title-row"><h2>VOC 목록</h2><span>{{ items|length }}건</span></div>
+    <div class="stack-form" style="gap:12px;">
+        {% for item in items %}
+        <article class="admin-card app-card" style="padding:14px 16px;">
+            <div class="ticket-title-row">
+                <span class="ticket-status">{{ item.status }}</span>
+                <strong>{{ item.author or '슬랙' }}</strong>
+                <small>{{ item.synced_at }}</small>
+            </div>
+            <p class="ticket-message">{{ item.text }}</p>
+            <p><a href="{{ item.permalink }}" target="_blank" rel="noopener">슬랙에서 원문 보기 ›</a></p>
+
+            {% if item.status == '요청됨' %}
+            <div class="ticket-meta">
+                <span>배정 지역 {{ item.city }} {{ item.district }}</span>
+                <span>요청자 {{ item.requested_by }}</span>
+                <span>{{ item.requested_at }}</span>
+            </div>
+            {% if item.note %}<p class="ticket-message">메모: {{ item.note }}</p>{% endif %}
+            {% else %}
+            <form method="post" action="{{ url_for('voc_request', item_id=item.id) }}" class="ticket-reply-form" style="flex-wrap:wrap;">
+                <select name="city" class="app-input voc-city-select" data-idx="{{ loop.index }}" required>
+                    <option value="">시/도 선택</option>
+                    {% for city in city_options %}<option value="{{ city }}">{{ city }}</option>{% endfor %}
+                </select>
+                <select name="district" class="app-input voc-district-select" data-idx="{{ loop.index }}" required>
+                    <option value="">구/군 선택</option>
+                </select>
+                <input name="note" class="app-input" placeholder="담당자에게 전달할 메모(선택)">
+                <button class="primary-btn" type="submit">요청</button>
+            </form>
+            {% endif %}
+        </article>
+        {% else %}
+        <div class="notice-empty"><strong>동기화된 VOC 글이 없습니다.</strong><span>슬랙 채널에 새 글이 올라오면 이곳에 표시됩니다.</span></div>
+        {% endfor %}
+    </div>
+</section>
+
+<script>
+const vocRegionMap = {{ region_map | tojson }};
+document.querySelectorAll('.voc-city-select').forEach(function (citySel) {
+    const idx = citySel.dataset.idx;
+    const districtSel = document.querySelector('.voc-district-select[data-idx="' + idx + '"]');
+    if (!districtSel) return;
+    citySel.addEventListener('change', function () {
+        districtSel.innerHTML = '<option value="">구/군 선택</option>';
+        (vocRegionMap[citySel.value] || []).forEach(function (d) {
+            const opt = document.createElement('option');
+            opt.value = d; opt.textContent = d;
+            districtSel.appendChild(opt);
+        });
+    });
+});
+</script>
+
+{% endblock %}

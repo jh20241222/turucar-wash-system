@@ -48,12 +48,15 @@
     </section>
 
     <section class="home-support-grid-v12" aria-label="지원 메뉴">
-        <button type="button" class="home-support-card-v12 home-support-button-v12" onclick="showHomeDevToast()">
+        <a href="{{ url_for('urgent_wash') }}" class="home-support-card-v12" style="position:relative;">
             <span class="support-visual-v12" aria-hidden="true">
                 <img src="{{ url_for('static', filename='img/icon-urgent-wash.png') }}" alt="">
             </span>
             <strong>긴급 세차</strong>
-        </button>
+            {% if field_request_badge_count %}
+            <em style="position:absolute;top:8px;right:8px;background:#e53935;color:#fff;font-style:normal;font-weight:800;font-size:11px;line-height:1;border-radius:999px;padding:4px 7px;">{{ field_request_badge_count }}</em>
+            {% endif %}
+        </a>
         <a href="{{ url_for('support_choice') }}" class="home-support-card-v12">
             <span class="support-visual-v12 chat-v12" aria-hidden="true">
                 <svg viewBox="0 0 64 64" fill="none">

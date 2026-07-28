@@ -37,7 +37,7 @@
             {% if request.endpoint != 'dashboard' %}
             <button type="button" class="icon-btn back-btn" onclick="history.length > 1 ? history.back() : location.href='{{ url_for('dashboard') }}'" aria-label="뒤로가기">‹</button>
             {% endif %}
-            {% if request.endpoint in ['wash_list','wash_status','profile','car_detail','support_choice','support_submit','damage_submit','damage_manage'] %}
+            {% if request.endpoint in ['wash_list','wash_status','profile','car_detail','support_choice','support_submit','damage_submit','damage_manage','urgent_wash','voc_manage'] %}
             <a href="{{ url_for('dashboard') }}" class="topbar-turu-brand-v27" aria-label="TURU CAR 홈">
                 <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=28" alt="TURU CAR">
             </a>
@@ -72,6 +72,12 @@
             <a href="{{ url_for('wash_status') }}" class="side-link {% if request.endpoint == 'wash_status' %}active{% endif %}">
                 <i class="ti ti-check"></i><b>완료 현황</b>
             </a>
+            <a href="{{ url_for('urgent_wash') }}" class="side-link side-link-with-badge {% if request.endpoint == 'urgent_wash' %}active{% endif %}">
+                <i class="ti ti-alert-octagon"></i><b>긴급세차</b>
+                <em class="side-menu-bubble{% if not field_request_badge_count %} is-hidden{% endif %}">
+                    {{ field_request_badge_count or 0 }}
+                </em>
+            </a>
 
             {% if current_user.is_master %}
             <!-- 데이터 관리 -->
@@ -98,6 +104,9 @@
                 <em class="side-menu-bubble{% if not damage_badge_count %} is-hidden{% endif %}">
                     {{ damage_badge_count or 0 }}
                 </em>
+            </a>
+            <a href="{{ url_for('voc_manage') }}" class="side-link {% if request.endpoint == 'voc_manage' %}active{% endif %}">
+                <i class="ti ti-brand-slack"></i><b>VOC 관리</b>
             </a>
             {% endif %}
 
@@ -164,6 +173,8 @@
                     {% elif request.endpoint == 'vendor_manage' %}계정 관리
                     {% elif request.endpoint == 'support_manage' %}계정 관리
                     {% elif request.endpoint in ['support_choice', 'damage_manage', 'damage_submit'] %}계정 관리
+                    {% elif request.endpoint == 'urgent_wash' %}세차 관리
+                    {% elif request.endpoint == 'voc_manage' %}계정 관리
                     {% elif request.endpoint == 'profile' %}내정보
                     {% elif request.endpoint == 'my_vehicles' %}내정보
                     {% else %}홈{% endif %}
@@ -179,6 +190,8 @@
                     {% elif request.endpoint == 'support_choice' %}문의/제보
                     {% elif request.endpoint == 'damage_manage' %}훼손 제보 관리
                     {% elif request.endpoint == 'damage_submit' %}차량 훼손 제보
+                    {% elif request.endpoint == 'urgent_wash' %}긴급세차
+                    {% elif request.endpoint == 'voc_manage' %}VOC 관리
                     {% elif request.endpoint == 'profile' %}계정 정보
                     {% elif request.endpoint == 'my_vehicles' %}내 담당 차량
                     {% elif request.endpoint == 'dashboard' %}홈

@@ -198,6 +198,73 @@ def get_wash_db():
     conn.row_factory = sqlite3.Row
     return conn
 # =========================================================
+# 전국 고정 시/도 + 구/군 데이터 (지역 배정 / 필터 드롭다운 공용)
+# =========================================================
+KOREA_REGIONS = {
+    "서울특별시": [
+        "강남구","강동구","강북구","강서구","관악구","광진구","구로구","금천구",
+        "노원구","도봉구","동대문구","동작구","마포구","서대문구","서초구",
+        "성동구","성북구","송파구","양천구","영등포구","용산구","은평구",
+        "종로구","중구","중랑구"
+    ],
+    "부산광역시": [
+        "강서구","금정구","기장군","남구","동구","동래구","부산진구","북구",
+        "사상구","사하구","서구","수영구","연제구","영도구","중구","해운대구"
+    ],
+    "대구광역시": [
+        "군위군","남구","달서구","달성군","동구","북구","서구","수성구","중구"
+    ],
+    "인천광역시": [
+        "강화군","검단구","계양구","남동구","미추홀구","부평구","서해구",
+        "연수구","영종구","옹진군","제물포구"
+    ],
+    "대전광역시": ["대덕구","동구","서구","유성구","중구"],
+    "울산광역시": ["남구","동구","북구","울주군","중구"],
+    "세종특별자치시": ["세종시"],
+    "경기도": [
+        "가평군","고양시","과천시","광명시","광주시","구리시","군포시","김포시",
+        "남양주시","동두천시","부천시","성남시","수원시","시흥시","안산시",
+        "안성시","안양시","양주시","양평군","여주시","연천군","오산시","용인시",
+        "의왕시","의정부시","이천시","파주시","평택시","포천시","하남시","화성시"
+    ],
+    "강원특별자치도": [
+        "강릉시","고성군","동해시","삼척시","속초시","양구군","양양군",
+        "영월군","원주시","인제군","정선군","철원군","춘천시","태백시",
+        "평창군","홍천군","화천군","횡성군"
+    ],
+    "충청북도": [
+        "괴산군","단양군","보은군","영동군","옥천군","음성군","제천시",
+        "증평군","진천군","청주시","충주시"
+    ],
+    "충청남도": [
+        "계룡시","공주시","금산군","논산시","당진시","보령시","부여군",
+        "서산시","서천군","아산시","예산군","천안시",
+        "청양군","태안군","홍성군"
+    ],
+    "전북특별자치도": [
+        "고창군","군산시","김제시","남원시","무주군","부안군","순창군",
+        "완주군","익산시","임실군","장수군","전주시",
+        "정읍시","진안군"
+    ],
+    "전남광주통합특별시": [
+        "강진군","고흥군","곡성군","광산구","광양시","구례군","나주시","남구",
+        "담양군","동구","목포시","무안군","보성군","북구","서구","순천시",
+        "신안군","여수시","영광군","영암군","완도군","장성군","장흥군","진도군",
+        "함평군","해남군","화순군"
+    ],
+    "경상북도": [
+        "경산시","경주시","고령군","구미시","김천시","문경시","봉화군",
+        "상주시","성주군","안동시","영덕군","영양군","영주시","영천시",
+        "예천군","울릉군","울진군","의성군","청도군","청송군","칠곡군","포항시"
+    ],
+    "경상남도": [
+        "거제시","거창군","고성군","김해시","남해군","밀양시","사천시",
+        "산청군","양산시","의령군","진주시","창녕군","창원시",
+        "통영시","하동군","함안군","함양군","합천군"
+    ],
+    "제주특별자치도": ["서귀포시","제주시"],
+}
+# =========================================================
 # DB 초기화 (테이블 생성 + 마스터 계정 생성)
 # =========================================================
 def init_db():
@@ -302,6 +369,42 @@ def init_db():
     existing_cols = [row[1] for row in cur.execute("PRAGMA table_info(dashboard_notices)").fetchall()]
     if "image_path" not in existing_cols:
         cur.execute("ALTER TABLE dashboard_notices ADD COLUMN image_path TEXT")
+    # 차량 청결 VOC (슬랙 동기화)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS voc_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            channel_id TEXT NOT NULL,
+            slack_ts TEXT NOT NULL UNIQUE,
+            author TEXT,
+            text TEXT,
+            permalink TEXT,
+            synced_at TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT '신규',
+            city TEXT,
+            district TEXT,
+            note TEXT,
+            requested_by TEXT,
+            requested_at TEXT
+        )
+    """)
+    # 긴급세차 / VOC 요청 건 — 지역 담당 작업자에게 전달되는 작업 큐
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS field_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            source TEXT NOT NULL DEFAULT 'urgent',
+            car_number TEXT,
+            city TEXT,
+            district TEXT,
+            vendor TEXT,
+            note TEXT,
+            voc_item_id INTEGER,
+            status TEXT NOT NULL DEFAULT '대기',
+            created_by TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            completed_by TEXT,
+            completed_at TEXT
+        )
+    """)
     # 마스터 계정 없으면 자동 생성
     existing = cur.execute("SELECT 1 FROM accounts WHERE username='jeongyeon.kim'").fetchone()
     if not existing:
@@ -1349,69 +1452,7 @@ def account_manage():
         () if current_user.is_master else (current_user.id,)
     ).fetchall()
     # 전국 고정 시/도 + 구/군 데이터 (세차 오더 업로드 없이도 지역 배정 가능)
-    KOREA_REGIONS = {
-        "서울특별시": [
-            "강남구","강동구","강북구","강서구","관악구","광진구","구로구","금천구",
-            "노원구","도봉구","동대문구","동작구","마포구","서대문구","서초구",
-            "성동구","성북구","송파구","양천구","영등포구","용산구","은평구",
-            "종로구","중구","중랑구"
-        ],
-        "부산광역시": [
-            "강서구","금정구","기장군","남구","동구","동래구","부산진구","북구",
-            "사상구","사하구","서구","수영구","연제구","영도구","중구","해운대구"
-        ],
-        "대구광역시": [
-            "군위군","남구","달서구","달성군","동구","북구","서구","수성구","중구"
-        ],
-        "인천광역시": [
-            "강화군","검단구","계양구","남동구","미추홀구","부평구","서해구",
-            "연수구","영종구","옹진군","제물포구"
-        ],
-        "대전광역시": ["대덕구","동구","서구","유성구","중구"],
-        "울산광역시": ["남구","동구","북구","울주군","중구"],
-        "세종특별자치시": ["세종시"],
-        "경기도": [
-            "가평군","고양시","과천시","광명시","광주시","구리시","군포시","김포시",
-            "남양주시","동두천시","부천시","성남시","수원시","시흥시","안산시",
-            "안성시","안양시","양주시","양평군","여주시","연천군","오산시","용인시",
-            "의왕시","의정부시","이천시","파주시","평택시","포천시","하남시","화성시"
-        ],
-        "강원특별자치도": [
-            "강릉시","고성군","동해시","삼척시","속초시","양구군","양양군",
-            "영월군","원주시","인제군","정선군","철원군","춘천시","태백시",
-            "평창군","홍천군","화천군","횡성군"
-        ],
-        "충청북도": [
-            "괴산군","단양군","보은군","영동군","옥천군","음성군","제천시",
-            "증평군","진천군","청주시","충주시"
-        ],
-        "충청남도": [
-            "계룡시","공주시","금산군","논산시","당진시","보령시","부여군",
-            "서산시","서천군","아산시","예산군","천안시",
-            "청양군","태안군","홍성군"
-        ],
-        "전북특별자치도": [
-            "고창군","군산시","김제시","남원시","무주군","부안군","순창군",
-            "완주군","익산시","임실군","장수군","전주시","정읍시","진안군"
-        ],
-        "전남광주통합특별시": [
-            "강진군","고흥군","곡성군","광산구","광양시","구례군","나주시","남구",
-            "담양군","동구","목포시","무안군","보성군","북구","서구","순천시",
-            "신안군","여수시","영광군","영암군","완도군","장성군","장흥군","진도군",
-            "함평군","해남군","화순군"
-        ],
-        "경상북도": [
-            "경산시","경주시","고령군","구미시","김천시","문경시","봉화군",
-            "상주시","성주군","안동시","영덕군","영양군","영주시","영천시",
-            "예천군","울릉군","울진군","의성군","청도군","청송군","칠곡군","포항시"
-        ],
-        "경상남도": [
-            "거제시","거창군","고성군","김해시","남해군","밀양시","사천시",
-            "산청군","양산시","의령군","진주시","창녕군","창원시",
-            "통영시","하동군","함안군","함양군","합천군"
-        ],
-        "제주특별자치도": ["서귀포시","제주시"],
-    }
+    # KOREA_REGIONS는 모듈 상단에 정의된 공용 상수를 사용한다.
     city_options = list(KOREA_REGIONS.keys())
     region_map = KOREA_REGIONS
     conn.close()
@@ -1783,24 +1824,7 @@ def wash_list():
     ).fetchone()["c"]
     total_target_count = order_count + completed_count
     conn.close()
-    KOREA_REGIONS = {
-        "서울특별시": ["강남구","강동구","강북구","강서구","관악구","광진구","구로구","금천구","노원구","도봉구","동대문구","동작구","마포구","서대문구","서초구","성동구","성북구","송파구","양천구","영등포구","용산구","은평구","종로구","중구","중랑구"],
-        "부산광역시": ["강서구","금정구","기장군","남구","동구","동래구","부산진구","북구","사상구","사하구","서구","수영구","연제구","영도구","중구","해운대구"],
-        "대구광역시": ["군위군","남구","달서구","달성군","동구","북구","서구","수성구","중구"],
-        "인천광역시": ["강화군","검단구","계양구","남동구","미추홀구","부평구","서해구","연수구","영종구","옹진군","제물포구"],
-        "대전광역시": ["대덕구","동구","서구","유성구","중구"],
-        "울산광역시": ["남구","동구","북구","울주군","중구"],
-        "세종특별자치시": ["세종시"],
-        "경기도": ["가평군","고양시","과천시","광명시","광주시","구리시","군포시","김포시","남양주시","동두천시","부천시","성남시","수원시","시흥시","안산시","안성시","안양시","양주시","양평군","여주시","연천군","오산시","용인시","의왕시","의정부시","이천시","파주시","평택시","포천시","하남시","화성시"],
-        "강원특별자치도": ["강릉시","고성군","동해시","삼척시","속초시","양구군","양양군","영월군","원주시","인제군","정선군","철원군","춘천시","태백시","평창군","홍천군","화천군","횡성군"],
-        "충청북도": ["괴산군","단양군","보은군","영동군","옥천군","음성군","제천시","증평군","진천군","청주시","충주시"],
-        "충청남도": ["계룡시","공주시","금산군","논산시","당진시","보령시","부여군","서산시","서천군","아산시","예산군","천안시","청양군","태안군","홍성군"],
-        "전북특별자치도": ["고창군","군산시","김제시","남원시","무주군","부안군","순창군","완주군","익산시","임실군","장수군","전주시","정읍시","진안군"],
-        "전남광주통합특별시": ["강진군","고흥군","곡성군","광산구","광양시","구례군","나주시","남구","담양군","동구","목포시","무안군","보성군","북구","서구","순천시","신안군","여수시","영광군","영암군","완도군","장성군","장흥군","진도군","함평군","해남군","화순군"],
-        "경상북도": ["경산시","경주시","고령군","구미시","김천시","문경시","봉화군","상주시","성주군","안동시","영덕군","영양군","영주시","영천시","예천군","울릉군","울진군","의성군","청도군","청송군","칠곡군","포항시"],
-        "경상남도": ["거제시","거창군","고성군","김해시","남해군","밀양시","사천시","산청군","양산시","의령군","진주시","창녕군","창원시","통영시","하동군","함안군","함양군","합천군"],
-        "제주특별자치도": ["서귀포시","제주시"],
-    }
+    # KOREA_REGIONS는 모듈 상단에 정의된 공용 상수를 사용한다.
     return render_template(
         "wash_list.html",
         rows=rows,
@@ -2219,6 +2243,9 @@ def wash_status_delete():
 SLACK_DAMAGE_WEBHOOK = os.environ.get("SLACK_DAMAGE_WEBHOOK", "")
 SLACK_BOT_TOKEN      = os.environ.get("SLACK_BOT_TOKEN", "")
 SLACK_CHANNEL_ID     = os.environ.get("SLACK_CHANNEL_ID", "")
+# 차량청결 VOC 채널(#피플카-차량청결voc, private). SLACK_BOT_TOKEN이 이 채널에
+# 초대되어 있어야 하고, 토큰에 groups:history / users:read 스코프가 필요하다.
+SLACK_VOC_CHANNEL_ID = os.environ.get("SLACK_VOC_CHANNEL_ID", "C0785K12R4G")
 APP_BASE_URL = os.environ.get("APP_BASE_URL", "https://turucar-wash-system-production.up.railway.app")
 ALLOWED_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp"}
 _PHOTO_MAX_PX = 1600   # 최대 해상도 (px)
@@ -2651,3 +2678,273 @@ def damage_alerts_poll():
     rows = conn.execute("SELECT id FROM damage_reports WHERE status='접수' AND id > ? ORDER BY id DESC", (since_id,)).fetchall()
     conn.close()
     return jsonify({"count": len(rows), "new_ids": [r["id"] for r in rows]})
+# =========================================================
+# 차량청결 VOC (슬랙 연동) + 긴급세차 — 지역 담당자 전달 큐
+# =========================================================
+_SLACK_USER_NAME_CACHE = {}
+def _slack_resolve_user(user_id):
+    """슬랙 user id → 표시 이름. users:read 스코프 필요. 실패 시 id 그대로 반환."""
+    if not user_id:
+        return ""
+    if user_id in _SLACK_USER_NAME_CACHE:
+        return _SLACK_USER_NAME_CACHE[user_id]
+    name = user_id
+    if SLACK_BOT_TOKEN:
+        try:
+            resp = _requests.get(
+                "https://slack.com/api/users.info",
+                headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}"},
+                params={"user": user_id},
+                timeout=5
+            )
+            data = resp.json()
+            if data.get("ok"):
+                profile = data.get("user", {}).get("profile", {})
+                name = profile.get("real_name") or data["user"].get("name") or user_id
+        except Exception as e:
+            print(f"[VOC Slack] users.info 오류: {e}")
+    _SLACK_USER_NAME_CACHE[user_id] = name
+    return name
+def _sync_voc_from_slack(limit=50):
+    """#피플카-차량청결voc 채널의 최근 메시지를 voc_items 테이블로 동기화.
+    SLACK_BOT_TOKEN이 해당(private) 채널에 초대되어 있어야 하며
+    groups:history, users:read 스코프가 필요하다. 새로 추가된 건수를 반환."""
+    if not SLACK_BOT_TOKEN or not SLACK_VOC_CHANNEL_ID:
+        return 0
+    try:
+        resp = _requests.get(
+            "https://slack.com/api/conversations.history",
+            headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}"},
+            params={"channel": SLACK_VOC_CHANNEL_ID, "limit": limit},
+            timeout=10
+        )
+        data = resp.json()
+        if not data.get("ok"):
+            print(f"[VOC Slack] sync 오류: {data.get('error')}")
+            return 0
+        messages = data.get("messages", [])
+        conn = get_user_db()
+        synced_at = now_kst().strftime("%Y-%m-%d %H:%M")
+        new_count = 0
+        for m in reversed(messages):  # 오래된 순으로 삽입
+            if m.get("subtype"):  # 채널 입장/시스템 메시지 등은 제외
+                continue
+            ts = m.get("ts")
+            text = (m.get("text") or "").strip()
+            if not ts or not text:
+                continue
+            exists = conn.execute("SELECT 1 FROM voc_items WHERE slack_ts=?", (ts,)).fetchone()
+            if exists:
+                continue
+            user_id = m.get("user", "")
+            author = _slack_resolve_user(user_id) if user_id else (m.get("username") or "슬랙")
+            permalink = f"https://peoplecarhq.slack.com/archives/{SLACK_VOC_CHANNEL_ID}/p{ts.replace('.', '')}"
+            conn.execute(
+                """INSERT INTO voc_items (channel_id, slack_ts, author, text, permalink, synced_at)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (SLACK_VOC_CHANNEL_ID, ts, author, text, permalink, synced_at)
+            )
+            new_count += 1
+        conn.commit()
+        conn.close()
+        if new_count:
+            print(f"[VOC Slack] 신규 {new_count}건 동기화됨")
+        return new_count
+    except Exception as e:
+        print(f"[VOC Slack] sync 예외: {e}")
+        return 0
+def _scheduled_voc_sync():
+    try:
+        _sync_voc_from_slack()
+    except Exception as e:
+        print(f"[VOC Slack] 스케줄 동기화 오류: {e}")
+_scheduler.add_job(_scheduled_voc_sync, "interval", minutes=5)
+def _resolve_vendor_for_region(city, district):
+    """해당 시/도+구/군을 담당 지역으로 등록해 둔 staff 계정의 업체명을 반환. 없으면 빈 문자열."""
+    if not city or not district:
+        return ""
+    conn = get_user_db()
+    row = conn.execute(
+        """
+        SELECT a.vendor
+        FROM account_region ar
+        JOIN accounts a ON a.username = ar.username
+        WHERE ar.city = ? AND ar.district = ? AND a.role = 'staff'
+        LIMIT 1
+        """,
+        (city, district)
+    ).fetchone()
+    conn.close()
+    return row["vendor"] if row and row["vendor"] else ""
+def _account_regions(username):
+    conn = get_user_db()
+    rows = conn.execute(
+        "SELECT city, district FROM account_region WHERE username=?",
+        (username,)
+    ).fetchall()
+    conn.close()
+    return [(r["city"], r["district"]) for r in rows]
+def _field_request_visible(row, user):
+    """field_requests/voc_items 한 건이 이 사용자에게 보여야 하는지 판단.
+    master: 전체, admin(업체 관리자): 같은 업체 전체(하위 작업자 포함), staff: 업체 + 담당 지역 일치."""
+    if user.is_master:
+        return True
+    row_vendor = row["vendor"] or ""
+    if row_vendor and row_vendor != (user.vendor or ""):
+        return False
+    if user.role == "admin":
+        return True
+    # staff: 담당 지역과 일치해야 함
+    regions = _account_regions(user.username)
+    return (row["city"], row["district"]) in regions
+def _visible_field_requests(rows, user):
+    return [r for r in rows if _field_request_visible(r, user)]
+@app.context_processor
+def inject_field_request_badge_count():
+    if not current_user.is_authenticated:
+        return {"field_request_badge_count": 0}
+    try:
+        conn = get_user_db()
+        rows = conn.execute("SELECT * FROM field_requests WHERE status='대기'").fetchall()
+        conn.close()
+        count = len(_visible_field_requests(rows, current_user))
+        return {"field_request_badge_count": count}
+    except Exception as e:
+        print(f"[FieldRequest] badge 오류: {e}")
+        return {"field_request_badge_count": 0}
+@app.route("/urgent_wash", methods=["GET", "POST"])
+@login_required
+def urgent_wash():
+    if request.method == "POST":
+        if not current_user.is_admin:
+            flash("❌ 관리자/마스터 계정만 긴급세차를 요청할 수 있습니다.")
+            return redirect(url_for("urgent_wash"))
+        car_number = request.form.get("car_number", "").strip()
+        city = request.form.get("city", "").strip()
+        district = request.form.get("district", "").strip()
+        note = request.form.get("note", "").strip()
+        if not city or not district:
+            flash("❌ 시/도, 구/군을 선택해주세요.")
+            return redirect(url_for("urgent_wash"))
+        if current_user.role == "admin":
+            vendor = current_user.vendor or ""
+        else:
+            vendor = _resolve_vendor_for_region(city, district)
+        conn = get_user_db()
+        conn.execute(
+            """INSERT INTO field_requests
+               (source, car_number, city, district, vendor, note, created_by, created_at)
+               VALUES ('urgent', ?, ?, ?, ?, ?, ?, ?)""",
+            (car_number, city, district, vendor, note,
+             current_user.username, now_kst().strftime("%Y-%m-%d %H:%M"))
+        )
+        conn.commit()
+        conn.close()
+        if not vendor:
+            flash("⚠️ 요청은 등록됐지만 해당 지역에 담당 작업자가 배정되어 있지 않습니다.")
+        else:
+            flash("✅ 긴급세차 요청이 담당 작업자에게 전달되었습니다.")
+        return redirect(url_for("urgent_wash"))
+    conn = get_user_db()
+    all_rows = conn.execute("SELECT * FROM field_requests ORDER BY id DESC").fetchall()
+    conn.close()
+    visible = _visible_field_requests(all_rows, current_user)
+    pending = [r for r in visible if r["status"] == "대기"]
+    done = [r for r in visible if r["status"] == "완료"][:30]
+    return render_template(
+        "urgent_wash.html",
+        pending=pending,
+        done=done,
+        city_options=list(KOREA_REGIONS.keys()),
+        region_map=KOREA_REGIONS,
+    )
+@app.route("/urgent_wash/complete/<int:req_id>", methods=["POST"])
+@login_required
+def urgent_wash_complete(req_id):
+    conn = get_user_db()
+    row = conn.execute("SELECT * FROM field_requests WHERE id=?", (req_id,)).fetchone()
+    if not row or not _field_request_visible(row, current_user):
+        conn.close()
+        flash("❌ 해당 요청을 처리할 권한이 없습니다.")
+        return redirect(url_for("urgent_wash"))
+    conn.execute(
+        "UPDATE field_requests SET status='완료', completed_by=?, completed_at=? WHERE id=?",
+        (current_user.username, now_kst().strftime("%Y-%m-%d %H:%M"), req_id)
+    )
+    conn.commit()
+    conn.close()
+    flash("✅ 완료 처리되었습니다.")
+    return redirect(url_for("urgent_wash"))
+@app.route("/voc_manage")
+@login_required
+def voc_manage():
+    if not current_user.is_master:
+        flash("❌ 마스터 계정만 접근할 수 있습니다.")
+        return redirect(url_for("dashboard"))
+    # 마지막 동기화로부터 60초 이상 지났으면 자동 새로고침 (페이지 열 때마다 슬랙 API 과호출 방지)
+    last_sync = get_app_setting("voc_last_sync_ts", "")
+    now_ts = now_kst().timestamp()
+    if not last_sync or (now_ts - float(last_sync)) > 60:
+        _sync_voc_from_slack()
+        set_app_setting("voc_last_sync_ts", str(now_ts))
+    conn = get_user_db()
+    items = conn.execute("SELECT * FROM voc_items ORDER BY slack_ts DESC LIMIT 100").fetchall()
+    conn.close()
+    return render_template(
+        "voc_manage.html",
+        items=items,
+        city_options=list(KOREA_REGIONS.keys()),
+        region_map=KOREA_REGIONS,
+        slack_configured=bool(SLACK_BOT_TOKEN and SLACK_VOC_CHANNEL_ID),
+    )
+@app.route("/voc_manage/sync", methods=["POST"])
+@login_required
+def voc_sync():
+    if not current_user.is_master:
+        return "Forbidden", 403
+    new_count = _sync_voc_from_slack()
+    set_app_setting("voc_last_sync_ts", str(now_kst().timestamp()))
+    flash(f"✅ 슬랙 동기화 완료 — 신규 {new_count}건")
+    return redirect(url_for("voc_manage"))
+@app.route("/voc_manage/request/<int:item_id>", methods=["POST"])
+@login_required
+def voc_request(item_id):
+    if not current_user.is_master:
+        return "Forbidden", 403
+    city = request.form.get("city", "").strip()
+    district = request.form.get("district", "").strip()
+    note = request.form.get("note", "").strip()
+    if not city or not district:
+        flash("❌ 시/도, 구/군을 선택해주세요.")
+        return redirect(url_for("voc_manage"))
+    conn = get_user_db()
+    item = conn.execute("SELECT * FROM voc_items WHERE id=?", (item_id,)).fetchone()
+    if not item:
+        conn.close()
+        flash("❌ VOC 항목을 찾을 수 없습니다.")
+        return redirect(url_for("voc_manage"))
+    vendor = _resolve_vendor_for_region(city, district)
+    requested_at = now_kst().strftime("%Y-%m-%d %H:%M")
+    conn.execute(
+        """UPDATE voc_items
+           SET status='요청됨', city=?, district=?, note=?, requested_by=?, requested_at=?
+           WHERE id=?""",
+        (city, district, note, current_user.username, requested_at, item_id)
+    )
+    # 담당 작업자가 긴급세차 화면에서 원본 VOC 내용을 볼 수 있도록 note에 함께 담는다.
+    field_note = f"[VOC] {item['text']}"
+    if note:
+        field_note += f"\n[전달 메모] {note}"
+    conn.execute(
+        """INSERT INTO field_requests
+           (source, car_number, city, district, vendor, note, voc_item_id, created_by, created_at)
+           VALUES ('voc', NULL, ?, ?, ?, ?, ?, ?, ?)""",
+        (city, district, vendor, field_note, item_id, current_user.username, requested_at)
+    )
+    conn.commit()
+    conn.close()
+    if not vendor:
+        flash("⚠️ 요청은 등록됐지만 해당 지역에 담당 작업자가 배정되어 있지 않습니다.")
+    else:
+        flash("✅ VOC 요청이 담당 작업자의 긴급세차 목록으로 전달되었습니다.")
+    return redirect(url_for("voc_manage"))

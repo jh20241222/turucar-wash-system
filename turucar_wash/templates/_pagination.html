@@ -1,0 +1,17 @@
+{% macro render_pagination(current_page, total_pages, param_name='page') %}
+{% if total_pages > 1 %}
+<div class="pg-pagination">
+  <a class="pg-link pg-nav{% if current_page <= 1 %} pg-disabled{% endif %}"
+     href="{% if current_page > 1 %}{{ pagination_url(param_name, current_page - 1) }}{% else %}#{% endif %}">‹</a>
+  {% for p in pagination_window(current_page, total_pages) %}
+    {% if p == '…' %}
+    <span class="pg-ellipsis">…</span>
+    {% else %}
+    <a class="pg-link{% if p == current_page %} pg-active{% endif %}" href="{{ pagination_url(param_name, p) }}">{{ p }}</a>
+    {% endif %}
+  {% endfor %}
+  <a class="pg-link pg-nav{% if current_page >= total_pages %} pg-disabled{% endif %}"
+     href="{% if current_page < total_pages %}{{ pagination_url(param_name, current_page + 1) }}{% else %}#{% endif %}">›</a>
+</div>
+{% endif %}
+{% endmacro %}

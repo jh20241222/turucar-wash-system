@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_pagination.html" import render_pagination %}
 {% block document_title %}Turu Wash · 훼손 제보 관리{% endblock %}
 {% block content %}
 
@@ -19,7 +20,7 @@
     <a class="{% if selected_status == '완료' %}active{% endif %}" href="{{ url_for('damage_manage', status='완료') }}">완료</a>
   </div>
   <div class="support-ticket-list">
-    {% for r in rows %}
+    {% for r in page_rows %}
     <article class="support-ticket-card">
       <div class="ticket-title-row">
         <span class="ticket-status">{{ r.status }}</span>
@@ -69,6 +70,7 @@
     <div class="notice-empty"><strong>접수된 제보가 없습니다.</strong><span>작업자가 제보하면 이곳에 표시됩니다.</span></div>
     {% endfor %}
   </div>
+  {{ render_pagination(current_page, total_pages) }}
 </section>
 
 {# ══ 데스크탑 ══ #}
@@ -149,7 +151,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for r in rows %}
+        {% for r in page_rows %}
         {% set ps = [r.photo_front, r.photo_damage1, r.photo_damage2, r.photo_damage3, r.photo_damage4, r.photo_damage5] | select | list %}
         <tr class="dmg-row" id="row-{{ r.id }}">
           {% if current_user.is_master %}
@@ -238,6 +240,7 @@
       </tbody>
     </table>
   </div>
+  {{ render_pagination(current_page, total_pages) }}
 
 </div>
 

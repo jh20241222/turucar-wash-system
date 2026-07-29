@@ -7740,13 +7740,13 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 
 @media (max-width: 900px){
   .app-topbar{display:none !important;}
-  .app-main{padding-top:0 !important;}
+  .app-main{padding-top:calc(28px + env(safe-area-inset-top)) !important;}
   .turu-home-v12,.turu-app-page-v24,.chatbot-screen,.detail-grid-clean,.detail-hero-clean{width:100%;max-width:100%;}
   .turu-home-v12,.turu-app-page-v24,.endpoint-car_detail .app-main,.endpoint-support_chat .app-main{padding-left:16px !important;padding-right:16px !important;}
-  .turu-page-brand-v24,.detail-page-brand-v36{display:flex;align-items:center;justify-content:flex-start;padding-top:20px;margin-bottom:18px;}
+  .turu-page-brand-v24,.detail-page-brand-v36{display:flex;align-items:center;justify-content:flex-start;padding-top:calc(20px + env(safe-area-inset-top));margin-bottom:18px;}
   .turu-page-brand-v24 img,.detail-page-brand-v36 img,.home-brand-logo-v12,.support-top-logo-v36{width:170px;height:auto;display:block;}
 
-  .turu-home-v12{background:transparent !important;padding-top:22px !important;padding-bottom:120px !important;}
+  .turu-home-v12{background:transparent !important;padding-top:calc(22px + env(safe-area-inset-top)) !important;padding-bottom:120px !important;}
   .home-brand-v12{margin-bottom:18px !important;}
   .home-notice-card-v12,.home-shortcut-card-v12,.home-wide-link-v12,.home-menu-tile-v12{background:rgba(255,255,255,.96) !important;border:1px solid var(--turu-line) !important;box-shadow:none !important;}
   .home-notice-card-v12{border-radius:30px !important;padding:20px 18px !important;}
@@ -7762,7 +7762,7 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   .home-wide-link-v12{min-height:84px !important;border-radius:24px !important;padding:0 18px !important;}
   .home-wide-link-v12 strong{font-size:18px !important;font-weight:800 !important;}
 
-  .turu-app-page-v24{background:transparent !important;padding-top:20px !important;padding-bottom:120px !important;}
+  .turu-app-page-v24{background:transparent !important;padding-top:calc(20px + env(safe-area-inset-top)) !important;padding-bottom:120px !important;}
   .turu-page-head-v24{margin-bottom:16px !important;align-items:flex-start !important;gap:12px !important;}
   .turu-page-head-v24 h1,.endpoint-car_detail .detail-hero-clean h1{font-size:22px !important;line-height:1.2 !important;font-weight:800 !important;color:var(--turu-text) !important;letter-spacing:-.04em !important;margin:0 !important;}
   .turu-page-head-v24 p,.endpoint-car_detail .detail-hero-clean .hero-copy{display:none !important;}

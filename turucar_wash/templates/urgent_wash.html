@@ -3,68 +3,80 @@
 {% block document_title %}Turu Wash · 긴급세차{% endblock %}
 {% block content %}
 
-<section class="page-hero app-card elevated brand-line-card">
-    <div class="hero-copy-block">
-        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo">
-        <h1>긴급세차</h1>
-        <p class="hero-copy">
-            {% if current_user.is_master %}전체 긴급세차 요청을 확인하고 새 요청을 등록합니다.
-            {% elif current_user.role == 'admin' %}우리 업체 소속 작업자들의 긴급세차 요청을 모두 확인합니다.
-            {% else %}내가 처리해야 할 긴급세차 차량을 확인합니다.{% endif %}
-        </p>
-    </div>
-    <div class="hero-chip-stack"><span>{{ pending_count }}</span><strong>대기중</strong></div>
-</section>
-
-<div style="display:flex;justify-content:flex-end;margin:-6px 0 2px;">
-    <button type="button" class="push-enable-btn uw-notify-btn">🔔 알림 받기</button>
-</div>
-
-{% if current_user.is_admin %}
-<section class="admin-card app-card">
-    <div class="admin-card-head"><div><p class="eyebrow">New</p><h2>새 긴급세차 요청</h2></div><span class="badge">등록</span></div>
-    <form method="POST" action="{{ url_for('urgent_wash') }}" class="stack-form">
-        <label class="field-label">차량번호 (선택)</label>
-        <input type="text" name="car_number" class="app-input" placeholder="예: 12가 3456">
-        <div class="form-grid two">
-            <div>
-                <label class="field-label">시/도</label>
-                <select name="city" id="uw_city" class="app-input" required>
-                    <option value="">시/도 선택</option>
-                    {% for city in city_options %}<option value="{{ city }}">{{ city }}</option>{% endfor %}
-                </select>
-            </div>
-            <div>
-                <label class="field-label">구/군</label>
-                <select name="district" id="uw_district" class="app-input" required>
-                    <option value="">구/군 선택</option>
-                </select>
-            </div>
+<section class="turu-app-page-v24 turu-order-page-v24">
+    <header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=37" alt="TURU CAR"></header>
+    <div class="turu-page-head-v24 turu-page-head--single-v25">
+        <div>
+            <h1>긴급세차</h1>
+            <p>
+                {% if current_user.is_master %}전체 긴급세차 요청을 확인하고 새 요청을 등록합니다.
+                {% elif current_user.role == 'admin' %}우리 업체 소속 작업자들의 긴급세차 요청을 모두 확인합니다.
+                {% else %}내가 처리해야 할 긴급세차 차량을 확인합니다.{% endif %}
+            </p>
         </div>
-        <label class="field-label">내용</label>
-        <textarea name="note" class="app-input" rows="3" placeholder="요청 내용을 입력해주세요."></textarea>
-        <button class="primary-btn tall full" type="submit">긴급세차 요청 보내기</button>
-    </form>
-</section>
-{% endif %}
+        <button type="button" class="push-enable-btn uw-notify-btn">🔔 알림 받기</button>
+    </div>
 
-<section class="app-section table-panel app-card">
-    <div class="table-title-row"><h2>대기중인 요청</h2><span>{{ pending_count }}건</span></div>
-    <div class="uw-card-list">
+    <div class="mob-stat-row" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+        <div style="background:#fff;border:none;border-radius:14px;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;box-shadow:0 1px 8px rgba(0,0,0,0.07);">
+            <span style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);">대기중</span>
+            <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ pending_count }}</strong>
+        </div>
+        <div style="background:#fff;border:none;border-radius:14px;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;box-shadow:0 1px 8px rgba(0,0,0,0.07);">
+            <span style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);">완료</span>
+            <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ done_count }}</strong>
+        </div>
+    </div>
+
+    {% if current_user.is_admin %}
+    <section class="admin-card app-card" style="margin-bottom:14px;">
+        <div class="admin-card-head"><div><p class="eyebrow">New</p><h2>새 긴급세차 요청</h2></div><span class="badge">등록</span></div>
+        <form method="POST" action="{{ url_for('urgent_wash') }}" class="stack-form">
+            <label class="field-label">차량번호 (선택)</label>
+            <input type="text" name="car_number" class="app-input" placeholder="예: 12가 3456">
+            <div class="form-grid two">
+                <div>
+                    <label class="field-label">시/도</label>
+                    <select name="city" id="uw_city" class="app-input" required>
+                        <option value="">시/도 선택</option>
+                        {% for city in city_options %}<option value="{{ city }}">{{ city }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="field-label">구/군</label>
+                    <select name="district" id="uw_district" class="app-input" required>
+                        <option value="">구/군 선택</option>
+                    </select>
+                </div>
+            </div>
+            <label class="field-label">내용</label>
+            <textarea name="note" class="app-input" rows="3" placeholder="요청 내용을 입력해주세요."></textarea>
+            <button class="primary-btn tall full" type="submit">긴급세차 요청 보내기</button>
+        </form>
+    </section>
+    {% endif %}
+
+    <div class="turu-card-list-v24">
+        {% if pending %}
+        <div class="wash-section-label wash-section-label--urgent">
+            <span class="wash-section-dot wash-section-dot--urgent"></span>
+            대기중 · {{ pending_count }}건
+        </div>
         {% for r in pending %}
-        <article class="uw-order-card">
-            <div class="uw-order-top">
-                <span class="uw-order-tag {{ 'uw-order-tag--voc' if r.source == 'voc' else '' }}">{{ '슬랙 VOC' if r.source == 'voc' else '긴급세차' }}</span>
-                <span class="uw-order-time">{{ r.created_at }}</span>
+        <div class="turu-delete-item-v24">
+            <div class="turu-order-card-v24 turu-order-card--urgent uw-flat-card">
+                <div class="turu-card-copy-v24">
+                    <div class="turu-card-title-v24">
+                        <strong>{{ r.car_number or (r.city + ' ' + r.district) }}</strong>
+                        <em class="{{ 'chip-regular' if r.source == 'voc' else 'chip-urgent' }}">{{ '슬랙 VOC' if r.source == 'voc' else '긴급세차' }}</em>
+                        {% if r.status == '접수' %}<em class="chip-day chip-day--new">🗓 {{ r.scheduled_date }}</em>{% endif %}
+                    </div>
+                    <p><span>📍</span>{{ r.city }} {{ r.district }}</p>
+                    {% if r.vendor %}<p><span>🚗</span>{{ r.vendor }}</p>{% endif %}
+                    <p><span>👤</span>{{ r.created_by }}</p>
+                    {% if r.note %}<span class="turu-card-note-v24">{{ r.note }}</span>{% endif %}
+                </div>
             </div>
-            <div class="uw-order-plate">{{ r.car_number or (r.city + ' ' + r.district) }}</div>
-            <div class="uw-order-meta">
-                <span>지역 <b>{{ r.city }} {{ r.district }}</b></span>
-                {% if r.vendor %}<span>업체 <b>{{ r.vendor }}</b></span>{% endif %}
-                <span>요청자 <b>{{ r.created_by }}</b></span>
-            </div>
-            {% if r.note %}<div class="uw-order-content">{{ r.note }}</div>{% endif %}
-
             {% if r.status == '접수' %}
             <div class="uw-order-actions">
                 <span class="uw-scheduled-chip">🗓 {{ r.scheduled_date }} 작업 예정 (담당 {{ r.accepted_by }})</span>
@@ -86,38 +98,42 @@
                 </form>
             </div>
             {% endif %}
-        </article>
-        {% else %}
-        <div class="uw-empty"><strong>대기중인 긴급세차 요청이 없습니다.</strong><p style="margin-top:6px;">요청이 등록되면 이곳에 표시됩니다.</p></div>
+        </div>
         {% endfor %}
+        {% else %}
+        <div class="turu-empty-v24"><strong>대기중인 긴급세차 요청이 없습니다.</strong><span>요청이 등록되면 이곳에 표시됩니다.</span></div>
+        {% endif %}
     </div>
     {{ render_pagination(pending_current_page, pending_total_pages, 'page') }}
-</section>
 
-{% if done_count %}
-<section class="app-section table-panel app-card">
-    <div class="table-title-row"><h2>최근 완료</h2><span>{{ done_count }}건</span></div>
-    <div class="table-wrap">
-        <table>
-            <thead><tr><th>구분</th><th>차량/지역</th><th>업체</th><th>완료자</th><th>완료일시</th></tr></thead>
-            <tbody>
-                {% for r in done %}
-                <tr>
-                    <td>{{ '슬랙 VOC' if r.source == 'voc' else '긴급세차' }}</td>
-                    <td>{{ r.car_number or (r.city + ' ' + r.district) }}</td>
-                    <td>{{ r.vendor or '-' }}</td>
-                    <td>{{ r.completed_by or '-' }}</td>
-                    <td>{{ r.completed_at or '-' }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    {% if done_count %}
+    <div class="wash-section-label wash-section-label--regular wash-section-label--mt">
+        <span class="wash-section-dot wash-section-dot--regular"></span>
+        최근 완료 · {{ done_count }}건
     </div>
-    {{ render_pagination(done_current_page, done_total_pages, 'done_page') }}
+    <section class="app-section table-panel app-card">
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>구분</th><th>차량/지역</th><th>업체</th><th>완료자</th><th>완료일시</th></tr></thead>
+                <tbody>
+                    {% for r in done %}
+                    <tr>
+                        <td>{{ '슬랙 VOC' if r.source == 'voc' else '긴급세차' }}</td>
+                        <td>{{ r.car_number or (r.city + ' ' + r.district) }}</td>
+                        <td>{{ r.vendor or '-' }}</td>
+                        <td>{{ r.completed_by or '-' }}</td>
+                        <td>{{ r.completed_at or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {{ render_pagination(done_current_page, done_total_pages, 'done_page') }}
+    </section>
+    {% endif %}
 </section>
-{% endif %}
 
-{# ── 작업조치예정일 달력 팝업 (기존 완료현황 달력과 동일한 UI) ── #}
+{# ── 작업조치예정일 달력 팝업 (세차 오더 달력과 동일한 UI) ── #}
 <div class="notice-modal-backdrop" id="uw-cal-backdrop" onclick="closeUwCalendar(event)">
     <div class="turu-mini-modal" style="padding:24px;max-width:320px;" onclick="event.stopPropagation()">
         <button type="button" class="notice-modal-close" onclick="closeUwCalendar()" aria-label="닫기">×</button>
@@ -138,6 +154,16 @@
         <div id="uw-cal-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
     </div>
 </div>
+
+<style>
+.uw-flat-card { grid-template-columns: minmax(0,1fr) !important; }
+.uw-order-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -6px 4px 4px; }
+.uw-date-input { padding: 8px 10px; font-size: 13px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #111827; font-family: inherit; cursor: pointer; }
+.uw-accept-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #111827; color: #fff; border: none; cursor: pointer; }
+.uw-complete-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #FF9900; color: #fff; border: none; cursor: pointer; }
+.uw-scheduled-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; background: #eef2ff; color: #4338ca; }
+.uw-notify-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 700; background: #fff7ed; color: #c2410c; border: 1px solid #ffe0b2; cursor: pointer; white-space: nowrap; }
+</style>
 
 <script>
 const uwRegionMap = {{ region_map | tojson }};

@@ -2,15 +2,14 @@
 {% block document_title %}Turu Wash · 공지사항{% endblock %}
 {% block content %}
 
-<header class="dashboard-brand-top notice-page-brand">
-    <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="dashboard-brand-logo">
-</header>
+<section class="turu-app-page-v24">
+<header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar"></header>
+<div class="turu-page-head-v24 turu-page-head--single-v25">
+    <div><h1>공지사항</h1><p>등록된 공지사항 전체 목록입니다.</p></div>
+    <a href="{{ url_for('dashboard') }}" class="turu-mini-btn-v24">홈으로</a>
+</div>
 
 <section class="dashboard-notice-list app-card elevated notice-board-final notice-full-board" id="notice-list">
-    <div class="notice-list-head">
-        <div><h2>공지사항 전체</h2><p>등록된 공지사항 전체 목록입니다.</p></div>
-        <a href="{{ url_for('dashboard') }}" class="notice-more-btn">홈으로</a>
-    </div>
 
     {% if current_user.is_master or current_user.username == "jeongyeon.kim" %}
     <form method="post" action="{{ url_for('update_dashboard_notice') }}" enctype="multipart/form-data" class="notice-form notice-create-form notice-page-create-form">
@@ -281,4 +280,5 @@ document.addEventListener('keydown', function(event) {
     }
 });
 </script>
+</section>
 {% endblock %}

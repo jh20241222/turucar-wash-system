@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% block document_title %}Turu Wash · 도어 제어{% endblock %}
 {% block content %}
-<div class="turu-app-page-v24">
-
-    <div class="turu-page-header-v24" style="margin-bottom:20px;">
-        <h2 style="font-size:20px;font-weight:900;color:#111;margin:0;">🔓 도어 제어</h2>
+<section class="turu-app-page-v24">
+    <header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
+    <div class="turu-page-head-v24 turu-page-head--single-v25">
+        <div><h1>도어 제어</h1><p>차량번호를 조회해 잠금/해제/비상등을 제어합니다.</p></div>
     </div>
 
     <!-- 차량번호 입력 -->
@@ -53,7 +54,7 @@
         <ul id="history-list" style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;"></ul>
     </div>
 
-</div>
+</section>
 
 <script>
 let currentCarNo = '';

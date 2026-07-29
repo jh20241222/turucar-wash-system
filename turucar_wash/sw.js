@@ -1,4 +1,4 @@
-const CACHE_NAME = 'turu-app-loader-v31';
+const CACHE_NAME = 'turu-app-loader-v32';
 const APP_SHELL = [
   '/offline',
   '/static/css/style.css',
@@ -43,4 +43,31 @@ self.addEventListener('fetch', (event) => {
       return cached || fresh;
     }));
   }
+});
+
+// 웹 푸시 알림 (긴급세차 요청 등)
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (e) {}
+  const title = data.title || '투루카';
+  const options = {
+    body: data.body || '',
+    icon: '/static/img/icons/icon-192.png',
+    badge: '/static/img/icons/favicon-64.png',
+    data: { url: data.url || '/urgent_wash' }
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/urgent_wash';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const client of list) {
+        if (client.url.includes(targetUrl) && 'focus' in client) return client.focus();
+      }
+      if (clients.openWindow) return clients.openWindow(targetUrl);
+    })
+  );
 });

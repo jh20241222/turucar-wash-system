@@ -3042,21 +3042,58 @@ def _parse_voc_summary(text):
         "spot": spot,
         "content": content,
     }
+def _norm_plate(s):
+    """차량번호 비교용 정규화: 대괄호 태그/괄호 설명/공백/하이픈 등 표기 차이를 제거."""
+    if not s:
+        return ""
+    s = re.sub(r"\[[^\]]*\]", "", s)
+    s = re.sub(r"\([^)]*\)", "", s)
+    s = re.sub(r"[\s\-]", "", s)
+    return s.strip().upper()
+_PLATE_CORE_RE = re.compile(r"([가-힣])([0-9]{3,4})$")
+def _plate_core(s):
+    """차량번호 뒤쪽 '한글 한 글자 + 숫자 3~4자리' 핵심 식별부만 추출.
+    (지역명/지역코드 등 앞부분 표기가 슬랙 원문과 차량마스터에서 서로 달라도 매칭되도록)"""
+    norm = _norm_plate(s)
+    m = _PLATE_CORE_RE.search(norm)
+    if m:
+        return m.group(1) + m.group(2)
+    return norm
 def _voc_vehicle_master_lookup():
-    """차량마스터(wash.db)에서 차량번호 → 행, 스팟 → (지역시도, 지역구군) 매핑을 만든다."""
+    """차량마스터(wash.db)에서 차량번호 → 매핑, 스팟 → (지역시도, 지역구군) 매핑을 만든다."""
     conn = get_wash_db()
     rows = conn.execute("SELECT 차량번호, 스팟, 지역시도, 지역구군 FROM vehicle_master").fetchall()
     conn.close()
-    by_car = set()
+    by_car_full = set()
+    by_car_core = set()
     by_spot = {}
     for r in rows:
         if r["차량번호"]:
-            by_car.add(r["차량번호"].strip())
+            full = _norm_plate(r["차량번호"])
+            if full:
+                by_car_full.add(full)
+                core = _plate_core(r["차량번호"])
+                if core:
+                    by_car_core.add(core)
         if r["스팟"]:
             spot_key = r["스팟"].strip()
             if spot_key and spot_key not in by_spot:
                 by_spot[spot_key] = (r["지역시도"] or "", r["지역구군"] or "")
-    return by_car, by_spot
+    return (by_car_full, by_car_core), by_spot
+def _match_car_bm(car_number, by_car):
+    """차량번호 전체 정규화 값이 정확히 일치하거나, 핵심 식별부(한글+숫자)가 일치하면 '왕복'."""
+    by_car_full, by_car_core = by_car
+    if not car_number:
+        return "혼용"
+    full = _norm_plate(car_number)
+    if not full:
+        return "혼용"
+    if full in by_car_full:
+        return "왕복"
+    core = _plate_core(car_number)
+    if core and len(core) >= 4 and core in by_car_core:
+        return "왕복"
+    return "혼용"
 def _match_spot_region(spot, by_spot):
     if not spot:
         return "", ""
@@ -3105,7 +3142,7 @@ def voc_manage():
             photos = []
         d["photos"] = [{"id": p["id"], "name": p.get("name", "photo")} for p in photos if p.get("id")]
         d["seq"] = seq_map.get(r["id"], 0)
-        d["bm"] = "왕복" if d["car_number"] and d["car_number"] in by_car else "혼용"
+        d["bm"] = _match_car_bm(d["car_number"], by_car)
         region_large, region_small = _match_spot_region(d["spot"], by_spot)
         d["region_large"] = region_large
         d["region_small"] = region_small

@@ -27,41 +27,57 @@
 
 <section class="app-section table-panel app-card">
     <div class="table-title-row"><h2>VOC 목록</h2><span>{{ items|length }}건</span></div>
-    <div class="stack-form" style="gap:12px;">
-        {% for item in items %}
-        <article class="admin-card app-card" style="padding:14px 16px;">
-            <div class="ticket-title-row">
-                <span class="ticket-status">{{ item.status }}</span>
-                <strong>{{ item.author or '슬랙' }}</strong>
-                <small>{{ item.synced_at }}</small>
-            </div>
-            <p class="ticket-message">{{ item.text }}</p>
-            <p><a href="{{ item.permalink }}" target="_blank" rel="noopener">슬랙에서 원문 보기 ›</a></p>
-
-            {% if item.status == '요청됨' %}
-            <div class="ticket-meta">
-                <span>배정 지역 {{ item.city }} {{ item.district }}</span>
-                <span>요청자 {{ item.requested_by }}</span>
-                <span>{{ item.requested_at }}</span>
-            </div>
-            {% if item.note %}<p class="ticket-message">메모: {{ item.note }}</p>{% endif %}
-            {% else %}
-            <form method="post" action="{{ url_for('voc_request', item_id=item.id) }}" class="ticket-reply-form" style="flex-wrap:wrap;">
-                <select name="city" class="app-input voc-city-select" data-idx="{{ loop.index }}" required>
-                    <option value="">시/도 선택</option>
-                    {% for city in city_options %}<option value="{{ city }}">{{ city }}</option>{% endfor %}
-                </select>
-                <select name="district" class="app-input voc-district-select" data-idx="{{ loop.index }}" required>
-                    <option value="">구/군 선택</option>
-                </select>
-                <input name="note" class="app-input" placeholder="담당자에게 전달할 메모(선택)">
-                <button class="primary-btn" type="submit">요청</button>
-            </form>
-            {% endif %}
-        </article>
-        {% else %}
-        <div class="notice-empty"><strong>동기화된 VOC 글이 없습니다.</strong><span>슬랙 채널에 새 글이 올라오면 이곳에 표시됩니다.</span></div>
-        {% endfor %}
+    <div class="table-wrap">
+        <table class="voc-table">
+            <thead>
+                <tr>
+                    <th>상태</th>
+                    <th>예약번호</th>
+                    <th>차량번호</th>
+                    <th>소속</th>
+                    <th>스팟명</th>
+                    <th>내용</th>
+                    <th>담당자에게</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td><span class="badge">{{ item.status }}</span></td>
+                    <td>{{ item.reservation_no or '-' }}</td>
+                    <td style="font-weight:800;">{{ item.car_number or '-' }}</td>
+                    <td>{{ item.org or '-' }}</td>
+                    <td>{{ item.spot or '-' }}</td>
+                    <td class="voc-content-cell" title="{{ item.content }}">
+                        {{ item.content }}
+                        <div style="margin-top:4px;"><a href="{{ item.permalink }}" target="_blank" rel="noopener" style="font-size:12px;">슬랙 원문 ›</a></div>
+                    </td>
+                    <td class="voc-action-cell">
+                        {% if item.status == '요청됨' %}
+                        <div class="voc-assigned">
+                            <span>{{ item.city }} {{ item.district }}</span>
+                            <small>{{ item.requested_by }} · {{ item.requested_at }}</small>
+                        </div>
+                        {% else %}
+                        <form method="post" action="{{ url_for('voc_request', item_id=item.id) }}" class="voc-request-form">
+                            <select name="city" class="app-input voc-city-select" data-idx="{{ loop.index }}" required>
+                                <option value="">시/도</option>
+                                {% for city in city_options %}<option value="{{ city }}">{{ city }}</option>{% endfor %}
+                            </select>
+                            <select name="district" class="app-input voc-district-select" data-idx="{{ loop.index }}" required>
+                                <option value="">구/군</option>
+                            </select>
+                            <input name="note" class="app-input" placeholder="메모(선택)">
+                            <button class="primary-btn" type="submit">요청</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="empty-cell">동기화된 VOC 글이 없습니다.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </section>
 
@@ -72,7 +88,7 @@ document.querySelectorAll('.voc-city-select').forEach(function (citySel) {
     const districtSel = document.querySelector('.voc-district-select[data-idx="' + idx + '"]');
     if (!districtSel) return;
     citySel.addEventListener('change', function () {
-        districtSel.innerHTML = '<option value="">구/군 선택</option>';
+        districtSel.innerHTML = '<option value="">구/군</option>';
         (vocRegionMap[citySel.value] || []).forEach(function (d) {
             const opt = document.createElement('option');
             opt.value = d; opt.textContent = d;
@@ -81,5 +97,18 @@ document.querySelectorAll('.voc-city-select').forEach(function (citySel) {
     });
 });
 </script>
+
+<style>
+.voc-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.voc-table th, .voc-table td { padding: 10px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid rgba(216,224,235,.6); }
+.voc-content-cell { max-width: 340px; white-space: pre-line; line-height: 1.5; }
+.voc-action-cell { min-width: 220px; }
+.voc-request-form { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.voc-request-form .app-input { width: auto; min-width: 90px; padding: 6px 8px; font-size: 12px; }
+.voc-request-form input[name="note"] { min-width: 140px; }
+.voc-request-form .primary-btn { padding: 6px 14px; font-size: 12px; }
+.voc-assigned { display: flex; flex-direction: column; gap: 2px; }
+.voc-assigned small { color: var(--text-secondary, #6b7280); }
+</style>
 
 {% endblock %}

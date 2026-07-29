@@ -49,34 +49,50 @@
     <table class="voc-table">
       <thead>
         <tr>
+          <th class="voc-col-seq">순번</th>
           <th class="voc-col-status">상태</th>
+          <th class="voc-col-bm">BM</th>
           <th class="voc-col-res">예약번호</th>
           <th class="voc-col-car">차량번호</th>
           <th class="voc-col-org">소속</th>
           <th class="voc-col-spot">스팟명</th>
+          <th class="voc-col-region">지역(대)</th>
+          <th class="voc-col-region">지역(소)</th>
           <th class="voc-col-photo">사진</th>
           <th class="voc-col-at">접수시간</th>
+          <th class="voc-col-act">관리</th>
         </tr>
       </thead>
       <tbody>
         {% for item in items %}
-        <tr class="voc-row" onclick="vocOpenModal({{ item.id }})">
-          <td class="voc-col-status">
+        <tr class="voc-row">
+          <td class="voc-col-seq" onclick="vocOpenModal({{ item.id }})">{{ item.seq }}</td>
+          <td class="voc-col-status" onclick="vocOpenModal({{ item.id }})">
             <span class="voc-badge voc-badge--{{ item.status }}"><i class="voc-badge-dot"></i>{{ item.status }}</span>
           </td>
-          <td class="voc-col-res">{{ item.reservation_no or '-' }}</td>
-          <td class="voc-col-car"><span class="voc-car-num">{{ item.car_number or '-' }}</span></td>
-          <td class="voc-col-org">{{ item.org or '-' }}</td>
-          <td class="voc-col-spot">{{ item.spot or '-' }}</td>
-          <td class="voc-col-photo">
+          <td class="voc-col-bm" onclick="vocOpenModal({{ item.id }})">
+            <span class="voc-bm-chip voc-bm-chip--{{ '왕복' if item.bm=='왕복' else '혼용' }}">{{ item.bm }}</span>
+          </td>
+          <td class="voc-col-res" onclick="vocOpenModal({{ item.id }})">{{ item.reservation_no or '-' }}</td>
+          <td class="voc-col-car" onclick="vocOpenModal({{ item.id }})"><span class="voc-car-num">{{ item.car_number or '-' }}</span></td>
+          <td class="voc-col-org" onclick="vocOpenModal({{ item.id }})">{{ item.org or '-' }}</td>
+          <td class="voc-col-spot" onclick="vocOpenModal({{ item.id }})">{{ item.spot or '-' }}</td>
+          <td class="voc-col-region" onclick="vocOpenModal({{ item.id }})">{{ item.region_large or '-' }}</td>
+          <td class="voc-col-region" onclick="vocOpenModal({{ item.id }})">{{ item.region_small or '-' }}</td>
+          <td class="voc-col-photo" onclick="vocOpenModal({{ item.id }})">
             {% if item.photos %}
             <span class="voc-photo-chip"><i class="ti ti-photo"></i> {{ item.photos|length }}</span>
             {% else %}<span class="voc-no-photo">—</span>{% endif %}
           </td>
-          <td class="voc-col-at">{{ item.synced_at }}</td>
+          <td class="voc-col-at" onclick="vocOpenModal({{ item.id }})">{{ item.synced_at }}</td>
+          <td class="voc-col-act" onclick="event.stopPropagation()">
+            <form method="post" action="{{ url_for('voc_delete', item_id=item.id) }}" onsubmit="return confirm('이 VOC 항목을 삭제할까요?');">
+              <button type="submit" class="voc-del-btn" title="삭제"><i class="ti ti-trash"></i></button>
+            </form>
+          </td>
         </tr>
         {% else %}
-        <tr><td colspan="7" class="voc-empty-cell"><div class="voc-empty-state"><i class="ti ti-inbox"></i><p>동기화된 VOC 글이 없습니다.</p></div></td></tr>
+        <tr><td colspan="12" class="voc-empty-cell"><div class="voc-empty-state"><i class="ti ti-inbox"></i><p>동기화된 VOC 글이 없습니다.</p></div></td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -157,8 +173,10 @@ function vocOpenModal(id) {
   document.getElementById('vocModalTitle').textContent = (item.car_number || item.reservation_no || 'VOC') + ' 상세';
 
   const fieldsHtml = [
+    ['순번', item.seq], ['BM', item.bm],
     ['예약번호', item.reservation_no], ['차량번호', item.car_number],
-    ['소속', item.org], ['스팟명', item.spot]
+    ['소속', item.org], ['스팟명', item.spot],
+    ['지역(대)', item.region_large], ['지역(소)', item.region_small]
   ].map(function (pair) {
     return '<div class="voc-field"><span>' + pair[0] + '</span><b>' + (pair[1] || '-') + '</b></div>';
   }).join('');
@@ -235,14 +253,25 @@ document.addEventListener('keydown', function (e) {
 .voc-table tbody tr:hover { background:#fafbfc; }
 .voc-table tbody tr:last-child { border-bottom:none; }
 .voc-table td { padding:12px 14px; vertical-align:middle; }
+.voc-col-seq { width:52px; color:#9ca3af; font-weight:700; text-align:center; }
 .voc-col-status { width:88px; }
+.voc-col-bm { width:70px; text-align:center; }
 .voc-col-res { width:100px; white-space:nowrap; }
 .voc-col-car { width:110px; white-space:nowrap; }
 .voc-col-org { width:140px; }
 .voc-col-spot { min-width:160px; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.voc-col-region { width:100px; white-space:nowrap; color:#4b5563; }
 .voc-col-photo { width:70px; }
 .voc-col-at { width:120px; white-space:nowrap; color:#9ca3af; font-size:12px; }
+.voc-col-act { width:56px; text-align:center; }
 .voc-car-num { font-weight:800; font-family:'Courier New',monospace; }
+
+.voc-bm-chip { display:inline-flex; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:700; white-space:nowrap; }
+.voc-bm-chip--왕복 { background:#eef2ff; color:#4338ca; }
+.voc-bm-chip--혼용 { background:#f3f4f6; color:#4b5563; }
+
+.voc-del-btn { width:30px; height:30px; border-radius:8px; border:1px solid #f0d5d5; background:#fff5f5; color:#dc2626; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:14px; }
+.voc-del-btn:hover { background:#fee2e2; }
 
 .voc-badge { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:700; white-space:nowrap; }
 .voc-badge-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
@@ -261,14 +290,14 @@ document.addEventListener('keydown', function (e) {
 /* 모달 */
 .voc-modal-overlay { display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.4); align-items:center; justify-content:center; padding:20px; }
 .voc-modal-overlay.open { display:flex; }
-.voc-modal { background:#fff; border-radius:16px; width:520px; max-width:100%; max-height:88vh; overflow-y:auto; box-shadow:0 8px 40px rgba(0,0,0,.18); }
+.voc-modal { background:#fff; border-radius:16px; width:800px; max-width:96%; max-height:92vh; overflow-y:auto; box-shadow:0 8px 40px rgba(0,0,0,.18); }
 .voc-modal-header { display:flex; align-items:flex-start; justify-content:space-between; padding:20px 20px 14px; border-bottom:1px solid #f0f2f5; }
 .voc-modal-meta { font-size:11px; color:#9ca3af; font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin:0 0 4px; }
 .voc-modal-title { font-size:16px; font-weight:800; color:#111827; margin:0; }
 .voc-modal-close { width:32px; height:32px; border-radius:8px; border:none; background:#f4f6f8; color:#6b7280; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; margin-left:10px; }
 .voc-modal-close:hover { background:#e5e8ec; color:#111827; }
 .voc-modal-body { padding:16px 20px 20px; }
-.voc-modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 16px; margin-bottom:14px; }
+.voc-modal-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px 16px; margin-bottom:14px; }
 .voc-field { display:flex; justify-content:space-between; font-size:13px; border-bottom:1px dashed #f0f2f5; padding-bottom:4px; }
 .voc-field span { color:#9ca3af; }
 .voc-field b { color:#111827; }

@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import sqlite3
 import uuid
@@ -2919,6 +2920,46 @@ def urgent_wash_complete(req_id):
         _post_voc_completion_reply(row["voc_item_id"], current_user.username)
     flash("✅ 완료 처리되었습니다.")
     return redirect(url_for("urgent_wash"))
+_VOC_LABELS = [
+    "서비스구분", "예약번호", "고객명", "연락처", "차량 번호", "차량번호", "차종",
+    "차량 소속", "소속", "사용 건수", "출발스팟명", "도착스팟명", "스팟명", "주소",
+    "예약시간", "회원명", "전화번호", "세차 경과일", "세차경과일",
+    "정비 경과일", "정비경과일", "관리자예약 생성여부", "관리자예약 기간", "내용",
+]
+_VOC_LABEL_ALT = "|".join(re.escape(l) for l in sorted(_VOC_LABELS, key=len, reverse=True))
+def _extract_voc_field(text, *label_variants):
+    for label in label_variants:
+        pat = rf"{re.escape(label)}\s*:\s*(.*?)(?=(?:{_VOC_LABEL_ALT})\s*:|$)"
+        m = re.search(pat, text, re.DOTALL)
+        if m:
+            val = m.group(1).strip(" \n\t-`")
+            if val:
+                return val
+    return ""
+def _parse_voc_summary(text):
+    """카쉐어링 VOC 원문(슬랙 메시지)에서 예약번호/차량번호/소속/스팟명/내용만 뽑아낸다.
+    메시지 포맷이 케이스마다 조금씩 달라서(차량번호 vs 차량 번호 등) 라벨 변형을 모두 시도한다."""
+    text = text or ""
+    reservation_no = _extract_voc_field(text, "예약번호")
+    car_number = _extract_voc_field(text, "차량 번호", "차량번호")
+    org = _extract_voc_field(text, "차량 소속", "소속")
+    spot = _extract_voc_field(text, "스팟명", "출발스팟명")
+    content = _extract_voc_field(text, "내용")
+    if not content:
+        # "내용:" 라벨이 없는 포맷 — 마지막으로 매칭된 라벨 뒤의 텍스트를 내용으로 간주
+        last_end = 0
+        for m in re.finditer(rf"(?:{_VOC_LABEL_ALT})\s*:\s*", text):
+            last_end = m.end()
+        content = text[last_end:].strip(" \n\t-`") if last_end else text.strip()
+    content = re.sub(r"`+", "", content)
+    content = re.sub(r"\s+", " ", content).strip()
+    return {
+        "reservation_no": reservation_no,
+        "car_number": car_number,
+        "org": org,
+        "spot": spot,
+        "content": content,
+    }
 @app.route("/voc_manage")
 @login_required
 def voc_manage():
@@ -2933,8 +2974,13 @@ def voc_manage():
         set_app_setting("voc_last_sync_ts", str(now_ts))
         set_app_setting("voc_last_sync_error", sync_error or "")
     conn = get_user_db()
-    items = conn.execute("SELECT * FROM voc_items ORDER BY slack_ts DESC LIMIT 100").fetchall()
+    rows = conn.execute("SELECT * FROM voc_items ORDER BY slack_ts DESC LIMIT 100").fetchall()
     conn.close()
+    items = []
+    for r in rows:
+        d = dict(r)
+        d.update(_parse_voc_summary(r["text"]))
+        items.append(d)
     return render_template(
         "voc_manage.html",
         items=items,

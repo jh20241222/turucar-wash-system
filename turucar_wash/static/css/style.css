@@ -8108,3 +8108,46 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   font-size: 13px;
   padding: 0 4px;
 }
+
+/* 긴급세차 홈 배지 (아이콘 우상단 알림 점) */
+.support-visual-v12 { position: relative; }
+.urgent-badge-v12 {
+  position: absolute;
+  top: -3px;
+  right: -5px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  background: linear-gradient(135deg, #ff6a4d, #e53935);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 17px;
+  text-align: center;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(229, 57, 53, .4);
+  z-index: 2;
+}
+
+/* 긴급세차 오더 카드 (오더 메뉴 카드와 동일 톤) */
+.uw-card-list { display: flex; flex-direction: column; gap: 12px; }
+.uw-order-card { background: #fff; border: 1px solid var(--d-border, #e5e8ec); border-radius: 16px; padding: 16px 18px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+.uw-order-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.uw-order-tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: #fff7ed; color: #c2410c; white-space: nowrap; }
+.uw-order-tag--voc { background: #eef2ff; color: #4338ca; }
+.uw-order-time { font-size: 11px; color: #9ca3af; }
+.uw-order-plate { font-size: 19px; font-weight: 800; font-family: 'Courier New', monospace; color: #111827; margin-bottom: 6px; }
+.uw-order-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: #6b7280; margin-bottom: 10px; }
+.uw-order-meta b { color: #374151; font-weight: 600; }
+.uw-order-content { background: #f8f9fb; border: 1px solid #f0f2f5; border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #374151; line-height: 1.6; white-space: pre-line; margin-bottom: 12px; }
+.uw-order-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.uw-date-input { padding: 8px 10px; font-size: 13px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #111827; font-family: inherit; }
+.uw-accept-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #111827; color: #fff; border: none; cursor: pointer; }
+.uw-complete-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #FF9900; color: #fff; border: none; cursor: pointer; }
+.uw-scheduled-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; background: #eef2ff; color: #4338ca; }
+.uw-empty { text-align: center; padding: 48px 20px; color: #9ca3af; }
+.uw-notify-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 700; background: #fff7ed; color: #c2410c; border: 1px solid #ffe0b2; cursor: pointer; }
+@media (max-width: 700px) {
+  .uw-order-meta { font-size: 12px; }
+}

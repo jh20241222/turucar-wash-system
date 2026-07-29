@@ -2705,12 +2705,21 @@ def _slack_resolve_user(user_id):
             print(f"[VOC Slack] users.info 오류: {e}")
     _SLACK_USER_NAME_CACHE[user_id] = name
     return name
+_SLACK_ERROR_HINTS = {
+    "not_in_channel": "봇이 #피플카-차량청결voc 채널에 초대되어 있지 않습니다. 슬랙에서 해당 채널에 봇을 /invite 해주세요.",
+    "channel_not_found": "채널 ID(SLACK_VOC_CHANNEL_ID)가 올바르지 않습니다.",
+    "missing_scope": "슬랙 앱에 groups:history(비공개 채널 읽기) 권한이 없습니다. OAuth 스코프 추가 후 워크스페이스에 재설치해주세요.",
+    "invalid_auth": "SLACK_BOT_TOKEN이 유효하지 않습니다. 토큰을 다시 확인해주세요.",
+    "account_inactive": "슬랙 앱/토큰이 비활성화된 상태입니다.",
+    "token_revoked": "슬랙 봇 토큰이 폐기(재발급)되었습니다.",
+}
 def _sync_voc_from_slack(limit=50):
     """#피플카-차량청결voc 채널의 최근 메시지를 voc_items 테이블로 동기화.
     SLACK_BOT_TOKEN이 해당(private) 채널에 초대되어 있어야 하며
-    groups:history, users:read 스코프가 필요하다. 새로 추가된 건수를 반환."""
+    groups:history, users:read 스코프가 필요하다.
+    반환값: (신규 건수, 오류 메시지 또는 None)"""
     if not SLACK_BOT_TOKEN or not SLACK_VOC_CHANNEL_ID:
-        return 0
+        return 0, "SLACK_BOT_TOKEN 환경변수가 설정되어 있지 않습니다."
     try:
         resp = _requests.get(
             "https://slack.com/api/conversations.history",
@@ -2720,8 +2729,11 @@ def _sync_voc_from_slack(limit=50):
         )
         data = resp.json()
         if not data.get("ok"):
-            print(f"[VOC Slack] sync 오류: {data.get('error')}")
-            return 0
+            err = data.get("error", "알 수 없는 오류")
+            hint = _SLACK_ERROR_HINTS.get(err, "")
+            message = f"슬랙 API 오류: {err}" + (f" — {hint}" if hint else "")
+            print(f"[VOC Slack] sync 오류: {message}")
+            return 0, message
         messages = data.get("messages", [])
         conn = get_user_db()
         synced_at = now_kst().strftime("%Y-%m-%d %H:%M")
@@ -2749,13 +2761,14 @@ def _sync_voc_from_slack(limit=50):
         conn.close()
         if new_count:
             print(f"[VOC Slack] 신규 {new_count}건 동기화됨")
-        return new_count
+        return new_count, None
     except Exception as e:
         print(f"[VOC Slack] sync 예외: {e}")
-        return 0
+        return 0, f"동기화 중 오류가 발생했습니다: {e}"
 def _scheduled_voc_sync():
     try:
-        _sync_voc_from_slack()
+        _, err = _sync_voc_from_slack()
+        set_app_setting("voc_last_sync_error", err or "")
     except Exception as e:
         print(f"[VOC Slack] 스케줄 동기화 오류: {e}")
 _scheduler.add_job(_scheduled_voc_sync, "interval", minutes=5)
@@ -2885,8 +2898,9 @@ def voc_manage():
     last_sync = get_app_setting("voc_last_sync_ts", "")
     now_ts = now_kst().timestamp()
     if not last_sync or (now_ts - float(last_sync)) > 60:
-        _sync_voc_from_slack()
+        _, sync_error = _sync_voc_from_slack()
         set_app_setting("voc_last_sync_ts", str(now_ts))
+        set_app_setting("voc_last_sync_error", sync_error or "")
     conn = get_user_db()
     items = conn.execute("SELECT * FROM voc_items ORDER BY slack_ts DESC LIMIT 100").fetchall()
     conn.close()
@@ -2896,15 +2910,20 @@ def voc_manage():
         city_options=list(KOREA_REGIONS.keys()),
         region_map=KOREA_REGIONS,
         slack_configured=bool(SLACK_BOT_TOKEN and SLACK_VOC_CHANNEL_ID),
+        sync_error=get_app_setting("voc_last_sync_error", ""),
     )
 @app.route("/voc_manage/sync", methods=["POST"])
 @login_required
 def voc_sync():
     if not current_user.is_master:
         return "Forbidden", 403
-    new_count = _sync_voc_from_slack()
+    new_count, sync_error = _sync_voc_from_slack()
     set_app_setting("voc_last_sync_ts", str(now_kst().timestamp()))
-    flash(f"✅ 슬랙 동기화 완료 — 신규 {new_count}건")
+    set_app_setting("voc_last_sync_error", sync_error or "")
+    if sync_error:
+        flash(f"❌ 슬랙 동기화 실패 — {sync_error}")
+    else:
+        flash(f"✅ 슬랙 동기화 완료 — 신규 {new_count}건")
     return redirect(url_for("voc_manage"))
 @app.route("/voc_manage/request/<int:item_id>", methods=["POST"])
 @login_required

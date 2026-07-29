@@ -1542,8 +1542,12 @@ def upload_vehicle_master():
         today_str = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
         conn = get_wash_db()
         cur = conn.cursor()
+        # 차량마스터는 "왕복(고정 스팟) 차량 목록" 그 자체이므로, 매번 업로드한 파일 내용으로 완전히
+        # 교체한다. (기존 upsert 방식은 새 파일에서 빠진 차량이 계속 남아있어 왕복/혼용 판정이
+        # 갱신되지 않는 문제가 있었음)
+        cur.execute("DELETE FROM vehicle_master")
         inserted = 0
-        updated = 0
+        skipped = 0
         for _, r in df.iterrows():
             차량번호 = str(r["차량번호"]).strip()
             if not 차량번호 or 차량번호.lower() == "nan":
@@ -1551,6 +1555,7 @@ def upload_vehicle_master():
             # 스팟/지역 없는 행 스킵
             스팟체크 = str(r.get("현재스팟명", "")).strip()
             if not 스팟체크 or 스팟체크.lower() == "nan":
+                skipped += 1
                 continue
             차대번호 = str(r.get("차대번호", "")).strip() or None
             차종명 = str(r.get("차종명", "")).strip() or None
@@ -1570,25 +1575,15 @@ def upload_vehicle_master():
                 세차경과일 = int(float(세차경과일_raw)) if 세차경과일_raw and str(세차경과일_raw).lower() != "nan" else 0
             except:
                 세차경과일 = 0
-            existing = cur.execute("SELECT id FROM vehicle_master WHERE 차량번호=?", (차량번호,)).fetchone()
-            if existing:
-                cur.execute("""
-                    UPDATE vehicle_master
-                    SET 차대번호=?, 차종명=?, 차량소속=?, 스팟=?, 주소=?,
-                        지역시도=?, 지역구군=?, 담당업체=?, 최근세차일=?, 세차경과일=?, updated_at=?
-                    WHERE 차량번호=?
-                """, (차대번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 담당업체, 최근세차일, 세차경과일, today_str, 차량번호))
-                updated += 1
-            else:
-                cur.execute("""
-                    INSERT INTO vehicle_master
-                    (차량번호, 차대번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 담당업체, 최근세차일, 세차경과일, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (차량번호, 차대번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 담당업체, 최근세차일, 세차경과일, today_str))
-                inserted += 1
+            cur.execute("""
+                INSERT INTO vehicle_master
+                (차량번호, 차대번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 담당업체, 최근세차일, 세차경과일, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (차량번호, 차대번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 담당업체, 최근세차일, 세차경과일, today_str))
+            inserted += 1
         conn.commit()
         conn.close()
-        flash(f"✔ 차량 마스터 업데이트 완료 — 신규 {inserted}대 / 업데이트 {updated}대")
+        flash(f"✔ 차량 마스터 전체 교체 완료 — 등록 {inserted}대 (스팟 없어 제외 {skipped}대)")
     except Exception as e:
         flash(f"❌ 업로드 실패: {e}")
     return redirect(url_for("upload_wash_list"))
@@ -3050,50 +3045,32 @@ def _norm_plate(s):
     s = re.sub(r"\([^)]*\)", "", s)
     s = re.sub(r"[\s\-]", "", s)
     return s.strip().upper()
-_PLATE_CORE_RE = re.compile(r"([가-힣])([0-9]{3,4})$")
-def _plate_core(s):
-    """차량번호 뒤쪽 '한글 한 글자 + 숫자 3~4자리' 핵심 식별부만 추출.
-    (지역명/지역코드 등 앞부분 표기가 슬랙 원문과 차량마스터에서 서로 달라도 매칭되도록)"""
-    norm = _norm_plate(s)
-    m = _PLATE_CORE_RE.search(norm)
-    if m:
-        return m.group(1) + m.group(2)
-    return norm
 def _voc_vehicle_master_lookup():
-    """차량마스터(wash.db)에서 차량번호 → 매핑, 스팟 → (지역시도, 지역구군) 매핑을 만든다."""
+    """차량마스터(wash.db, 왕복=고정 스팟 차량 목록)에서 차량번호 집합과
+    스팟 → (지역시도, 지역구군) 매핑을 만든다."""
     conn = get_wash_db()
     rows = conn.execute("SELECT 차량번호, 스팟, 지역시도, 지역구군 FROM vehicle_master").fetchall()
     conn.close()
-    by_car_full = set()
-    by_car_core = set()
+    by_car = set()
     by_spot = {}
     for r in rows:
         if r["차량번호"]:
-            full = _norm_plate(r["차량번호"])
-            if full:
-                by_car_full.add(full)
-                core = _plate_core(r["차량번호"])
-                if core:
-                    by_car_core.add(core)
+            norm = _norm_plate(r["차량번호"])
+            if norm:
+                by_car.add(norm)
         if r["스팟"]:
             spot_key = r["스팟"].strip()
             if spot_key and spot_key not in by_spot:
                 by_spot[spot_key] = (r["지역시도"] or "", r["지역구군"] or "")
-    return (by_car_full, by_car_core), by_spot
+    return by_car, by_spot
 def _match_car_bm(car_number, by_car):
-    """차량번호 전체 정규화 값이 정확히 일치하거나, 핵심 식별부(한글+숫자)가 일치하면 '왕복'."""
-    by_car_full, by_car_core = by_car
+    """차량번호 정규화 값이 차량마스터(왕복 차량 목록)에 정확히 있으면 '왕복', 없으면 '혼용'."""
     if not car_number:
         return "혼용"
     full = _norm_plate(car_number)
     if not full:
         return "혼용"
-    if full in by_car_full:
-        return "왕복"
-    core = _plate_core(car_number)
-    if core and len(core) >= 4 and core in by_car_core:
-        return "왕복"
-    return "혼용"
+    return "왕복" if full in by_car else "혼용"
 def _match_spot_region(spot, by_spot):
     if not spot:
         return "", ""

@@ -2777,6 +2777,30 @@ def _scheduled_voc_sync():
     except Exception as e:
         print(f"[VOC Slack] 스케줄 동기화 오류: {e}")
 _scheduler.add_job(_scheduled_voc_sync, "interval", minutes=5)
+def _post_voc_completion_reply(voc_item_id, completed_by):
+    """긴급세차(VOC 요청 건)가 완료되면 원본 슬랙 메시지에 스레드 댓글을 단다.
+    SLACK_VOC_BOT_TOKEN에 chat:write 스코프가 있어야 하고, 봇이 채널 멤버여야 한다."""
+    if not SLACK_VOC_BOT_TOKEN or not voc_item_id:
+        return
+    conn = get_user_db()
+    item = conn.execute("SELECT slack_ts FROM voc_items WHERE id=?", (voc_item_id,)).fetchone()
+    conn.close()
+    if not item or not item["slack_ts"]:
+        return
+    text = f"✅ {now_kst().strftime('%m/%d')} 긴급세차 요청 완료 (처리: {completed_by})"
+    try:
+        resp = _requests.post(
+            "https://slack.com/api/chat.postMessage",
+            headers={"Authorization": f"Bearer {SLACK_VOC_BOT_TOKEN}",
+                     "Content-Type": "application/json"},
+            json={"channel": SLACK_VOC_CHANNEL_ID, "thread_ts": item["slack_ts"], "text": text},
+            timeout=10
+        )
+        data = resp.json()
+        if not data.get("ok"):
+            print(f"[VOC Slack] 완료 댓글 전송 실패: {data.get('error')}")
+    except Exception as e:
+        print(f"[VOC Slack] 완료 댓글 전송 예외: {e}")
 def _resolve_vendor_for_region(city, district):
     """해당 시/도+구/군을 담당 지역으로 등록해 둔 staff 계정의 업체명을 반환. 없으면 빈 문자열."""
     if not city or not district:
@@ -2891,6 +2915,8 @@ def urgent_wash_complete(req_id):
     )
     conn.commit()
     conn.close()
+    if row["source"] == "voc" and row["voc_item_id"]:
+        _post_voc_completion_reply(row["voc_item_id"], current_user.username)
     flash("✅ 완료 처리되었습니다.")
     return redirect(url_for("urgent_wash"))
 @app.route("/voc_manage")

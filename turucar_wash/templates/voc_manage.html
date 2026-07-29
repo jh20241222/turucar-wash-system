@@ -2,113 +2,300 @@
 {% block document_title %}Turu Wash · VOC 관리{% endblock %}
 {% block content %}
 
-<section class="page-hero app-card elevated brand-line-card">
+<div class="d-wrap voc-wrap">
+
+  <section class="page-hero app-card elevated brand-line-card" style="margin-bottom:0;">
     <div class="hero-copy-block">
-        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo">
-        <h1>VOC 관리</h1>
-        <p class="hero-copy">#피플카-차량청결VOC 슬랙 채널과 연동됩니다. 지역을 지정해 담당 작업자의 긴급세차 목록으로 전달할 수 있습니다.</p>
+      <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo">
+      <h1>VOC 관리</h1>
+      <p class="hero-copy">#피플카-차량청결VOC 슬랙 채널과 연동됩니다. 항목을 클릭하면 상세 내용과 사진을 확인할 수 있어요.</p>
     </div>
     <form method="post" action="{{ url_for('voc_sync') }}">
-        <button type="submit" class="blue-btn tall">지금 동기화</button>
+      <button type="submit" class="blue-btn tall">지금 동기화</button>
     </form>
-</section>
+  </section>
 
-{% if not slack_configured %}
-<div class="notice-empty">
+  {% if not slack_configured %}
+  <div class="notice-empty">
     <strong>슬랙 연동이 아직 설정되지 않았습니다.</strong>
     <span>서버 환경변수 SLACK_VOC_BOT_TOKEN이 필요하고, 봇이 #피플카-차량청결voc(private) 채널에 초대되어 있어야 하며 groups:history / users:read 권한이 있어야 합니다.</span>
-</div>
-{% elif sync_error %}
-<div class="notice-empty" style="border-color:#e53935;">
+  </div>
+  {% elif sync_error %}
+  <div class="notice-empty" style="border-color:#e53935;">
     <strong style="color:#e53935;">마지막 동기화 실패</strong>
     <span>{{ sync_error }}</span>
-</div>
-{% endif %}
+  </div>
+  {% endif %}
 
-<section class="app-section table-panel app-card">
-    <div class="table-title-row"><h2>VOC 목록</h2><span>{{ items|length }}건</span></div>
-    <div class="table-wrap">
-        <table class="voc-table">
-            <thead>
-                <tr>
-                    <th>상태</th>
-                    <th>예약번호</th>
-                    <th>차량번호</th>
-                    <th>소속</th>
-                    <th>스팟명</th>
-                    <th>내용</th>
-                    <th>담당자에게</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in items %}
-                <tr>
-                    <td><span class="badge">{{ item.status }}</span></td>
-                    <td>{{ item.reservation_no or '-' }}</td>
-                    <td style="font-weight:800;">{{ item.car_number or '-' }}</td>
-                    <td>{{ item.org or '-' }}</td>
-                    <td>{{ item.spot or '-' }}</td>
-                    <td class="voc-content-cell" title="{{ item.content }}">
-                        {{ item.content }}
-                        <div style="margin-top:4px;"><a href="{{ item.permalink }}" target="_blank" rel="noopener" style="font-size:12px;">슬랙 원문 ›</a></div>
-                    </td>
-                    <td class="voc-action-cell">
-                        {% if item.status == '요청됨' %}
-                        <div class="voc-assigned">
-                            <span>{{ item.city }} {{ item.district }}</span>
-                            <small>{{ item.requested_by }} · {{ item.requested_at }}</small>
-                        </div>
-                        {% else %}
-                        <form method="post" action="{{ url_for('voc_request', item_id=item.id) }}" class="voc-request-form">
-                            <select name="city" class="app-input voc-city-select" data-idx="{{ loop.index }}" required>
-                                <option value="">시/도</option>
-                                {% for city in city_options %}<option value="{{ city }}">{{ city }}</option>{% endfor %}
-                            </select>
-                            <select name="district" class="app-input voc-district-select" data-idx="{{ loop.index }}" required>
-                                <option value="">구/군</option>
-                            </select>
-                            <input name="note" class="app-input" placeholder="메모(선택)">
-                            <button class="primary-btn" type="submit">요청</button>
-                        </form>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% else %}
-                <tr><td colspan="7" class="empty-cell">동기화된 VOC 글이 없습니다.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+  {# ── 상단 요약 카드 ── #}
+  <div class="voc-stat-row">
+    <a class="voc-stat-card voc-stat-card--all {% if not selected_status %}voc-stat-card--active{% endif %}" href="{{ url_for('voc_manage') }}">
+      <span class="voc-stat-icon"><i class="ti ti-message-2"></i></span>
+      <div><p class="voc-stat-num">{{ cnt_total }}</p><p class="voc-stat-label">전체</p></div>
+    </a>
+    <a class="voc-stat-card voc-stat-card--new {% if selected_status=='신규' %}voc-stat-card--active{% endif %}" href="{{ url_for('voc_manage', status='신규') }}">
+      <span class="voc-stat-icon voc-stat-icon--new"><i class="ti ti-alert-circle"></i></span>
+      <div><p class="voc-stat-num voc-stat-num--new">{{ cnt_new }}</p><p class="voc-stat-label">신규</p></div>
+    </a>
+    <a class="voc-stat-card voc-stat-card--done {% if selected_status=='요청됨' %}voc-stat-card--active{% endif %}" href="{{ url_for('voc_manage', status='요청됨') }}">
+      <span class="voc-stat-icon voc-stat-icon--done"><i class="ti ti-circle-check"></i></span>
+      <div><p class="voc-stat-num voc-stat-num--done">{{ cnt_requested }}</p><p class="voc-stat-label">요청됨</p></div>
+    </a>
+  </div>
+
+  {# ── 테이블 ── #}
+  <div class="voc-table-wrap">
+    <table class="voc-table">
+      <thead>
+        <tr>
+          <th class="voc-col-status">상태</th>
+          <th class="voc-col-res">예약번호</th>
+          <th class="voc-col-car">차량번호</th>
+          <th class="voc-col-org">소속</th>
+          <th class="voc-col-spot">스팟명</th>
+          <th class="voc-col-photo">사진</th>
+          <th class="voc-col-at">접수시간</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr class="voc-row" onclick="vocOpenModal({{ item.id }})">
+          <td class="voc-col-status">
+            <span class="voc-badge voc-badge--{{ item.status }}"><i class="voc-badge-dot"></i>{{ item.status }}</span>
+          </td>
+          <td class="voc-col-res">{{ item.reservation_no or '-' }}</td>
+          <td class="voc-col-car"><span class="voc-car-num">{{ item.car_number or '-' }}</span></td>
+          <td class="voc-col-org">{{ item.org or '-' }}</td>
+          <td class="voc-col-spot">{{ item.spot or '-' }}</td>
+          <td class="voc-col-photo">
+            {% if item.photos %}
+            <span class="voc-photo-chip"><i class="ti ti-photo"></i> {{ item.photos|length }}</span>
+            {% else %}<span class="voc-no-photo">—</span>{% endif %}
+          </td>
+          <td class="voc-col-at">{{ item.synced_at }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="voc-empty-cell"><div class="voc-empty-state"><i class="ti ti-inbox"></i><p>동기화된 VOC 글이 없습니다.</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# ── 상세 모달 ── #}
+<div id="vocModal" class="voc-modal-overlay" onclick="vocCloseModal(event)">
+  <div class="voc-modal" onclick="event.stopPropagation()">
+    <div class="voc-modal-header">
+      <div>
+        <p class="voc-modal-meta" id="vocModalMeta"></p>
+        <h3 class="voc-modal-title" id="vocModalTitle">VOC 상세</h3>
+      </div>
+      <button class="voc-modal-close" onclick="vocCloseModal()"><i class="ti ti-x"></i></button>
     </div>
-</section>
+    <div class="voc-modal-body">
+      <div class="voc-modal-grid" id="vocModalFields"></div>
+      <div class="voc-modal-content" id="vocModalContent"></div>
+      <div class="voc-modal-photos" id="vocModalPhotos"></div>
+      <p><a id="vocModalPermalink" href="#" target="_blank" rel="noopener">슬랙에서 원문 보기 ›</a></p>
+
+      <div id="vocModalAssignedBox" style="display:none;">
+        <label class="voc-edit-label">담당자 전달 정보</label>
+        <div class="voc-assigned-box" id="vocAssignedInfo"></div>
+      </div>
+
+      <form id="vocModalForm" method="post">
+        <label class="voc-edit-label">시/도 · 구/군 지정 후 담당자에게 전달</label>
+        <div class="voc-modal-row">
+          <select name="city" id="vocModalCity" class="voc-edit-select" required>
+            <option value="">시/도</option>
+            {% for city in city_options %}<option value="{{ city }}">{{ city }}</option>{% endfor %}
+          </select>
+          <select name="district" id="vocModalDistrict" class="voc-edit-select" required>
+            <option value="">구/군</option>
+          </select>
+        </div>
+        <label class="voc-edit-label">메모 (선택)</label>
+        <input name="note" id="vocModalNote" class="voc-edit-input" placeholder="담당자에게 전달할 메모">
+        <div class="voc-modal-footer">
+          <button type="button" class="voc-edit-cancel" onclick="vocCloseModal()">닫기</button>
+          <button type="submit" class="voc-edit-save">담당자에게 요청</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# ── 사진 라이트박스 ── #}
+<div id="vocLightbox" class="voc-lightbox" onclick="vocCloseLightbox()">
+  <button class="voc-lb-close" onclick="vocCloseLightbox()"><i class="ti ti-x"></i></button>
+  <img id="vocLbImg" src="" alt="">
+</div>
 
 <script>
+const VOC_ITEMS = {{ items | tojson }};
 const vocRegionMap = {{ region_map | tojson }};
-document.querySelectorAll('.voc-city-select').forEach(function (citySel) {
-    const idx = citySel.dataset.idx;
-    const districtSel = document.querySelector('.voc-district-select[data-idx="' + idx + '"]');
-    if (!districtSel) return;
-    citySel.addEventListener('change', function () {
-        districtSel.innerHTML = '<option value="">구/군</option>';
-        (vocRegionMap[citySel.value] || []).forEach(function (d) {
-            const opt = document.createElement('option');
-            opt.value = d; opt.textContent = d;
-            districtSel.appendChild(opt);
-        });
-    });
+
+function vocRenderDistricts() {
+  const city = document.getElementById('vocModalCity').value;
+  const d = document.getElementById('vocModalDistrict');
+  d.innerHTML = '<option value="">구/군</option>';
+  (vocRegionMap[city] || []).forEach(function (v) {
+    const o = document.createElement('option');
+    o.value = v; o.textContent = v;
+    d.appendChild(o);
+  });
+}
+document.getElementById('vocModalCity').addEventListener('change', vocRenderDistricts);
+
+function vocOpenModal(id) {
+  const item = VOC_ITEMS.find(function (x) { return x.id === id; });
+  if (!item) return;
+
+  document.getElementById('vocModalMeta').textContent = (item.author || '슬랙') + ' · ' + (item.synced_at || '');
+  document.getElementById('vocModalTitle').textContent = (item.car_number || item.reservation_no || 'VOC') + ' 상세';
+
+  const fieldsHtml = [
+    ['예약번호', item.reservation_no], ['차량번호', item.car_number],
+    ['소속', item.org], ['스팟명', item.spot]
+  ].map(function (pair) {
+    return '<div class="voc-field"><span>' + pair[0] + '</span><b>' + (pair[1] || '-') + '</b></div>';
+  }).join('');
+  document.getElementById('vocModalFields').innerHTML = fieldsHtml;
+  document.getElementById('vocModalContent').textContent = item.content || item.text || '';
+  document.getElementById('vocModalPermalink').href = item.permalink || '#';
+
+  const photosBox = document.getElementById('vocModalPhotos');
+  photosBox.innerHTML = '';
+  (item.photos || []).forEach(function (p) {
+    const img = document.createElement('img');
+    img.src = '/voc_photo/' + p.id;
+    img.alt = p.name || '사진';
+    img.loading = 'lazy';
+    img.onclick = function () { vocOpenLightbox('/voc_photo/' + p.id); };
+    photosBox.appendChild(img);
+  });
+
+  const assignedBox = document.getElementById('vocModalAssignedBox');
+  const form = document.getElementById('vocModalForm');
+  if (item.status === '요청됨') {
+    assignedBox.style.display = 'block';
+    document.getElementById('vocAssignedInfo').innerHTML =
+      '<span>' + (item.city || '') + ' ' + (item.district || '') + '</span>' +
+      '<small>' + (item.requested_by || '') + ' · ' + (item.requested_at || '') + '</small>' +
+      (item.note ? '<p>' + item.note + '</p>' : '');
+    form.style.display = 'none';
+  } else {
+    assignedBox.style.display = 'none';
+    form.style.display = 'block';
+    form.action = '/voc_manage/request/' + item.id;
+    document.getElementById('vocModalCity').value = '';
+    vocRenderDistricts();
+    document.getElementById('vocModalNote').value = '';
+  }
+
+  document.getElementById('vocModal').classList.add('open');
+}
+function vocCloseModal(e) {
+  if (e && e.target !== document.getElementById('vocModal')) return;
+  document.getElementById('vocModal').classList.remove('open');
+}
+function vocOpenLightbox(src) {
+  document.getElementById('vocLbImg').src = src;
+  document.getElementById('vocLightbox').classList.add('open');
+}
+function vocCloseLightbox() {
+  document.getElementById('vocLightbox').classList.remove('open');
+}
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') { vocCloseModal(); vocCloseLightbox(); }
 });
 </script>
 
 <style>
-.voc-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.voc-table th, .voc-table td { padding: 10px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid rgba(216,224,235,.6); }
-.voc-content-cell { max-width: 340px; white-space: pre-line; line-height: 1.5; }
-.voc-action-cell { min-width: 220px; }
-.voc-request-form { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.voc-request-form .app-input { width: auto; min-width: 90px; padding: 6px 8px; font-size: 12px; }
-.voc-request-form input[name="note"] { min-width: 140px; }
-.voc-request-form .primary-btn { padding: 6px 14px; font-size: 12px; }
-.voc-assigned { display: flex; flex-direction: column; gap: 2px; }
-.voc-assigned small { color: var(--text-secondary, #6b7280); }
+.voc-wrap { padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+
+.voc-stat-row { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.voc-stat-card { display:flex; align-items:center; gap:14px; background:var(--surface,#fff); border:1.5px solid var(--d-border,#e5e8ec); border-radius:14px; padding:16px 20px; text-decoration:none; color:inherit; transition:all .15s; }
+.voc-stat-card:hover { border-color:#FF9900; box-shadow:0 2px 12px rgba(255,153,0,.10); }
+.voc-stat-card--active { border-color:#FF9900 !important; background:#fffaf3 !important; box-shadow:0 2px 16px rgba(255,153,0,.15) !important; }
+.voc-stat-icon { width:42px; height:42px; border-radius:12px; background:#f4f6f8; display:flex; align-items:center; justify-content:center; font-size:20px; color:var(--text-secondary); flex-shrink:0; }
+.voc-stat-icon--new { background:#fff3e0; color:#e65100; }
+.voc-stat-icon--done { background:#e8f5e9; color:#2e7d32; }
+.voc-stat-num { font-size:24px; font-weight:800; color:#111827; margin:0 0 2px; line-height:1; }
+.voc-stat-num--new { color:#e65100; }
+.voc-stat-num--done { color:#2e7d32; }
+.voc-stat-label { font-size:12px; font-weight:600; color:var(--text-secondary); margin:0; }
+
+.voc-table-wrap { background:#fff; border:1px solid var(--d-border,#e5e8ec); border-radius:14px; overflow:hidden; overflow-x:auto; box-shadow:0 1px 4px rgba(0,0,0,.04); }
+.voc-table { width:100%; border-collapse:collapse; font-size:13px; }
+.voc-table thead th { background:#f8f9fb; padding:11px 14px; text-align:left; font-size:11px; font-weight:700; color:#6b7280; letter-spacing:.04em; text-transform:uppercase; border-bottom:1px solid var(--d-border,#e5e8ec); white-space:nowrap; }
+.voc-table tbody tr { border-bottom:1px solid #f0f2f5; cursor:pointer; transition:background .1s; }
+.voc-table tbody tr:hover { background:#fafbfc; }
+.voc-table tbody tr:last-child { border-bottom:none; }
+.voc-table td { padding:12px 14px; vertical-align:middle; }
+.voc-col-status { width:88px; }
+.voc-col-res { width:100px; white-space:nowrap; }
+.voc-col-car { width:110px; white-space:nowrap; }
+.voc-col-org { width:140px; }
+.voc-col-spot { min-width:160px; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.voc-col-photo { width:70px; }
+.voc-col-at { width:120px; white-space:nowrap; color:#9ca3af; font-size:12px; }
+.voc-car-num { font-weight:800; font-family:'Courier New',monospace; }
+
+.voc-badge { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:700; white-space:nowrap; }
+.voc-badge-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.voc-badge--신규 { background:#fff7ed; color:#c2410c; }
+.voc-badge--신규 .voc-badge-dot { background:#f97316; }
+.voc-badge--요청됨 { background:#f0fdf4; color:#15803d; }
+.voc-badge--요청됨 .voc-badge-dot { background:#22c55e; }
+
+.voc-photo-chip { display:inline-flex; align-items:center; gap:4px; font-size:12px; color:#6b7280; }
+.voc-no-photo { color:#d1d5db; }
+
+.voc-empty-cell { text-align:center; padding:64px 20px !important; }
+.voc-empty-state { display:flex; flex-direction:column; align-items:center; gap:10px; color:#9ca3af; }
+.voc-empty-state .ti { font-size:36px; }
+
+/* 모달 */
+.voc-modal-overlay { display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.4); align-items:center; justify-content:center; padding:20px; }
+.voc-modal-overlay.open { display:flex; }
+.voc-modal { background:#fff; border-radius:16px; width:520px; max-width:100%; max-height:88vh; overflow-y:auto; box-shadow:0 8px 40px rgba(0,0,0,.18); }
+.voc-modal-header { display:flex; align-items:flex-start; justify-content:space-between; padding:20px 20px 14px; border-bottom:1px solid #f0f2f5; }
+.voc-modal-meta { font-size:11px; color:#9ca3af; font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin:0 0 4px; }
+.voc-modal-title { font-size:16px; font-weight:800; color:#111827; margin:0; }
+.voc-modal-close { width:32px; height:32px; border-radius:8px; border:none; background:#f4f6f8; color:#6b7280; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; margin-left:10px; }
+.voc-modal-close:hover { background:#e5e8ec; color:#111827; }
+.voc-modal-body { padding:16px 20px 20px; }
+.voc-modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 16px; margin-bottom:14px; }
+.voc-field { display:flex; justify-content:space-between; font-size:13px; border-bottom:1px dashed #f0f2f5; padding-bottom:4px; }
+.voc-field span { color:#9ca3af; }
+.voc-field b { color:#111827; }
+.voc-modal-content { background:#f8f9fb; border-radius:10px; padding:12px 14px; font-size:13px; color:#374151; line-height:1.6; margin-bottom:14px; border:1px solid #f0f2f5; white-space:pre-line; max-height:180px; overflow-y:auto; }
+.voc-modal-photos { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.voc-modal-photos img { width:90px; height:70px; object-fit:cover; border-radius:8px; border:1px solid var(--border,#e0e0e0); cursor:zoom-in; }
+.voc-edit-label { display:block; font-size:11px; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:.04em; margin:12px 0 6px; }
+.voc-modal-row { display:flex; gap:8px; }
+.voc-edit-select, .voc-edit-input { width:100%; padding:8px 10px; font-size:13px; border:1px solid #d1d5db; border-radius:8px; background:#fff; color:#111827; font-family:inherit; outline:none; box-sizing:border-box; }
+.voc-edit-select:focus, .voc-edit-input:focus { border-color:#FF9900; box-shadow:0 0 0 2px rgba(255,153,0,.12); }
+.voc-modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:14px; }
+.voc-edit-cancel { padding:7px 16px; border-radius:8px; font-size:13px; font-weight:600; background:#fff; border:1px solid #d1d5db; color:#6b7280; cursor:pointer; font-family:inherit; }
+.voc-edit-save { padding:7px 18px; border-radius:8px; font-size:13px; font-weight:700; background:#FF9900; border:none; color:#fff; cursor:pointer; font-family:inherit; }
+.voc-assigned-box { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:12px 14px; font-size:13px; }
+.voc-assigned-box span { font-weight:700; color:#15803d; display:block; }
+.voc-assigned-box small { color:#6b7280; }
+.voc-assigned-box p { margin:6px 0 0; color:#374151; }
+
+/* 라이트박스 */
+.voc-lightbox { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.88); align-items:center; justify-content:center; }
+.voc-lightbox.open { display:flex; }
+.voc-lightbox img { max-width:90vw; max-height:88vh; border-radius:10px; object-fit:contain; }
+.voc-lb-close { position:absolute; top:20px; right:24px; width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,.12); border:none; color:#fff; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.voc-lb-close:hover { background:rgba(255,255,255,.25); }
+
+@media (max-width: 700px) {
+  .voc-stat-row { grid-template-columns: 1fr; }
+  .voc-modal-grid { grid-template-columns: 1fr; }
+}
 </style>
 
 {% endblock %}

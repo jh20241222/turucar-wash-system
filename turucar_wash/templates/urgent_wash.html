@@ -106,11 +106,11 @@
 
             <form id="uwAcceptForm" method="post">
                 <label class="uw-edit-label">작업조치예정일 지정</label>
-                <button type="button" class="uw-date-input" onclick="uwOpenCalendar()">
-                    <span id="uwModalDateLabel">📅 날짜 선택</span>
-                </button>
                 <input type="hidden" name="scheduled_date" id="uwModalDateValue" value="">
-                <div class="uw-modal-footer">
+                <div class="uw-modal-footer" style="justify-content:space-between;align-items:center;">
+                    <button type="button" class="uw-date-input" onclick="uwOpenCalendar()">
+                        <span id="uwModalDateLabel">📅 날짜 선택</span>
+                    </button>
                     <button type="submit" class="uw-accept-btn">예정일 저장 (접수)</button>
                 </div>
             </form>

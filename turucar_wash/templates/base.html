@@ -256,6 +256,9 @@
 
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=31"></script>
     <script src="{{ url_for('static', filename='js/app_loader.js') }}?v=31"></script>
+    {% if current_user.is_authenticated %}
+    <script src="{{ url_for('static', filename='js/push.js') }}?v=1"></script>
+    {% endif %}
     <script>
     (function(){
         function setMode(){

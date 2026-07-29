@@ -48,14 +48,14 @@
     </section>
 
     <section class="home-support-grid-v12" aria-label="지원 메뉴">
-        <a href="{{ url_for('urgent_wash') }}" class="home-support-card-v12" style="position:relative;">
+        <a href="{{ url_for('urgent_wash') }}" class="home-support-card-v12">
             <span class="support-visual-v12" aria-hidden="true">
                 <img src="{{ url_for('static', filename='img/icon-urgent-wash.png') }}" alt="">
+                {% if field_request_badge_count %}
+                <span class="urgent-badge-v12">{{ field_request_badge_count if field_request_badge_count < 100 else '99+' }}</span>
+                {% endif %}
             </span>
             <strong>긴급 세차</strong>
-            {% if field_request_badge_count %}
-            <em style="position:absolute;top:8px;right:8px;background:#e53935;color:#fff;font-style:normal;font-weight:800;font-size:11px;line-height:1;border-radius:999px;padding:4px 7px;">{{ field_request_badge_count }}</em>
-            {% endif %}
         </a>
         <a href="{{ url_for('support_choice') }}" class="home-support-card-v12">
             <span class="support-visual-v12 chat-v12" aria-hidden="true">

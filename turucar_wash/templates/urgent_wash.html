@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_pagination.html" import render_pagination %}
 {% block document_title %}Turu Wash · 긴급세차{% endblock %}
 {% block content %}
 
@@ -12,8 +13,12 @@
             {% else %}내가 처리해야 할 긴급세차 차량을 확인합니다.{% endif %}
         </p>
     </div>
-    <div class="hero-chip-stack"><span>{{ pending|length }}</span><strong>대기중</strong></div>
+    <div class="hero-chip-stack"><span>{{ pending_count }}</span><strong>대기중</strong></div>
 </section>
+
+<div style="display:flex;justify-content:flex-end;margin:-6px 0 2px;">
+    <button type="button" class="push-enable-btn uw-notify-btn">🔔 알림 받기</button>
+</div>
 
 {% if current_user.is_admin %}
 <section class="admin-card app-card">
@@ -36,7 +41,7 @@
                 </select>
             </div>
         </div>
-        <label class="field-label">메모</label>
+        <label class="field-label">내용</label>
         <textarea name="note" class="app-input" rows="3" placeholder="요청 내용을 입력해주세요."></textarea>
         <button class="primary-btn tall full" type="submit">긴급세차 요청 보내기</button>
     </form>
@@ -44,34 +49,54 @@
 {% endif %}
 
 <section class="app-section table-panel app-card">
-    <div class="table-title-row"><h2>대기중인 요청</h2><span>{{ pending|length }}건</span></div>
-    <div class="stack-form" style="gap:12px;">
+    <div class="table-title-row"><h2>대기중인 요청</h2><span>{{ pending_count }}건</span></div>
+    <div class="uw-card-list">
         {% for r in pending %}
-        <article class="admin-card app-card" style="padding:14px 16px;">
-            <div class="ticket-title-row">
-                <span class="ticket-status">{{ '슬랙 VOC' if r.source == 'voc' else '긴급세차' }}</span>
-                <strong>{{ r.car_number or (r.city + ' ' + r.district) }}</strong>
-                <small>{{ r.created_at }}</small>
+        <article class="uw-order-card">
+            <div class="uw-order-top">
+                <span class="uw-order-tag {{ 'uw-order-tag--voc' if r.source == 'voc' else '' }}">{{ '슬랙 VOC' if r.source == 'voc' else '긴급세차' }}</span>
+                <span class="uw-order-time">{{ r.created_at }}</span>
             </div>
-            <div class="ticket-meta">
-                <span>지역 {{ r.city }} {{ r.district }}</span>
-                {% if r.vendor %}<span>업체 {{ r.vendor }}</span>{% endif %}
-                <span>요청자 {{ r.created_by }}</span>
+            <div class="uw-order-plate">{{ r.car_number or (r.city + ' ' + r.district) }}</div>
+            <div class="uw-order-meta">
+                <span>지역 <b>{{ r.city }} {{ r.district }}</b></span>
+                {% if r.vendor %}<span>업체 <b>{{ r.vendor }}</b></span>{% endif %}
+                <span>요청자 <b>{{ r.created_by }}</b></span>
             </div>
-            {% if r.note %}<p class="ticket-message" style="white-space:pre-line;">{{ r.note }}</p>{% endif %}
-            <form method="post" action="{{ url_for('urgent_wash_complete', req_id=r.id) }}" style="margin-top:10px;">
-                <button type="submit" class="primary-btn">완료 처리</button>
-            </form>
+            {% if r.note %}<div class="uw-order-content">{{ r.note }}</div>{% endif %}
+
+            {% if r.status == '접수' %}
+            <div class="uw-order-actions">
+                <span class="uw-scheduled-chip">🗓 {{ r.scheduled_date }} 작업 예정 (담당 {{ r.accepted_by }})</span>
+                <form method="post" action="{{ url_for('urgent_wash_complete', req_id=r.id) }}">
+                    <button type="submit" class="uw-complete-btn">완료 처리</button>
+                </form>
+            </div>
+            {% else %}
+            <div class="uw-order-actions">
+                <form method="post" action="{{ url_for('urgent_wash_accept', req_id=r.id) }}" onsubmit="return uwValidateAccept({{ r.id }});" style="display:flex;gap:8px;align-items:center;">
+                    <input type="hidden" name="scheduled_date" id="uw_date_{{ r.id }}" value="">
+                    <button type="button" class="uw-date-input" onclick="uwOpenCalendar({{ r.id }})">
+                        <span id="uw_date_label_{{ r.id }}">📅 작업조치예정일</span>
+                    </button>
+                    <button type="submit" class="uw-accept-btn">접수</button>
+                </form>
+                <form method="post" action="{{ url_for('urgent_wash_complete', req_id=r.id) }}">
+                    <button type="submit" class="uw-complete-btn" style="background:#f4f6f8;color:#374151;">바로 완료</button>
+                </form>
+            </div>
+            {% endif %}
         </article>
         {% else %}
-        <div class="notice-empty"><strong>대기중인 긴급세차 요청이 없습니다.</strong><span>요청이 등록되면 이곳에 표시됩니다.</span></div>
+        <div class="uw-empty"><strong>대기중인 긴급세차 요청이 없습니다.</strong><p style="margin-top:6px;">요청이 등록되면 이곳에 표시됩니다.</p></div>
         {% endfor %}
     </div>
+    {{ render_pagination(pending_current_page, pending_total_pages, 'page') }}
 </section>
 
-{% if done %}
+{% if done_count %}
 <section class="app-section table-panel app-card">
-    <div class="table-title-row"><h2>최근 완료</h2><span>{{ done|length }}건</span></div>
+    <div class="table-title-row"><h2>최근 완료</h2><span>{{ done_count }}건</span></div>
     <div class="table-wrap">
         <table>
             <thead><tr><th>구분</th><th>차량/지역</th><th>업체</th><th>완료자</th><th>완료일시</th></tr></thead>
@@ -88,8 +113,31 @@
             </tbody>
         </table>
     </div>
+    {{ render_pagination(done_current_page, done_total_pages, 'done_page') }}
 </section>
 {% endif %}
+
+{# ── 작업조치예정일 달력 팝업 (기존 완료현황 달력과 동일한 UI) ── #}
+<div class="notice-modal-backdrop" id="uw-cal-backdrop" onclick="closeUwCalendar(event)">
+    <div class="turu-mini-modal" style="padding:24px;max-width:320px;" onclick="event.stopPropagation()">
+        <button type="button" class="notice-modal-close" onclick="closeUwCalendar()" aria-label="닫기">×</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <button type="button" onclick="uwCalChangeMonth(-1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 14px;cursor:pointer;">‹</button>
+            <strong id="uw-cal-title" style="font-size:15px;font-weight:950;color:var(--color-text-primary);"></strong>
+            <button type="button" onclick="uwCalChangeMonth(1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 14px;cursor:pointer;">›</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px;">
+            <span style="text-align:center;font-size:11px;font-weight:900;color:#E24B4A;padding:4px 0;">일</span>
+            <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">월</span>
+            <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">화</span>
+            <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">수</span>
+            <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">목</span>
+            <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">금</span>
+            <span style="text-align:center;font-size:11px;font-weight:900;color:#185FA5;padding:4px 0;">토</span>
+        </div>
+        <div id="uw-cal-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
+    </div>
+</div>
 
 <script>
 const uwRegionMap = {{ region_map | tojson }};
@@ -106,6 +154,53 @@ const uwRegionMap = {{ region_map | tojson }};
         });
     });
 })();
+
+let _uwCalTargetId = null, _uwcy, _uwcm;
+function uwOpenCalendar(reqId) {
+    _uwCalTargetId = reqId;
+    const today = new Date();
+    _uwcy = today.getFullYear(); _uwcm = today.getMonth();
+    renderUwCal();
+    document.getElementById('uw-cal-backdrop').classList.add('open');
+}
+function closeUwCalendar(e) {
+    if (e && e.target !== document.getElementById('uw-cal-backdrop')) return;
+    document.getElementById('uw-cal-backdrop').classList.remove('open');
+}
+function uwCalChangeMonth(delta) {
+    _uwcm += delta;
+    if (_uwcm > 11) { _uwcm = 0; _uwcy++; } else if (_uwcm < 0) { _uwcm = 11; _uwcy--; }
+    renderUwCal();
+}
+function renderUwCal() {
+    document.getElementById('uw-cal-title').textContent = _uwcy + '년 ' + (_uwcm + 1) + '월';
+    const first = new Date(_uwcy, _uwcm, 1).getDay();
+    const last = new Date(_uwcy, _uwcm + 1, 0).getDate();
+    let html = '';
+    for (let i = 0; i < first; i++) html += '<span></span>';
+    for (let day = 1; day <= last; day++) {
+        const mm = String(_uwcm + 1).padStart(2, '0');
+        const dd = String(day).padStart(2, '0');
+        const ds = _uwcy + '-' + mm + '-' + dd;
+        html += '<button type="button" onclick="uwPickDate(\'' + ds + '\')" style="border:none;border-radius:8px;padding:6px 2px;font-size:13px;font-weight:600;background:transparent;color:var(--color-text-primary);cursor:pointer;">' + day + '</button>';
+    }
+    document.getElementById('uw-cal-days').innerHTML = html;
+}
+function uwPickDate(ds) {
+    if (_uwCalTargetId) {
+        document.getElementById('uw_date_' + _uwCalTargetId).value = ds;
+        document.getElementById('uw_date_label_' + _uwCalTargetId).textContent = '📅 ' + ds;
+    }
+    closeUwCalendar();
+}
+function uwValidateAccept(reqId) {
+    const val = document.getElementById('uw_date_' + reqId).value;
+    if (!val) {
+        alert('작업 조치 예정일을 먼저 선택해주세요.');
+        return false;
+    }
+    return true;
+}
 </script>
 
 {% endblock %}

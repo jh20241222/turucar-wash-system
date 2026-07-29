@@ -3010,6 +3010,29 @@ def inject_field_request_badge_count():
     except Exception as e:
         print(f"[FieldRequest] badge 오류: {e}")
         return {"field_request_badge_count": 0}
+def _parse_field_request_note(note):
+    """field_requests.note에서 (VOC 요청 건은 '소속:'/'스팟명:'/'내용:' 라벨로 저장돼 있음)
+    차량소속/스팟명/내용만 뽑아낸다. 라벨이 없는 일반 긴급세차 메모는 그대로 내용으로 취급."""
+    note = note or ""
+    org, spot = "", ""
+    content_lines = []
+    matched_any = False
+    for line in note.split("\n"):
+        s = line.strip()
+        if s.startswith("소속:"):
+            org = s[len("소속:"):].strip()
+            matched_any = True
+        elif s.startswith("스팟명:"):
+            spot = s[len("스팟명:"):].strip()
+            matched_any = True
+        elif s.startswith("내용:"):
+            content_lines.append(s[len("내용:"):].strip())
+            matched_any = True
+        elif s.startswith("[전달 메모]"):
+            content_lines.append(s)
+        elif not matched_any:
+            content_lines.append(s)
+    return {"org": org, "spot": spot, "content": "\n".join(l for l in content_lines if l)}
 @app.route("/urgent_wash", methods=["GET", "POST"])
 @login_required
 def urgent_wash():
@@ -3058,7 +3081,14 @@ def urgent_wash():
     done_all = [r for r in visible if r["status"] == "완료"]
     pending_page, pending_current_page, pending_total_pages = paginate_list(pending_all, page, per_page=10)
     done_page_rows, done_current_page, done_total_pages = paginate_list(done_all, done_page, per_page=10)
-    pending_items = [dict(r) for r in pending_page]
+    pending_items = []
+    for r in pending_page:
+        d = dict(r)
+        parsed = _parse_field_request_note(d.get("note"))
+        d["org_display"] = parsed["org"]
+        d["spot_display"] = parsed["spot"]
+        d["content_display"] = parsed["content"]
+        pending_items.append(d)
     return render_template(
         "urgent_wash.html",
         pending=pending_items,

@@ -3058,9 +3058,10 @@ def urgent_wash():
     done_all = [r for r in visible if r["status"] == "완료"]
     pending_page, pending_current_page, pending_total_pages = paginate_list(pending_all, page, per_page=10)
     done_page_rows, done_current_page, done_total_pages = paginate_list(done_all, done_page, per_page=10)
+    pending_items = [dict(r) for r in pending_page]
     return render_template(
         "urgent_wash.html",
-        pending=pending_page,
+        pending=pending_items,
         pending_count=len(pending_all),
         pending_current_page=pending_current_page,
         pending_total_pages=pending_total_pages,

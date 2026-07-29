@@ -63,41 +63,18 @@
             대기중 · {{ pending_count }}건
         </div>
         {% for r in pending %}
-        <div class="turu-delete-item-v24">
-            <div class="turu-order-card-v24 turu-order-card--urgent uw-flat-card">
-                <div class="turu-card-copy-v24">
-                    <div class="turu-card-title-v24">
-                        <strong>{{ r.car_number or (r.city + ' ' + r.district) }}</strong>
-                        <em class="{{ 'chip-regular' if r.source == 'voc' else 'chip-urgent' }}">{{ '슬랙 VOC' if r.source == 'voc' else '긴급세차' }}</em>
-                        {% if r.status == '접수' %}<em class="chip-day chip-day--new">🗓 {{ r.scheduled_date }}</em>{% endif %}
-                    </div>
-                    <p><span>📍</span>{{ r.city }} {{ r.district }}</p>
-                    {% if r.vendor %}<p><span>🚗</span>{{ r.vendor }}</p>{% endif %}
-                    <p><span>👤</span>{{ r.created_by }}</p>
-                    {% if r.note %}<span class="turu-card-note-v24">{{ r.note }}</span>{% endif %}
+        <div class="turu-order-card-v24 turu-order-card--urgent uw-flat-card" onclick="uwOpenDetail({{ r.id }})" style="cursor:pointer;">
+            <div class="turu-card-copy-v24">
+                <div class="turu-card-title-v24">
+                    <strong>{{ r.car_number or (r.city + ' ' + r.district) }}</strong>
+                    <em class="{{ 'chip-regular' if r.source == 'voc' else 'chip-urgent' }}">{{ '슬랙 VOC' if r.source == 'voc' else '긴급세차' }}</em>
+                    {% if r.status == '접수' %}<em class="chip-day chip-day--new">🗓 {{ r.scheduled_date }}</em>{% endif %}
                 </div>
+                <p><span>📍</span>{{ r.city }} {{ r.district }}</p>
+                {% if r.vendor %}<p><span>🚗</span>{{ r.vendor }}</p>{% endif %}
+                <p><span>👤</span>{{ r.created_by }}</p>
+                {% if r.note %}<span class="turu-card-note-v24">{{ r.note }}</span>{% endif %}
             </div>
-            {% if r.status == '접수' %}
-            <div class="uw-order-actions">
-                <span class="uw-scheduled-chip">🗓 {{ r.scheduled_date }} 작업 예정 (담당 {{ r.accepted_by }})</span>
-                <form method="post" action="{{ url_for('urgent_wash_complete', req_id=r.id) }}">
-                    <button type="submit" class="uw-complete-btn">완료 처리</button>
-                </form>
-            </div>
-            {% else %}
-            <div class="uw-order-actions">
-                <form method="post" action="{{ url_for('urgent_wash_accept', req_id=r.id) }}" onsubmit="return uwValidateAccept({{ r.id }});" style="display:flex;gap:8px;align-items:center;">
-                    <input type="hidden" name="scheduled_date" id="uw_date_{{ r.id }}" value="">
-                    <button type="button" class="uw-date-input" onclick="uwOpenCalendar({{ r.id }})">
-                        <span id="uw_date_label_{{ r.id }}">📅 작업조치예정일</span>
-                    </button>
-                    <button type="submit" class="uw-accept-btn">접수</button>
-                </form>
-                <form method="post" action="{{ url_for('urgent_wash_complete', req_id=r.id) }}">
-                    <button type="submit" class="uw-complete-btn" style="background:#f4f6f8;color:#374151;">바로 완료</button>
-                </form>
-            </div>
-            {% endif %}
         </div>
         {% endfor %}
         {% else %}
@@ -105,33 +82,44 @@
         {% endif %}
     </div>
     {{ render_pagination(pending_current_page, pending_total_pages, 'page') }}
-
-    {% if done_count %}
-    <div class="wash-section-label wash-section-label--regular wash-section-label--mt">
-        <span class="wash-section-dot wash-section-dot--regular"></span>
-        최근 완료 · {{ done_count }}건
-    </div>
-    <section class="app-section table-panel app-card">
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>구분</th><th>차량/지역</th><th>업체</th><th>완료자</th><th>완료일시</th></tr></thead>
-                <tbody>
-                    {% for r in done %}
-                    <tr>
-                        <td>{{ '슬랙 VOC' if r.source == 'voc' else '긴급세차' }}</td>
-                        <td>{{ r.car_number or (r.city + ' ' + r.district) }}</td>
-                        <td>{{ r.vendor or '-' }}</td>
-                        <td>{{ r.completed_by or '-' }}</td>
-                        <td>{{ r.completed_at or '-' }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {{ render_pagination(done_current_page, done_total_pages, 'done_page') }}
-    </section>
-    {% endif %}
 </section>
+
+{# ── 상세 처리 모달 (카드 클릭 시) ── #}
+<div id="uwDetailOverlay" class="uw-modal-overlay" onclick="uwCloseDetail(event)">
+    <div class="uw-modal" onclick="event.stopPropagation()">
+        <div class="uw-modal-header">
+            <div>
+                <p class="uw-modal-meta" id="uwDetailMeta"></p>
+                <h3 class="uw-modal-title" id="uwDetailTitle">긴급세차 상세</h3>
+            </div>
+            <button class="uw-modal-close" onclick="uwCloseDetail()">×</button>
+        </div>
+        <div class="uw-modal-body">
+            <div class="uw-modal-grid" id="uwDetailFields"></div>
+            <div class="uw-modal-content" id="uwDetailContent"></div>
+
+            <div id="uwDetailScheduledBox" style="display:none;">
+                <label class="uw-edit-label">작업조치예정일</label>
+                <div class="uw-assigned-box" id="uwScheduledInfo"></div>
+            </div>
+
+            <form id="uwAcceptForm" method="post">
+                <label class="uw-edit-label">작업조치예정일 지정</label>
+                <button type="button" class="uw-date-input" onclick="uwOpenCalendar()">
+                    <span id="uwModalDateLabel">📅 날짜 선택</span>
+                </button>
+                <input type="hidden" name="scheduled_date" id="uwModalDateValue" value="">
+                <div class="uw-modal-footer">
+                    <button type="submit" class="uw-accept-btn">예정일 저장 (접수)</button>
+                </div>
+            </form>
+
+            <form id="uwCompleteForm" method="post" style="margin-top:10px;">
+                <button type="submit" class="uw-complete-btn" style="width:100%;">완료 처리</button>
+            </form>
+        </div>
+    </div>
+</div>
 
 {# ── 작업조치예정일 달력 팝업 (세차 오더 달력과 동일한 UI) ── #}
 <div class="notice-modal-backdrop" id="uw-cal-backdrop" onclick="closeUwCalendar(event)">
@@ -157,12 +145,32 @@
 
 <style>
 .uw-flat-card { grid-template-columns: minmax(0,1fr) !important; }
-.uw-order-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -6px 4px 4px; }
 .uw-date-input { padding: 8px 10px; font-size: 13px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #111827; font-family: inherit; cursor: pointer; }
-.uw-accept-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #111827; color: #fff; border: none; cursor: pointer; }
-.uw-complete-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #FF9900; color: #fff; border: none; cursor: pointer; }
-.uw-scheduled-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; background: #eef2ff; color: #4338ca; }
+.uw-accept-btn { padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #111827; color: #fff; border: none; cursor: pointer; }
+.uw-complete-btn { padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #FF9900; color: #fff; border: none; cursor: pointer; }
 .uw-notify-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 700; background: #fff7ed; color: #c2410c; border: 1px solid #ffe0b2; cursor: pointer; white-space: nowrap; }
+
+/* 상세 모달 */
+.uw-modal-overlay { display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.4); align-items:center; justify-content:center; padding:20px; }
+.uw-modal-overlay.open { display:flex; }
+.uw-modal { background:#fff; border-radius:16px; width:520px; max-width:100%; max-height:88vh; overflow-y:auto; box-shadow:0 8px 40px rgba(0,0,0,.18); }
+.uw-modal-header { display:flex; align-items:flex-start; justify-content:space-between; padding:20px 20px 14px; border-bottom:1px solid #f0f2f5; }
+.uw-modal-meta { font-size:11px; color:#9ca3af; font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin:0 0 4px; }
+.uw-modal-title { font-size:16px; font-weight:800; color:#111827; margin:0; }
+.uw-modal-close { width:32px; height:32px; border-radius:8px; border:none; background:#f4f6f8; color:#6b7280; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; margin-left:10px; }
+.uw-modal-close:hover { background:#e5e8ec; color:#111827; }
+.uw-modal-body { padding:16px 20px 20px; }
+.uw-modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 16px; margin-bottom:14px; }
+.uw-field { display:flex; justify-content:space-between; font-size:13px; border-bottom:1px dashed #f0f2f5; padding-bottom:4px; }
+.uw-field span { color:#9ca3af; }
+.uw-field b { color:#111827; }
+.uw-modal-content { background:#f8f9fb; border-radius:10px; padding:12px 14px; font-size:13px; color:#374151; line-height:1.6; margin-bottom:14px; border:1px solid #f0f2f5; white-space:pre-line; max-height:180px; overflow-y:auto; }
+.uw-edit-label { display:block; font-size:11px; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:.04em; margin:12px 0 6px; }
+.uw-modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:10px; }
+.uw-assigned-box { background:#eef2ff; border:1px solid #c7d2fe; border-radius:10px; padding:12px 14px; font-size:13px; color:#4338ca; font-weight:700; }
+@media (max-width: 700px) {
+    .uw-modal-grid { grid-template-columns: 1fr; }
+}
 </style>
 
 <script>
@@ -181,9 +189,58 @@ const uwRegionMap = {{ region_map | tojson }};
     });
 })();
 
-let _uwCalTargetId = null, _uwcy, _uwcm;
-function uwOpenCalendar(reqId) {
-    _uwCalTargetId = reqId;
+const UW_ITEMS = {{ pending | tojson }};
+
+function uwOpenDetail(id) {
+    const item = UW_ITEMS.find(function (x) { return x.id === id; });
+    if (!item) return;
+
+    document.getElementById('uwDetailMeta').textContent = (item.source === 'voc' ? '슬랙 VOC' : '긴급세차') + ' · ' + (item.created_at || '');
+    document.getElementById('uwDetailTitle').textContent = (item.car_number || (item.city + ' ' + item.district)) + ' 상세';
+
+    const fieldsHtml = [
+        ['지역', (item.city || '') + ' ' + (item.district || '')],
+        ['업체', item.vendor],
+        ['요청자', item.created_by],
+        ['접수시간', item.created_at]
+    ].map(function (pair) {
+        return '<div class="uw-field"><span>' + pair[0] + '</span><b>' + (pair[1] || '-') + '</b></div>';
+    }).join('');
+    document.getElementById('uwDetailFields').innerHTML = fieldsHtml;
+    document.getElementById('uwDetailContent').textContent = item.note || '';
+
+    const scheduledBox = document.getElementById('uwDetailScheduledBox');
+    const acceptForm = document.getElementById('uwAcceptForm');
+    const completeForm = document.getElementById('uwCompleteForm');
+    completeForm.action = '/urgent_wash/complete/' + item.id;
+
+    if (item.status === '접수') {
+        scheduledBox.style.display = 'block';
+        document.getElementById('uwScheduledInfo').textContent = '🗓 ' + item.scheduled_date + ' 작업 예정 (담당 ' + item.accepted_by + ')';
+        acceptForm.style.display = 'none';
+    } else {
+        scheduledBox.style.display = 'none';
+        acceptForm.style.display = 'block';
+        acceptForm.action = '/urgent_wash/accept/' + item.id;
+        document.getElementById('uwModalDateValue').value = '';
+        document.getElementById('uwModalDateLabel').textContent = '📅 날짜 선택';
+    }
+
+    document.getElementById('uwDetailOverlay').classList.add('open');
+}
+function uwCloseDetail(e) {
+    if (e && e.target !== document.getElementById('uwDetailOverlay')) return;
+    document.getElementById('uwDetailOverlay').classList.remove('open');
+}
+document.getElementById('uwAcceptForm').addEventListener('submit', function (e) {
+    if (!document.getElementById('uwModalDateValue').value) {
+        e.preventDefault();
+        alert('작업 조치 예정일을 먼저 선택해주세요.');
+    }
+});
+
+let _uwcy, _uwcm;
+function uwOpenCalendar() {
     const today = new Date();
     _uwcy = today.getFullYear(); _uwcm = today.getMonth();
     renderUwCal();
@@ -213,20 +270,13 @@ function renderUwCal() {
     document.getElementById('uw-cal-days').innerHTML = html;
 }
 function uwPickDate(ds) {
-    if (_uwCalTargetId) {
-        document.getElementById('uw_date_' + _uwCalTargetId).value = ds;
-        document.getElementById('uw_date_label_' + _uwCalTargetId).textContent = '📅 ' + ds;
-    }
+    document.getElementById('uwModalDateValue').value = ds;
+    document.getElementById('uwModalDateLabel').textContent = '📅 ' + ds;
     closeUwCalendar();
 }
-function uwValidateAccept(reqId) {
-    const val = document.getElementById('uw_date_' + reqId).value;
-    if (!val) {
-        alert('작업 조치 예정일을 먼저 선택해주세요.');
-        return false;
-    }
-    return true;
-}
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { uwCloseDetail(); closeUwCalendar(); }
+});
 </script>
 
 {% endblock %}

@@ -3024,6 +3024,8 @@ def _parse_voc_summary(text):
         text, "스팟명", "출발스팟명",
         "출발 스테이션명", "출발스테이션명", "도착 스테이션명", "도착스테이션명"
     )
+    # 원문에 "OOO 스팟"처럼 라벨과 같은 단어가 값 끝에 중복으로 붙는 경우가 있어 정리
+    spot = re.sub(r"\s*스팟\s*$", "", spot).strip()
     content = _extract_voc_field(text, "내용")
     if not content:
         # "내용:" 라벨이 없는 포맷 — 마지막으로 매칭된 라벨 뒤의 텍스트를 내용으로 간주
@@ -3040,6 +3042,30 @@ def _parse_voc_summary(text):
         "spot": spot,
         "content": content,
     }
+def _voc_vehicle_master_lookup():
+    """차량마스터(wash.db)에서 차량번호 → 행, 스팟 → (지역시도, 지역구군) 매핑을 만든다."""
+    conn = get_wash_db()
+    rows = conn.execute("SELECT 차량번호, 스팟, 지역시도, 지역구군 FROM vehicle_master").fetchall()
+    conn.close()
+    by_car = set()
+    by_spot = {}
+    for r in rows:
+        if r["차량번호"]:
+            by_car.add(r["차량번호"].strip())
+        if r["스팟"]:
+            spot_key = r["스팟"].strip()
+            if spot_key and spot_key not in by_spot:
+                by_spot[spot_key] = (r["지역시도"] or "", r["지역구군"] or "")
+    return by_car, by_spot
+def _match_spot_region(spot, by_spot):
+    if not spot:
+        return "", ""
+    if spot in by_spot:
+        return by_spot[spot]
+    for key, region in by_spot.items():
+        if key and (key in spot or spot in key):
+            return region
+    return "", ""
 @app.route("/voc_manage")
 @login_required
 def voc_manage():
@@ -3064,7 +3090,10 @@ def voc_manage():
     else:
         rows = conn.execute("SELECT * FROM voc_items ORDER BY slack_ts DESC").fetchall()
     all_rows = conn.execute("SELECT status FROM voc_items").fetchall()
+    seq_rows = conn.execute("SELECT id FROM voc_items ORDER BY slack_ts ASC, id ASC").fetchall()
     conn.close()
+    seq_map = {r["id"]: i + 1 for i, r in enumerate(seq_rows)}
+    by_car, by_spot = _voc_vehicle_master_lookup()
     page_rows, current_page, total_pages = paginate_list(rows, page, per_page=10)
     items = []
     for r in page_rows:
@@ -3075,6 +3104,11 @@ def voc_manage():
         except Exception:
             photos = []
         d["photos"] = [{"id": p["id"], "name": p.get("name", "photo")} for p in photos if p.get("id")]
+        d["seq"] = seq_map.get(r["id"], 0)
+        d["bm"] = "왕복" if d["car_number"] and d["car_number"] in by_car else "혼용"
+        region_large, region_small = _match_spot_region(d["spot"], by_spot)
+        d["region_large"] = region_large
+        d["region_small"] = region_small
         items.append(d)
     cnt_total = len(all_rows)
     cnt_new = sum(1 for r in all_rows if r["status"] == "신규")
@@ -3183,4 +3217,16 @@ def voc_request(item_id):
         flash("⚠️ 요청은 등록됐지만 해당 지역에 담당 작업자가 배정되어 있지 않습니다.")
     else:
         flash("✅ VOC 요청이 담당 작업자의 긴급세차 목록으로 전달되었습니다.")
+    return redirect(url_for("voc_manage"))
+@app.route("/voc_manage/delete/<int:item_id>", methods=["POST"])
+@login_required
+def voc_delete(item_id):
+    if not current_user.is_master:
+        return "Forbidden", 403
+    conn = get_user_db()
+    conn.execute("DELETE FROM field_requests WHERE voc_item_id=?", (item_id,))
+    conn.execute("DELETE FROM voc_items WHERE id=?", (item_id,))
+    conn.commit()
+    conn.close()
+    flash("✅ VOC 항목이 삭제되었습니다.")
     return redirect(url_for("voc_manage"))

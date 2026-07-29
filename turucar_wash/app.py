@@ -2243,8 +2243,13 @@ def wash_status_delete():
 SLACK_DAMAGE_WEBHOOK = os.environ.get("SLACK_DAMAGE_WEBHOOK", "")
 SLACK_BOT_TOKEN      = os.environ.get("SLACK_BOT_TOKEN", "")
 SLACK_CHANNEL_ID     = os.environ.get("SLACK_CHANNEL_ID", "")
-# 차량청결 VOC 채널(#피플카-차량청결voc, private). SLACK_BOT_TOKEN이 이 채널에
-# 초대되어 있어야 하고, 토큰에 groups:history / users:read 스코프가 필요하다.
+# 차량청결 VOC 채널(#피플카-차량청결voc, private) 읽기 전용 봇 토큰.
+# 훼손제보 전송용 SLACK_BOT_TOKEN과는 별개의 앱/토큰을 쓰는 것을 권장한다
+# (기존 앱에 스코프를 추가하면 워크스페이스 관리자 재승인이 필요해 번거로움).
+# 새 앱을 만들었다면 SLACK_VOC_BOT_TOKEN 환경변수에 그 Bot User OAuth Token을 넣고,
+# 봇을 #피플카-차량청결voc 채널에 /invite 한 뒤 groups:history, users:read 스코프로 설치하면 된다.
+# 별도 설정이 없으면 기존 SLACK_BOT_TOKEN을 그대로 사용한다(하위 호환).
+SLACK_VOC_BOT_TOKEN  = os.environ.get("SLACK_VOC_BOT_TOKEN", "") or SLACK_BOT_TOKEN
 SLACK_VOC_CHANNEL_ID = os.environ.get("SLACK_VOC_CHANNEL_ID", "C0785K12R4G")
 APP_BASE_URL = os.environ.get("APP_BASE_URL", "https://turucar-wash-system-production.up.railway.app")
 ALLOWED_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp"}
@@ -2689,11 +2694,11 @@ def _slack_resolve_user(user_id):
     if user_id in _SLACK_USER_NAME_CACHE:
         return _SLACK_USER_NAME_CACHE[user_id]
     name = user_id
-    if SLACK_BOT_TOKEN:
+    if SLACK_VOC_BOT_TOKEN:
         try:
             resp = _requests.get(
                 "https://slack.com/api/users.info",
-                headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}"},
+                headers={"Authorization": f"Bearer {SLACK_VOC_BOT_TOKEN}"},
                 params={"user": user_id},
                 timeout=5
             )
@@ -2709,21 +2714,21 @@ _SLACK_ERROR_HINTS = {
     "not_in_channel": "봇이 #피플카-차량청결voc 채널에 초대되어 있지 않습니다. 슬랙에서 해당 채널에 봇을 /invite 해주세요.",
     "channel_not_found": "채널 ID(SLACK_VOC_CHANNEL_ID)가 올바르지 않습니다.",
     "missing_scope": "슬랙 앱에 groups:history(비공개 채널 읽기) 권한이 없습니다. OAuth 스코프 추가 후 워크스페이스에 재설치해주세요.",
-    "invalid_auth": "SLACK_BOT_TOKEN이 유효하지 않습니다. 토큰을 다시 확인해주세요.",
+    "invalid_auth": "SLACK_VOC_BOT_TOKEN이 유효하지 않습니다. 토큰을 다시 확인해주세요.",
     "account_inactive": "슬랙 앱/토큰이 비활성화된 상태입니다.",
     "token_revoked": "슬랙 봇 토큰이 폐기(재발급)되었습니다.",
 }
 def _sync_voc_from_slack(limit=50):
     """#피플카-차량청결voc 채널의 최근 메시지를 voc_items 테이블로 동기화.
-    SLACK_BOT_TOKEN이 해당(private) 채널에 초대되어 있어야 하며
-    groups:history, users:read 스코프가 필요하다.
+    SLACK_VOC_BOT_TOKEN(전용 봇, 없으면 SLACK_BOT_TOKEN)이 해당(private) 채널에
+    초대되어 있어야 하며 groups:history, users:read 스코프가 필요하다.
     반환값: (신규 건수, 오류 메시지 또는 None)"""
-    if not SLACK_BOT_TOKEN or not SLACK_VOC_CHANNEL_ID:
-        return 0, "SLACK_BOT_TOKEN 환경변수가 설정되어 있지 않습니다."
+    if not SLACK_VOC_BOT_TOKEN or not SLACK_VOC_CHANNEL_ID:
+        return 0, "SLACK_VOC_BOT_TOKEN 환경변수가 설정되어 있지 않습니다."
     try:
         resp = _requests.get(
             "https://slack.com/api/conversations.history",
-            headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}"},
+            headers={"Authorization": f"Bearer {SLACK_VOC_BOT_TOKEN}"},
             params={"channel": SLACK_VOC_CHANNEL_ID, "limit": limit},
             timeout=10
         )
@@ -2909,7 +2914,7 @@ def voc_manage():
         items=items,
         city_options=list(KOREA_REGIONS.keys()),
         region_map=KOREA_REGIONS,
-        slack_configured=bool(SLACK_BOT_TOKEN and SLACK_VOC_CHANNEL_ID),
+        slack_configured=bool(SLACK_VOC_BOT_TOKEN and SLACK_VOC_CHANNEL_ID),
         sync_error=get_app_setting("voc_last_sync_error", ""),
     )
 @app.route("/voc_manage/sync", methods=["POST"])

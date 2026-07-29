@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import shutil
@@ -22,7 +23,7 @@ except ImportError:
     _PIL_AVAILABLE = False
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import (
-    Flask, flash, jsonify, redirect, render_template,
+    Flask, Response, flash, jsonify, redirect, render_template,
     request, send_file, send_from_directory, url_for
 )
 from flask_login import (
@@ -385,9 +386,14 @@ def init_db():
             district TEXT,
             note TEXT,
             requested_by TEXT,
-            requested_at TEXT
+            requested_at TEXT,
+            photos TEXT
         )
     """)
+    # voc_items.photos 컬럼 마이그레이션 (기존 DB 호환)
+    _voc_cols = [row[1] for row in cur.execute("PRAGMA table_info(voc_items)").fetchall()]
+    if "photos" not in _voc_cols:
+        cur.execute("ALTER TABLE voc_items ADD COLUMN photos TEXT")
     # 긴급세차 / VOC 요청 건 — 지역 담당 작업자에게 전달되는 작업 큐
     cur.execute("""
         CREATE TABLE IF NOT EXISTS field_requests (
@@ -2757,10 +2763,21 @@ def _sync_voc_from_slack(limit=50):
             user_id = m.get("user", "")
             author = _slack_resolve_user(user_id) if user_id else (m.get("username") or "슬랙")
             permalink = f"https://peoplecarhq.slack.com/archives/{SLACK_VOC_CHANNEL_ID}/p{ts.replace('.', '')}"
+            photos = []
+            for f in m.get("files", []) or []:
+                mimetype = f.get("mimetype", "")
+                url_private = f.get("url_private")
+                if url_private and (mimetype.startswith("image/") or f.get("filetype") in ("jpg", "jpeg", "png", "gif", "webp", "heic")):
+                    photos.append({
+                        "id": f.get("id"),
+                        "name": f.get("name") or "photo",
+                        "mimetype": mimetype or "image/jpeg",
+                        "url_private": url_private,
+                    })
             conn.execute(
-                """INSERT INTO voc_items (channel_id, slack_ts, author, text, permalink, synced_at)
-                   VALUES (?, ?, ?, ?, ?, ?)""",
-                (SLACK_VOC_CHANNEL_ID, ts, author, text, permalink, synced_at)
+                """INSERT INTO voc_items (channel_id, slack_ts, author, text, permalink, synced_at, photos)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (SLACK_VOC_CHANNEL_ID, ts, author, text, permalink, synced_at, json.dumps(photos, ensure_ascii=False))
             )
             new_count += 1
         conn.commit()
@@ -2973,22 +2990,78 @@ def voc_manage():
         _, sync_error = _sync_voc_from_slack()
         set_app_setting("voc_last_sync_ts", str(now_ts))
         set_app_setting("voc_last_sync_error", sync_error or "")
+    selected_status = request.args.get("status", "").strip()
     conn = get_user_db()
-    rows = conn.execute("SELECT * FROM voc_items ORDER BY slack_ts DESC LIMIT 100").fetchall()
+    if selected_status:
+        rows = conn.execute(
+            "SELECT * FROM voc_items WHERE status=? ORDER BY slack_ts DESC LIMIT 200",
+            (selected_status,)
+        ).fetchall()
+    else:
+        rows = conn.execute("SELECT * FROM voc_items ORDER BY slack_ts DESC LIMIT 200").fetchall()
+    all_rows = conn.execute("SELECT status FROM voc_items").fetchall()
     conn.close()
     items = []
     for r in rows:
         d = dict(r)
         d.update(_parse_voc_summary(r["text"]))
+        try:
+            photos = json.loads(r["photos"] or "[]")
+        except Exception:
+            photos = []
+        d["photos"] = [{"id": p["id"], "name": p.get("name", "photo")} for p in photos if p.get("id")]
         items.append(d)
+    cnt_total = len(all_rows)
+    cnt_new = sum(1 for r in all_rows if r["status"] == "신규")
+    cnt_requested = sum(1 for r in all_rows if r["status"] == "요청됨")
     return render_template(
         "voc_manage.html",
         items=items,
+        selected_status=selected_status,
+        cnt_total=cnt_total,
+        cnt_new=cnt_new,
+        cnt_requested=cnt_requested,
         city_options=list(KOREA_REGIONS.keys()),
         region_map=KOREA_REGIONS,
         slack_configured=bool(SLACK_VOC_BOT_TOKEN and SLACK_VOC_CHANNEL_ID),
         sync_error=get_app_setting("voc_last_sync_error", ""),
     )
+@app.route("/voc_photo/<file_id>")
+@login_required
+def voc_photo(file_id):
+    if not current_user.is_master:
+        return "Forbidden", 403
+    if not SLACK_VOC_BOT_TOKEN:
+        return "Not configured", 404
+    conn = get_user_db()
+    rows = conn.execute("SELECT photos FROM voc_items WHERE photos LIKE ?", (f'%{file_id}%',)).fetchall()
+    conn.close()
+    url_private = None
+    for r in rows:
+        try:
+            photos = json.loads(r["photos"] or "[]")
+        except Exception:
+            continue
+        for p in photos:
+            if p.get("id") == file_id:
+                url_private = p.get("url_private")
+                break
+        if url_private:
+            break
+    if not url_private:
+        return "Not found", 404
+    try:
+        resp = _requests.get(
+            url_private,
+            headers={"Authorization": f"Bearer {SLACK_VOC_BOT_TOKEN}"},
+            timeout=15
+        )
+        if resp.status_code != 200:
+            return "Slack fetch failed", 502
+        return Response(resp.content, mimetype=resp.headers.get("Content-Type", "image/jpeg"))
+    except Exception as e:
+        print(f"[VOC Slack] 사진 프록시 오류: {e}")
+        return "Error", 502
 @app.route("/voc_manage/sync", methods=["POST"])
 @login_required
 def voc_sync():

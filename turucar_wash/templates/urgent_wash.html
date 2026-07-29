@@ -96,6 +96,7 @@
         </div>
         <div class="uw-modal-body">
             <div class="uw-modal-grid" id="uwDetailFields"></div>
+            <label class="uw-edit-label">내용</label>
             <div class="uw-modal-content" id="uwDetailContent"></div>
 
             <div id="uwDetailScheduledBox" style="display:none;">
@@ -199,15 +200,15 @@ function uwOpenDetail(id) {
     document.getElementById('uwDetailTitle').textContent = (item.car_number || (item.city + ' ' + item.district)) + ' 상세';
 
     const fieldsHtml = [
-        ['지역', (item.city || '') + ' ' + (item.district || '')],
-        ['업체', item.vendor],
-        ['요청자', item.created_by],
-        ['접수시간', item.created_at]
+        ['차량번호', item.car_number],
+        ['차량소속', item.org_display],
+        ['스팟명', item.spot_display],
+        ['지역', (item.city || '') + ' ' + (item.district || '')]
     ].map(function (pair) {
         return '<div class="uw-field"><span>' + pair[0] + '</span><b>' + (pair[1] || '-') + '</b></div>';
     }).join('');
     document.getElementById('uwDetailFields').innerHTML = fieldsHtml;
-    document.getElementById('uwDetailContent').textContent = item.note || '';
+    document.getElementById('uwDetailContent').textContent = item.content_display || item.note || '';
 
     const scheduledBox = document.getElementById('uwDetailScheduledBox');
     const acceptForm = document.getElementById('uwAcceptForm');

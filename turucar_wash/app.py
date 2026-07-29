@@ -4,6 +4,7 @@ import re
 import shutil
 import sqlite3
 import uuid
+from urllib.parse import urlencode
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 KST = ZoneInfo("Asia/Seoul")
@@ -686,6 +687,41 @@ def filter_distinct_values(cur, table_name, column_name, base_query, base_params
     query = f"SELECT DISTINCT {column_name} AS value FROM {table_name} WHERE 1=1{base_query} ORDER BY {column_name}"
     rows = cur.execute(query, base_params).fetchall()
     return [r["value"] for r in rows if r["value"] not in (None, "", "None")]
+# =========================================================
+# 공용 페이지네이션 (리스트가 있는 관리 화면에서 공통으로 사용)
+# =========================================================
+def paginate_list(items, page, per_page=10):
+    """리스트를 페이지 단위로 잘라서 (해당 페이지 항목, 현재 페이지, 전체 페이지 수)를 반환."""
+    total = len(items)
+    total_pages = max(1, -(-total // per_page))  # ceil division
+    page = max(1, min(page, total_pages))
+    start = (page - 1) * per_page
+    return items[start:start + per_page], page, total_pages
+def pagination_window(current_page, total_pages, radius=2):
+    """1 2 3 ... 형태로 표시할 페이지 번호 목록. 생략된 구간은 '…' 문자열로 표시."""
+    if total_pages <= 1:
+        return []
+    pages = {1, total_pages, current_page}
+    for i in range(current_page - radius, current_page + radius + 1):
+        if 1 <= i <= total_pages:
+            pages.add(i)
+    ordered = sorted(pages)
+    result = []
+    prev = None
+    for p in ordered:
+        if prev is not None and p - prev > 1:
+            result.append("…")
+        result.append(p)
+        prev = p
+    return result
+def pagination_url(param_name, page_num):
+    """현재 쿼리스트링을 유지한 채 param_name 값만 page_num으로 바꾼 URL을 만든다.
+    (한 화면에 목록이 여러 개 있을 때 acct_page/region_page 처럼 서로 다른 파라미터명을 쓸 수 있게 함)"""
+    args = request.args.to_dict()
+    args[param_name] = page_num
+    return request.path + "?" + urlencode(args)
+app.jinja_env.globals["pagination_window"] = pagination_window
+app.jinja_env.globals["pagination_url"] = pagination_url
 def can_manage_target(target_row):
     if current_user.is_master:
         return True
@@ -1463,10 +1499,20 @@ def account_manage():
     city_options = list(KOREA_REGIONS.keys())
     region_map = KOREA_REGIONS
     conn.close()
+    acct_page = request.args.get("acct_page", 1, type=int)
+    region_page = request.args.get("region_page", 1, type=int)
+    accounts_page, acct_current_page, acct_total_pages = paginate_list(accounts, acct_page, per_page=10)
+    region_list_page, region_current_page, region_total_pages = paginate_list(region_list, region_page, per_page=10)
     return render_template(
         "account_manage.html",
         accounts=accounts,
+        accounts_page=accounts_page,
+        acct_current_page=acct_current_page,
+        acct_total_pages=acct_total_pages,
         region_list=region_list,
+        region_list_page=region_list_page,
+        region_current_page=region_current_page,
+        region_total_pages=region_total_pages,
         vendors=vendors,
         creatable_accounts=creatable_accounts,
         city_options=city_options,
@@ -2140,6 +2186,7 @@ def support_manage():
         flash("\u274c 권한이 없습니다.")
         return redirect(url_for("dashboard"))
     selected_status = request.args.get("status", "")
+    page = request.args.get("page", 1, type=int)
     conn = get_user_db()
     if selected_status:
         rows = conn.execute(
@@ -2151,7 +2198,12 @@ def support_manage():
             "SELECT * FROM support_tickets ORDER BY created_at DESC"
         ).fetchall()
     conn.close()
-    return render_template("support_manage.html", rows=rows, selected_status=selected_status)
+    page_rows, current_page, total_pages = paginate_list(rows, page, per_page=10)
+    return render_template(
+        "support_manage.html", rows=rows, page_rows=page_rows,
+        current_page=current_page, total_pages=total_pages,
+        selected_status=selected_status
+    )
 @app.route("/support_reply/<int:ticket_id>", methods=["POST"])
 @login_required
 def support_reply(ticket_id):
@@ -2548,13 +2600,19 @@ def damage_manage():
         flash("접근 권한이 없습니다.")
         return redirect(url_for("dashboard"))
     status_filter = request.args.get("status", "")
+    page = request.args.get("page", 1, type=int)
     conn = get_user_db()
     if status_filter:
         rows = conn.execute("SELECT * FROM damage_reports WHERE status=? ORDER BY id DESC", (status_filter,)).fetchall()
     else:
         rows = conn.execute("SELECT * FROM damage_reports ORDER BY id DESC").fetchall()
     conn.close()
-    return render_template("damage_manage.html", rows=rows, selected_status=status_filter)
+    page_rows, current_page, total_pages = paginate_list(rows, page, per_page=10)
+    return render_template(
+        "damage_manage.html", rows=rows, page_rows=page_rows,
+        current_page=current_page, total_pages=total_pages,
+        selected_status=status_filter
+    )
 @app.route("/damage_reply/<int:report_id>", methods=["POST"])
 @login_required
 def damage_reply(report_id):
@@ -2939,7 +2997,9 @@ def urgent_wash_complete(req_id):
     return redirect(url_for("urgent_wash"))
 _VOC_LABELS = [
     "서비스구분", "예약번호", "고객명", "연락처", "차량 번호", "차량번호", "차종",
-    "차량 소속", "소속", "사용 건수", "출발스팟명", "도착스팟명", "스팟명", "주소",
+    "차량 소속", "소속", "사용 건수", "출발스팟명", "도착스팟명", "스팟명",
+    "출발 스테이션명", "도착 스테이션명", "출발스테이션명", "도착스테이션명",
+    "운행 시간", "운행시간", "주소",
     "예약시간", "회원명", "전화번호", "세차 경과일", "세차경과일",
     "정비 경과일", "정비경과일", "관리자예약 생성여부", "관리자예약 기간", "내용",
 ]
@@ -2960,7 +3020,10 @@ def _parse_voc_summary(text):
     reservation_no = _extract_voc_field(text, "예약번호")
     car_number = _extract_voc_field(text, "차량 번호", "차량번호")
     org = _extract_voc_field(text, "차량 소속", "소속")
-    spot = _extract_voc_field(text, "스팟명", "출발스팟명")
+    spot = _extract_voc_field(
+        text, "스팟명", "출발스팟명",
+        "출발 스테이션명", "출발스테이션명", "도착 스테이션명", "도착스테이션명"
+    )
     content = _extract_voc_field(text, "내용")
     if not content:
         # "내용:" 라벨이 없는 포맷 — 마지막으로 매칭된 라벨 뒤의 텍스트를 내용으로 간주
@@ -2991,18 +3054,20 @@ def voc_manage():
         set_app_setting("voc_last_sync_ts", str(now_ts))
         set_app_setting("voc_last_sync_error", sync_error or "")
     selected_status = request.args.get("status", "").strip()
+    page = request.args.get("page", 1, type=int)
     conn = get_user_db()
     if selected_status:
         rows = conn.execute(
-            "SELECT * FROM voc_items WHERE status=? ORDER BY slack_ts DESC LIMIT 200",
+            "SELECT * FROM voc_items WHERE status=? ORDER BY slack_ts DESC",
             (selected_status,)
         ).fetchall()
     else:
-        rows = conn.execute("SELECT * FROM voc_items ORDER BY slack_ts DESC LIMIT 200").fetchall()
+        rows = conn.execute("SELECT * FROM voc_items ORDER BY slack_ts DESC").fetchall()
     all_rows = conn.execute("SELECT status FROM voc_items").fetchall()
     conn.close()
+    page_rows, current_page, total_pages = paginate_list(rows, page, per_page=10)
     items = []
-    for r in rows:
+    for r in page_rows:
         d = dict(r)
         d.update(_parse_voc_summary(r["text"]))
         try:
@@ -3018,6 +3083,8 @@ def voc_manage():
         "voc_manage.html",
         items=items,
         selected_status=selected_status,
+        current_page=current_page,
+        total_pages=total_pages,
         cnt_total=cnt_total,
         cnt_new=cnt_new,
         cnt_requested=cnt_requested,

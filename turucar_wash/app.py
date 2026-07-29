@@ -410,7 +410,26 @@ def init_db():
             created_by TEXT NOT NULL,
             created_at TEXT NOT NULL,
             completed_by TEXT,
-            completed_at TEXT
+            completed_at TEXT,
+            scheduled_date TEXT,
+            accepted_by TEXT,
+            accepted_at TEXT
+        )
+    """)
+    # field_requests 작업조치예정일 컬럼 마이그레이션 (기존 DB 호환)
+    _fr_cols = [row[1] for row in cur.execute("PRAGMA table_info(field_requests)").fetchall()]
+    for _fr_col in ("scheduled_date", "accepted_by", "accepted_at"):
+        if _fr_col not in _fr_cols:
+            cur.execute(f"ALTER TABLE field_requests ADD COLUMN {_fr_col} TEXT")
+    # 웹 푸시 구독 정보 (브라우저/PWA 알림용)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS push_subscriptions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            endpoint TEXT NOT NULL UNIQUE,
+            p256dh TEXT NOT NULL,
+            auth TEXT NOT NULL,
+            created_at TEXT NOT NULL
         )
     """)
     # 마스터 계정 없으면 자동 생성
@@ -2306,6 +2325,16 @@ SLACK_CHANNEL_ID     = os.environ.get("SLACK_CHANNEL_ID", "")
 SLACK_VOC_BOT_TOKEN  = os.environ.get("SLACK_VOC_BOT_TOKEN", "") or SLACK_BOT_TOKEN
 SLACK_VOC_CHANNEL_ID = os.environ.get("SLACK_VOC_CHANNEL_ID", "C0785K12R4G")
 APP_BASE_URL = os.environ.get("APP_BASE_URL", "https://turucar-wash-system-production.up.railway.app")
+# 웹 푸시(브라우저/PWA 알림) — VAPID 키. Railway 환경변수에 VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY 설정.
+# 키가 없으면 앱은 정상 동작하되 푸시 발송만 조용히 스킵된다.
+VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "")
+VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "")
+VAPID_CONTACT_EMAIL = os.environ.get("VAPID_CONTACT_EMAIL", "admin@peoplecar.co.kr")
+try:
+    from pywebpush import webpush, WebPushException
+    _WEBPUSH_AVAILABLE = True
+except Exception:
+    _WEBPUSH_AVAILABLE = False
 ALLOWED_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp"}
 _PHOTO_MAX_PX = 1600   # 최대 해상도 (px)
 _PHOTO_QUALITY = 75    # JPEG 압축 품질 (%)
@@ -2848,8 +2877,8 @@ def _scheduled_voc_sync():
     except Exception as e:
         print(f"[VOC Slack] 스케줄 동기화 오류: {e}")
 _scheduler.add_job(_scheduled_voc_sync, "interval", minutes=5)
-def _post_voc_completion_reply(voc_item_id, completed_by):
-    """긴급세차(VOC 요청 건)가 완료되면 원본 슬랙 메시지에 스레드 댓글을 단다.
+def _post_voc_thread_reply(voc_item_id, text):
+    """VOC 원본 슬랙 메시지에 스레드 댓글을 단다.
     SLACK_VOC_BOT_TOKEN에 chat:write 스코프가 있어야 하고, 봇이 채널 멤버여야 한다."""
     if not SLACK_VOC_BOT_TOKEN or not voc_item_id:
         return
@@ -2858,7 +2887,6 @@ def _post_voc_completion_reply(voc_item_id, completed_by):
     conn.close()
     if not item or not item["slack_ts"]:
         return
-    text = f"✅ {now_kst().strftime('%m/%d')} 긴급세차 요청 완료 (처리: {completed_by})"
     try:
         resp = _requests.post(
             "https://slack.com/api/chat.postMessage",
@@ -2869,9 +2897,66 @@ def _post_voc_completion_reply(voc_item_id, completed_by):
         )
         data = resp.json()
         if not data.get("ok"):
-            print(f"[VOC Slack] 완료 댓글 전송 실패: {data.get('error')}")
+            print(f"[VOC Slack] 댓글 전송 실패: {data.get('error')}")
     except Exception as e:
-        print(f"[VOC Slack] 완료 댓글 전송 예외: {e}")
+        print(f"[VOC Slack] 댓글 전송 예외: {e}")
+def _post_voc_completion_reply(voc_item_id, completed_by):
+    """긴급세차(VOC 요청 건)가 완료되면 원본 슬랙 메시지에 완료 댓글을 단다."""
+    text = f"✅ {now_kst().strftime('%m/%d')} 긴급세차 요청 완료 (처리: {completed_by})"
+    _post_voc_thread_reply(voc_item_id, text)
+def _post_voc_schedule_reply(voc_item_id, scheduled_date, accepted_by):
+    """작업자가 작업조치예정일을 지정하고 접수하면 원본 슬랙 메시지에 예정 댓글을 단다."""
+    text = f"🗓 {scheduled_date} 세차 진행 예정입니다. (담당: {accepted_by})"
+    _post_voc_thread_reply(voc_item_id, text)
+def _send_push_to_username(username, title, body, url="/urgent_wash"):
+    """해당 계정이 구독해 둔 모든 기기에 웹 푸시 알림을 보낸다. 실패한 구독은 정리한다."""
+    if not (_WEBPUSH_AVAILABLE and VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY):
+        return
+    conn = get_user_db()
+    subs = conn.execute("SELECT * FROM push_subscriptions WHERE username=?", (username,)).fetchall()
+    stale_ids = []
+    for s in subs:
+        subscription_info = {
+            "endpoint": s["endpoint"],
+            "keys": {"p256dh": s["p256dh"], "auth": s["auth"]},
+        }
+        try:
+            webpush(
+                subscription_info=subscription_info,
+                data=json.dumps({"title": title, "body": body, "url": url}),
+                vapid_private_key=VAPID_PRIVATE_KEY,
+                vapid_claims={"sub": f"mailto:{VAPID_CONTACT_EMAIL}"},
+            )
+        except WebPushException as e:
+            status = getattr(e.response, "status_code", None)
+            if status in (404, 410):
+                stale_ids.append(s["id"])
+            else:
+                print(f"[Push] 전송 실패({username}): {e}")
+        except Exception as e:
+            print(f"[Push] 전송 예외({username}): {e}")
+    if stale_ids:
+        conn.executemany("DELETE FROM push_subscriptions WHERE id=?", [(i,) for i in stale_ids])
+        conn.commit()
+    conn.close()
+def _target_usernames_for_request(city, district, vendor):
+    """해당 지역/업체에 새 긴급세차 요청을 알려야 할 계정 목록(담당 작업자 + 업체 관리자)."""
+    conn = get_user_db()
+    accounts = conn.execute("SELECT username, role, vendor FROM accounts WHERE role IN ('staff','admin')").fetchall()
+    conn.close()
+    targets = []
+    for a in accounts:
+        if vendor and (a["vendor"] or "") != vendor:
+            continue
+        if a["role"] == "admin":
+            targets.append(a["username"])
+        else:
+            if (city, district) in _account_regions(a["username"]):
+                targets.append(a["username"])
+    return targets
+def _notify_urgent_wash_targets(city, district, vendor, title, body):
+    for username in _target_usernames_for_request(city, district, vendor):
+        _send_push_to_username(username, title, body)
 def _resolve_vendor_for_region(city, district):
     """해당 시/도+구/군을 담당 지역으로 등록해 둔 staff 계정의 업체명을 반환. 없으면 빈 문자열."""
     if not city or not district:
@@ -2918,7 +3003,7 @@ def inject_field_request_badge_count():
         return {"field_request_badge_count": 0}
     try:
         conn = get_user_db()
-        rows = conn.execute("SELECT * FROM field_requests WHERE status='대기'").fetchall()
+        rows = conn.execute("SELECT * FROM field_requests WHERE status IN ('대기','접수')").fetchall()
         conn.close()
         count = len(_visible_field_requests(rows, current_user))
         return {"field_request_badge_count": count}
@@ -2957,20 +3042,62 @@ def urgent_wash():
             flash("⚠️ 요청은 등록됐지만 해당 지역에 담당 작업자가 배정되어 있지 않습니다.")
         else:
             flash("✅ 긴급세차 요청이 담당 작업자에게 전달되었습니다.")
+            _notify_urgent_wash_targets(
+                city, district, vendor,
+                "🚨 긴급세차 요청",
+                f"{city} {district}" + (f" · {car_number}" if car_number else "") + " 긴급세차 요청이 있습니다."
+            )
         return redirect(url_for("urgent_wash"))
+    page = request.args.get("page", 1, type=int)
+    done_page = request.args.get("done_page", 1, type=int)
     conn = get_user_db()
     all_rows = conn.execute("SELECT * FROM field_requests ORDER BY id DESC").fetchall()
     conn.close()
     visible = _visible_field_requests(all_rows, current_user)
-    pending = [r for r in visible if r["status"] == "대기"]
-    done = [r for r in visible if r["status"] == "완료"][:30]
+    pending_all = [r for r in visible if r["status"] in ("대기", "접수")]
+    done_all = [r for r in visible if r["status"] == "완료"]
+    pending_page, pending_current_page, pending_total_pages = paginate_list(pending_all, page, per_page=10)
+    done_page_rows, done_current_page, done_total_pages = paginate_list(done_all, done_page, per_page=10)
     return render_template(
         "urgent_wash.html",
-        pending=pending,
-        done=done,
+        pending=pending_page,
+        pending_count=len(pending_all),
+        pending_current_page=pending_current_page,
+        pending_total_pages=pending_total_pages,
+        done=done_page_rows,
+        done_count=len(done_all),
+        done_current_page=done_current_page,
+        done_total_pages=done_total_pages,
         city_options=list(KOREA_REGIONS.keys()),
         region_map=KOREA_REGIONS,
+        today_str=now_kst().strftime("%Y-%m-%d"),
+        push_available=bool(_WEBPUSH_AVAILABLE and VAPID_PUBLIC_KEY),
     )
+@app.route("/urgent_wash/accept/<int:req_id>", methods=["POST"])
+@login_required
+def urgent_wash_accept(req_id):
+    scheduled_date = request.form.get("scheduled_date", "").strip()
+    if not scheduled_date:
+        flash("❌ 작업 조치 예정일을 선택해주세요.")
+        return redirect(url_for("urgent_wash"))
+    conn = get_user_db()
+    row = conn.execute("SELECT * FROM field_requests WHERE id=?", (req_id,)).fetchone()
+    if not row or not _field_request_visible(row, current_user):
+        conn.close()
+        flash("❌ 해당 요청을 처리할 권한이 없습니다.")
+        return redirect(url_for("urgent_wash"))
+    conn.execute(
+        """UPDATE field_requests
+           SET status='접수', scheduled_date=?, accepted_by=?, accepted_at=?
+           WHERE id=?""",
+        (scheduled_date, current_user.username, now_kst().strftime("%Y-%m-%d %H:%M"), req_id)
+    )
+    conn.commit()
+    conn.close()
+    if row["source"] == "voc" and row["voc_item_id"]:
+        _post_voc_schedule_reply(row["voc_item_id"], scheduled_date, current_user.username)
+    flash(f"✅ {scheduled_date} 작업 예정으로 접수되었습니다.")
+    return redirect(url_for("urgent_wash"))
 @app.route("/urgent_wash/complete/<int:req_id>", methods=["POST"])
 @login_required
 def urgent_wash_complete(req_id):
@@ -2990,6 +3117,46 @@ def urgent_wash_complete(req_id):
         _post_voc_completion_reply(row["voc_item_id"], current_user.username)
     flash("✅ 완료 처리되었습니다.")
     return redirect(url_for("urgent_wash"))
+@app.route("/push/vapid_public_key")
+@login_required
+def push_vapid_public_key():
+    return jsonify({"key": VAPID_PUBLIC_KEY, "available": bool(_WEBPUSH_AVAILABLE and VAPID_PUBLIC_KEY)})
+@app.route("/push/subscribe", methods=["POST"])
+@login_required
+def push_subscribe():
+    data = request.get_json(silent=True) or {}
+    endpoint = data.get("endpoint")
+    keys = data.get("keys") or {}
+    p256dh = keys.get("p256dh")
+    auth = keys.get("auth")
+    if not endpoint or not p256dh or not auth:
+        return jsonify({"ok": False, "message": "잘못된 구독 정보입니다."}), 400
+    conn = get_user_db()
+    existing = conn.execute("SELECT id FROM push_subscriptions WHERE endpoint=?", (endpoint,)).fetchone()
+    if existing:
+        conn.execute(
+            "UPDATE push_subscriptions SET username=?, p256dh=?, auth=? WHERE endpoint=?",
+            (current_user.username, p256dh, auth, endpoint)
+        )
+    else:
+        conn.execute(
+            "INSERT INTO push_subscriptions (username, endpoint, p256dh, auth, created_at) VALUES (?, ?, ?, ?, ?)",
+            (current_user.username, endpoint, p256dh, auth, now_kst().strftime("%Y-%m-%d %H:%M"))
+        )
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
+@app.route("/push/unsubscribe", methods=["POST"])
+@login_required
+def push_unsubscribe():
+    data = request.get_json(silent=True) or {}
+    endpoint = data.get("endpoint")
+    if endpoint:
+        conn = get_user_db()
+        conn.execute("DELETE FROM push_subscriptions WHERE endpoint=? AND username=?", (endpoint, current_user.username))
+        conn.commit()
+        conn.close()
+    return jsonify({"ok": True})
 _VOC_LABELS = [
     "서비스구분", "예약번호", "고객명", "연락처", "차량 번호", "차량번호", "차종",
     "차량 소속", "소속", "사용 건수", "출발스팟명", "도착스팟명", "스팟명",
@@ -3215,15 +3382,22 @@ def voc_request(item_id):
            WHERE id=?""",
         (city, district, note, current_user.username, requested_at, item_id)
     )
-    # 담당 작업자가 긴급세차 화면에서 원본 VOC 내용을 볼 수 있도록 note에 함께 담는다.
-    field_note = f"[VOC] {item['text']}"
+    # 담당 작업자에게는 원본 슬랙 텍스트(고객명/연락처 등 개인정보 포함) 대신,
+    # 차량번호/소속/스팟명/내용만 파싱해서 전달한다.
+    summary = _parse_voc_summary(item["text"])
+    field_note_lines = [
+        f"소속: {summary['org']}" if summary["org"] else "",
+        f"스팟명: {summary['spot']}" if summary["spot"] else "",
+        f"내용: {summary['content']}" if summary["content"] else "",
+    ]
+    field_note = "\n".join(line for line in field_note_lines if line)
     if note:
         field_note += f"\n[전달 메모] {note}"
     conn.execute(
         """INSERT INTO field_requests
            (source, car_number, city, district, vendor, note, voc_item_id, created_by, created_at)
-           VALUES ('voc', NULL, ?, ?, ?, ?, ?, ?, ?)""",
-        (city, district, vendor, field_note, item_id, current_user.username, requested_at)
+           VALUES ('voc', ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (summary["car_number"] or None, city, district, vendor, field_note, item_id, current_user.username, requested_at)
     )
     conn.commit()
     conn.close()
@@ -3231,6 +3405,11 @@ def voc_request(item_id):
         flash("⚠️ 요청은 등록됐지만 해당 지역에 담당 작업자가 배정되어 있지 않습니다.")
     else:
         flash("✅ VOC 요청이 담당 작업자의 긴급세차 목록으로 전달되었습니다.")
+        _notify_urgent_wash_targets(
+            city, district, vendor,
+            "🚨 긴급세차 요청 (VOC)",
+            f"{city} {district}" + (f" · {summary['car_number']}" if summary["car_number"] else "") + " 긴급세차 요청이 있습니다."
+        )
     return redirect(url_for("voc_manage"))
 @app.route("/voc_manage/delete/<int:item_id>", methods=["POST"])
 @login_required

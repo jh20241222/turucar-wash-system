@@ -8064,3 +8064,47 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 #desktop-mode .mob-date-card { display: none !important; }
 #desktop-mode .mob-stat-row { display: none !important; }
 #desktop-mode .mob-stat-cards { display: none !important; }
+
+/* ════════════════════════════════
+   공용 페이지네이션 (리스트가 있는 관리 화면 전역 공용)
+════════════════════════════════ */
+.pg-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 18px 0 6px;
+}
+.pg-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid var(--d-border, #e5e8ec);
+  background: var(--surface, #fff);
+  color: var(--text-primary, #374151);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all .15s;
+}
+.pg-link:hover { border-color: #FF9900; color: #FF9900; }
+.pg-link.pg-active {
+  background: #FF9900;
+  border-color: #FF9900;
+  color: #fff;
+  font-weight: 800;
+}
+.pg-link.pg-disabled {
+  pointer-events: none;
+  opacity: .4;
+}
+.pg-ellipsis {
+  color: var(--text-secondary, #9ca3af);
+  font-size: 13px;
+  padding: 0 4px;
+}

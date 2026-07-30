@@ -7005,7 +7005,7 @@ body.endpoint-dashboard .app-main {
 
 /* ===== v25 order/status refinement ===== */
 .turu-page-head--single-v25 {
-    justify-content: flex-start;
+    justify-content: center;
 }
 .turu-date-nav-v25 {
     display: grid;
@@ -7790,8 +7790,11 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   .home-wide-link-v12 strong{font-size:18px !important;font-weight:800 !important;}
 
   .turu-app-page-v24{background:transparent !important;padding-top:calc(20px + env(safe-area-inset-top)) !important;padding-bottom:120px !important;}
-  .turu-page-head-v24{margin-bottom:16px !important;align-items:flex-start !important;gap:12px !important;}
-  .turu-page-head-v24 h1,.endpoint-car_detail .detail-hero-clean h1{font-size:22px !important;line-height:1.2 !important;font-weight:800 !important;color:var(--turu-text) !important;letter-spacing:-.04em !important;margin:0 !important;}
+  /* v41: 로고 아래로 타이틀을 쌓지 않고, 로고 옆(같은 줄)에 작게 붙인다. 밑줄(하단)을 로고와 맞춤. */
+  .turu-page-brand-v24{display:inline-flex !important;vertical-align:bottom !important;}
+  .turu-page-brand-v24 + .turu-page-head-v24{display:inline-flex !important;vertical-align:bottom !important;width:auto !important;margin:0 0 18px 8px !important;gap:0 !important;}
+  .turu-page-brand-v24 + .turu-page-head-v24 > div:first-child{flex:none !important;text-align:left !important;}
+  .turu-page-brand-v24 + .turu-page-head-v24 h1,.endpoint-car_detail .detail-hero-clean h1{display:block !important;text-align:left !important;font-size:15px !important;line-height:1.3 !important;font-weight:600 !important;color:#8b93a3 !important;letter-spacing:-.01em !important;margin:0 !important;}
   .turu-page-head-v24 p,.endpoint-car_detail .detail-hero-clean .hero-copy{display:none !important;}
   .turu-mini-btn-v24,.filter-card .primary-btn,.filter-card .blue-btn,.primary-btn,.blue-btn,.secondary-btn{border-radius:16px !important;font-weight:700 !important;font-size:14px !important;box-shadow:none !important;}
   .turu-mini-btn-v24{background:#fff !important;color:var(--turu-text) !important;border:1px solid var(--turu-line) !important;padding:12px 16px !important;}
@@ -7923,7 +7926,7 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 
 @media (max-width:900px){
   .endpoint-wash_list .turu-page-brand-v24,
-  .endpoint-wash_status .turu-page-brand-v24{display:flex !important;align-items:center !important;justify-content:flex-start !important;padding-top:2px !important;margin-bottom:18px !important;}
+  .endpoint-wash_status .turu-page-brand-v24{display:inline-flex !important;vertical-align:bottom !important;align-items:center !important;justify-content:flex-start !important;padding-top:2px !important;margin-bottom:18px !important;}
   .endpoint-wash_list .turu-page-brand-v24 img,
   .endpoint-wash_status .turu-page-brand-v24 img{display:block !important;width:170px !important;height:auto !important;}
 
@@ -7998,7 +8001,8 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   .endpoint-support_chat .turu-page-brand-v24,
   .endpoint-support_chat .turu-page-brand-v26,
   .endpoint-car_detail .detail-page-brand-v36 {
-    display:flex !important;
+    display:inline-flex !important;
+    vertical-align:bottom !important;
     align-items:center !important;
     justify-content:flex-start !important;
     visibility:visible !important;

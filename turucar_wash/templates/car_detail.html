@@ -1,16 +1,10 @@
 {% extends "base.html" %}
 {% block document_title %}Turu Wash · {{ car['차량번호'] }}{% endblock %}
 {% block content %}
-<section class="detail-page-brand-v36"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></section>
-
-<section class="detail-hero app-card elevated brand-line-card detail-hero-clean">
-    <div class="hero-copy-block">
-        <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo">
-        <h1>업무 수행 시작</h1>
-        <p class="hero-copy">차량 정보를 확인하고 세차 기록을 입력하세요.</p>
-    </div>
-    <div class="plate-display">{{ car['차량번호'] }}</div>
-</section>
+<section class="turu-app-page-v24 detail-page-wrap-v24">
+    <header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
+    <div class="turu-page-head-v24 turu-page-head--single-v25"><div><h1>세차 기록 입력</h1><p>차량 정보를 확인하고 세차 기록을 입력하세요.</p></div></div>
+    <div class="detail-plate-chip-v40">{{ car['차량번호'] }}</div>
 
 <section class="detail-grid detail-grid-clean">
     <article class="vehicle-card app-card vehicle-card-clean">
@@ -68,6 +62,7 @@
             </div>
         </div>
     </form>
+</section>
 </section>
 
 <script>
@@ -146,9 +141,9 @@ function dCopyInfo(){
 <style>
 #d-car-detail { display: none; }
 #desktop-mode #d-car-detail { display: block !important; }
-#desktop-mode .detail-page-brand-v36,
-#desktop-mode .detail-hero,
-#desktop-mode .detail-grid { display: none !important; }
+#desktop-mode .detail-page-wrap-v24 { display: none !important; }
+
+.detail-plate-chip-v40{ margin:0 0 14px; padding:14px 20px; border-radius:16px; background:#fff; border:1px solid var(--turu-line); box-shadow:0 1px 8px rgba(0,0,0,.06); font-size:24px; font-weight:900; letter-spacing:-.03em; color:#3d4451; text-align:center; }
 
 .cdp-toggle{width:100%;padding:12px 14px;background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;font-size:14px;font-weight:700;color:#111;display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:10px;}
 .cdp-toggle.is-open{border-color:#D85A30;color:#D85A30;}

@@ -14,17 +14,21 @@
                 {% else %}내가 처리해야 할 긴급세차 차량을 확인합니다.{% endif %}
             </p>
         </div>
-        <button type="button" class="push-enable-btn uw-notify-btn">🔔 알림 받기</button>
+        <button type="button" class="push-enable-btn uw-notify-btn"><i class="ti ti-bell"></i> 알림 받기</button>
     </div>
 
-    <div class="mob-stat-row" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
-        <div style="background:#fff;border:none;border-radius:14px;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;box-shadow:0 1px 8px rgba(0,0,0,0.07);">
-            <span style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);">대기중</span>
-            <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ pending_count }}</strong>
+    <div class="mob-stat-row uw-stat-row-v27" style="grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+        <div class="uw-stat-card-v27">
+            <span>요청건</span>
+            <strong>{{ waiting_count }}</strong>
         </div>
-        <div style="background:#fff;border:none;border-radius:14px;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;box-shadow:0 1px 8px rgba(0,0,0,0.07);">
-            <span style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);">완료</span>
-            <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ done_count }}</strong>
+        <div class="uw-stat-card-v27">
+            <span>진행중</span>
+            <strong>{{ progress_count }}</strong>
+        </div>
+        <div class="uw-stat-card-v27">
+            <span>완료</span>
+            <strong>{{ done_count }}</strong>
         </div>
     </div>
 
@@ -57,27 +61,50 @@
     {% endif %}
 
     <div class="turu-card-list-v24">
-        {% if pending %}
+        {% if waiting_items %}
         <div class="wash-section-label wash-section-label--urgent">
             <span class="wash-section-dot wash-section-dot--urgent"></span>
-            대기중 · {{ pending_count }}건
+            긴급세차 요청건 · {{ waiting_count }}건
         </div>
-        {% for r in pending %}
+        {% for r in waiting_items %}
         <div class="turu-order-card-v24 turu-order-card--urgent uw-flat-card" onclick="uwOpenDetail({{ r.id }})" style="cursor:pointer;">
             <div class="turu-card-copy-v24">
                 <div class="turu-card-title-v24">
                     <strong>{{ r.car_number or (r.city + ' ' + r.district) }}</strong>
                     <em class="{{ 'chip-regular' if r.source == 'voc' else 'chip-urgent' }}">{{ '슬랙 VOC' if r.source == 'voc' else '긴급세차' }}</em>
-                    {% if r.status == '접수' %}<em class="chip-day chip-day--new">🗓 {{ r.scheduled_date }}</em>{% endif %}
                 </div>
-                <p><span>📍</span>{{ r.city }} {{ r.district }}</p>
-                {% if r.vendor %}<p><span>🚗</span>{{ r.vendor }}</p>{% endif %}
-                <p><span>👤</span>{{ r.created_by }}</p>
+                <p><span><i class="ti ti-map-pin"></i></span>{{ r.city }} {{ r.district }}</p>
+                {% if r.vendor %}<p><span><i class="ti ti-building"></i></span>{{ r.vendor }}</p>{% endif %}
+                <p><span><i class="ti ti-user"></i></span>{{ r.created_by }}</p>
                 {% if r.note %}<span class="turu-card-note-v24">{{ r.note }}</span>{% endif %}
             </div>
         </div>
         {% endfor %}
-        {% else %}
+        {% endif %}
+
+        {% if progress_items %}
+        <div class="wash-section-label wash-section-label--urgent">
+            <span class="wash-section-dot" style="background:#3B82F6;"></span>
+            진행중 · {{ progress_count }}건
+        </div>
+        {% for r in progress_items %}
+        <div class="turu-order-card-v24 turu-order-card--urgent uw-flat-card" onclick="uwOpenDetail({{ r.id }})" style="cursor:pointer;">
+            <div class="turu-card-copy-v24">
+                <div class="turu-card-title-v24">
+                    <strong>{{ r.car_number or (r.city + ' ' + r.district) }}</strong>
+                    <em class="{{ 'chip-regular' if r.source == 'voc' else 'chip-urgent' }}">{{ '슬랙 VOC' if r.source == 'voc' else '긴급세차' }}</em>
+                    <em class="chip-day chip-day--new"><i class="ti ti-calendar"></i> {{ r.scheduled_date }}</em>
+                </div>
+                <p><span><i class="ti ti-map-pin"></i></span>{{ r.city }} {{ r.district }}</p>
+                {% if r.vendor %}<p><span><i class="ti ti-building"></i></span>{{ r.vendor }}</p>{% endif %}
+                <p><span><i class="ti ti-user"></i></span>{{ r.created_by }}</p>
+                {% if r.note %}<span class="turu-card-note-v24">{{ r.note }}</span>{% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if not waiting_items and not progress_items %}
         <div class="turu-empty-v24"><strong>대기중인 긴급세차 요청이 없습니다.</strong><span>요청이 등록되면 이곳에 표시됩니다.</span></div>
         {% endif %}
     </div>
@@ -109,14 +136,20 @@
                 <input type="hidden" name="scheduled_date" id="uwModalDateValue" value="">
                 <div class="uw-modal-footer" style="justify-content:space-between;align-items:center;">
                     <button type="button" class="uw-date-input" onclick="uwOpenCalendar()">
-                        <span id="uwModalDateLabel">📅 날짜 선택</span>
+                        <span id="uwModalDateLabel"><i class="ti ti-calendar"></i> 날짜 선택</span>
                     </button>
                     <button type="submit" class="uw-accept-btn">예정일 저장 (접수)</button>
                 </div>
             </form>
 
             <form id="uwCompleteForm" method="post" style="margin-top:10px;">
+                <label class="uw-edit-label">완료 처리 (특이사항)</label>
+                <textarea name="complete_note" class="app-input uw-complete-note" rows="2" placeholder="완료 시 특이사항이 있으면 입력 (선택)"></textarea>
                 <button type="submit" class="uw-complete-btn" style="width:100%;">완료 처리</button>
+            </form>
+
+            <form id="uwCancelForm" method="post" style="margin-top:10px;display:none;" onsubmit="return confirm('이 긴급세차 요청을 취소(회수)할까요?');">
+                <button type="submit" class="uw-cancel-btn" style="width:100%;">요청 취소 (회수)</button>
             </form>
         </div>
     </div>
@@ -149,7 +182,15 @@
 .uw-date-input { padding: 8px 10px; font-size: 13px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #111827; font-family: inherit; cursor: pointer; }
 .uw-accept-btn { padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #111827; color: #fff; border: none; cursor: pointer; }
 .uw-complete-btn { padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #FF9900; color: #fff; border: none; cursor: pointer; }
+.uw-cancel-btn { padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #fff; color: #e5484d; border: 1.5px solid #ffd1d1; cursor: pointer; }
+.uw-complete-note { margin: 6px 0 10px; resize: vertical; }
 .uw-notify-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 700; background: #fff7ed; color: #c2410c; border: 1px solid #ffe0b2; cursor: pointer; white-space: nowrap; }
+
+/* 상단 통계 카드 — 홈 화면풍 여유있는 라운드/그림자 */
+.uw-stat-row-v27 { display: grid; }
+.uw-stat-card-v27 { background:#fff; border:none; border-radius:18px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:14px 8px; box-shadow:0 2px 14px rgba(0,0,0,0.06); }
+.uw-stat-card-v27 span { font-size:11px; font-weight:700; color:var(--color-text-tertiary); }
+.uw-stat-card-v27 strong { font-size:22px; font-weight:900; color:var(--color-text-primary); letter-spacing:-.02em; }
 
 /* 상세 모달 */
 .uw-modal-overlay { display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.4); align-items:center; justify-content:center; padding:20px; }
@@ -191,6 +232,7 @@ const uwRegionMap = {{ region_map | tojson }};
 })();
 
 const UW_ITEMS = {{ pending | tojson }};
+const UW_CURRENT_USERNAME = {{ current_username | tojson }};
 
 function uwOpenDetail(id) {
     const item = UW_ITEMS.find(function (x) { return x.id === id; });
@@ -213,18 +255,22 @@ function uwOpenDetail(id) {
     const scheduledBox = document.getElementById('uwDetailScheduledBox');
     const acceptForm = document.getElementById('uwAcceptForm');
     const completeForm = document.getElementById('uwCompleteForm');
+    const cancelForm = document.getElementById('uwCancelForm');
     completeForm.action = '/urgent_wash/complete/' + item.id;
+    completeForm.querySelector('textarea[name="complete_note"]').value = '';
+    cancelForm.action = '/urgent_wash/cancel/' + item.id;
+    cancelForm.style.display = (item.created_by === UW_CURRENT_USERNAME) ? 'block' : 'none';
 
     if (item.status === '접수') {
         scheduledBox.style.display = 'block';
-        document.getElementById('uwScheduledInfo').textContent = '🗓 ' + item.scheduled_date + ' 작업 예정 (담당 ' + item.accepted_by + ')';
+        document.getElementById('uwScheduledInfo').innerHTML = '<i class="ti ti-calendar"></i> ' + item.scheduled_date + ' 작업 예정 (담당 ' + item.accepted_by + ')';
         acceptForm.style.display = 'none';
     } else {
         scheduledBox.style.display = 'none';
         acceptForm.style.display = 'block';
         acceptForm.action = '/urgent_wash/accept/' + item.id;
         document.getElementById('uwModalDateValue').value = '';
-        document.getElementById('uwModalDateLabel').textContent = '📅 날짜 선택';
+        document.getElementById('uwModalDateLabel').innerHTML = '<i class="ti ti-calendar"></i> 날짜 선택';
     }
 
     document.getElementById('uwDetailOverlay').classList.add('open');
@@ -272,7 +318,7 @@ function renderUwCal() {
 }
 function uwPickDate(ds) {
     document.getElementById('uwModalDateValue').value = ds;
-    document.getElementById('uwModalDateLabel').textContent = '📅 ' + ds;
+    document.getElementById('uwModalDateLabel').innerHTML = '<i class="ti ti-calendar"></i> ' + ds;
     closeUwCalendar();
 }
 document.addEventListener('keydown', function (e) {

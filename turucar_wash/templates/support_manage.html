@@ -4,15 +4,10 @@
 {% block content %}
 
 {# ══ 모바일 ══ #}
-<section class="app-card elevated support-manage-page">
-  <div class="support-manage-head">
-    <div>
-      <p class="eyebrow">Support</p>
-      <h1>문의 관리</h1>
-      <p>작업자가 접수한 문의를 확인하고 답변합니다.</p>
-    </div>
-    <a href="{{ url_for('dashboard') }}" class="notice-more-btn">홈으로</a>
-  </div>
+<section class="turu-app-page-v24 turu-support-manage-page-v24">
+  <header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
+  <div class="turu-page-head-v24 turu-page-head--single-v25"><div><h1>문의 관리</h1><p>작업자가 접수한 문의를 확인하고 답변합니다.</p></div></div>
+
   <div class="support-filter">
     <a class="{% if not selected_status %}active{% endif %}" href="{{ url_for('support_manage') }}">전체</a>
     <a class="{% if selected_status == '접수' %}active{% endif %}" href="{{ url_for('support_manage', status='접수') }}">접수</a>
@@ -227,7 +222,7 @@
 ════════════════════════════════ */
 .sm-desktop-wrap { display:none; }
 #desktop-mode .sm-desktop-wrap { display:block !important; }
-#desktop-mode .app-card.elevated.support-manage-page { display:none !important; }
+#desktop-mode .turu-support-manage-page-v24 { display:none !important; }
 
 /* ════════════════════════════════
    요약 카드

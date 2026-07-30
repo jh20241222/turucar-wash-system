@@ -3,18 +3,13 @@
 {% block document_title %}Turu Wash · VOC 관리{% endblock %}
 {% block content %}
 
-<div class="d-wrap voc-wrap">
+<div class="d-wrap voc-wrap turu-app-page-v24 turu-voc-manage-page-v24">
 
-  <section class="page-hero app-card elevated brand-line-card" style="margin-bottom:0;">
-    <div class="hero-copy-block">
-      <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo">
-      <h1>VOC 관리</h1>
-      <p class="hero-copy">#피플카-차량청결VOC 슬랙 채널과 연동됩니다. 항목을 클릭하면 상세 내용과 사진을 확인할 수 있어요.</p>
-    </div>
-    <form method="post" action="{{ url_for('voc_sync') }}">
-      <button type="submit" class="blue-btn tall">지금 동기화</button>
-    </form>
-  </section>
+  <header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
+  <div class="turu-page-head-v24 turu-page-head--single-v25"><div><h1>VOC 관리</h1><p>#피플카-차량청결VOC 슬랙 채널과 연동됩니다. 항목을 클릭하면 상세 내용과 사진을 확인할 수 있어요.</p></div></div>
+  <form method="post" action="{{ url_for('voc_sync') }}" style="margin:-6px 0 4px;">
+    <button type="submit" class="blue-btn tall" style="width:100%;">지금 동기화</button>
+  </form>
 
   {% if not slack_configured %}
   <div class="notice-empty">

@@ -4,15 +4,10 @@
 {% block content %}
 
 {# ══ 모바일 ══ #}
-<section class="app-card elevated damage-manage-page">
-  <div class="support-manage-head">
-    <div>
-      <p class="eyebrow">제보 관리</p>
-      <h1>훼손 제보 관리</h1>
-      <p>작업자가 접수한 차량 훼손 제보를 확인합니다.</p>
-    </div>
-    <a href="{{ url_for('support_choice') }}" class="notice-more-btn">← 뒤로</a>
-  </div>
+<section class="turu-app-page-v24 turu-damage-manage-page-v24">
+  <header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
+  <div class="turu-page-head-v24 turu-page-head--single-v25"><div><h1>훼손 제보 관리</h1><p>작업자가 접수한 차량 훼손 제보를 확인합니다.</p></div></div>
+
   <div class="support-filter">
     <a class="{% if not selected_status %}active{% endif %}" href="{{ url_for('damage_manage') }}">전체</a>
     <a class="{% if selected_status == '접수' %}active{% endif %}" href="{{ url_for('damage_manage', status='접수') }}">접수</a>
@@ -269,7 +264,7 @@
 ════════════════════════════════ */
 .dmg-desktop-wrap { display:none; }
 #desktop-mode .dmg-desktop-wrap { display:block !important; }
-#desktop-mode .app-card.elevated.damage-manage-page { display:none !important; }
+#desktop-mode .turu-damage-manage-page-v24 { display:none !important; }
 
 /* ════════════════════════════════
    요약 카드

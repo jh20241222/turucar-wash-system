@@ -2,10 +2,10 @@
 {% from "_pagination.html" import render_pagination %}
 {% block document_title %}Turu Wash · 계정/지역{% endblock %}
 {% block content %}
-<section class="page-hero app-card elevated brand-line-card">
-    <div class="hero-copy-block"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar" class="page-hero-logo brand-combo-logo"><h1>계정/지역</h1><p class="hero-copy">계정 생성, 권한, 담당 지역을 관리합니다.</p></div>
-    <div class="hero-chip-stack"><span>{{ accounts|length }}</span><strong>계정</strong></div>
-</section>
+<section class="turu-app-page-v24 turu-account-manage-page-v24">
+    <header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
+    <div class="turu-page-head-v24 turu-page-head--single-v25"><div><h1>계정/지역</h1><p>계정 생성, 권한, 담당 지역을 관리합니다.</p></div></div>
+    <div class="hero-chip-stack" style="margin-bottom:14px;"><span>{{ accounts|length }}</span><strong>계정</strong></div>
 
 <section class="manager-grid">
     <article class="admin-card app-card">
@@ -37,6 +37,7 @@
 <section class="app-section table-panel app-card"><div class="table-title-row"><h2>계정 목록</h2><span>{{ accounts|length }}개</span></div><div class="table-wrap"><table><thead><tr><th>계정</th><th>권한</th><th>업체</th><th>소속 구조</th><th>관리</th></tr></thead><tbody>{% for a in accounts_page %}<tr><td>{{ a.username }}</td><td><span class="badge">{{ a.role }}</span></td><td>{{ a.vendor or '-' }}</td><td>{% if a.role == 'master' %}최상위{% elif a.role == 'admin' %}업체 관리자{% else %}하위 계정{% endif %}</td><td>{% if a.role != 'master' and (current_user.is_master or (a.role == 'staff' and a.parent_id == current_user.id)) %}<form method="POST" class="inline-form" onsubmit="return confirm('정말 이 계정을 삭제할까요?');"><input type="hidden" name="action" value="delete_account"><input type="hidden" name="delete_username" value="{{ a.username }}"><button type="submit" class="btn-del">삭제</button></form>{% else %}-{% endif %}</td></tr>{% else %}<tr><td colspan="5" class="empty-cell">계정이 없습니다.</td></tr>{% endfor %}</tbody></table></div>{{ render_pagination(acct_current_page, acct_total_pages, 'acct_page') }}</section>
 
 <section class="app-section table-panel app-card"><div class="table-title-row"><h2>지역 권한</h2><span>{{ region_list|length }}개</span></div><div class="table-wrap"><table><thead><tr><th>계정</th><th>권한</th><th>업체</th><th>시/도</th><th>구/군</th><th>관리</th></tr></thead><tbody>{% for r in region_list_page %}<tr><td>{{ r.username }}</td><td>{{ r.role }}</td><td>{{ r.vendor or '-' }}</td><td>{{ r.city }}</td><td>{{ r.district }}</td><td>{% if current_user.is_master or (r.parent_id == current_user.id) %}<form method="POST" class="inline-form" onsubmit="return confirm('이 지역 권한을 삭제할까요?');"><input type="hidden" name="action" value="delete_region"><input type="hidden" name="region_id" value="{{ r.id }}"><button type="submit" class="btn-del">삭제</button></form>{% else %}-{% endif %}</td></tr>{% else %}<tr><td colspan="6" class="empty-cell">등록된 지역이 없습니다.</td></tr>{% endfor %}</tbody></table></div>{{ render_pagination(region_current_page, region_total_pages, 'region_page') }}</section>
+</section>
 
 <script>
 const regionMap={{ region_map | tojson }};
@@ -128,9 +129,7 @@ _bindR('d_assign_city','d_assign_district');
 </script>
 <style>
 #desktop-mode #d-acct { display: block !important; }
-#desktop-mode .page-hero,
-#desktop-mode .manager-grid,
-#desktop-mode .app-section.table-panel { display: none !important; }
+#desktop-mode .turu-account-manage-page-v24 { display: none !important; }
 </style>
 
 {% endblock %}

@@ -3,15 +3,20 @@
 {% block content %}
 
 {# ══ 모바일 채팅 UI ══ #}
-<div class="turu-chat-screen" id="chatScreen">
-  <div class="turu-chat-body" id="chatBody"></div>
-  <div class="turu-chat-inputbar" id="chatInputbar">
-    <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." autocomplete="off" autocorrect="off">
-    <button type="button" id="chatSendBtn" onclick="sendUserMsg()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-    </button>
-  </div>
-</div>
+<section class="turu-app-page-v24 turu-chat-page-v24">
+    <header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
+    <div class="turu-page-head-v24 turu-page-head--single-v25"><div><h1>문의하기</h1><p>차량번호와 문의 내용을 남겨주세요.</p></div></div>
+
+    <div class="turu-chat-screen" id="chatScreen">
+      <div class="turu-chat-body" id="chatBody"></div>
+      <div class="turu-chat-inputbar" id="chatInputbar">
+        <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." autocomplete="off" autocorrect="off">
+        <button type="button" id="chatSendBtn" onclick="sendUserMsg()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+</section>
 
 {# 실제 제출 폼 (hidden) #}
 <form id="supportForm" method="post" action="{{ url_for('support_submit') }}" style="display:none;">
@@ -57,16 +62,20 @@
 </div>
 
 <style>
-/* ── 채팅 화면 레이아웃 (모바일) ── */
+/* ── 채팅 화면 레이아웃 (모바일) ──
+   다른 메뉴와 동일하게 상단 로고+타이틀은 turu-page-brand-v24/turu-page-head-v24로
+   문서 흐름 안에 배치하고, 채팅 영역만 남은 공간을 채우는 flex 박스로 처리한다
+   (예전처럼 position:fixed + 고정 top px로 상단바 높이를 가정하지 않는다). */
+@media (max-width: 900px) {
+  .turu-chat-page-v24 { display: flex; flex-direction: column; height: calc(100dvh - 116px); }
+}
 .turu-chat-screen {
-  position: fixed;
-  top: 56px;          /* 상단바 높이 */
-  bottom: 64px;       /* 하단 탭바 높이 — 탭바 위에 표시 */
-  left: 0; right: 0;
+  position: static;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  background: var(--background, #f5f5f5);
-  z-index: 10;
+  background: transparent;
 }
 
 .turu-chat-body {
@@ -182,7 +191,7 @@
 
 /* ── 데스크탑 ── */
 #desktop-mode #d-support-submit { display: block !important; }
-#desktop-mode .turu-chat-screen { display: none !important; }
+#desktop-mode .turu-chat-page-v24 { display: none !important; }
 
 .field-group { display: flex; flex-direction: column; gap: 6px; }
 .field-label  { font-size: 13px; font-weight: 600; color: var(--text-primary); }

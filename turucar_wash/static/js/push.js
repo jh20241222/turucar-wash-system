@@ -8,7 +8,7 @@
 
   function setBtnState(btn, subscribed) {
     if (!btn) return;
-    btn.textContent = subscribed ? '🔔 알림 켜짐' : '🔔 알림 받기';
+    btn.textContent = subscribed ? '알림 켜짐' : '알림 받기';
     btn.disabled = subscribed;
   }
 

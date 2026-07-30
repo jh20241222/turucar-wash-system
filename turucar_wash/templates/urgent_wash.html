@@ -142,14 +142,14 @@
             </div>
 
             <form id="uwAcceptForm" method="post">
-                <label class="uw-edit-label">작업조치예정일 지정</label>
+                <label class="uw-edit-label">접수 예정일 선택</label>
                 <input type="hidden" name="scheduled_date" id="uwModalDateValue" value="">
-                <div class="uw-modal-footer" style="justify-content:space-between;align-items:center;">
+                <div class="uw-accept-date-row">
                     <button type="button" class="uw-date-input" onclick="uwOpenCalendar()">
                         <span id="uwModalDateLabel"><i class="ti ti-calendar"></i> 날짜 선택</span>
                     </button>
-                    <button type="submit" class="uw-accept-btn">예정일 저장 (접수)</button>
                 </div>
+                <button type="submit" class="uw-accept-btn" style="width:100%;margin-top:10px;">접수 완료</button>
             </form>
 
             <form id="uwCompleteForm" method="post" style="margin-top:10px;">
@@ -193,6 +193,8 @@
 .uw-accept-btn { padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #111827; color: #fff; border: none; cursor: pointer; }
 .uw-complete-btn { padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #FF9900; color: #fff; border: none; cursor: pointer; }
 .uw-cancel-btn { padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #fff; color: #e5484d; border: 1.5px solid #ffd1d1; cursor: pointer; }
+.uw-accept-date-row { display: flex; justify-content: center; }
+.uw-accept-date-row .uw-date-input { padding: 12px 24px; font-size: 14px; }
 .uw-complete-note { margin: 6px 0 10px; resize: vertical; }
 .uw-notify-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 700; background: #fff7ed; color: #c2410c; border: 1px solid #ffe0b2; cursor: pointer; white-space: nowrap; }
 
@@ -295,15 +297,19 @@ function uwOpenDetail(id) {
     cancelForm.style.display = (item.created_by === UW_CURRENT_USERNAME) ? 'block' : 'none';
 
     if (item.status === '접수') {
+        // 예정 차량(진행중): 예정일 정보 + 완료 처리(특이사항) 폼만 노출
         scheduledBox.style.display = 'block';
         document.getElementById('uwScheduledInfo').innerHTML = '<i class="ti ti-calendar"></i> ' + item.scheduled_date + ' 작업 예정 (담당 ' + item.accepted_by + ')';
         acceptForm.style.display = 'none';
+        completeForm.style.display = 'block';
     } else {
+        // 접수 대기: 접수 예정일 지정 폼만 노출 (완료 처리는 여기선 필요 없음)
         scheduledBox.style.display = 'none';
         acceptForm.style.display = 'block';
         acceptForm.action = '/urgent_wash/accept/' + item.id;
         document.getElementById('uwModalDateValue').value = '';
         document.getElementById('uwModalDateLabel').innerHTML = '<i class="ti ti-calendar"></i> 날짜 선택';
+        completeForm.style.display = 'none';
     }
 
     document.getElementById('uwDetailOverlay').classList.add('open');

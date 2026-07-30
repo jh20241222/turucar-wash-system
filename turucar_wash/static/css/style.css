@@ -7746,10 +7746,13 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 
 @media (max-width: 900px){
   .app-topbar{display:none !important;}
-  .app-main{padding-top:calc(28px + env(safe-area-inset-top)) !important;}
+  /* 안전영역(노치) 여백은 .turu-home-v12 / .turu-app-page-v24 같은 페이지 wrapper가 각자 한 번만 담당한다.
+     .app-main 자체에 또 safe-area를 더하면 wrapper 안쪽 로고 헤더의 padding-top과 이중으로 겹쳐서
+     로고 위 여백이 비정상적으로 커지는 버그가 생기므로, 여기서는 고정값만 둔다. */
+  .app-main{padding-top:0 !important;}
   .turu-home-v12,.turu-app-page-v24,.chatbot-screen,.detail-grid-clean,.detail-hero-clean{width:100%;max-width:100%;}
   .turu-home-v12,.turu-app-page-v24,.endpoint-car_detail .app-main,.endpoint-support_chat .app-main{padding-left:16px !important;padding-right:16px !important;}
-  .turu-page-brand-v24,.detail-page-brand-v36{display:flex;align-items:center;justify-content:flex-start;padding-top:calc(20px + env(safe-area-inset-top));margin-bottom:18px;}
+  .turu-page-brand-v24,.detail-page-brand-v36{display:flex;align-items:center;justify-content:flex-start;padding-top:2px;margin-bottom:18px;}
   .turu-page-brand-v24 img,.detail-page-brand-v36 img,.home-brand-logo-v12,.support-top-logo-v36{width:170px;height:auto;display:block;}
 
   .turu-home-v12{background:transparent !important;padding-top:calc(22px + env(safe-area-inset-top)) !important;padding-bottom:120px !important;}
@@ -7902,7 +7905,7 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 
 @media (max-width:900px){
   .endpoint-wash_list .turu-page-brand-v24,
-  .endpoint-wash_status .turu-page-brand-v24{display:flex !important;align-items:center !important;justify-content:flex-start !important;padding-top:calc(20px + env(safe-area-inset-top)) !important;margin-bottom:18px !important;}
+  .endpoint-wash_status .turu-page-brand-v24{display:flex !important;align-items:center !important;justify-content:flex-start !important;padding-top:2px !important;margin-bottom:18px !important;}
   .endpoint-wash_list .turu-page-brand-v24 img,
   .endpoint-wash_status .turu-page-brand-v24 img{display:block !important;width:170px !important;height:auto !important;}
 
@@ -7985,7 +7988,7 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
     height:auto !important;
     min-height:36px !important;
     overflow:visible !important;
-    padding-top:calc(18px + env(safe-area-inset-top)) !important;
+    padding-top:2px !important;
     padding-bottom:0 !important;
     margin:0 0 18px !important;
   }

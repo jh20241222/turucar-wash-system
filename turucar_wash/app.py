@@ -418,7 +418,7 @@ def init_db():
     """)
     # field_requests 작업조치예정일 컬럼 마이그레이션 (기존 DB 호환)
     _fr_cols = [row[1] for row in cur.execute("PRAGMA table_info(field_requests)").fetchall()]
-    for _fr_col in ("scheduled_date", "accepted_by", "accepted_at"):
+    for _fr_col in ("scheduled_date", "accepted_by", "accepted_at", "complete_note", "cancelled_by", "cancelled_at"):
         if _fr_col not in _fr_cols:
             cur.execute(f"ALTER TABLE field_requests ADD COLUMN {_fr_col} TEXT")
     # 웹 푸시 구독 정보 (브라우저/PWA 알림용)
@@ -2900,13 +2900,19 @@ def _post_voc_thread_reply(voc_item_id, text):
             print(f"[VOC Slack] 댓글 전송 실패: {data.get('error')}")
     except Exception as e:
         print(f"[VOC Slack] 댓글 전송 예외: {e}")
-def _post_voc_completion_reply(voc_item_id, completed_by):
+def _post_voc_completion_reply(voc_item_id, completed_by, complete_note=""):
     """긴급세차(VOC 요청 건)가 완료되면 원본 슬랙 메시지에 완료 댓글을 단다."""
     text = f"✅ {now_kst().strftime('%m/%d')} 긴급세차 요청 완료 (처리: {completed_by})"
+    if complete_note:
+        text += f"\n특이사항: {complete_note}"
     _post_voc_thread_reply(voc_item_id, text)
 def _post_voc_schedule_reply(voc_item_id, scheduled_date, accepted_by):
     """작업자가 작업조치예정일을 지정하고 접수하면 원본 슬랙 메시지에 예정 댓글을 단다."""
     text = f"🗓 {scheduled_date} 세차 진행 예정입니다. (담당: {accepted_by})"
+    _post_voc_thread_reply(voc_item_id, text)
+def _post_voc_cancel_reply(voc_item_id, cancelled_by):
+    """긴급세차 요청이 취소/회수되면 원본 슬랙 메시지에 취소 댓글을 단다."""
+    text = f"🚫 긴급세차 요청이 취소되었습니다. (처리: {cancelled_by})"
     _post_voc_thread_reply(voc_item_id, text)
 def _send_push_to_username(username, title, body, url="/urgent_wash"):
     """해당 계정이 구독해 둔 모든 기기에 웹 푸시 알림을 보낸다. 실패한 구독은 정리한다."""
@@ -3077,7 +3083,9 @@ def urgent_wash():
     all_rows = conn.execute("SELECT * FROM field_requests ORDER BY id DESC").fetchall()
     conn.close()
     visible = _visible_field_requests(all_rows, current_user)
-    pending_all = [r for r in visible if r["status"] in ("대기", "접수")]
+    waiting_all = [r for r in visible if r["status"] == "대기"]
+    progress_all = [r for r in visible if r["status"] == "접수"]
+    pending_all = waiting_all + progress_all
     done_all = [r for r in visible if r["status"] == "완료"]
     pending_page, pending_current_page, pending_total_pages = paginate_list(pending_all, page, per_page=10)
     done_page_rows, done_current_page, done_total_pages = paginate_list(done_all, done_page, per_page=10)
@@ -3089,9 +3097,15 @@ def urgent_wash():
         d["spot_display"] = parsed["spot"]
         d["content_display"] = parsed["content"]
         pending_items.append(d)
+    waiting_items = [d for d in pending_items if d["status"] == "대기"]
+    progress_items = [d for d in pending_items if d["status"] == "접수"]
     return render_template(
         "urgent_wash.html",
         pending=pending_items,
+        waiting_items=waiting_items,
+        progress_items=progress_items,
+        waiting_count=len(waiting_all),
+        progress_count=len(progress_all),
         pending_count=len(pending_all),
         pending_current_page=pending_current_page,
         pending_total_pages=pending_total_pages,
@@ -3103,6 +3117,7 @@ def urgent_wash():
         region_map=KOREA_REGIONS,
         today_str=now_kst().strftime("%Y-%m-%d"),
         push_available=bool(_WEBPUSH_AVAILABLE and VAPID_PUBLIC_KEY),
+        current_username=current_user.username,
     )
 @app.route("/urgent_wash/accept/<int:req_id>", methods=["POST"])
 @login_required
@@ -3132,6 +3147,7 @@ def urgent_wash_accept(req_id):
 @app.route("/urgent_wash/complete/<int:req_id>", methods=["POST"])
 @login_required
 def urgent_wash_complete(req_id):
+    complete_note = request.form.get("complete_note", "").strip()
     conn = get_user_db()
     row = conn.execute("SELECT * FROM field_requests WHERE id=?", (req_id,)).fetchone()
     if not row or not _field_request_visible(row, current_user):
@@ -3139,14 +3155,42 @@ def urgent_wash_complete(req_id):
         flash("❌ 해당 요청을 처리할 권한이 없습니다.")
         return redirect(url_for("urgent_wash"))
     conn.execute(
-        "UPDATE field_requests SET status='완료', completed_by=?, completed_at=? WHERE id=?",
+        "UPDATE field_requests SET status='완료', completed_by=?, completed_at=?, complete_note=? WHERE id=?",
+        (current_user.username, now_kst().strftime("%Y-%m-%d %H:%M"), complete_note, req_id)
+    )
+    conn.commit()
+    conn.close()
+    if row["source"] == "voc" and row["voc_item_id"]:
+        _post_voc_completion_reply(row["voc_item_id"], current_user.username, complete_note)
+    flash("✅ 완료 처리되었습니다.")
+    return redirect(url_for("urgent_wash"))
+@app.route("/urgent_wash/cancel/<int:req_id>", methods=["POST"])
+@login_required
+def urgent_wash_cancel(req_id):
+    conn = get_user_db()
+    row = conn.execute("SELECT * FROM field_requests WHERE id=?", (req_id,)).fetchone()
+    if not row:
+        conn.close()
+        flash("❌ 해당 요청을 찾을 수 없습니다.")
+        return redirect(url_for("urgent_wash"))
+    # 요청을 만든 본인, 또는 마스터 계정만 취소/회수할 수 있다.
+    if row["created_by"] != current_user.username and not current_user.is_master:
+        conn.close()
+        flash("❌ 본인이 등록한 요청만 취소할 수 있습니다.")
+        return redirect(url_for("urgent_wash"))
+    if row["status"] == "완료":
+        conn.close()
+        flash("❌ 이미 완료 처리된 요청은 취소할 수 없습니다.")
+        return redirect(url_for("urgent_wash"))
+    conn.execute(
+        "UPDATE field_requests SET status='취소', cancelled_by=?, cancelled_at=? WHERE id=?",
         (current_user.username, now_kst().strftime("%Y-%m-%d %H:%M"), req_id)
     )
     conn.commit()
     conn.close()
     if row["source"] == "voc" and row["voc_item_id"]:
-        _post_voc_completion_reply(row["voc_item_id"], current_user.username)
-    flash("✅ 완료 처리되었습니다.")
+        _post_voc_cancel_reply(row["voc_item_id"], current_user.username)
+    flash("✅ 요청이 취소되었습니다.")
     return redirect(url_for("urgent_wash"))
 @app.route("/push/vapid_public_key")
 @login_required
@@ -3198,11 +3242,13 @@ _VOC_LABELS = [
 ]
 _VOC_LABEL_ALT = "|".join(re.escape(l) for l in sorted(_VOC_LABELS, key=len, reverse=True))
 def _extract_voc_field(text, *label_variants):
+    # 슬랙 원문이 "*차량번호*: 172허1475"처럼 라벨을 볼드(mrkdwn *…*)로 감싸거나,
+    # "차량번호： 172허1475"처럼 전각 콜론(：)을 쓰는 경우가 있어 이를 모두 허용한다.
     for label in label_variants:
-        pat = rf"{re.escape(label)}\s*:\s*(.*?)(?=(?:{_VOC_LABEL_ALT})\s*:|$)"
+        pat = rf"\*?{re.escape(label)}\*?\s*[:：]\s*(.*?)(?=(?:\*?(?:{_VOC_LABEL_ALT})\*?\s*[:：])|$)"
         m = re.search(pat, text, re.DOTALL)
         if m:
-            val = m.group(1).strip(" \n\t-`")
+            val = m.group(1).strip(" \n\t-`*")
             if val:
                 return val
     return ""
@@ -3223,7 +3269,7 @@ def _parse_voc_summary(text):
     if not content:
         # "내용:" 라벨이 없는 포맷 — 마지막으로 매칭된 라벨 뒤의 텍스트를 내용으로 간주
         last_end = 0
-        for m in re.finditer(rf"(?:{_VOC_LABEL_ALT})\s*:\s*", text):
+        for m in re.finditer(rf"\*?(?:{_VOC_LABEL_ALT})\*?\s*[:：]\s*", text):
             last_end = m.end()
         content = text[last_end:].strip(" \n\t-`") if last_end else text.strip()
     content = re.sub(r"`+", "", content)

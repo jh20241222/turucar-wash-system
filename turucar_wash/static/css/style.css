@@ -751,7 +751,7 @@ body {
 }
 
 /* Main cards */
-.app-main { background: var(--daangn-bg) !important; }
+.app-main { background: #fff !important; }
 .app-card, .stat-card, .quick-card, .filter-card, .admin-card, .guide-card, .vehicle-card, .work-form, .order-card, .history-card, .profile-card {
     background: var(--daangn-card) !important;
     border: 1px solid var(--daangn-line) !important;
@@ -861,7 +861,7 @@ body {
 
 /* Mobile app */
 @media (max-width: 900px) {
-    body.app-shell { background: #f8f9fa !important; color: var(--daangn-ink) !important; }
+    body.app-shell { background: #fff !important; color: var(--daangn-ink) !important; }
     .app-topbar {
         background: rgba(255,255,255,.94) !important;
         color: var(--daangn-ink) !important;
@@ -6523,6 +6523,24 @@ body.endpoint-dashboard .app-main {
     font-weight: 820;
     color: #101827;
 }
+/* 페이지 타이틀 아이콘 배지 — 모든 메뉴 화면 제목 앞에 공통으로 붙이는 아이콘 (모든 메뉴 통일) */
+.turu-title-icon-v28 {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    margin-right: 8px;
+    vertical-align: -7px;
+    flex-shrink: 0;
+}
+.turu-title-icon-v28 i { font-size: 17px; line-height: 1; }
+.turu-title-icon-v28--orange { background: #FFF2E9; color: #FF6B00; }
+.turu-title-icon-v28--green  { background: #EAF3DE; color: #4C9A1A; }
+.turu-title-icon-v28--blue   { background: #E9F1FF; color: #2563EB; }
+.turu-title-icon-v28--red    { background: #FDEBEC; color: #E5484D; }
+.turu-title-icon-v28--gray   { background: #F1F2F4; color: #4B5563; }
 .turu-page-head-v24 p {
     margin: 8px 0 0;
     color: #6f7785;
@@ -7730,7 +7748,7 @@ body.endpoint-dashboard .app-main {
   --turu-shadow:0 10px 28px rgba(15,28,51,.06);
 }
 @media (max-width: 900px) { html,body{font-family:'Pretendard', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;color:var(--turu-text);} }
-@media (max-width: 900px) { body{background:linear-gradient(180deg,#fff 0%, #f5f8fc 34%, #f2f5fa 100%);} .app-main{padding-bottom:120px;} }
+@media (max-width: 900px) { body{background:#fff !important;} .app-main{padding-bottom:120px;} }
 /* 모든 화면(홈 포함) 공통 배경 — 홈 화면의 배경을 그대로 모든 메뉴가 공유하도록 wrapper는 항상 투명 처리 */
 @media (max-width: 900px) {
   body.app-shell,

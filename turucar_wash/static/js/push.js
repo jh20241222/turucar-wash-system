@@ -19,14 +19,26 @@
     });
   }
 
+  // 브라우저 알림 권한 요청은 반드시 "사용자 클릭" 안에서 호출해야 한다.
+  // 클릭 없이 자동으로 요청하면 크롬이 스팸으로 판단해 이후 권한 요청 자체를 영구 차단해버린다
+  // ("Notifications permission has been blocked as the user has ignored the permission prompt
+  //  several times" 콘솔 경고가 그 증거). 그래서 종 아이콘 클릭 시에만 요청한다.
   async function subscribeNow() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      alert('이 브라우저(또는 앱 설치 방식)는 푸시 알림을 지원하지 않습니다.');
+      return false;
+    }
+    if (Notification.permission === 'denied') {
+      alert('알림이 브라우저에서 차단된 상태입니다. 주소창 옆 사이트 설정에서 알림 권한을 초기화한 뒤 다시 시도해주세요.');
       return false;
     }
     try {
       const keyResp = await fetch('/push/vapid_public_key');
       const keyData = await keyResp.json();
-      if (!keyData.available || !keyData.key) return false;
+      if (!keyData.available || !keyData.key) {
+        alert('서버에 푸시 알림이 아직 설정되지 않았습니다.');
+        return false;
+      }
 
       const reg = await navigator.serviceWorker.ready;
       let sub = await reg.pushManager.getSubscription();
@@ -71,19 +83,9 @@
   document.addEventListener('click', function (event) {
     const btn = event.target.closest('.push-bell-btn');
     if (!btn) return;
-    if (btn.classList.contains('is-on')) return; // 이미 켜져 있으면 클릭해도 그대로 유지
-    subscribeNow().then(refreshBellState);
+    if (btn.classList.contains('is-on')) return; // 이미 켜져 있으면 그대로 둔다
+    subscribeNow().then((ok) => { if (ok) setBellState(true); });
   });
 
-  document.addEventListener('DOMContentLoaded', async function () {
-    await refreshBellState();
-    // 버튼 클릭 없이도 가능한 경우 자동으로 구독을 시도한다 (권한이 이미 허용된 상태이거나
-    // 브라우저가 자동 요청을 막지 않는 경우에는 사용자가 아무것도 안 눌러도 알림이 켜진다).
-    const reg = ('serviceWorker' in navigator) ? await navigator.serviceWorker.ready.catch(() => null) : null;
-    const sub = reg ? await reg.pushManager.getSubscription().catch(() => null) : null;
-    if (!sub && typeof Notification !== 'undefined' && Notification.permission !== 'denied') {
-      const ok = await subscribeNow();
-      if (ok) setBellState(true);
-    }
-  });
+  document.addEventListener('DOMContentLoaded', refreshBellState);
 })();

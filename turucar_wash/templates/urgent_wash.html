@@ -60,11 +60,18 @@
     </section>
     {% endif %}
 
+    <div class="wash-type-filter-bar uw-type-filter-bar">
+        <button type="button" class="wash-type-btn wash-type-btn--all active" onclick="uwSetFilter('all')">전체</button>
+        <button type="button" class="wash-type-btn wash-type-btn--waiting" onclick="uwSetFilter('waiting')">🟠 접수 대기</button>
+        <button type="button" class="wash-type-btn wash-type-btn--progress" onclick="uwSetFilter('progress')">🔵 예정 차량</button>
+    </div>
+
     <div class="turu-card-list-v24">
         {% if waiting_items %}
+        <div id="section-waiting">
         <div class="wash-section-label wash-section-label--urgent">
             <span class="wash-section-dot wash-section-dot--urgent"></span>
-            긴급세차 요청건 · {{ waiting_count }}건
+            접수 대기 · {{ waiting_count }}건
         </div>
         {% for r in waiting_items %}
         <div class="turu-order-card-v24 turu-order-card--urgent uw-flat-card" onclick="uwOpenDetail({{ r.id }})" style="cursor:pointer;">
@@ -80,12 +87,14 @@
             </div>
         </div>
         {% endfor %}
+        </div>
         {% endif %}
 
         {% if progress_items %}
-        <div class="wash-section-label wash-section-label--urgent">
+        <div id="section-progress">
+        <div class="wash-section-label wash-section-label--urgent {% if waiting_items %}wash-section-label--mt{% endif %}">
             <span class="wash-section-dot" style="background:#3B82F6;"></span>
-            진행중 · {{ progress_count }}건
+            예정 차량 · {{ progress_count }}건
         </div>
         {% for r in progress_items %}
         <div class="turu-order-card-v24 turu-order-card--urgent uw-flat-card" onclick="uwOpenDetail({{ r.id }})" style="cursor:pointer;">
@@ -102,6 +111,7 @@
             </div>
         </div>
         {% endfor %}
+        </div>
         {% endif %}
 
         {% if not waiting_items and not progress_items %}
@@ -186,6 +196,13 @@
 .uw-complete-note { margin: 6px 0 10px; resize: vertical; }
 .uw-notify-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 700; background: #fff7ed; color: #c2410c; border: 1px solid #ffe0b2; cursor: pointer; white-space: nowrap; }
 
+/* 세차오더(전체/장기미세차/정기세차)와 동일한 탭 필터 UI */
+.wash-type-filter-bar{display:flex;gap:8px;padding:4px 0 8px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.wash-type-btn{flex-shrink:0;font-size:13px;font-weight:500;padding:6px 14px;border-radius:20px;border:1.5px solid var(--color-border-tertiary);background:var(--color-background-primary);color:var(--color-text-secondary);cursor:pointer;font-family:inherit;}
+.wash-type-btn.active{color:var(--color-text-primary);border-color:var(--color-border-primary);background:var(--color-background-secondary);}
+.wash-type-btn--waiting.active{background:#FAECE7;border-color:#D85A30;color:#993C1D;}
+.wash-type-btn--progress.active{background:#EAF1FB;border-color:#3B82F6;color:#1E40AF;}
+
 /* 상단 통계 카드 — 홈 화면풍 여유있는 라운드/그림자 */
 .uw-stat-row-v27 { display: grid; }
 .uw-stat-card-v27 { background:#fff; border:none; border-radius:18px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:14px 8px; box-shadow:0 2px 14px rgba(0,0,0,0.06); }
@@ -230,6 +247,22 @@ const uwRegionMap = {{ region_map | tojson }};
         });
     });
 })();
+
+function uwSetFilter(type) {
+    document.querySelectorAll('.uw-type-filter-bar .wash-type-btn').forEach(function (b) { b.classList.remove('active'); });
+    document.querySelector('.uw-type-filter-bar .wash-type-btn--' + type).classList.add('active');
+    const w = document.getElementById('section-waiting'), p = document.getElementById('section-progress');
+    if (type === 'all') {
+        if (w) w.style.display = '';
+        if (p) p.style.display = '';
+    } else if (type === 'waiting') {
+        if (w) w.style.display = '';
+        if (p) p.style.display = 'none';
+    } else {
+        if (w) w.style.display = 'none';
+        if (p) p.style.display = '';
+    }
+}
 
 const UW_ITEMS = {{ pending | tojson }};
 const UW_CURRENT_USERNAME = {{ current_username | tojson }};

@@ -7730,7 +7730,13 @@ body.endpoint-dashboard .app-main {
   --turu-shadow:0 10px 28px rgba(15,28,51,.06);
 }
 @media (max-width: 900px) { html,body{font-family:'Pretendard', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;color:var(--turu-text);} }
-@media (max-width: 900px) { body{background:linear-gradient(180deg,#fff 0%, #f5f8fc 34%, #f2f5fa 100%);} .app-main{padding-bottom:120px;} }
+@media (max-width: 900px) { body{background:radial-gradient(120% 60% at 100% 0%, rgba(15,23,42,.055), transparent 55%), linear-gradient(180deg,#fff 0%, #f5f8fc 34%, #f2f5fa 100%);background-attachment:fixed;} .app-main{padding-bottom:120px;} }
+/* 모든 화면(홈 포함) 공통 배경 — 우측 상단에서 은은하게 퍼지는 음영을 강제 적용해 어떤 화면이든 동일하게 보이도록 고정 */
+@media (max-width: 900px) {
+  body.app-shell,
+  .turu-home-v12,
+  .turu-app-page-v24 { background: transparent !important; }
+}
 body.endpoint-dashboard .floating-turu-home-link,
 body.endpoint-wash_list .floating-turu-home-link,
 body.endpoint-wash_status .floating-turu-home-link,
@@ -7896,7 +7902,7 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 
 @media (max-width:900px){
   .endpoint-wash_list .turu-page-brand-v24,
-  .endpoint-wash_status .turu-page-brand-v24{display:flex !important;align-items:center !important;justify-content:flex-start !important;padding-top:20px !important;margin-bottom:18px !important;}
+  .endpoint-wash_status .turu-page-brand-v24{display:flex !important;align-items:center !important;justify-content:flex-start !important;padding-top:calc(20px + env(safe-area-inset-top)) !important;margin-bottom:18px !important;}
   .endpoint-wash_list .turu-page-brand-v24 img,
   .endpoint-wash_status .turu-page-brand-v24 img{display:block !important;width:170px !important;height:auto !important;}
 
@@ -7979,9 +7985,9 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
     height:auto !important;
     min-height:36px !important;
     overflow:visible !important;
-    padding-top:18px !important;
+    padding-top:calc(18px + env(safe-area-inset-top)) !important;
     padding-bottom:0 !important;
-    margin:0 0 16px !important;
+    margin:0 0 18px !important;
   }
 
   .endpoint-wash_list .turu-page-brand-v24 img,

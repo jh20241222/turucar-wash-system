@@ -17,7 +17,7 @@
         <button type="button" class="push-enable-btn uw-notify-btn"><i class="ti ti-bell"></i> 알림 받기</button>
     </div>
 
-    <div class="mob-stat-row uw-stat-row-v27" style="grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+    <div class="uw-stat-row-v27">
         <div class="uw-stat-card-v27">
             <span>요청건</span>
             <strong>{{ waiting_count }}</strong>
@@ -205,11 +205,15 @@
 .wash-type-btn--waiting.active{background:#FAECE7;border-color:#D85A30;color:#993C1D;}
 .wash-type-btn--progress.active{background:#EAF1FB;border-color:#3B82F6;color:#1E40AF;}
 
-/* 상단 통계 카드 — 홈 화면풍 여유있는 라운드/그림자 */
-.uw-stat-row-v27 { display: grid; }
-.uw-stat-card-v27 { background:#fff; border:none; border-radius:18px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:14px 8px; box-shadow:0 2px 14px rgba(0,0,0,0.06); }
+/* 상단 통계 카드 — 세차오더(mob-stat-row) 카드와 동일한 스타일(라벨 좌측/숫자 우측 한 줄) */
+.uw-stat-row-v27 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.uw-stat-card-v27 { background:#fff; border:none; border-radius:14px; display:flex; align-items:center; justify-content:space-between; padding:10px 14px; box-shadow:0 1px 8px rgba(0,0,0,0.07); }
 .uw-stat-card-v27 span { font-size:11px; font-weight:700; color:var(--color-text-tertiary); }
-.uw-stat-card-v27 strong { font-size:22px; font-weight:900; color:var(--color-text-primary); letter-spacing:-.02em; }
+.uw-stat-card-v27 strong { font-size:24px; font-weight:900; color:var(--color-text-primary); letter-spacing:-.02em; }
+@media (max-width: 360px) {
+    .uw-stat-card-v27 { padding:10px 8px; }
+    .uw-stat-card-v27 strong { font-size:20px; }
+}
 
 /* 상세 모달 */
 .uw-modal-overlay { display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.4); align-items:center; justify-content:center; padding:20px; }

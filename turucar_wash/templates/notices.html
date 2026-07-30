@@ -3,9 +3,9 @@
 {% block content %}
 
 <section class="turu-app-page-v24">
-<header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar"></header>
+<div class="turu-page-topbar-v42"><header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TuruCar"></header>
 <div class="turu-page-head-v24 turu-page-head--single-v25">
-    <div><h1><span class="turu-title-icon-v28 turu-title-icon-v28--gray"><i class="ti ti-speakerphone"></i></span>공지사항</h1><p>등록된 공지사항 전체 목록입니다.</p></div>
+    <div><h1>공지사항</h1><p>등록된 공지사항 전체 목록입니다.</p></div>
     <a href="{{ url_for('dashboard') }}" class="turu-mini-btn-v24">홈으로</a>
 </div>
 
@@ -24,7 +24,7 @@
                 <span class="notice-file-name" id="notice-create-fname">선택된 파일 없음</span>
             </div>
             <div class="notice-file-preview" id="notice-create-preview" hidden></div>
-        </div>
+        </div></div>
         <button type="submit" class="btn-primary notice-save-btn">공지사항 등록</button>
     </form>
     {% endif %}

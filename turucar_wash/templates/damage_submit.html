@@ -5,15 +5,15 @@
 <div class="d-wrap dmg-page turu-app-page-v24" style="width:100%;min-width:0;box-sizing:border-box;padding:16px;">
 
   {# 모바일 헤더 #}
-  <header class="dmg-mobile-header turu-page-brand-v24 turu-page-brand-v26">
+  <div class="turu-page-topbar-v42"><header class="dmg-mobile-header turu-page-brand-v24 turu-page-brand-v26">
     <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=1" alt="TURU CAR">
   </header>
   <div class="dmg-mobile-title turu-page-head-v24 turu-page-head--single-v25">
     <div>
-      <h1><span class="turu-title-icon-v28 turu-title-icon-v28--red"><i class="ti ti-alert-triangle"></i></span>차량 훼손 제보</h1>
+      <h1>차량 훼손 제보</h1>
       <p>세차 중 발견한 차량 훼손 내용을 제출해주세요</p>
     </div>
-  </div>
+  </div></div>
 
   {# 폼 (모바일·데스크탑 공용) #}
   <form method="post" action="{{ url_for('damage_submit') }}" enctype="multipart/form-data"

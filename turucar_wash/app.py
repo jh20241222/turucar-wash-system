@@ -2946,20 +2946,13 @@ def _send_push_to_username(username, title, body, url="/urgent_wash"):
         conn.commit()
     conn.close()
 def _target_usernames_for_request(city, district, vendor):
-    """해당 지역/업체에 새 긴급세차 요청을 알려야 할 계정 목록(담당 작업자 + 업체 관리자)."""
+    """긴급세차 요청 알림 대상 계정 목록.
+    지역/업체 매칭 여부와 무관하게 담당자(staff)/관리자(admin) 계정 전원에게 무조건 발송한다
+    (담당 작업자가 아직 배정되지 않은 지역이어도 알림은 항상 나가야 하므로 필터를 두지 않는다)."""
     conn = get_user_db()
-    accounts = conn.execute("SELECT username, role, vendor FROM accounts WHERE role IN ('staff','admin')").fetchall()
+    accounts = conn.execute("SELECT username FROM accounts WHERE role IN ('staff','admin')").fetchall()
     conn.close()
-    targets = []
-    for a in accounts:
-        if vendor and (a["vendor"] or "") != vendor:
-            continue
-        if a["role"] == "admin":
-            targets.append(a["username"])
-        else:
-            if (city, district) in _account_regions(a["username"]):
-                targets.append(a["username"])
-    return targets
+    return [a["username"] for a in accounts]
 def _notify_urgent_wash_targets(city, district, vendor, title, body):
     for username in _target_usernames_for_request(city, district, vendor):
         _send_push_to_username(username, title, body)
@@ -3068,14 +3061,15 @@ def urgent_wash():
         conn.commit()
         conn.close()
         if not vendor:
-            flash("⚠️ 요청은 등록됐지만 해당 지역에 담당 작업자가 배정되어 있지 않습니다.")
+            flash("⚠️ 요청은 등록됐지만 해당 지역에 담당 작업자가 배정되어 있지 않습니다. (알림은 전체 담당자에게 발송됩니다)")
         else:
             flash("✅ 긴급세차 요청이 담당 작업자에게 전달되었습니다.")
-            _notify_urgent_wash_targets(
-                city, district, vendor,
-                "🚨 긴급세차 요청",
-                f"{city} {district}" + (f" · {car_number}" if car_number else "") + " 긴급세차 요청이 있습니다."
-            )
+        # 지역/업체 매칭 여부와 무관하게 긴급세차가 배정되면 무조건 push 알림을 보낸다.
+        _notify_urgent_wash_targets(
+            city, district, vendor,
+            "🚨 긴급세차 요청",
+            f"{city} {district}" + (f" · {car_number}" if car_number else "") + " 긴급세차 요청이 있습니다."
+        )
         return redirect(url_for("urgent_wash"))
     page = request.args.get("page", 1, type=int)
     done_page = request.args.get("done_page", 1, type=int)
@@ -3479,14 +3473,15 @@ def voc_request(item_id):
     conn.commit()
     conn.close()
     if not vendor:
-        flash("⚠️ 요청은 등록됐지만 해당 지역에 담당 작업자가 배정되어 있지 않습니다.")
+        flash("⚠️ 요청은 등록됐지만 해당 지역에 담당 작업자가 배정되어 있지 않습니다. (알림은 전체 담당자에게 발송됩니다)")
     else:
         flash("✅ VOC 요청이 담당 작업자의 긴급세차 목록으로 전달되었습니다.")
-        _notify_urgent_wash_targets(
-            city, district, vendor,
-            "🚨 긴급세차 요청 (VOC)",
-            f"{city} {district}" + (f" · {summary['car_number']}" if summary["car_number"] else "") + " 긴급세차 요청이 있습니다."
-        )
+    # 지역/업체 매칭 여부와 무관하게 긴급세차가 배정되면 무조건 push 알림을 보낸다.
+    _notify_urgent_wash_targets(
+        city, district, vendor,
+        "🚨 긴급세차 요청 (VOC)",
+        f"{city} {district}" + (f" · {summary['car_number']}" if summary["car_number"] else "") + " 긴급세차 요청이 있습니다."
+    )
     return redirect(url_for("voc_manage"))
 @app.route("/voc_manage/delete/<int:item_id>", methods=["POST"])
 @login_required

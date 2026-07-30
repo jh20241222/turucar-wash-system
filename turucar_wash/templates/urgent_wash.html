@@ -14,7 +14,7 @@
                 {% else %}내가 처리해야 할 긴급세차 차량을 확인합니다.{% endif %}
             </p>
         </div>
-        <button type="button" class="push-enable-btn uw-notify-btn">알림 받기</button>
+        <button type="button" class="push-bell-btn" id="uwPushBell" aria-label="알림 상태"><i class="ti ti-bell-off"></i></button>
     </div>
 
     <div class="uw-stat-row-v27">
@@ -196,7 +196,9 @@
 .uw-accept-date-row { display: flex; justify-content: center; }
 .uw-accept-date-row .uw-date-input { padding: 12px 24px; font-size: 14px; }
 .uw-complete-note { margin: 6px 0 10px; resize: vertical; }
-.uw-notify-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 700; background: #fff7ed; color: #c2410c; border: 1px solid #ffe0b2; cursor: pointer; white-space: nowrap; }
+.push-bell-btn { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 999px; border: none; background: transparent; cursor: pointer; flex-shrink: 0; margin-left: 8px; }
+.push-bell-btn i { font-size: 19px; line-height: 1; color: #b9c0cc; }
+.push-bell-btn.is-on i { color: #FF6B00; }
 
 /* 세차오더(전체/장기미세차/정기세차)와 동일한 탭 필터 UI */
 .wash-type-filter-bar{display:flex;gap:8px;padding:4px 0 8px;overflow-x:auto;-webkit-overflow-scrolling:touch;}

@@ -751,7 +751,7 @@ body {
 }
 
 /* Main cards */
-.app-main { background: var(--daangn-bg) !important; }
+.app-main { background: #fff !important; }
 .app-card, .stat-card, .quick-card, .filter-card, .admin-card, .guide-card, .vehicle-card, .work-form, .order-card, .history-card, .profile-card {
     background: var(--daangn-card) !important;
     border: 1px solid var(--daangn-line) !important;
@@ -861,7 +861,7 @@ body {
 
 /* Mobile app */
 @media (max-width: 900px) {
-    body.app-shell { background: #f8f9fa !important; color: var(--daangn-ink) !important; }
+    body.app-shell { background: #fff !important; color: var(--daangn-ink) !important; }
     .app-topbar {
         background: rgba(255,255,255,.94) !important;
         color: var(--daangn-ink) !important;
@@ -1870,13 +1870,16 @@ body {
 .notice-modal-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 300;
+    z-index: 9000;
     background: rgba(17, 24, 39, .34);
     backdrop-filter: blur(8px);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     padding: 22px;
+}
+.notice-modal-backdrop.open {
+    display: flex;
 }
 .notice-modal-backdrop[hidden] {
     display: none !important;
@@ -5570,16 +5573,16 @@ body.endpoint-dashboard .app-main {
     box-shadow: var(--shadow);
 }
 .home-notice-card-v12 {
-    border-radius: 30px;
-    padding: 34px 40px 36px;
-    margin-bottom: 26px;
+    border-radius: 25px;
+    padding: 26px 32px 28px;
+    margin-bottom: 20px;
 }
 .notice-head-v12 {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 18px;
-    margin-bottom: 28px;
+    margin-bottom: 20px;
 }
 .notice-head-v12 h2 {
     margin: 0;
@@ -5606,11 +5609,11 @@ body.endpoint-dashboard .app-main {
     letter-spacing: -.035em;
 }
 .notice-body-v12 {
-    min-height: 182px;
+    min-height: 150px;
     display: grid;
     grid-template-columns: 300px minmax(0, 1fr);
     align-items: center;
-    gap: 30px;
+    gap: 24px;
 }
 .notice-visual-v12 {
     display: flex;
@@ -5618,7 +5621,7 @@ body.endpoint-dashboard .app-main {
     align-items: center;
 }
 .notice-visual-v12 img {
-    width: 250px;
+    width: 200px;
     max-width: 100%;
     height: auto;
     display: block;
@@ -5666,6 +5669,8 @@ body.endpoint-dashboard .app-main {
 }
 .main-icon-v12 {
     width: 206px;
+    max-width: 100%;
+    box-sizing: border-box;
     height: 150px;
     display: flex;
     align-items: center;
@@ -5805,20 +5810,20 @@ body.endpoint-dashboard .app-main {
     }
     .home-brand-logo-v12 { width: 194px; }
     .home-notice-card-v12 {
-        border-radius: 28px;
-        padding: 22px 20px 24px;
-        margin-bottom: 26px;
+        border-radius: 23px;
+        padding: 14px 16px 16px;
+        margin-bottom: 16px;
     }
-    .notice-head-v12 { margin-bottom: 18px; }
+    .notice-head-v12 { margin-bottom: 12px; }
     .notice-head-v12 h2 { font-size: 24px; }
     .notice-more-v12 { height: 40px; min-width: 66px; font-size: 13px; padding: 0 14px; }
     .notice-body-v12 {
-        min-height: 136px;
-        grid-template-columns: 126px minmax(0,1fr);
-        gap: 18px;
+        min-height: 76px;
+        grid-template-columns: 80px minmax(0,1fr);
+        gap: 14px;
     }
-    .notice-visual-v12 img { width: 128px; }
-    .notice-copy-v12 strong { font-size: 18px; line-height: 1.36; margin-bottom: 10px; }
+    .notice-visual-v12 img { width: 64px; }
+    .notice-copy-v12 strong { font-size: 18px; line-height: 1.36; margin-bottom: 4px; }
     .notice-copy-v12 span { font-size: 15px; line-height: 1.55; -webkit-line-clamp: 3; }
     .home-main-grid-v12 { gap: 12px; margin-bottom: 24px; }
     .home-main-card-v12 {
@@ -5864,8 +5869,8 @@ body.endpoint-dashboard .app-main {
 @media (max-width: 390px) {
     .turu-home-v12 { padding-left: 14px; padding-right: 14px; }
     .home-brand-logo-v12 { width: 178px; }
-    .notice-body-v12 { grid-template-columns: 112px minmax(0,1fr); gap: 14px; min-height: 128px; }
-    .notice-visual-v12 img { width: 116px; }
+    .notice-body-v12 { grid-template-columns: 112px minmax(0,1fr); gap: 12px; min-height: 106px; }
+    .notice-visual-v12 img { width: 96px; }
     .notice-copy-v12 strong { font-size: 16px; }
     .notice-copy-v12 span { font-size: 13px; }
     .home-main-grid-v12 { gap: 10px; }
@@ -5882,12 +5887,12 @@ body.endpoint-dashboard .app-main {
 .home-brand-logo-v12 { width: 230px; }
 .notice-heading-link-v12, .notice-heading-link-v12:hover { color: inherit; text-decoration: none; }
 .notice-link-v12 { display:block; color: inherit; text-decoration:none; }
-.home-notice-card-v12 { padding: 30px 34px 32px; }
-.notice-head-v12 { margin-bottom: 18px; }
+.home-notice-card-v12 { padding: 24px 28px 26px; }
+.notice-head-v12 { margin-bottom: 14px; }
 .notice-head-v12 h2 { font-size: 24px; font-weight: 800; letter-spacing: -.05em; }
-.notice-body-v12 { min-height: 140px; grid-template-columns: 160px minmax(0,1fr); gap: 18px; }
+.notice-body-v12 { min-height: 116px; grid-template-columns: 160px minmax(0,1fr); gap: 14px; }
 .notice-visual-v12 { justify-content:flex-start; }
-.notice-visual-v12 img { width: 132px; }
+.notice-visual-v12 img { width: 108px; }
 .notice-copy-v12 strong { font-size: 18px; line-height: 1.45; font-weight: 800; margin-bottom: 8px; }
 .notice-copy-v12 span { font-size: 14px; line-height: 1.65; font-weight: 500; -webkit-line-clamp: 3; }
 .home-main-card-v12 { min-height: 286px; padding: 22px 14px 20px; }
@@ -5913,11 +5918,11 @@ body.endpoint-dashboard .app-main {
 @media (max-width: 900px) {
   .home-brand-v12 { height: 40px; margin-bottom: 18px; }
   .home-brand-logo-v12 { width: 172px; }
-  .home-notice-card-v12 { padding: 18px 16px 18px; border-radius: 26px; }
-  .notice-head-v12 { margin-bottom: 12px; }
+  .home-notice-card-v12 { padding: 14px 13px 14px; border-radius: 22px; }
+  .notice-head-v12 { margin-bottom: 10px; }
   .notice-head-v12 h2 { font-size: 18px; }
-  .notice-body-v12 { min-height: 120px; grid-template-columns: 92px minmax(0,1fr); gap: 12px; }
-  .notice-visual-v12 img { width: 86px; }
+  .notice-body-v12 { min-height: 100px; grid-template-columns: 92px minmax(0,1fr); gap: 10px; }
+  .notice-visual-v12 img { width: 70px; }
   .notice-copy-v12 strong { font-size: 14px; line-height: 1.45; margin-bottom: 6px; }
   .notice-copy-v12 span { font-size: 12px; line-height: 1.55; -webkit-line-clamp: 4; }
   .home-main-card-v12 { min-height: 182px; padding: 14px 8px 14px; }
@@ -5934,8 +5939,8 @@ body.endpoint-dashboard .app-main {
 }
 @media (max-width: 390px) {
   .home-brand-logo-v12 { width: 164px; }
-  .notice-body-v12 { grid-template-columns: 86px minmax(0,1fr); gap: 10px; }
-  .notice-visual-v12 img { width: 78px; }
+  .notice-body-v12 { grid-template-columns: 86px minmax(0,1fr); gap: 8px; }
+  .notice-visual-v12 img { width: 65px; }
   .home-main-card-v12 { min-height: 176px; }
   .main-icon-v12 { width: 68px; height: 68px; flex-basis: 68px; }
 }
@@ -5945,6 +5950,11 @@ body.endpoint-dashboard .app-main {
 .home-support-button-v12{border:1px solid rgba(221,229,239,.95);font-family:inherit;cursor:pointer;text-align:left;background:var(--card);box-shadow:var(--shadow);}
 .home-notice-title-button-v12{appearance:none;border:0;background:transparent;padding:0;margin:0;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;display:block;}
 .home-notice-title-button-v12 strong,.home-notice-title-button-v12 span{display:block;}
+.home-notice-slides-v12 .home-notice-title-button-v12{display:none;}
+.home-notice-slides-v12 .home-notice-title-button-v12.active{display:block;}
+.home-notice-dots-v12{display:flex;gap:6px;justify-content:flex-start;margin-top:12px;}
+.home-notice-dot-v12{width:6px;height:6px;border-radius:999px;background:rgba(180,190,205,.55);cursor:pointer;flex-shrink:0;}
+.home-notice-dot-v12.active{background:var(--daangn-orange,#FF6F0F);}
 .home-dev-toast-v12{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(12px);z-index:9999;background:rgba(17,24,39,.94);color:#fff;border-radius:999px;padding:12px 18px;font-size:14px;font-weight:700;letter-spacing:-.035em;box-shadow:0 14px 32px rgba(0,0,0,.22);opacity:0;transition:.18s ease;white-space:nowrap;}
 .home-dev-toast-v12.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .notice-page-create-form{margin:0 0 22px;padding:20px;border:1px solid rgba(221,229,239,.95);border-radius:24px;background:rgba(255,255,255,.96);box-shadow:0 12px 28px rgba(9,30,63,.06);display:grid;gap:14px;}
@@ -5957,12 +5967,12 @@ body.endpoint-dashboard .app-main {
   .turu-home-v12{width:min(100% - 64px,1120px);padding:54px 0 64px;}
   .home-brand-v12{height:62px;margin-bottom:24px;}
   .home-brand-logo-v12{width:236px;}
-  .home-notice-card-v12{border-radius:30px;padding:34px 40px 36px;margin-bottom:26px;}
-  .notice-head-v12{margin-bottom:28px;}
+  .home-notice-card-v12{border-radius:25px;padding:26px 32px 28px;margin-bottom:20px;}
+  .notice-head-v12{margin-bottom:20px;}
   .notice-head-v12 h2{font-size:32px;}
-  .notice-body-v12{min-height:182px;grid-template-columns:300px minmax(0,1fr);gap:30px;}
+  .notice-body-v12{min-height:150px;grid-template-columns:300px minmax(0,1fr);gap:24px;}
   .notice-visual-v12{justify-content:center;}
-  .notice-visual-v12 img{width:250px;}
+  .notice-visual-v12 img{width:200px;}
   .notice-copy-v12 strong{font-size:26px;margin-bottom:14px;}
   .notice-copy-v12 span{font-size:19px;line-height:1.55;-webkit-line-clamp:2;}
   .home-main-grid-v12{gap:24px;margin-bottom:24px;}
@@ -5986,12 +5996,12 @@ body.endpoint-dashboard .app-main {
   .turu-home-v12{width:100%;min-height:100svh;padding:calc(28px + env(safe-area-inset-top)) 14px calc(104px + env(safe-area-inset-bottom));}
   .home-brand-v12{height:40px;margin-bottom:18px;}
   .home-brand-logo-v12{width:166px;}
-  .home-notice-card-v12{border-radius:25px;padding:18px 16px;margin-bottom:22px;}
-  .notice-head-v12{margin-bottom:12px;}
+  .home-notice-card-v12{border-radius:21px;padding:14px 13px;margin-bottom:18px;}
+  .notice-head-v12{margin-bottom:10px;}
   .notice-head-v12 h2{font-size:18px;}
   .notice-more-v12{height:36px;min-width:58px;font-size:12px;padding:0 12px;}
-  .notice-body-v12{min-height:112px;grid-template-columns:84px minmax(0,1fr);gap:10px;}
-  .notice-visual-v12 img{width:78px;}
+  .notice-body-v12{min-height:92px;grid-template-columns:84px minmax(0,1fr);gap:8px;}
+  .notice-visual-v12 img{width:65px;}
   .notice-copy-v12 strong{font-size:13px;line-height:1.45;margin-bottom:6px;}
   .notice-copy-v12 span{font-size:11px;line-height:1.55;-webkit-line-clamp:4;}
   .home-main-grid-v12{gap:10px;margin-bottom:20px;}
@@ -6076,12 +6086,12 @@ body.endpoint-dashboard .app-main {
   }
 
   .home-notice-card-v12{
-    border-radius: 28px !important;
-    padding: 22px 18px 24px !important;
-    margin-bottom: 24px !important;
+    border-radius: 23px !important;
+    padding: 14px 14px 14px !important;
+    margin-bottom: 14px !important;
   }
   .notice-head-v12{
-    margin-bottom: 18px !important;
+    margin-bottom: 10px !important;
   }
   .notice-head-v12 h2{
     font-size: 24px !important;
@@ -6094,17 +6104,17 @@ body.endpoint-dashboard .app-main {
     padding: 0 18px !important;
   }
   .notice-body-v12{
-    min-height: 158px !important;
-    grid-template-columns: 126px minmax(0, 1fr) !important;
-    gap: 16px !important;
+    min-height: 84px !important;
+    grid-template-columns: 76px minmax(0, 1fr) !important;
+    gap: 12px !important;
   }
   .notice-visual-v12 img{
-    width: 118px !important;
+    width: 60px !important;
   }
   .notice-copy-v12 strong{
     font-size: 18px !important;
     line-height: 1.42 !important;
-    margin-bottom: 10px !important;
+    margin-bottom: 4px !important;
   }
   .notice-copy-v12 span{
     font-size: 15px !important;
@@ -6185,13 +6195,13 @@ body.endpoint-dashboard .app-main {
     padding-right: 12px !important;
   }
   .home-brand-logo-v12{ width: 184px !important; }
-  .home-notice-card-v12{ padding: 20px 16px 22px !important; }
+  .home-notice-card-v12{ padding: 12px 13px 12px !important; }
   .notice-body-v12{
-    min-height: 150px !important;
-    grid-template-columns: 112px minmax(0,1fr) !important;
-    gap: 14px !important;
+    min-height: 80px !important;
+    grid-template-columns: 72px minmax(0,1fr) !important;
+    gap: 10px !important;
   }
-  .notice-visual-v12 img{ width: 106px !important; }
+  .notice-visual-v12 img{ width: 58px !important; }
   .notice-copy-v12 strong{ font-size: 17px !important; }
   .notice-copy-v12 span{ font-size: 14px !important; }
 
@@ -6224,9 +6234,9 @@ body.endpoint-dashboard .app-main {
 
 @media (min-width: 641px){
   .turu-home-v12{ width:min(100% - 40px,1120px); padding:54px 0 64px; }
-  .home-notice-card-v12{ padding:34px 40px 36px; }
-  .notice-body-v12{ min-height:182px; grid-template-columns:300px minmax(0,1fr); gap:30px; }
-  .notice-visual-v12 img{ width:250px; }
+  .home-notice-card-v12{ padding:26px 32px 28px; }
+  .notice-body-v12{ min-height:150px; grid-template-columns:300px minmax(0,1fr); gap:24px; }
+  .notice-visual-v12 img{ width:200px; }
   .home-main-card-v12{ min-height:304px; }
   .main-icon-v12{ width:206px !important; height:150px !important; flex-basis:150px !important; }
 }
@@ -6272,17 +6282,17 @@ body.endpoint-dashboard .app-main {
     width: 230px !important;
   }
   .home-notice-card-v12{
-    border-radius: 28px !important;
-    padding: 34px 40px 36px !important;
-    margin-bottom: 28px !important;
+    border-radius: 23px !important;
+    padding: 26px 32px 28px !important;
+    margin-bottom: 20px !important;
   }
   .notice-body-v12{
-    min-height: 190px !important;
+    min-height: 156px !important;
     grid-template-columns: 280px minmax(0,1fr) !important;
-    gap: 34px !important;
+    gap: 28px !important;
   }
   .notice-visual-v12 img{
-    width: 240px !important;
+    width: 196px !important;
   }
   .notice-copy-v12 strong{
     font-size: 25px !important;
@@ -6520,6 +6530,24 @@ body.endpoint-dashboard .app-main {
     font-weight: 820;
     color: #101827;
 }
+/* 페이지 타이틀 아이콘 배지 — 모든 메뉴 화면 제목 앞에 공통으로 붙이는 아이콘 (모든 메뉴 통일) */
+.turu-title-icon-v28 {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    margin-right: 8px;
+    vertical-align: -7px;
+    flex-shrink: 0;
+}
+.turu-title-icon-v28 i { font-size: 17px; line-height: 1; }
+.turu-title-icon-v28--orange { background: #FFF2E9; color: #FF6B00; }
+.turu-title-icon-v28--green  { background: #EAF3DE; color: #4C9A1A; }
+.turu-title-icon-v28--blue   { background: #E9F1FF; color: #2563EB; }
+.turu-title-icon-v28--red    { background: #FDEBEC; color: #E5484D; }
+.turu-title-icon-v28--gray   { background: #F1F2F4; color: #4B5563; }
 .turu-page-head-v24 p {
     margin: 8px 0 0;
     color: #6f7785;
@@ -6984,7 +7012,7 @@ body.endpoint-dashboard .app-main {
 
 /* ===== v25 order/status refinement ===== */
 .turu-page-head--single-v25 {
-    justify-content: flex-start;
+    justify-content: center;
 }
 .turu-date-nav-v25 {
     display: grid;
@@ -7727,7 +7755,13 @@ body.endpoint-dashboard .app-main {
   --turu-shadow:0 10px 28px rgba(15,28,51,.06);
 }
 @media (max-width: 900px) { html,body{font-family:'Pretendard', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;color:var(--turu-text);} }
-@media (max-width: 900px) { body{background:linear-gradient(180deg,#fff 0%, #f5f8fc 34%, #f2f5fa 100%);} .app-main{padding-bottom:120px;} }
+@media (max-width: 900px) { body{background:#fff !important;} .app-main{padding-bottom:120px;} }
+/* 모든 화면(홈 포함) 공통 배경 — 홈 화면의 배경을 그대로 모든 메뉴가 공유하도록 wrapper는 항상 투명 처리 */
+@media (max-width: 900px) {
+  body.app-shell,
+  .turu-home-v12,
+  .turu-app-page-v24 { background: transparent !important; }
+}
 body.endpoint-dashboard .floating-turu-home-link,
 body.endpoint-wash_list .floating-turu-home-link,
 body.endpoint-wash_status .floating-turu-home-link,
@@ -7737,16 +7771,19 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 
 @media (max-width: 900px){
   .app-topbar{display:none !important;}
+  /* 안전영역(노치) 여백은 .turu-home-v12 / .turu-app-page-v24 같은 페이지 wrapper가 각자 한 번만 담당한다.
+     .app-main 자체에 또 safe-area를 더하면 wrapper 안쪽 로고 헤더의 padding-top과 이중으로 겹쳐서
+     로고 위 여백이 비정상적으로 커지는 버그가 생기므로, 여기서는 고정값만 둔다. */
   .app-main{padding-top:0 !important;}
   .turu-home-v12,.turu-app-page-v24,.chatbot-screen,.detail-grid-clean,.detail-hero-clean{width:100%;max-width:100%;}
   .turu-home-v12,.turu-app-page-v24,.endpoint-car_detail .app-main,.endpoint-support_chat .app-main{padding-left:16px !important;padding-right:16px !important;}
-  .turu-page-brand-v24,.detail-page-brand-v36{display:flex;align-items:center;justify-content:flex-start;padding-top:20px;margin-bottom:18px;}
+  .turu-page-brand-v24,.detail-page-brand-v36{display:flex;align-items:center;justify-content:flex-start;padding-top:2px;margin-bottom:18px;}
   .turu-page-brand-v24 img,.detail-page-brand-v36 img,.home-brand-logo-v12,.support-top-logo-v36{width:170px;height:auto;display:block;}
 
-  .turu-home-v12{background:transparent !important;padding-top:22px !important;padding-bottom:120px !important;}
+  .turu-home-v12{background:transparent !important;padding-top:calc(22px + env(safe-area-inset-top)) !important;padding-bottom:120px !important;}
   .home-brand-v12{margin-bottom:18px !important;}
   .home-notice-card-v12,.home-shortcut-card-v12,.home-wide-link-v12,.home-menu-tile-v12{background:rgba(255,255,255,.96) !important;border:1px solid var(--turu-line) !important;box-shadow:none !important;}
-  .home-notice-card-v12{border-radius:30px !important;padding:20px 18px !important;}
+  .home-notice-card-v12{border-radius:25px !important;padding:16px 14px !important;}
   .notice-head-v12 h2,.notice-heading-link-v12,.home-shortcut-title-v12,.home-wide-link-v12 strong,.home-menu-tile-v12 strong{color:var(--turu-text) !important;letter-spacing:-.03em;}
   .notice-head-v12 h2,.notice-heading-link-v12{font-size:17px !important;font-weight:800 !important;}
   .notice-more-v12{border:1px solid var(--turu-line) !important;color:var(--turu-text) !important;font-size:14px !important;font-weight:700 !important;border-radius:999px !important;padding:10px 16px !important;background:#fff !important;}
@@ -7759,9 +7796,14 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   .home-wide-link-v12{min-height:84px !important;border-radius:24px !important;padding:0 18px !important;}
   .home-wide-link-v12 strong{font-size:18px !important;font-weight:800 !important;}
 
-  .turu-app-page-v24{background:transparent !important;padding-top:20px !important;padding-bottom:120px !important;}
-  .turu-page-head-v24{margin-bottom:16px !important;align-items:flex-start !important;gap:12px !important;}
-  .turu-page-head-v24 h1,.endpoint-car_detail .detail-hero-clean h1{font-size:22px !important;line-height:1.2 !important;font-weight:800 !important;color:var(--turu-text) !important;letter-spacing:-.04em !important;margin:0 !important;}
+  .turu-app-page-v24{background:transparent !important;padding-top:calc(20px + env(safe-area-inset-top)) !important;padding-bottom:120px !important;}
+  /* v42: 로고 아래로 타이틀을 쌓지 않고, 진짜 flex 래퍼(.turu-page-topbar-v42)로 로고 옆에 작게, 하단 라인을 맞춰서 배치한다.
+     (inline-flex + vertical-align 방식은 브라우저별로 기준선 계산이 달라 오차가 생겨서, 실제 flex 컨테이너로 교체) */
+  .turu-page-topbar-v42{display:flex !important;align-items:flex-end !important;gap:8px !important;margin-bottom:28px !important;}
+  .turu-page-topbar-v42 .turu-page-brand-v24{margin-bottom:0 !important;}
+  .turu-page-topbar-v42 .turu-page-head-v24{margin:0 !important;width:auto !important;flex:1;min-width:0;justify-content:flex-start !important;}
+  .turu-page-topbar-v42 .turu-page-head-v24 > div:first-child{flex:none !important;text-align:left !important;min-width:0;}
+  .turu-page-topbar-v42 .turu-page-head-v24 h1,.endpoint-car_detail .detail-hero-clean h1{display:block !important;text-align:left !important;font-size:15px !important;line-height:1.3 !important;font-weight:600 !important;color:#8b93a3 !important;letter-spacing:-.01em !important;margin:0 !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .turu-page-head-v24 p,.endpoint-car_detail .detail-hero-clean .hero-copy{display:none !important;}
   .turu-mini-btn-v24,.filter-card .primary-btn,.filter-card .blue-btn,.primary-btn,.blue-btn,.secondary-btn{border-radius:16px !important;font-weight:700 !important;font-size:14px !important;box-shadow:none !important;}
   .turu-mini-btn-v24{background:#fff !important;color:var(--turu-text) !important;border:1px solid var(--turu-line) !important;padding:12px 16px !important;}
@@ -7893,7 +7935,7 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 
 @media (max-width:900px){
   .endpoint-wash_list .turu-page-brand-v24,
-  .endpoint-wash_status .turu-page-brand-v24{display:flex !important;align-items:center !important;justify-content:flex-start !important;padding-top:20px !important;margin-bottom:18px !important;}
+  .endpoint-wash_status .turu-page-brand-v24{display:flex !important;align-items:center !important;justify-content:flex-start !important;padding-top:2px !important;margin-bottom:0 !important;}
   .endpoint-wash_list .turu-page-brand-v24 img,
   .endpoint-wash_status .turu-page-brand-v24 img{display:block !important;width:170px !important;height:auto !important;}
 
@@ -7919,20 +7961,35 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   .turu-status-page-v37 .turu-status-searchbar-v37 .filter{justify-content:center !important;white-space:nowrap;}
   .turu-status-page-v37 .turu-status-searchbar-v37 .period{height:46px;border-radius:16px;border:1px solid var(--turu-line);background:#fff;color:var(--turu-text);font-size:13px;font-weight:700;padding:0 10px;}
 
+  .turu-order-page-v24 .mobile-filter-sheet,
   .turu-order-page-v37 .mobile-filter-sheet,
+  .turu-status-page-v24 .mobile-filter-sheet,
   .turu-status-page-v37 .mobile-filter-sheet{left:16px !important;right:16px !important;bottom:calc(16px + env(safe-area-inset-bottom)) !important;z-index:330 !important;display:none;max-height:min(78vh,720px) !important;overflow-y:auto !important;padding:18px !important;border-radius:26px !important;background:#fff !important;border:1px solid var(--turu-line) !important;box-shadow:0 24px 60px rgba(15,28,51,.16) !important;}
+  .turu-order-page-v24 .mobile-filter-sheet.open,
   .turu-order-page-v37 .mobile-filter-sheet.open,
+  .turu-status-page-v24 .mobile-filter-sheet.open,
   .turu-status-page-v37 .mobile-filter-sheet.open{display:block !important;visibility:visible !important;opacity:1 !important;}
+  .turu-order-page-v24 .mobile-filter-sheet .filter-grid,
   .turu-order-page-v37 .mobile-filter-sheet .filter-grid,
+  .turu-status-page-v24 .mobile-filter-sheet .filter-grid,
   .turu-status-page-v37 .mobile-filter-sheet .filter-grid,
+  .turu-status-page-v24 .mobile-filter-sheet .status-filter-grid,
   .turu-status-page-v37 .mobile-filter-sheet .status-filter-grid{display:grid !important;grid-template-columns:1fr !important;gap:10px !important;}
+  .turu-order-page-v24 .mobile-filter-sheet .blue-btn,
   .turu-order-page-v37 .mobile-filter-sheet .blue-btn,
+  .turu-status-page-v24 .mobile-filter-sheet .blue-btn,
   .turu-status-page-v37 .mobile-filter-sheet .blue-btn,
+  .turu-order-page-v24 .mobile-filter-sheet .primary-btn,
   .turu-order-page-v37 .mobile-filter-sheet .primary-btn,
+  .turu-status-page-v24 .mobile-filter-sheet .primary-btn,
   .turu-status-page-v37 .mobile-filter-sheet .primary-btn{height:48px !important;}
+  .turu-order-page-v24 .mobile-filter-sheet-head,
   .turu-order-page-v37 .mobile-filter-sheet-head,
+  .turu-status-page-v24 .mobile-filter-sheet-head,
   .turu-status-page-v37 .mobile-filter-sheet-head{display:flex !important;align-items:center !important;justify-content:space-between !important;gap:12px !important;margin-bottom:14px !important;}
+  .turu-order-page-v24 .mobile-filter-sheet-head button,
   .turu-order-page-v37 .mobile-filter-sheet-head button,
+  .turu-status-page-v24 .mobile-filter-sheet-head button,
   .turu-status-page-v37 .mobile-filter-sheet-head button{width:36px;height:36px;border:none;border-radius:999px;background:#f5f7fb;color:var(--turu-text);font-size:24px;line-height:1;}
 
   .turu-status-page-v37 .turu-stat-strip-v37{margin-bottom:14px !important;}
@@ -7961,9 +8018,9 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
     height:auto !important;
     min-height:36px !important;
     overflow:visible !important;
-    padding-top:18px !important;
+    padding-top:2px !important;
     padding-bottom:0 !important;
-    margin:0 0 16px !important;
+    margin:0 !important;
   }
 
   .endpoint-wash_list .turu-page-brand-v24 img,
@@ -8024,6 +8081,114 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 #desktop-mode .desktop-sidebar { display: flex !important; }
 #desktop-mode .dt-topnav { display: flex !important; }
 
+/* 모바일 날짜/통계 카드 기본 스타일 */
+.mob-date-card {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    background: #fff !important;
+    border-radius: 18px !important;
+    padding: 6px !important;
+    margin-bottom: 8px !important;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.07) !important;
+}
+.mob-stat-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    margin-bottom: 14px !important;
+}
+
 /* 모바일 날짜/통계 카드 데스크탑 숨김 */
 #desktop-mode .mob-date-card { display: none !important; }
+#desktop-mode .mob-stat-row { display: none !important; }
 #desktop-mode .mob-stat-cards { display: none !important; }
+
+/* ════════════════════════════════
+   공용 페이지네이션 (리스트가 있는 관리 화면 전역 공용)
+════════════════════════════════ */
+.pg-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 18px 0 6px;
+}
+.pg-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid var(--d-border, #e5e8ec);
+  background: var(--surface, #fff);
+  color: var(--text-primary, #374151);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all .15s;
+}
+.pg-link:hover { border-color: #FF9900; color: #FF9900; }
+.pg-link.pg-active {
+  background: #FF9900;
+  border-color: #FF9900;
+  color: #fff;
+  font-weight: 800;
+}
+.pg-link.pg-disabled {
+  pointer-events: none;
+  opacity: .4;
+}
+.pg-ellipsis {
+  color: var(--text-secondary, #9ca3af);
+  font-size: 13px;
+  padding: 0 4px;
+}
+
+/* 긴급세차 홈 배지 — 카드 오른쪽 모서리에 걸치는 알림 숫자 */
+.support-visual-v12 { position: relative; }
+.home-support-card-v12 { position: relative; }
+.urgent-label-wrap-v12 { display: inline-flex; align-items: flex-start; gap: 4px; }
+.urgent-badge-v12 {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  background: linear-gradient(135deg, #ff6a4d, #e53935);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 22px;
+  text-align: center;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(229, 57, 53, .4);
+  z-index: 2;
+}
+
+/* 긴급세차 오더 카드 (오더 메뉴 카드와 동일 톤) */
+.uw-card-list { display: flex; flex-direction: column; gap: 12px; }
+.uw-order-card { background: #fff; border: 1px solid var(--d-border, #e5e8ec); border-radius: 16px; padding: 16px 18px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+.uw-order-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.uw-order-tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: #fff7ed; color: #c2410c; white-space: nowrap; }
+.uw-order-tag--voc { background: #eef2ff; color: #4338ca; }
+.uw-order-time { font-size: 11px; color: #9ca3af; }
+.uw-order-plate { font-size: 19px; font-weight: 800; font-family: 'Courier New', monospace; color: #111827; margin-bottom: 6px; }
+.uw-order-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: #6b7280; margin-bottom: 10px; }
+.uw-order-meta b { color: #374151; font-weight: 600; }
+.uw-order-content { background: #f8f9fb; border: 1px solid #f0f2f5; border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #374151; line-height: 1.6; white-space: pre-line; margin-bottom: 12px; }
+.uw-order-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.uw-date-input { padding: 8px 10px; font-size: 13px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #111827; font-family: inherit; }
+.uw-accept-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #111827; color: #fff; border: none; cursor: pointer; }
+.uw-complete-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #FF9900; color: #fff; border: none; cursor: pointer; }
+.uw-scheduled-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; background: #eef2ff; color: #4338ca; }
+.uw-empty { text-align: center; padding: 48px 20px; color: #9ca3af; }
+.uw-notify-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 700; background: #fff7ed; color: #c2410c; border: 1px solid #ffe0b2; cursor: pointer; }
+@media (max-width: 700px) {
+  .uw-order-meta { font-size: 12px; }
+}

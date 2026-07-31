@@ -8141,24 +8141,22 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   padding: 0 4px;
 }
 
-/* 긴급세차 홈 배지 ("긴급 세차" 글자 우상단 알림 숫자 — 아이콘이 아니라 글자 옆에 붙는다)
-   글자 폭에 따라 겹칠 수 있는 position:absolute 방식 대신, 실제 flex 형제 요소로 두고
-   위로 살짝 띄우는 방식(위첨자 느낌)으로 처리해 텍스트와 절대 겹치지 않게 한다. */
+/* 긴급세차 홈 배지 — 카드 오른쪽 모서리에 걸치는 알림 숫자 */
 .support-visual-v12 { position: relative; }
+.home-support-card-v12 { position: relative; }
 .urgent-label-wrap-v12 { display: inline-flex; align-items: flex-start; gap: 4px; }
 .urgent-badge-v12 {
-  position: static;
-  align-self: flex-start;
-  margin-top: -4px;
-  flex-shrink: 0;
-  min-width: 15px;
-  height: 15px;
-  padding: 0 3px;
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
   background: linear-gradient(135deg, #ff6a4d, #e53935);
   color: #fff;
-  font-size: 9px;
+  font-size: 13px;
   font-weight: 800;
-  line-height: 15px;
+  line-height: 22px;
   text-align: center;
   border-radius: 999px;
   border: 2px solid #fff;

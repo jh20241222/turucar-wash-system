@@ -8243,14 +8243,14 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   font-size: 12px !important;
 }
 
-/* ===== v46: 홈 공지사항 제목 볼드 제거 + 날짜/작성자 메타 라인 추가 ===== */
+/* ===== v46: 홈 공지사항 제목 볼드 + 날짜/작성자 메타 라인 ===== */
 .turu-home-v12 .notice-copy-v12 strong{
-  font-weight: 500 !important;
+  font-weight: 800 !important;
 }
 .home-notice-meta-v12{
   display: block;
   text-align: right;
-  font-size: 12px;
+  font-size: 10px;
   color: #687385;
   font-weight: 500;
   letter-spacing: -.04em;

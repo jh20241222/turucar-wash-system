@@ -1302,7 +1302,7 @@ def dashboard():
         "dashboard_notice_body",
         f"{current_user.username} 계정으로 접속 중입니다. 오더 확인, 완료 처리까지 앱처럼 빠르게 확인하세요."
     )
-    notice_rows, notice_total, _, _ = get_dashboard_notices(1, 3)
+    notice_rows, notice_total, _, _ = get_dashboard_notices(1, 5)
     return render_template(
         "dashboard.html",
         total_count=total_count,

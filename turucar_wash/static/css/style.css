@@ -8242,3 +8242,16 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 .home-tab-v12{
   font-size: 12px !important;
 }
+
+/* ===== v46: 홈 공지사항 제목 볼드 제거 + 날짜/작성자 메타 라인 추가 ===== */
+.turu-home-v12 .notice-copy-v12 strong{
+  font-weight: 500 !important;
+}
+.home-notice-meta-v12{
+  display: block;
+  text-align: right;
+  font-size: 12px;
+  color: #9AA3B2;
+  font-weight: 400;
+  margin-top: 6px;
+}

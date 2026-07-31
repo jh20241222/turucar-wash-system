@@ -35,9 +35,7 @@ body {
     min-height: 100vh;
     font-family: "NanumSquare", "NanumSquare Neo", "Apple SD Gothic Neo", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     color: var(--ink);
-    background:
-        radial-gradient(circle at 80% -10%, rgba(255, 128, 33, .15), transparent 32%),
-        linear-gradient(180deg, #FBFCFE 0%, var(--bg) 50%, #EFF1F5 100%);
+    background: #FFFFFF;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
 }
@@ -627,7 +625,7 @@ tbody tr:hover td { background: #FFF9F5; }
 :root {
     --daangn-orange: #ff6f0f;
     --daangn-orange-soft: #fff3ea;
-    --daangn-bg: #f8f9fa;
+    --daangn-bg: #ffffff;
     --daangn-card: #ffffff;
     --daangn-ink: #212124;
     --daangn-muted: #868b94;
@@ -871,7 +869,7 @@ body {
     .brand-dot { width: 31px; height: 31px; border-radius: 11px; }
     .icon-btn { background: #f2f3f5 !important; color: var(--daangn-ink) !important; border: 0 !important; }
     .app-main {
-        background: #f8f9fa !important;
+        background: #ffffff !important;
         padding-bottom: calc(104px + env(safe-area-inset-bottom));
     }
     .mobile-tabbar {
@@ -5517,9 +5515,7 @@ body.modal-open {
    TURU CAR home v12 - preview matched web/app dashboard
    ========================================================= */
 body.endpoint-dashboard {
-    background:
-        radial-gradient(circle at 86% -12%, rgba(255,128,33,.10), transparent 31%),
-        linear-gradient(180deg, #FBFCFE 0%, #F5F7FA 52%, #EEF3F8 100%) !important;
+    background: #FFFFFF !important;
 }
 body.endpoint-dashboard .desktop-sidebar,
 body.endpoint-dashboard .app-topbar,
@@ -5543,8 +5539,8 @@ body.endpoint-dashboard .app-main {
     --ink: #111827;
     --muted: #6B7280;
     --line: #DDE5EF;
-    --card: rgba(255,255,255,.96);
-    --shadow: 0 18px 45px rgba(9, 30, 63, .085);
+    --card: #ffffff;
+    --shadow: 0 14px 34px rgba(9, 30, 63, .11);
     width: min(100% - 40px, 1120px);
     margin: 0 auto;
     min-height: 100vh;
@@ -6265,7 +6261,7 @@ body.endpoint-dashboard .app-main {
     background: transparent !important;
   }
   body.endpoint-dashboard{
-    background: #F4F7FB !important;
+    background: #FFFFFF !important;
   }
   .turu-home-v12{
     width: 100% !important;
@@ -7340,14 +7336,12 @@ body.endpoint-dashboard .app-main {
 @media (min-width: 901px) {
   html, body {
     min-width: 1180px;
-    background: #f4f7fb !important;
+    background: #ffffff !important;
   }
 
   body.app-shell {
     color: #111827 !important;
-    background:
-      radial-gradient(circle at 85% -10%, rgba(255, 122, 0, .08), transparent 30%),
-      linear-gradient(180deg, #f8fafc 0%, #f2f5f9 100%) !important;
+    background: #ffffff !important;
   }
 
   /* top bar: desktop header, not mobile app header */
@@ -7782,7 +7776,7 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 
   .turu-home-v12{background:transparent !important;padding-top:calc(22px + env(safe-area-inset-top)) !important;padding-bottom:120px !important;}
   .home-brand-v12{margin-bottom:18px !important;}
-  .home-notice-card-v12,.home-shortcut-card-v12,.home-wide-link-v12,.home-menu-tile-v12{background:rgba(255,255,255,.96) !important;border:1px solid var(--turu-line) !important;box-shadow:none !important;}
+  .home-notice-card-v12,.home-shortcut-card-v12,.home-wide-link-v12,.home-menu-tile-v12{background:#ffffff !important;border:1px solid var(--turu-line) !important;box-shadow:0 10px 26px rgba(15,23,42,.08) !important;}
   .home-notice-card-v12{border-radius:25px !important;padding:16px 14px !important;}
   .notice-head-v12 h2,.notice-heading-link-v12,.home-shortcut-title-v12,.home-wide-link-v12 strong,.home-menu-tile-v12 strong{color:var(--turu-text) !important;letter-spacing:-.03em;}
   .notice-head-v12 h2,.notice-heading-link-v12{font-size:17px !important;font-weight:800 !important;}
@@ -7811,7 +7805,7 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   .blue-btn::before{content:'⤓';margin-right:6px;color:#3aa655;font-weight:900;}
   .primary-btn{background:linear-gradient(180deg,#ffad0a 0%, #ff8a00 100%) !important;color:#fff !important;border:none !important;}
   .secondary-btn{background:#fff !important;color:var(--turu-text) !important;border:1px solid var(--turu-line) !important;}
-  .turu-date-nav-v26,.turu-stat-strip-v24,.turu-order-card-v24,.turu-profile-main-card-v24,.turu-menu-card-v24,.detail-hero-clean,.vehicle-card-clean,.work-form-clean,.home-notice-viewer-panel-v12,.chatbot-intro-card-v36,.my-ticket-box{background:rgba(255,255,255,.97) !important;border:1px solid var(--turu-line) !important;box-shadow:none !important;}
+  .turu-date-nav-v26,.turu-stat-strip-v24,.turu-order-card-v24,.turu-profile-main-card-v24,.turu-menu-card-v24,.detail-hero-clean,.vehicle-card-clean,.work-form-clean,.home-notice-viewer-panel-v12,.chatbot-intro-card-v36,.my-ticket-box{background:#ffffff !important;border:1px solid var(--turu-line) !important;box-shadow:0 10px 26px rgba(15,23,42,.08) !important;}
   .turu-date-nav-v26{border-radius:20px !important;padding:6px !important;margin-bottom:14px !important;}
   .turu-date-current-v26{background:transparent !important;}
   .turu-date-current-v26 span{font-size:11px !important;color:#7b8aa1 !important;font-weight:700 !important;}

@@ -1,7 +1,7 @@
-const CACHE_NAME = 'turu-app-loader-v33';
+const CACHE_NAME = 'turu-app-loader-v36';
 const APP_SHELL = [
   '/offline',
-  '/static/css/style.css?v=33',
+  '/static/css/style.css?v=36',
   '/static/js/support_alerts.js',
   '/static/js/app_loader.js',
   '/static/img/turucar_logo_brand.png',
@@ -36,9 +36,12 @@ self.addEventListener('fetch', (event) => {
   }
   if (url.pathname.startsWith('/static/')) {
     event.respondWith(caches.match(request).then((cached) => {
-      const fresh = fetch(request).then((response) => {
-        if (response && response.ok) caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
-        return response;
+      const fresh = fetch(request).then((networkResponse) => {
+        if (networkResponse && networkResponse.ok) {
+          const toCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, toCache));
+        }
+        return networkResponse;
       }).catch(() => cached);
       return cached || fresh;
     }));

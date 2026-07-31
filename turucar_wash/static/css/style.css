@@ -7790,11 +7790,13 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   .home-wide-link-v12 strong{font-size:18px !important;font-weight:800 !important;}
 
   .turu-app-page-v24{background:transparent !important;padding-top:calc(20px + env(safe-area-inset-top)) !important;padding-bottom:120px !important;}
-  /* v41: 로고 아래로 타이틀을 쌓지 않고, 로고 옆(같은 줄)에 작게 붙인다. 밑줄(하단)을 로고와 맞춤. */
-  .turu-page-brand-v24{display:inline-flex !important;vertical-align:bottom !important;}
-  .turu-page-brand-v24 + .turu-page-head-v24{display:inline-flex !important;vertical-align:bottom !important;width:auto !important;margin:0 0 18px 8px !important;gap:0 !important;}
-  .turu-page-brand-v24 + .turu-page-head-v24 > div:first-child{flex:none !important;text-align:left !important;}
-  .turu-page-brand-v24 + .turu-page-head-v24 h1,.endpoint-car_detail .detail-hero-clean h1{display:block !important;text-align:left !important;font-size:15px !important;line-height:1.3 !important;font-weight:600 !important;color:#8b93a3 !important;letter-spacing:-.01em !important;margin:0 !important;}
+  /* v42: 로고 아래로 타이틀을 쌓지 않고, 진짜 flex 래퍼(.turu-page-topbar-v42)로 로고 옆에 작게, 하단 라인을 맞춰서 배치한다.
+     (inline-flex + vertical-align 방식은 브라우저별로 기준선 계산이 달라 오차가 생겨서, 실제 flex 컨테이너로 교체) */
+  .turu-page-topbar-v42{display:flex !important;align-items:flex-end !important;gap:8px !important;margin-bottom:18px !important;}
+  .turu-page-topbar-v42 .turu-page-brand-v24{margin-bottom:0 !important;}
+  .turu-page-topbar-v42 .turu-page-head-v24{margin:0 !important;width:auto !important;flex:1;min-width:0;}
+  .turu-page-topbar-v42 .turu-page-head-v24 > div:first-child{flex:none !important;text-align:left !important;min-width:0;}
+  .turu-page-topbar-v42 .turu-page-head-v24 h1,.endpoint-car_detail .detail-hero-clean h1{display:block !important;text-align:left !important;font-size:15px !important;line-height:1.3 !important;font-weight:600 !important;color:#8b93a3 !important;letter-spacing:-.01em !important;margin:0 !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .turu-page-head-v24 p,.endpoint-car_detail .detail-hero-clean .hero-copy{display:none !important;}
   .turu-mini-btn-v24,.filter-card .primary-btn,.filter-card .blue-btn,.primary-btn,.blue-btn,.secondary-btn{border-radius:16px !important;font-weight:700 !important;font-size:14px !important;box-shadow:none !important;}
   .turu-mini-btn-v24{background:#fff !important;color:var(--turu-text) !important;border:1px solid var(--turu-line) !important;padding:12px 16px !important;}
@@ -7926,7 +7928,7 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 
 @media (max-width:900px){
   .endpoint-wash_list .turu-page-brand-v24,
-  .endpoint-wash_status .turu-page-brand-v24{display:inline-flex !important;vertical-align:bottom !important;align-items:center !important;justify-content:flex-start !important;padding-top:2px !important;margin-bottom:18px !important;}
+  .endpoint-wash_status .turu-page-brand-v24{display:flex !important;align-items:center !important;justify-content:flex-start !important;padding-top:2px !important;margin-bottom:0 !important;}
   .endpoint-wash_list .turu-page-brand-v24 img,
   .endpoint-wash_status .turu-page-brand-v24 img{display:block !important;width:170px !important;height:auto !important;}
 
@@ -8001,8 +8003,7 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   .endpoint-support_chat .turu-page-brand-v24,
   .endpoint-support_chat .turu-page-brand-v26,
   .endpoint-car_detail .detail-page-brand-v36 {
-    display:inline-flex !important;
-    vertical-align:bottom !important;
+    display:flex !important;
     align-items:center !important;
     justify-content:flex-start !important;
     visibility:visible !important;
@@ -8012,7 +8013,7 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
     overflow:visible !important;
     padding-top:2px !important;
     padding-bottom:0 !important;
-    margin:0 0 18px !important;
+    margin:0 !important;
   }
 
   .endpoint-wash_list .turu-page-brand-v24 img,
@@ -8140,20 +8141,21 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   padding: 0 4px;
 }
 
-/* 긴급세차 홈 배지 (아이콘 우상단 알림 점) */
+/* 긴급세차 홈 배지 ("긴급 세차" 글자 우상단 알림 숫자 — 아이콘이 아니라 글자 옆에 붙는다) */
 .support-visual-v12 { position: relative; }
+.urgent-label-wrap-v12 { position: relative; display: inline-flex; align-items: flex-start; }
 .urgent-badge-v12 {
   position: absolute;
-  top: -3px;
-  right: -5px;
-  min-width: 17px;
-  height: 17px;
-  padding: 0 4px;
+  top: -7px;
+  right: -13px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
   background: linear-gradient(135deg, #ff6a4d, #e53935);
   color: #fff;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
-  line-height: 17px;
+  line-height: 15px;
   text-align: center;
   border-radius: 999px;
   border: 2px solid #fff;

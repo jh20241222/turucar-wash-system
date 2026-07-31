@@ -7792,7 +7792,7 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   .turu-app-page-v24{background:transparent !important;padding-top:calc(20px + env(safe-area-inset-top)) !important;padding-bottom:120px !important;}
   /* v42: 로고 아래로 타이틀을 쌓지 않고, 진짜 flex 래퍼(.turu-page-topbar-v42)로 로고 옆에 작게, 하단 라인을 맞춰서 배치한다.
      (inline-flex + vertical-align 방식은 브라우저별로 기준선 계산이 달라 오차가 생겨서, 실제 flex 컨테이너로 교체) */
-  .turu-page-topbar-v42{display:flex !important;align-items:flex-end !important;gap:8px !important;margin-bottom:18px !important;}
+  .turu-page-topbar-v42{display:flex !important;align-items:flex-end !important;gap:8px !important;margin-bottom:28px !important;}
   .turu-page-topbar-v42 .turu-page-brand-v24{margin-bottom:0 !important;}
   .turu-page-topbar-v42 .turu-page-head-v24{margin:0 !important;width:auto !important;flex:1;min-width:0;}
   .turu-page-topbar-v42 .turu-page-head-v24 > div:first-child{flex:none !important;text-align:left !important;min-width:0;}

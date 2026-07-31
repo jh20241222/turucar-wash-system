@@ -97,7 +97,7 @@
     </section>
 </section>
 <script>
-async function clearAppCache(){try{if('caches' in window){const keys=await caches.keys();await Promise.all(keys.map((key)=>caches.delete(key)));}alert('앱 캐시를 초기화했습니다. 새로고침합니다.');location.reload();}catch(error){alert('캐시 초기화 중 오류가 발생했습니다.');}}
+async function clearAppCache(){try{if('caches' in window){const keys=await caches.keys();await Promise.all(keys.map((key)=>caches.delete(key)));}if('serviceWorker' in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map((r)=>r.unregister()));}alert('앱 캐시를 초기화했습니다. 새로고침합니다.');location.reload(true);}catch(error){alert('캐시 초기화 중 오류가 발생했습니다.');}}
 function toggleSection(id){const el=document.getElementById(id);if(!el)return;const open=el.style.display==='none';el.style.display=open?'block':'none';}
 </script>
 {# ── 데스크탑 전용 ── #}

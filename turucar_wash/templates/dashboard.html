@@ -16,11 +16,23 @@
                 <img src="{{ url_for('static', filename='img/icon-megaphone.png') }}" alt="">
             </div>
             <div class="notice-copy-v12">
-                {% if latest_notice %}
-                    <button type="button" class="home-notice-title-button-v12" data-title="{{ latest_notice.title|e }}" data-body="{{ latest_notice.body|e }}" data-created="{{ latest_notice.created_at|e }}" data-author="{{ latest_notice.author|e }}" onclick="openHomeNoticeViewer(this)">
-                        <strong>{{ latest_notice.title }}</strong>
-                        <span>{{ latest_notice.body }}</span>
-                    </button>
+                {% if notice_rows and notice_rows|length > 0 %}
+                    <div class="home-notice-slides-v12" id="homeNoticeSlides">
+                        {% for n in notice_rows[:5] %}
+                        <button type="button" class="home-notice-title-button-v12{% if loop.first %} active{% endif %}"
+                            data-title="{{ n.title|e }}" data-body="{{ n.body|e }}" data-created="{{ n.created_at|e }}" data-author="{{ n.author|e }}"
+                            onclick="openHomeNoticeViewer(this)">
+                            <strong>{{ n.title }}</strong>
+                        </button>
+                        {% endfor %}
+                    </div>
+                    {% if notice_rows|length > 1 %}
+                    <div class="home-notice-dots-v12" id="homeNoticeDots">
+                        {% for n in notice_rows[:5] %}
+                        <span class="home-notice-dot-v12{% if loop.first %} active{% endif %}" onclick="showHomeNoticeSlide({{ loop.index0 }})"></span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 {% else %}
                     <strong>아직 등록된 공지사항이 없습니다.</strong>
                     <span>공지사항을 작성하면 이곳에 누적됩니다.</span>
@@ -123,6 +135,12 @@ function closeHomeNoticeViewer(){
   homeModal.hidden=true;
   homeModal.classList.remove('open');
   document.body.classList.remove('modal-open');
+}
+function showHomeNoticeSlide(index){
+  var slides=document.querySelectorAll('#homeNoticeSlides .home-notice-title-button-v12');
+  var dots=document.querySelectorAll('#homeNoticeDots .home-notice-dot-v12');
+  slides.forEach(function(el,i){ el.classList.toggle('active', i===index); });
+  dots.forEach(function(el,i){ el.classList.toggle('active', i===index); });
 }
 let homeDevToastTimer=null;
 function showHomeDevToast(){

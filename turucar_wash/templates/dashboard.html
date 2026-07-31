@@ -62,14 +62,7 @@
     <section class="home-support-grid-v12" aria-label="지원 메뉴">
         <a href="{{ url_for('urgent_wash') }}" class="home-support-card-v12">
             <span class="support-visual-v12 urgent-v12" aria-hidden="true">
-                <svg viewBox="0 0 64 64" fill="none">
-                    <path d="M32 4v7" stroke="#E5342A" stroke-width="4.5" stroke-linecap="round"/>
-                    <path d="M12.5 12.5l5 5" stroke="#E5342A" stroke-width="4.5" stroke-linecap="round"/>
-                    <path d="M51.5 12.5l-5 5" stroke="#E5342A" stroke-width="4.5" stroke-linecap="round"/>
-                    <rect x="16" y="52" width="32" height="7" rx="3.5" fill="#33383F"/>
-                    <path d="M21 52c0-15.5 5-27 11-27s11 11.5 11 27H21Z" fill="#E5342A"/>
-                    <ellipse cx="32" cy="30" rx="4.5" ry="3" fill="#fff" opacity=".5"/>
-                </svg>
+                <img src="{{ url_for('static', filename='img/icon-urgent-wash.png') }}" alt="">
             </span>
             <span class="urgent-label-wrap-v12">
                 <strong>긴급 세차</strong>
@@ -80,10 +73,7 @@
         </a>
         <a href="{{ url_for('support_choice') }}" class="home-support-card-v12">
             <span class="support-visual-v12 chat-v12" aria-hidden="true">
-                <svg viewBox="0 0 64 64" fill="none">
-                    <path d="M15 14h34c5 0 9 4 9 9v17c0 5-4 9-9 9H31L16 57v-8h-1c-5 0-9-4-9-9V23c0-5 4-9 9-9Z" fill="#FFF7E8" stroke="#FF9900" stroke-width="4" stroke-linejoin="round"/>
-                    <circle cx="25" cy="32" r="3" fill="#FF9900"/><circle cx="36" cy="32" r="3" fill="#FF9900"/><circle cx="47" cy="32" r="3" fill="#FF9900"/>
-                </svg>
+                <img src="{{ url_for('static', filename='img/icon-support.png') }}" alt="">
             </span>
             <strong>문의/제보</strong>
         </a>

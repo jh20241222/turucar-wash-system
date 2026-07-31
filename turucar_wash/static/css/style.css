@@ -8203,17 +8203,17 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   align-items: start !important;
 }
 .home-main-card-v12{
-  min-height: 0 !important;
+  min-height: 224px !important;
   height: auto !important;
-  padding: 18px 10px 16px !important;
+  padding: 28px 12px 22px !important;
 }
 .main-icon-v12{
-  width: 82% !important;
-  max-width: 140px !important;
+  width: 88% !important;
+  max-width: 160px !important;
   height: auto !important;
-  aspect-ratio: 1.1 / 1 !important;
+  aspect-ratio: 1.05 / 1 !important;
   flex: none !important;
-  margin: 0 auto 10px !important;
+  margin: 0 auto 14px !important;
   box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;
@@ -8227,4 +8227,24 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 }
 .home-main-card-v12 strong{
   margin-top: 0 !important;
+}
+
+/* ===== v45: 홈화면 전체 글자 크기 살짝 축소 ===== */
+.turu-home-v12 .notice-head-v12 h2{
+  font-size: 15px !important;
+}
+.turu-home-v12 .notice-copy-v12 strong{
+  font-size: 15px !important;
+}
+.home-main-card-v12 strong{
+  font-size: 15px !important;
+}
+.home-main-card-v12 small{
+  font-size: 10px !important;
+}
+.home-support-card-v12 strong{
+  font-size: 15px !important;
+}
+.home-tab-v12{
+  font-size: 11px !important;
 }

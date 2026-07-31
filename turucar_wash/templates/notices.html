@@ -207,11 +207,15 @@ function openNoticeViewer(button) {
         else { img.src = fileUrl; img.hidden = false; }
         attachWrap.hidden = false;
     }
-    document.getElementById('notice-viewer-modal').hidden = false;
+    var viewerModal = document.getElementById('notice-viewer-modal');
+    viewerModal.hidden = false;
+    viewerModal.classList.add('open');
     document.body.classList.add('modal-open');
 }
 function closeNoticeViewer() {
-    document.getElementById('notice-viewer-modal').hidden = true;
+    var viewerModal = document.getElementById('notice-viewer-modal');
+    viewerModal.hidden = true;
+    viewerModal.classList.remove('open');
     document.body.classList.remove('modal-open');
     document.getElementById('notice-viewer-pdf-frame').src = '';
 }
@@ -256,11 +260,15 @@ function openNoticeEdit(button) {
         currentAttach.hidden = true;
     }
     document.querySelectorAll('.notice-kebab-wrap.open').forEach(function(m) { m.classList.remove('open'); });
-    document.getElementById('notice-edit-modal').hidden = false;
+    var editModal = document.getElementById('notice-edit-modal');
+    editModal.hidden = false;
+    editModal.classList.add('open');
     document.body.classList.add('modal-open');
 }
 function closeNoticeEdit() {
-    document.getElementById('notice-edit-modal').hidden = true;
+    var editModal = document.getElementById('notice-edit-modal');
+    editModal.hidden = true;
+    editModal.classList.remove('open');
     document.body.classList.remove('modal-open');
 }
 function removeNoticeAttach() {

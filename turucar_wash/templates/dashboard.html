@@ -113,11 +113,15 @@ function openHomeNoticeViewer(button){
   document.getElementById('home-notice-viewer-body').textContent=button.dataset.body||'공지사항 내용이 없습니다.';
   document.getElementById('home-notice-viewer-created').textContent=button.dataset.created||'';
   document.getElementById('home-notice-viewer-author').textContent=button.dataset.author||'투루카 담당자';
-  document.getElementById('home-notice-viewer-modal').hidden=false;
+  var homeModal=document.getElementById('home-notice-viewer-modal');
+  homeModal.hidden=false;
+  homeModal.classList.add('open');
   document.body.classList.add('modal-open');
 }
 function closeHomeNoticeViewer(){
-  document.getElementById('home-notice-viewer-modal').hidden=true;
+  var homeModal=document.getElementById('home-notice-viewer-modal');
+  homeModal.hidden=true;
+  homeModal.classList.remove('open');
   document.body.classList.remove('modal-open');
 }
 let homeDevToastTimer=null;

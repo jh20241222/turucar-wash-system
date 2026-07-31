@@ -1,7 +1,7 @@
-const CACHE_NAME = 'turu-app-loader-v43';
+const CACHE_NAME = 'turu-app-loader-v44';
 const APP_SHELL = [
   '/offline',
-  '/static/css/style.css?v=43',
+  '/static/css/style.css?v=44',
   '/static/js/support_alerts.js',
   '/static/js/app_loader.js',
   '/static/img/turucar_logo_brand.png',

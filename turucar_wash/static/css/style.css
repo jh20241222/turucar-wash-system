@@ -8193,18 +8193,27 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   .uw-order-meta { font-size: 12px; }
 }
 
-/* ===== v43: 세차오더/예약제어/완료현황 아이콘, 화면 크기와 무관하게 항상 카드 중앙에 비율로 맞춤 =====
-   기존에는 브레이크포인트마다 고정 px 값을 따로 지정해서 실제 3열 그리드 카드 폭보다 아이콘이 커지는
-   화면 폭에서 카드의 overflow:hidden에 의해 잘려 보이는 문제가 있었음.
-   폭을 카드 대비 %로, 높이는 aspect-ratio로 계산해서 카드가 커지든 작아지든 항상 카드 안에 맞고
-   중앙 정렬되도록 통일. (이 규칙이 파일 맨 마지막에 있어 위의 모든 고정 px 규칙보다 우선 적용됨) */
-.main-icon-v12{
-  width: 60% !important;
-  max-width: 170px !important;
+/* ===== v44: 세차오더/예약제어/완료현황 카드 — 아이콘이 카드 높이의 절반 정도를 차지하고
+   그 아래 텍스트가 오도록 통일. 기존엔 카드에 고정 min-height(268~330px)가 박혀 있어서
+   아이콘을 키워도 카드 자체가 너무 길어 아이콘이 위쪽에 작게 붕 떠 보였음.
+   → 카드 높이를 내용에 맞게 줄이고(min-height 제거), 그리드가 카드를 늘리지 않게 하고,
+   아이콘 폭을 카드 대비 크게 키워서 실제로 절반 정도의 비중을 차지하도록 함.
+   (이 규칙이 파일 맨 마지막에 있어 위의 모든 고정 px 규칙보다 우선 적용됨) */
+.home-main-grid-v12{
+  align-items: start !important;
+}
+.home-main-card-v12{
+  min-height: 0 !important;
   height: auto !important;
-  aspect-ratio: 1.35 / 1 !important;
+  padding: 18px 10px 16px !important;
+}
+.main-icon-v12{
+  width: 82% !important;
+  max-width: 140px !important;
+  height: auto !important;
+  aspect-ratio: 1.1 / 1 !important;
   flex: none !important;
-  margin: 0 auto 14px !important;
+  margin: 0 auto 10px !important;
   box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;
@@ -8215,4 +8224,7 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
   height: 100% !important;
   object-fit: contain !important;
   display: block !important;
+}
+.home-main-card-v12 strong{
+  margin-top: 0 !important;
 }

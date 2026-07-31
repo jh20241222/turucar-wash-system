@@ -23,6 +23,7 @@
                             data-title="{{ n.title|e }}" data-body="{{ n.body|e }}" data-created="{{ n.created_at|e }}" data-author="{{ n.author|e }}"
                             onclick="openHomeNoticeViewer(this)">
                             <strong>{{ n.title }}</strong>
+                            <span class="home-notice-meta-v12">{{ n.created_at }} {{ n.author }}</span>
                         </button>
                         {% endfor %}
                     </div>

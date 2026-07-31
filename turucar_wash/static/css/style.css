@@ -8205,15 +8205,15 @@ body.endpoint-support_chat .floating-turu-home-link{display:none !important;}
 .home-main-card-v12{
   min-height: 268px !important;
   height: auto !important;
-  padding: 32px 12px 26px !important;
+  padding: 32px 5px 26px !important;
 }
 .main-icon-v12{
-  width: 90% !important;
-  max-width: 175px !important;
+  width: 99% !important;
+  max-width: 230px !important;
   height: auto !important;
   aspect-ratio: 1.05 / 1 !important;
   flex: none !important;
-  margin: 0 auto 16px !important;
+  margin: 0 auto 26px !important;
   box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;

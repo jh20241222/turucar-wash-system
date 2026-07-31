@@ -8,6 +8,7 @@
     <div><h1>공지사항</h1><p>등록된 공지사항 전체 목록입니다.</p></div>
     <a href="{{ url_for('dashboard') }}" class="turu-mini-btn-v24">홈으로</a>
 </div>
+</div>
 
 <section class="dashboard-notice-list app-card elevated notice-board-final notice-full-board" id="notice-list">
 
@@ -24,7 +25,7 @@
                 <span class="notice-file-name" id="notice-create-fname">선택된 파일 없음</span>
             </div>
             <div class="notice-file-preview" id="notice-create-preview" hidden></div>
-        </div></div>
+        </div>
         <button type="submit" class="btn-primary notice-save-btn">공지사항 등록</button>
     </form>
     {% endif %}

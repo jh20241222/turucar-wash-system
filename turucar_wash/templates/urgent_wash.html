@@ -16,6 +16,7 @@
         </div>
         <button type="button" class="push-bell-btn" id="uwPushBell" aria-label="알림 상태"><i class="ti ti-bell-off"></i></button>
     </div>
+    </div>
 
     <div class="uw-stat-row-v27">
         <div class="uw-stat-card-v27">
@@ -30,7 +31,7 @@
             <span>완료</span>
             <strong>{{ done_count }}</strong>
         </div>
-    </div></div>
+    </div>
 
     {% if current_user.is_admin %}
     <section class="admin-card app-card" style="margin-bottom:14px;">
@@ -80,10 +81,11 @@
                     <strong>{{ r.car_number or (r.city + ' ' + r.district) }}</strong>
                     <em class="{{ 'chip-regular' if r.source == 'voc' else 'chip-urgent' }}">{{ '슬랙 VOC' if r.source == 'voc' else '긴급세차' }}</em>
                 </div>
-                <p><span><i class="ti ti-map-pin"></i></span>{{ r.city }} {{ r.district }}</p>
-                {% if r.vendor %}<p><span><i class="ti ti-building"></i></span>{{ r.vendor }}</p>{% endif %}
-                <p><span><i class="ti ti-user"></i></span>{{ r.created_by }}</p>
-                {% if r.note %}<span class="turu-card-note-v24">{{ r.note }}</span>{% endif %}
+                <p><span>📍</span>{{ r.spot_display or '-' }}</p>
+                <p><span>🚗</span>{{ r.org_display or '-' }}</p>
+                <p><span>🗓</span>{{ r.created_at }}</p>
+                <p><span>👤</span>{{ r.created_by }}</p>
+                {% if r.content_display %}<p><span>📝</span>{{ r.content_display }}</p>{% endif %}
             </div>
         </div>
         {% endfor %}
@@ -104,10 +106,11 @@
                     <em class="{{ 'chip-regular' if r.source == 'voc' else 'chip-urgent' }}">{{ '슬랙 VOC' if r.source == 'voc' else '긴급세차' }}</em>
                     <em class="chip-day chip-day--new"><i class="ti ti-calendar"></i> {{ r.scheduled_date }}</em>
                 </div>
-                <p><span><i class="ti ti-map-pin"></i></span>{{ r.city }} {{ r.district }}</p>
-                {% if r.vendor %}<p><span><i class="ti ti-building"></i></span>{{ r.vendor }}</p>{% endif %}
-                <p><span><i class="ti ti-user"></i></span>{{ r.created_by }}</p>
-                {% if r.note %}<span class="turu-card-note-v24">{{ r.note }}</span>{% endif %}
+                <p><span>📍</span>{{ r.spot_display or '-' }}</p>
+                <p><span>🚗</span>{{ r.org_display or '-' }}</p>
+                <p><span>🗓</span>{{ r.created_at }}</p>
+                <p><span>👤</span>{{ r.created_by }}</p>
+                {% if r.content_display %}<p><span>📝</span>{{ r.content_display }}</p>{% endif %}
             </div>
         </div>
         {% endfor %}

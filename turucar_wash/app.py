@@ -1,3 +1,4 @@
+import fcntl
 import json
 import os
 import re
@@ -192,14 +193,19 @@ def find_band_link(band_dict, car_org, vendor=""):
 # =========================================================
 # DB 연결
 # =========================================================
+def _connect_sqlite(path):
+    """WAL 모드 + busy_timeout 적용된 SQLite 연결.
+    여러 gunicorn 워커/스케줄러가 동시에 같은 DB 파일에 접근할 때
+    'database is locked' 즉시 실패 대신 잠깐 대기 후 재시도하도록 한다."""
+    conn = sqlite3.connect(path, timeout=15)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA busy_timeout=15000")
+    return conn
 def get_user_db():
-    conn = sqlite3.connect(USER_DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    return _connect_sqlite(USER_DB_PATH)
 def get_wash_db():
-    conn = sqlite3.connect(WASH_DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    return _connect_sqlite(WASH_DB_PATH)
 # =========================================================
 # 전국 고정 시/도 + 구/군 데이터 (지역 배정 / 필터 드롭다운 공용)
 # =========================================================
@@ -614,10 +620,28 @@ def scheduled_daily_job():
     rollover_wash_orders()
     set_app_setting("last_rollover_date", today_kst())
     print(f"[TuruWash] 스케줄러 실행 완료 — {now_kst().strftime('%Y-%m-%d %H:%M:%S')}")
+# gunicorn 등 다중 워커 프로세스 환경에서 워커마다 스케줄러가 따로 뜨면
+# 같은 SQLite DB에 동시에 쓰기 작업을 해서 "database is locked" 에러와
+# VOC 슬랙 동기화 중복 삽입(UNIQUE constraint) 문제가 발생한다.
+# 파일 락으로 전체 워커 중 딱 하나만 스케줄러를 실제로 구동하도록 막는다.
+_scheduler_lock_file = None
+def _acquire_scheduler_lock():
+    global _scheduler_lock_file
+    try:
+        lock_path = os.path.join(DATA_DIR, ".scheduler.lock")
+        f = open(lock_path, "w")
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        _scheduler_lock_file = f  # 프로세스 살아있는 동안 열어둬야 락 유지됨(GC/close 되면 해제됨)
+        return True
+    except (IOError, OSError):
+        return False
 _scheduler = BackgroundScheduler(timezone="Asia/Seoul")
-_scheduler.add_job(scheduled_daily_job, "cron", hour=0, minute=0)
-_scheduler.start()
-print("[TuruWash] APScheduler 시작 — 매일 00:00 KST 이월/리셋 자동 실행")
+if _acquire_scheduler_lock():
+    _scheduler.add_job(scheduled_daily_job, "cron", hour=0, minute=0)
+    _scheduler.start()
+    print("[TuruWash] APScheduler 시작 — 매일 00:00 KST 이월/리셋 자동 실행 (이 워커가 스케줄러 담당)")
+else:
+    print("[TuruWash] APScheduler 스킵 — 다른 워커가 이미 스케줄러 담당 중")
 # =========================================================
 # 로그인 설정
 # =========================================================
@@ -2856,12 +2880,14 @@ def _sync_voc_from_slack(limit=50):
                         "mimetype": mimetype or "image/jpeg",
                         "url_private": url_private,
                     })
-            conn.execute(
-                """INSERT INTO voc_items (channel_id, slack_ts, author, text, permalink, synced_at, photos)
+            cur_ins = conn.execute(
+                """INSERT OR IGNORE INTO voc_items (channel_id, slack_ts, author, text, permalink, synced_at, photos)
                    VALUES (?, ?, ?, ?, ?, ?, ?)""",
                 (SLACK_VOC_CHANNEL_ID, ts, author, text, permalink, synced_at, json.dumps(photos, ensure_ascii=False))
             )
-            new_count += 1
+            # OR IGNORE라 동시 실행 중인 다른 워커가 먼저 넣었으면 rowcount=0 (정상, 중복 아님)
+            if cur_ins.rowcount:
+                new_count += 1
         conn.commit()
         conn.close()
         if new_count:

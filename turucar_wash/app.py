@@ -2415,6 +2415,38 @@ def _save_damage_photo(file_obj):
     fname = f"{uuid.uuid4().hex}{ext}"
     file_obj.save(os.path.join(DAMAGE_UPLOAD_DIR, fname))
     return fname
+def _lookup_car_org(car_number):
+    """차량번호로 차량소속을 조회한다.
+    세차 대상(wash_list, 최신순) → 차량마스터(vehicle_master) → 세차이력(wash_history, 최신순)
+    순으로 데이터가 있는 곳에서 가져온다 (모두 업로드 파일 기반 데이터)."""
+    if not car_number:
+        return ""
+    try:
+        wash_conn = get_wash_db()
+        row = wash_conn.execute(
+            """SELECT 차량소속 FROM wash_list
+               WHERE 차량번호=? AND 차량소속 IS NOT NULL AND TRIM(차량소속)!=''
+               ORDER BY 세차일 DESC, id DESC LIMIT 1""",
+            (car_number,)
+        ).fetchone()
+        if not row:
+            row = wash_conn.execute(
+                """SELECT 차량소속 FROM vehicle_master
+                   WHERE 차량번호=? AND 차량소속 IS NOT NULL AND TRIM(차량소속)!=''""",
+                (car_number,)
+            ).fetchone()
+        if not row:
+            row = wash_conn.execute(
+                """SELECT 차량소속 FROM wash_history
+                   WHERE 차량번호=? AND 차량소속 IS NOT NULL AND TRIM(차량소속)!=''
+                   ORDER BY id DESC LIMIT 1""",
+                (car_number,)
+            ).fetchone()
+        wash_conn.close()
+        return row["차량소속"].strip() if row and row["차량소속"] else ""
+    except Exception as e:
+        print(f"[Damage] 차량소속 조회 오류: {e}")
+        return ""
 def _send_damage_slack(report, base_url):
     """슬랙으로 훼손 제보 알림 전송. Bot Token 사용 시 ts 반환 (삭제용)."""
     blocks = [
@@ -2629,18 +2661,8 @@ def damage_submit():
             if fname:
                 fpath = os.path.join(DAMAGE_UPLOAD_DIR, fname)
                 photos_for_slack.append((field, fname, fpath))
-        # 차량소속 조회 (vehicle_master 기준)
-        car_org = ""
-        try:
-            wash_conn = get_wash_db()
-            car_row = wash_conn.execute(
-                "SELECT 차량소속 FROM vehicle_master WHERE 차량번호=?", (car_number,)
-            ).fetchone()
-            wash_conn.close()
-            if car_row and car_row["차량소속"]:
-                car_org = car_row["차량소속"]
-        except Exception as e:
-            print(f"[Damage] 차량소속 조회 오류: {e}")
+        # 차량소속 조회 (세차 대상/차량마스터/세차이력 업로드 데이터에서 자동 매핑)
+        car_org = _lookup_car_org(car_number)
         slack_ts = _send_damage_slack({
             "car_number": car_number, "car_org": car_org, "wash_date": wash_date,
             "damage_location": damage_location, "description": description,

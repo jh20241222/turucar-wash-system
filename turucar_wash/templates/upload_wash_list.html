@@ -185,7 +185,7 @@ document.getElementById('band_file')?.addEventListener('change',e=>{const f=e.ta
                     <label class="d-file-zone" for="d-vehicle-file">
                         <span class="d-file-zone-icon">↑</span>
                         <strong>파일 선택</strong>
-                        <small id="d-vehicle-file-name">차량번호 / 차종명 / 차량소속 / 현재스팟명 / 현재스팟주소 / 지역(시/도) / 지역(구/군) / 담당업체</small>
+                        <small id="d-vehicle-file-name">차량번호 / 차종명 / 차량소속 / 현재스팟명 / 현재스팟주소 / 지역(시/도) / 지역(구/군) / 담당업체 / BM구분 (선택)</small>
                         <input id="d-vehicle-file" type="file" name="vehicle_file" accept=".xlsx" required>
                     </label>
                 </div>
@@ -207,6 +207,7 @@ document.getElementById('band_file')?.addEventListener('change',e=>{const f=e.ta
                 <li>담당업체</li>
                 <li>최근세차일 (선택)</li>
                 <li>세차경과일 (선택)</li>
+                <li>BM구분 (선택 — "왕복"/"혼용", 혼용 차량은 담당차량 목록에서 자동 제외)</li>
             </ul>
         </div>
     </div>

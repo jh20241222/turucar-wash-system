@@ -2421,9 +2421,11 @@ def _send_damage_slack(report, base_url):
         {"type": "header", "text": {"type": "plain_text", "text": "🚨 차량 훼손 제보 접수"}},
         {"type": "section", "fields": [
             {"type": "mrkdwn", "text": f"*차량번호*\n{report['car_number']}"},
+            {"type": "mrkdwn", "text": f"*차량소속*\n{report.get('car_org') or '-'}"},
             {"type": "mrkdwn", "text": f"*세차일자*\n{report['wash_date']}"},
-            {"type": "mrkdwn", "text": f"*훼손 부위*\n{report['damage_location']}"},
-            {"type": "mrkdwn", "text": f"*제보자*\n{report['reporter']} ({report.get('vendor','')})"},
+            {"type": "mrkdwn", "text": f"*훼손부위*\n{report['damage_location']}"},
+            {"type": "mrkdwn", "text": f"*제보 업체명*\n{report.get('vendor') or '-'}"},
+            {"type": "mrkdwn", "text": f"*제보자*\n{report['reporter']}"},
         ]},
     ]
     if report.get("description"):
@@ -2627,8 +2629,20 @@ def damage_submit():
             if fname:
                 fpath = os.path.join(DAMAGE_UPLOAD_DIR, fname)
                 photos_for_slack.append((field, fname, fpath))
+        # 차량소속 조회 (vehicle_master 기준)
+        car_org = ""
+        try:
+            wash_conn = get_wash_db()
+            car_row = wash_conn.execute(
+                "SELECT 차량소속 FROM vehicle_master WHERE 차량번호=?", (car_number,)
+            ).fetchone()
+            wash_conn.close()
+            if car_row and car_row["차량소속"]:
+                car_org = car_row["차량소속"]
+        except Exception as e:
+            print(f"[Damage] 차량소속 조회 오류: {e}")
         slack_ts = _send_damage_slack({
-            "car_number": car_number, "wash_date": wash_date,
+            "car_number": car_number, "car_org": car_org, "wash_date": wash_date,
             "damage_location": damage_location, "description": description,
             "reporter": current_user.username,
             "vendor": getattr(current_user, "vendor", "") or "",

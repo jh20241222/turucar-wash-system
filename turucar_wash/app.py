@@ -482,7 +482,8 @@ def init_db():
             담당업체 TEXT,
             최근세차일 TEXT,
             세차경과일 INTEGER DEFAULT 0,
-            updated_at TEXT
+            updated_at TEXT,
+            BM구분 TEXT
         )
     """)
     conn.commit()
@@ -537,6 +538,10 @@ def ensure_wash_schema():
         if "원본ID" not in hist_cols:
             cur.execute("ALTER TABLE wash_history ADD COLUMN 원본ID INTEGER")
             print("[TuruWash] wash_history.원본ID 컬럼 추가됨")
+        vm_cols = [row[1] for row in cur.execute("PRAGMA table_info(vehicle_master)").fetchall()]
+        if "BM구분" not in vm_cols:
+            cur.execute("ALTER TABLE vehicle_master ADD COLUMN BM구분 TEXT")
+            print("[TuruWash] vehicle_master.BM구분 컬럼 추가됨")
         conn.commit()
         print("[TuruWash] ensure_wash_schema 완료")
     except Exception as e:
@@ -1028,7 +1033,7 @@ def my_vehicles():
         vehicles = wash_cur.execute(f"""
             SELECT 차량번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 담당업체, 최근세차일, 세차경과일
             FROM vehicle_master
-            WHERE ({region_clauses}){vendor_clause}
+            WHERE ({region_clauses}){vendor_clause} AND (BM구분 IS NULL OR TRIM(BM구분) NOT IN ('혼용'))
             ORDER BY 세차경과일 DESC, 차량번호
         """, region_params + vendor_param).fetchall()
         for r in region_rows:
@@ -1618,11 +1623,13 @@ def upload_vehicle_master():
                 세차경과일 = int(float(세차경과일_raw)) if 세차경과일_raw and str(세차경과일_raw).lower() != "nan" else 0
             except:
                 세차경과일 = 0
+            BM구분_raw = r.get("BM구분", None)
+            BM구분 = str(BM구분_raw).strip() if BM구분_raw and str(BM구분_raw).strip().lower() not in ("nan", "") else None
             cur.execute("""
                 INSERT INTO vehicle_master
-                (차량번호, 차대번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 담당업체, 최근세차일, 세차경과일, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (차량번호, 차대번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 담당업체, 최근세차일, 세차경과일, today_str))
+                (차량번호, 차대번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 담당업체, 최근세차일, 세차경과일, updated_at, BM구분)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (차량번호, 차대번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 담당업체, 최근세차일, 세차경과일, today_str, BM구분))
             inserted += 1
         conn.commit()
         conn.close()

@@ -29,6 +29,18 @@
             {% endfor %}
         </div>
         {% endif %}
+
+        {% if bm_stats %}
+        <div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;overflow:hidden;max-height:260px;overflow-y:auto;">
+            <div style="font-size:10px;font-weight:800;color:#aaa;letter-spacing:.06em;text-transform:uppercase;padding:10px 14px 6px;font-family:'NanumSquare',sans-serif;position:sticky;top:0;background:#fff;">BM별 현황</div>
+            {% for b in bm_stats %}
+            <div onclick="filterBm('{{ b.name }}', this)" class="cc-summary-row" style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-top:0.5px solid #f0f0f0;cursor:pointer;">
+                <span style="font-size:14px;font-weight:700;color:#111;font-family:'NanumSquare',sans-serif;">{{ b.name }}</span>
+                <span style="font-size:13px;font-weight:700;color:#888;">{{ b.total }}대 ›</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
 
     <div style="padding:10px 16px 0;">
@@ -56,6 +68,7 @@
 const _ccVehicles = {{ vehicles | tojson }};
 let _ccRegion = '';
 let _ccOrg = '';
+let _ccBm = '';
 
 function filterRegion(region, el){
     if(_ccRegion === region){ _ccRegion=''; }
@@ -71,6 +84,13 @@ function filterOrg(org, el){
     if(_ccOrg) el.classList.add('active');
     renderCC();
 }
+function filterBm(bm, el){
+    if(_ccBm === bm){ _ccBm=''; }
+    else { _ccBm = bm; }
+    document.querySelectorAll('.cc-summary-row').forEach(r=>r.classList.remove('active'));
+    if(_ccBm) el.classList.add('active');
+    renderCC();
+}
 
 function renderCC(){
     const q=(document.getElementById('cc-search').value||'').toLowerCase();
@@ -83,12 +103,13 @@ function renderCC(){
             .map(x=>(x||'').toString().toLowerCase()).join(' ').includes(q);
         const matchRegion = !_ccRegion || ((v['지역시도']||'')+' '+(v['지역구군']||'')).trim()===_ccRegion;
         const matchOrg = !_ccOrg || (v['차량소속']||'소속 미지정')===_ccOrg;
-        return matchQ && matchRegion && matchOrg;
+        const matchBm = !_ccBm || (v['BM구분']||'BM 미지정')===_ccBm;
+        return matchQ && matchRegion && matchOrg && matchBm;
     });
 
-    if(_ccRegion || _ccOrg){
+    if(_ccRegion || _ccOrg || _ccBm){
         filterBar.style.display='block';
-        filterBar.innerHTML = `필터: ${[_ccRegion, _ccOrg].filter(Boolean).join(' · ')} <a href="javascript:void(0)" onclick="clearCCFilters()" style="color:#D85A30;font-weight:700;margin-left:6px;">초기화</a>`;
+        filterBar.innerHTML = `필터: ${[_ccRegion, _ccOrg, _ccBm].filter(Boolean).join(' · ')} <a href="javascript:void(0)" onclick="clearCCFilters()" style="color:#D85A30;font-weight:700;margin-left:6px;">초기화</a>`;
     } else {
         filterBar.style.display='none';
     }
@@ -100,6 +121,9 @@ function renderCC(){
     filtered.forEach(v=>{
         const elapsed=v['세차경과일']||0;
         const isUrg=elapsed>=14;
+        const isMixed = v['BM구분']==='혼용';
+        const spotDisp = isMixed ? '혼용' : (v['스팟']||'스팟 미지정');
+        const regionDisp = isMixed ? '혼용' : `${(v['지역시도']||'')} ${(v['지역구군']||'')}`.trim();
         html+=`<div class="cc-car-row${isUrg?' urg':''}">
             <div style="flex:1;min-width:0;">
                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap;">
@@ -107,7 +131,7 @@ function renderCC(){
                     <span style="font-size:12px;font-weight:600;color:#555;">${v['차량소속']||''}</span>
                     ${v['BM구분']?`<span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;background:#f0f0f0;color:#888;">${v['BM구분']}</span>`:''}
                 </div>
-                <div style="font-size:11px;color:#aaa;">${v['스팟']||'스팟 미지정'} · ${(v['지역시도']||'')} ${(v['지역구군']||'')} · ${v['담당업체']||'-'}</div>
+                <div style="font-size:11px;color:#aaa;">${spotDisp} · ${regionDisp} · ${v['담당업체']||'-'}</div>
             </div>
             <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;flex-shrink:0;${isUrg?'background:#FAECE7;color:#993C1D;':'background:#f0f0f0;color:#888;'}">D+${elapsed}</span>
         </div>`;
@@ -116,7 +140,7 @@ function renderCC(){
     list.innerHTML=html;
 }
 function clearCCFilters(){
-    _ccRegion=''; _ccOrg='';
+    _ccRegion=''; _ccOrg=''; _ccBm='';
     document.querySelectorAll('.cc-summary-row').forEach(r=>r.classList.remove('active'));
     renderCC();
 }
@@ -127,7 +151,7 @@ document.addEventListener('DOMContentLoaded', renderCC);
 {# ── 데스크탑 전용 ── #}
 <div id="d-mv" style="display:none">
 <div class="d-wrap">
-    <div class="d-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="d-grid-3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
         {% if region_stats %}
         <div class="d-card">
             <div class="d-card-head"><div><span class="d-eyebrow">Summary</span><h2>지역별 현황</h2></div></div>
@@ -152,6 +176,21 @@ document.addEventListener('DOMContentLoaded', renderCC);
                 {% for o in org_stats %}
                 <tr class="dcc-summary-row" data-org="{{ o.name }}" style="cursor:pointer;" onclick="dccFilterOrg('{{ o.name }}', this)">
                     <td>{{ o.name }}</td><td>{{ o.total }}</td>
+                </tr>
+                {% endfor %}
+                </tbody></table>
+            </div>
+        </div>
+        {% endif %}
+        {% if bm_stats %}
+        <div class="d-card">
+            <div class="d-card-head"><div><span class="d-eyebrow">Summary</span><h2>BM별 현황</h2></div></div>
+            <div class="d-table-wrap" style="max-height:320px;overflow-y:auto;">
+                <table class="d-table"><thead><tr><th>BM구분</th><th>대수</th></tr></thead>
+                <tbody>
+                {% for b in bm_stats %}
+                <tr class="dcc-summary-row" data-bm="{{ b.name }}" style="cursor:pointer;" onclick="dccFilterBm('{{ b.name }}', this)">
+                    <td>{{ b.name }}</td><td>{{ b.total }}</td>
                 </tr>
                 {% endfor %}
                 </tbody></table>
@@ -183,6 +222,7 @@ document.addEventListener('DOMContentLoaded', renderCC);
 <script>
 let _dccRegion='';
 let _dccOrg='';
+let _dccBm='';
 function dccFilterRegion(region, el){
     _dccRegion = (_dccRegion===region) ? '' : region;
     document.querySelectorAll('.dcc-summary-row').forEach(r=>r.classList.remove('active'));
@@ -195,6 +235,12 @@ function dccFilterOrg(org, el){
     if(_dccOrg) el.classList.add('active');
     renderDCC();
 }
+function dccFilterBm(bm, el){
+    _dccBm = (_dccBm===bm) ? '' : bm;
+    document.querySelectorAll('.dcc-summary-row').forEach(r=>r.classList.remove('active'));
+    if(_dccBm) el.classList.add('active');
+    renderDCC();
+}
 function renderDCC(){
     const q=(document.getElementById('dcc-search').value||'').toLowerCase();
     const tbody=document.getElementById('dcc-tbody');
@@ -204,11 +250,12 @@ function renderDCC(){
             .map(x=>(x||'').toString().toLowerCase()).join(' ').includes(q);
         const matchRegion = !_dccRegion || ((v['지역시도']||'')+' '+(v['지역구군']||'')).trim()===_dccRegion;
         const matchOrg = !_dccOrg || (v['차량소속']||'소속 미지정')===_dccOrg;
-        return matchQ && matchRegion && matchOrg;
+        const matchBm = !_dccBm || (v['BM구분']||'BM 미지정')===_dccBm;
+        return matchQ && matchRegion && matchOrg && matchBm;
     });
-    if(_dccRegion || _dccOrg){
+    if(_dccRegion || _dccOrg || _dccBm){
         filterBar.style.display='inline';
-        filterBar.innerHTML = `필터: ${[_dccRegion, _dccOrg].filter(Boolean).join(' · ')} <a href="javascript:void(0)" onclick="dccClearFilters()" style="color:#D85A30;font-weight:700;margin-left:6px;">초기화</a>`;
+        filterBar.innerHTML = `필터: ${[_dccRegion, _dccOrg, _dccBm].filter(Boolean).join(' · ')} <a href="javascript:void(0)" onclick="dccClearFilters()" style="color:#D85A30;font-weight:700;margin-left:6px;">초기화</a>`;
     } else {
         filterBar.style.display='none';
     }
@@ -221,20 +268,23 @@ function renderDCC(){
     filtered.forEach(v=>{
         const elapsed=v['세차경과일']||0;
         const urgStyle = elapsed>=14 ? 'style="color:#FF5F00;font-weight:700;"' : '';
+        const isMixed = v['BM구분']==='혼용';
+        const spotDisp = isMixed ? '혼용' : (v['스팟']||'-');
+        const regionDisp = isMixed ? '혼용' : `${(v['지역시도']||'')} ${(v['지역구군']||'')}`.trim();
         html+=`<tr>
             <td style="font-weight:700;">${v['차량번호']||''}${v['BM구분']?`<span class="cc-bm-chip">${v['BM구분']}</span>`:''}</td>
             <td>${v['차종명']||'-'}</td>
             <td>${v['차량소속']||'-'}</td>
             <td>${v['담당업체']||'-'}</td>
-            <td>${v['스팟']||'-'}</td>
-            <td>${(v['지역시도']||'')} ${(v['지역구군']||'')}</td>
+            <td>${spotDisp}</td>
+            <td>${regionDisp}</td>
             <td ${urgStyle}>D+${elapsed}</td>
         </tr>`;
     });
     tbody.innerHTML=html;
 }
 function dccClearFilters(){
-    _dccRegion=''; _dccOrg='';
+    _dccRegion=''; _dccOrg=''; _dccBm='';
     document.querySelectorAll('.dcc-summary-row').forEach(r=>r.classList.remove('active'));
     renderDCC();
 }

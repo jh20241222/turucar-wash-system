@@ -715,7 +715,8 @@ def inject_support_badge_count():
 # 공통 권한 함수
 # =========================================================
 def scoped_condition(table_name, user):
-    if user.is_master:
+    if user.is_master or getattr(user, "is_contact_center", False):
+        # 컨택센터 계정은 특정 업체/지역에 소속되지 않은 전역 조회 계정이므로 마스터처럼 범위 제한 없이 조회한다.
         return "", []
     clauses = [f"{table_name}.업체 = ?"]
     params = [user.vendor]
@@ -728,7 +729,9 @@ def scoped_condition(table_name, user):
         ).fetchall()
         conn.close()
         if not regions:
-            return " AND 1=0", params
+            # 담당 지역이 하나도 없으면 아무 것도 매칭되지 않게 하되, "1=0"에는 바인딩할 파라미터가 없어야 한다.
+            # (여기서 params를 그대로 반환하면 자리표시자 수와 파라미터 수가 안 맞아 SQL 오류가 났었음)
+            return " AND 1=0", []
         region_clause = " OR ".join([f"({table_name}.지역시도 = ? AND {table_name}.지역구군 = ?)"] * len(regions))
         clauses.append(f"({region_clause})")
         for region in regions:
@@ -784,11 +787,11 @@ def can_manage_target(target_row):
     )
 # =========================================================
 # 컨택센터 전용 계정 접근 제한
-# (이름/아이디에 "컨택센터"가 들어간 계정은 홈화면에서 전체 차량 마스터를
-#  검색만 할 수 있고, 그 외 메뉴는 전부 접근 불가 처리한다)
+# (이름/아이디에 "컨택센터"가 들어간 계정은 홈(공지사항)과 세차 대상 리스트만
+#  볼 수 있고, 그 외 메뉴는 전부 접근 불가 처리한다)
 # =========================================================
 CONTACT_CENTER_ALLOWED_ENDPOINTS = {
-    "dashboard", "home", "logout", "static",
+    "dashboard", "home", "wash_target_list", "logout", "static",
     "service_worker", "offline",
 }
 @app.before_request
@@ -800,8 +803,8 @@ def restrict_contact_center_access():
     endpoint = request.endpoint
     if endpoint in CONTACT_CENTER_ALLOWED_ENDPOINTS:
         return None
-    flash("❌ 접근 권한이 없습니다.")
-    return redirect(url_for("dashboard"))
+    # 상단 플래시 배너 대신 홈 화면 가운데에 모달로 안내한다 (dashboard.html의 denied 처리 참고)
+    return redirect(url_for("dashboard", denied=1))
 # =========================================================
 # PWA 앱 설치 / 오프라인 지원
 # =========================================================
@@ -1326,10 +1329,16 @@ def delete_dashboard_notice(notice_id):
     flash("공지사항이 삭제되었습니다.")
     page = request.form.get("notice_page", 1)
     return redirect((url_for("notices", notice_page=page) if request.form.get("return_to") == "notices" else url_for("dashboard") + "#notice-list"))
-def contact_center_home():
-    """컨택센터 계정 전용 홈화면: 업로드된 차량 마스터 전체를 검색할 수 있게 보여준다
-    (세차 대상 리스트). 지역/업체로 범위를 좁히지 않고 전체 차량을 대상으로 하며,
-    전체 대수 + 지역별/차량소속별 요약을 간단한 대시보드 형태로 보여준다."""
+@app.route("/wash_target_list")
+@login_required
+def wash_target_list():
+    """세차 대상 리스트: 업로드된 차량 마스터 전체를 검색할 수 있게 보여준다.
+    지역/업체로 범위를 좁히지 않고 전체 차량을 대상으로 하며,
+    전체 대수 + 지역별/차량소속별 요약을 간단한 대시보드 형태로 보여준다.
+    (컨택센터 계정 전용 — 세차 관리 메뉴에서 접근)"""
+    if not (current_user.is_contact_center or current_user.is_master):
+        flash("❌ 접근 권한이 없습니다.")
+        return redirect(url_for("dashboard"))
     conn = get_wash_db()
     cur = conn.cursor()
     vehicles = cur.execute("""
@@ -1375,8 +1384,6 @@ def contact_center_home():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    if current_user.is_contact_center:
-        return contact_center_home()
     today = today_kst()
     conn = get_wash_db()
     cur = conn.cursor()
@@ -1649,7 +1656,11 @@ def upload_vehicle_master():
         return redirect(url_for("upload_wash_list"))
     try:
         df = pd.read_excel(file)
-        df.columns = df.columns.str.strip()
+        # 공백/줄바꿈이 섞여 있어도 컬럼명이 안전하게 매칭되도록 정리
+        df.columns = df.columns.str.replace(" ", "").str.replace("\n", "").str.strip()
+        # 예전 파일에 "BM구분" 대신 "용도구분"으로 남아있는 경우 자동으로 인식
+        if "BM구분" not in df.columns and "용도구분" in df.columns:
+            df = df.rename(columns={"용도구분": "BM구분"})
         required = ["차량번호", "차종명", "차량소속"]
         for col in required:
             if col not in df.columns:
@@ -1770,6 +1781,9 @@ def upload_wash_list():
                 flash(f"❌ 밴드매칭 파일 오류: {e}")
                 return redirect(url_for("upload_wash_list"))
         has_elapsed_col = "세차경과일" in df.columns
+        # 예전 파일에 "BM구분" 대신 "용도구분"으로 남아있는 경우 자동으로 인식
+        if "BM구분" not in df.columns and "용도구분" in df.columns:
+            df = df.rename(columns={"용도구분": "BM구분"})
         has_bm_col = "BM구분" in df.columns
         today_str = today_kst()
         conn = get_wash_db()

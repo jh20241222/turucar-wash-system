@@ -1328,36 +1328,46 @@ def delete_dashboard_notice(notice_id):
     return redirect((url_for("notices", notice_page=page) if request.form.get("return_to") == "notices" else url_for("dashboard") + "#notice-list"))
 def contact_center_home():
     """컨택센터 계정 전용 홈화면: 업로드된 차량 마스터 전체를 검색할 수 있게 보여준다
-    (세차 대상 리스트). 지역/업체로 범위를 좁히지 않고 전체 차량을 대상으로 한다."""
-    search = request.args.get("s", "").strip()
+    (세차 대상 리스트). 지역/업체로 범위를 좁히지 않고 전체 차량을 대상으로 하며,
+    전체 대수 + 지역별/차량소속별 요약을 간단한 대시보드 형태로 보여준다."""
     conn = get_wash_db()
     cur = conn.cursor()
-    query = """
+    vehicles = cur.execute("""
         SELECT 차량번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군,
                담당업체, 최근세차일, 세차경과일, BM구분
         FROM vehicle_master
-    """
-    params = []
-    if search:
-        query += """
-            WHERE 차량번호 LIKE ? OR 스팟 LIKE ? OR 차량소속 LIKE ?
-               OR 담당업체 LIKE ? OR 지역시도 LIKE ? OR 지역구군 LIKE ?
-        """
-        like = f"%{search}%"
-        params = [like] * 6
-    query += " ORDER BY 세차경과일 DESC, 차량번호"
-    vehicles = cur.execute(query, params).fetchall()
-    total_all = cur.execute("SELECT COUNT(*) AS c FROM vehicle_master").fetchone()["c"]
+        ORDER BY 세차경과일 DESC, 차량번호
+    """).fetchall()
     conn.close()
     vehicles_list = [dict(v) for v in vehicles]
-    urgent_count = sum(1 for v in vehicles_list if (v["세차경과일"] or 0) >= 14)
+    total_all = len(vehicles_list)
+
+    # 지역별(시/도 + 구/군) 집계
+    region_counts = {}
+    for v in vehicles_list:
+        key = (v["지역시도"] or "지역 미지정", v["지역구군"] or "")
+        region_counts[key] = region_counts.get(key, 0) + 1
+    region_stats = [
+        {"city": city, "district": district, "total": cnt}
+        for (city, district), cnt in sorted(region_counts.items(), key=lambda x: -x[1])
+    ]
+
+    # 차량소속별 집계
+    org_counts = {}
+    for v in vehicles_list:
+        key = v["차량소속"] or "소속 미지정"
+        org_counts[key] = org_counts.get(key, 0) + 1
+    org_stats = [
+        {"name": name, "total": cnt}
+        for name, cnt in sorted(org_counts.items(), key=lambda x: -x[1])
+    ]
+
     return render_template(
         "contact_center_home.html",
         vehicles=vehicles_list,
-        total=len(vehicles_list),
         total_all=total_all,
-        urgent_count=urgent_count,
-        search_input=search,
+        region_stats=region_stats,
+        org_stats=org_stats,
     )
 # =========================================================
 # 대시보드

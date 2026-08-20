@@ -124,6 +124,7 @@ function renderCC(){
         const isMixed = v['BM구분']==='혼용';
         const spotDisp = isMixed ? '혼용' : (v['스팟']||'스팟 미지정');
         const regionDisp = isMixed ? '혼용' : `${(v['지역시도']||'')} ${(v['지역구군']||'')}`.trim();
+        const vendorDisp = isMixed ? '혼용' : (v['담당업체']||'-');
         html+=`<div class="cc-car-row${isUrg?' urg':''}">
             <div style="flex:1;min-width:0;">
                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap;">
@@ -131,7 +132,7 @@ function renderCC(){
                     <span style="font-size:12px;font-weight:600;color:#555;">${v['차량소속']||''}</span>
                     ${v['BM구분']?`<span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;background:#f0f0f0;color:#888;">${v['BM구분']}</span>`:''}
                 </div>
-                <div style="font-size:11px;color:#aaa;">${spotDisp} · ${regionDisp} · ${v['담당업체']||'-'}</div>
+                <div style="font-size:11px;color:#aaa;">${spotDisp} · ${regionDisp} · ${vendorDisp}</div>
             </div>
             <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;flex-shrink:0;${isUrg?'background:#FAECE7;color:#993C1D;':'background:#f0f0f0;color:#888;'}">D+${elapsed}</span>
         </div>`;
@@ -271,11 +272,12 @@ function renderDCC(){
         const isMixed = v['BM구분']==='혼용';
         const spotDisp = isMixed ? '혼용' : (v['스팟']||'-');
         const regionDisp = isMixed ? '혼용' : `${(v['지역시도']||'')} ${(v['지역구군']||'')}`.trim();
+        const vendorDisp = isMixed ? '혼용' : (v['담당업체']||'-');
         html+=`<tr>
             <td style="font-weight:700;">${v['차량번호']||''}${v['BM구분']?`<span class="cc-bm-chip">${v['BM구분']}</span>`:''}</td>
             <td>${v['차종명']||'-'}</td>
             <td>${v['차량소속']||'-'}</td>
-            <td>${v['담당업체']||'-'}</td>
+            <td>${vendorDisp}</td>
             <td>${spotDisp}</td>
             <td>${regionDisp}</td>
             <td ${urgStyle}>D+${elapsed}</td>

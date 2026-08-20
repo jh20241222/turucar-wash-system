@@ -673,6 +673,9 @@ class User(UserMixin):
     @property
     def is_staff(self):
         return self.role == "staff"
+    @property
+    def is_contact_center(self):
+        return bool(self.username) and "컨택센터" in self.username
 @login_manager.user_loader
 def load_user(user_id):
     conn = get_user_db()
@@ -779,6 +782,26 @@ def can_manage_target(target_row):
         and target_row["parent_id"] == current_user.id
         and target_row["vendor"] == current_user.vendor
     )
+# =========================================================
+# 컨택센터 전용 계정 접근 제한
+# (이름/아이디에 "컨택센터"가 들어간 계정은 홈화면에서 전체 차량 마스터를
+#  검색만 할 수 있고, 그 외 메뉴는 전부 접근 불가 처리한다)
+# =========================================================
+CONTACT_CENTER_ALLOWED_ENDPOINTS = {
+    "dashboard", "home", "logout", "static",
+    "service_worker", "offline",
+}
+@app.before_request
+def restrict_contact_center_access():
+    if not current_user.is_authenticated:
+        return None
+    if not getattr(current_user, "is_contact_center", False):
+        return None
+    endpoint = request.endpoint
+    if endpoint in CONTACT_CENTER_ALLOWED_ENDPOINTS:
+        return None
+    flash("❌ 접근 권한이 없습니다.")
+    return redirect(url_for("dashboard"))
 # =========================================================
 # PWA 앱 설치 / 오프라인 지원
 # =========================================================
@@ -1303,12 +1326,47 @@ def delete_dashboard_notice(notice_id):
     flash("공지사항이 삭제되었습니다.")
     page = request.form.get("notice_page", 1)
     return redirect((url_for("notices", notice_page=page) if request.form.get("return_to") == "notices" else url_for("dashboard") + "#notice-list"))
+def contact_center_home():
+    """컨택센터 계정 전용 홈화면: 업로드된 차량 마스터 전체를 검색할 수 있게 보여준다
+    (세차 대상 리스트). 지역/업체로 범위를 좁히지 않고 전체 차량을 대상으로 한다."""
+    search = request.args.get("s", "").strip()
+    conn = get_wash_db()
+    cur = conn.cursor()
+    query = """
+        SELECT 차량번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군,
+               담당업체, 최근세차일, 세차경과일, BM구분
+        FROM vehicle_master
+    """
+    params = []
+    if search:
+        query += """
+            WHERE 차량번호 LIKE ? OR 스팟 LIKE ? OR 차량소속 LIKE ?
+               OR 담당업체 LIKE ? OR 지역시도 LIKE ? OR 지역구군 LIKE ?
+        """
+        like = f"%{search}%"
+        params = [like] * 6
+    query += " ORDER BY 세차경과일 DESC, 차량번호"
+    vehicles = cur.execute(query, params).fetchall()
+    total_all = cur.execute("SELECT COUNT(*) AS c FROM vehicle_master").fetchone()["c"]
+    conn.close()
+    vehicles_list = [dict(v) for v in vehicles]
+    urgent_count = sum(1 for v in vehicles_list if (v["세차경과일"] or 0) >= 14)
+    return render_template(
+        "contact_center_home.html",
+        vehicles=vehicles_list,
+        total=len(vehicles_list),
+        total_all=total_all,
+        urgent_count=urgent_count,
+        search_input=search,
+    )
 # =========================================================
 # 대시보드
 # =========================================================
 @app.route("/dashboard")
 @login_required
 def dashboard():
+    if current_user.is_contact_center:
+        return contact_center_home()
     today = today_kst()
     conn = get_wash_db()
     cur = conn.cursor()
@@ -1702,12 +1760,21 @@ def upload_wash_list():
                 flash(f"❌ 밴드매칭 파일 오류: {e}")
                 return redirect(url_for("upload_wash_list"))
         has_elapsed_col = "세차경과일" in df.columns
+        has_bm_col = "BM구분" in df.columns
         today_str = today_kst()
         conn = get_wash_db()
         cur = conn.cursor()
         inserted = 0
         skipped = 0
+        excluded_mixed = 0
         for _, r in df.iterrows():
+            # BM구분이 "혼용"인 차량은 오더에 올리지 않는다.
+            # (혼용 차량은 스팟이 수시로 바뀌어 오더가 있어도 실제로 그 자리에 없을 수 있음)
+            if has_bm_col:
+                bm_val = str(r.get("BM구분", "")).strip()
+                if bm_val == "혼용":
+                    excluded_mixed += 1
+                    continue
             # 밴드링크 결정
             if has_band_col:
                 band_val = str(r["밴드링크"]).strip()
@@ -1762,10 +1829,10 @@ def upload_wash_list():
                 inserted += 1
         conn.commit()
         conn.close()
-        if skipped:
-            flash(f"✔ 업로드 완료 — {inserted}건 신규등록, {skipped}건 정보 업데이트")
-        else:
-            flash(f"✔ 업로드 완료 — {inserted}건 등록")
+        msg = f"✔ 업로드 완료 — {inserted}건 신규등록" if skipped == 0 else f"✔ 업로드 완료 — {inserted}건 신규등록, {skipped}건 정보 업데이트"
+        if excluded_mixed:
+            msg += f" (BM구분 '혼용' {excluded_mixed}건 제외)"
+        flash(msg)
         return redirect(url_for("upload_wash_list"))
     # 날짜 목록 조회 (삭제 UI용)
     conn = get_wash_db()

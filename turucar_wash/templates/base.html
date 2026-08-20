@@ -58,13 +58,6 @@
         </a>
 
         <nav class="side-nav">
-            {% if current_user.is_contact_center %}
-            <!-- 컨택센터 전용: 홈(세차 대상 리스트) 외 메뉴 없음 -->
-            <p class="side-nav-group">세차 관리</p>
-            <a href="{{ url_for('dashboard') }}" class="side-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
-                <i class="ti ti-home"></i><b>세차 대상 리스트</b>
-            </a>
-            {% else %}
             <!-- 세차 관리 -->
             <p class="side-nav-group">세차 관리</p>
             <a href="{{ url_for('dashboard') }}" class="side-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
@@ -153,7 +146,6 @@
                 <i class="ti ti-car"></i><b>내 담당 차량</b>
             </a>
             {% endif %}
-            {% endif %}
         </nav>
 
         <div class="sidebar-profile">
@@ -233,11 +225,6 @@
 
     <!-- ══ 모바일 하단 탭바 ══ -->
     <nav class="mobile-tabbar turu-mobile-tabbar" aria-label="주요 메뉴">
-        {% if current_user.is_contact_center %}
-        <a href="{{ url_for('dashboard') }}" class="tab-item active">
-            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M3.5 11.2 12 4.3l8.5 6.9"/><path d="M6.5 10.3v9.4h11v-9.4"/><path d="M10 19.7v-5h4v5"/></svg></span><b>세차 대상</b>
-        </a>
-        {% else %}
         <a href="{{ url_for('dashboard') }}" class="tab-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
             <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M3.5 11.2 12 4.3l8.5 6.9"/><path d="M6.5 10.3v9.4h11v-9.4"/><path d="M10 19.7v-5h4v5"/></svg></span><b>홈</b>
         </a>
@@ -253,7 +240,6 @@
         <a href="{{ url_for('profile') }}" class="tab-item {% if request.endpoint in ['profile','account_manage','vendor_manage','upload_wash_list','my_vehicles','support_choice','support_submit','support_manage','damage_submit','damage_manage'] %}active{% endif %}">
             <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1.5-5 13.5-5 15 0"/></svg></span><b>내정보</b>
         </a>
-        {% endif %}
     </nav>
 
     {% if current_user.is_authenticated and (current_user.is_master or current_user.username == 'jeongyeon.kim') %}

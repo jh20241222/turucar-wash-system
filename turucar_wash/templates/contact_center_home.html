@@ -5,22 +5,45 @@
     <div class="turu-page-topbar-v42"><header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
     <div class="turu-page-head-v24 turu-page-head--single-v25"><div><h1>세차 대상 리스트</h1></div></div></div>
 
-    <div style="padding:12px 16px 0;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <div style="padding:12px 16px 0;">
         <div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;padding:18px 16px;text-align:center;">
             <div style="font-size:11px;font-weight:800;color:#aaa;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px;font-family:'NanumSquare',sans-serif;">전체 차량</div>
-            <div style="font-size:32px;font-weight:950;color:#111;letter-spacing:-.03em;line-height:1;font-family:'NanumSquare',sans-serif;">{{ total_all }}<span style="font-size:14px;color:#888;font-weight:600;margin-left:4px;">대</span></div>
+            <div style="font-size:36px;font-weight:950;color:#111;letter-spacing:-.03em;line-height:1;font-family:'NanumSquare',sans-serif;">{{ total_all }}<span style="font-size:16px;color:#888;font-weight:600;margin-left:4px;">대</span></div>
         </div>
-        <div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;padding:18px 16px;text-align:center;">
-            <div style="font-size:11px;font-weight:800;color:#aaa;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px;font-family:'NanumSquare',sans-serif;">장기미세차(14일↑)</div>
-            <div style="font-size:32px;font-weight:950;color:#D85A30;letter-spacing:-.03em;line-height:1;font-family:'NanumSquare',sans-serif;">{{ urgent_count }}<span style="font-size:14px;color:#888;font-weight:600;margin-left:4px;">대</span></div>
+    </div>
+
+    <div style="padding:10px 16px 0;display:grid;grid-template-columns:1fr;gap:10px;">
+        {% if region_stats %}
+        <div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;overflow:hidden;max-height:260px;overflow-y:auto;">
+            <div style="font-size:10px;font-weight:800;color:#aaa;letter-spacing:.06em;text-transform:uppercase;padding:10px 14px 6px;font-family:'NanumSquare',sans-serif;position:sticky;top:0;background:#fff;">지역별 현황</div>
+            {% for r in region_stats %}
+            <div onclick="filterRegion('{{ r.city }} {{ r.district }}', this)" class="cc-summary-row" style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-top:0.5px solid #f0f0f0;cursor:pointer;">
+                <span style="font-size:14px;font-weight:700;color:#111;font-family:'NanumSquare',sans-serif;">{{ r.city }} {{ r.district }}</span>
+                <span style="font-size:13px;font-weight:700;color:#888;">{{ r.total }}대 ›</span>
+            </div>
+            {% endfor %}
         </div>
+        {% endif %}
+
+        {% if org_stats %}
+        <div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;overflow:hidden;max-height:260px;overflow-y:auto;">
+            <div style="font-size:10px;font-weight:800;color:#aaa;letter-spacing:.06em;text-transform:uppercase;padding:10px 14px 6px;font-family:'NanumSquare',sans-serif;position:sticky;top:0;background:#fff;">차량소속별 현황</div>
+            {% for o in org_stats %}
+            <div onclick="filterOrg('{{ o.name }}', this)" class="cc-summary-row" style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-top:0.5px solid #f0f0f0;cursor:pointer;">
+                <span style="font-size:14px;font-weight:700;color:#111;font-family:'NanumSquare',sans-serif;">{{ o.name }}</span>
+                <span style="font-size:13px;font-weight:700;color:#888;">{{ o.total }}대 ›</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
 
     <div style="padding:10px 16px 0;">
         <div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;display:flex;align-items:center;padding:0 14px;height:44px;gap:8px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
-            <input id="cc-search" placeholder="차량번호, 스팟, 차량소속, 담당업체, 지역 검색" oninput="renderCC()" style="flex:1;border:none;outline:none;font-size:13px;font-family:'NanumSquare',sans-serif;background:transparent;color:#111;">
+            <input id="cc-search" placeholder="차량번호, 스팟, 차량소속, 담당업체 검색" oninput="renderCC()" style="flex:1;border:none;outline:none;font-size:13px;font-family:'NanumSquare',sans-serif;background:transparent;color:#111;">
         </div>
+        <div id="cc-active-filters" style="display:none;padding:8px 2px 0;font-size:12px;color:#888;"></div>
     </div>
 
     <div class="turu-card-list-v24" id="cc-list"></div>
@@ -30,6 +53,7 @@
 <style>
 @import url('https://cdn.jsdelivr.net/gh/moonspam/NanumSquare@2.0/nanumsquare.css');
 .mv-page, .mv-page * { font-family: 'NanumSquare', 'Apple SD Gothic Neo', sans-serif !important; }
+.cc-summary-row.active { background:#fff2e9; }
 .cc-car-row { display:flex; align-items:center; padding:12px 14px; border-bottom:0.5px solid #f0f0f0; gap:10px; background:#fff; }
 .cc-car-row:last-child { border-bottom:none; }
 .cc-car-row.urg { border-left:3px solid #D85A30; }
@@ -37,18 +61,44 @@
 
 <script>
 const _ccVehicles = {{ vehicles | tojson }};
+let _ccRegion = '';
+let _ccOrg = '';
+
+function filterRegion(region, el){
+    if(_ccRegion === region){ _ccRegion=''; }
+    else { _ccRegion = region; }
+    document.querySelectorAll('.cc-summary-row').forEach(r=>r.classList.remove('active'));
+    if(_ccRegion) el.classList.add('active');
+    renderCC();
+}
+function filterOrg(org, el){
+    if(_ccOrg === org){ _ccOrg=''; }
+    else { _ccOrg = org; }
+    document.querySelectorAll('.cc-summary-row').forEach(r=>r.classList.remove('active'));
+    if(_ccOrg) el.classList.add('active');
+    renderCC();
+}
 
 function renderCC(){
     const q=(document.getElementById('cc-search').value||'').toLowerCase();
     const list=document.getElementById('cc-list');
     const empty=document.getElementById('cc-empty');
+    const filterBar=document.getElementById('cc-active-filters');
 
     let filtered=_ccVehicles.filter(v=>{
-        if(!q) return true;
-        const hay=[v['차량번호'],v['스팟'],v['차량소속'],v['담당업체'],v['지역시도'],v['지역구군']]
-            .map(x=>(x||'').toString().toLowerCase()).join(' ');
-        return hay.includes(q);
+        const matchQ = !q || [v['차량번호'],v['스팟'],v['차량소속'],v['담당업체']]
+            .map(x=>(x||'').toString().toLowerCase()).join(' ').includes(q);
+        const matchRegion = !_ccRegion || ((v['지역시도']||'')+' '+(v['지역구군']||'')).trim()===_ccRegion;
+        const matchOrg = !_ccOrg || (v['차량소속']||'소속 미지정')===_ccOrg;
+        return matchQ && matchRegion && matchOrg;
     });
+
+    if(_ccRegion || _ccOrg){
+        filterBar.style.display='block';
+        filterBar.innerHTML = `필터: ${[_ccRegion, _ccOrg].filter(Boolean).join(' · ')} <a href="javascript:void(0)" onclick="clearCCFilters()" style="color:#D85A30;font-weight:700;margin-left:6px;">초기화</a>`;
+    } else {
+        filterBar.style.display='none';
+    }
 
     if(filtered.length===0){ list.innerHTML=''; empty.style.display='block'; return; }
     empty.style.display='none';
@@ -72,6 +122,11 @@ function renderCC(){
     html+='</div>';
     list.innerHTML=html;
 }
+function clearCCFilters(){
+    _ccRegion=''; _ccOrg='';
+    document.querySelectorAll('.cc-summary-row').forEach(r=>r.classList.remove('active'));
+    renderCC();
+}
 
 document.addEventListener('DOMContentLoaded', renderCC);
 </script>
@@ -79,14 +134,48 @@ document.addEventListener('DOMContentLoaded', renderCC);
 {# ── 데스크탑 전용 ── #}
 <div id="d-mv" style="display:none">
 <div class="d-wrap">
-    <div class="d-mv-grid">
+    <div class="d-mv-grid" style="grid-template-columns:1fr;">
         <div class="d-mv-stat"><span>전체 차량</span><strong>{{ total_all }}</strong></div>
-        <div class="d-mv-stat urgent"><span>장기미세차</span><strong>{{ urgent_count }}</strong></div>
     </div>
+
+    <div class="d-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        {% if region_stats %}
+        <div class="d-card">
+            <div class="d-card-head"><div><span class="d-eyebrow">Summary</span><h2>지역별 현황</h2></div></div>
+            <div class="d-table-wrap" style="max-height:320px;overflow-y:auto;">
+                <table class="d-table"><thead><tr><th>지역</th><th>대수</th></tr></thead>
+                <tbody>
+                {% for r in region_stats %}
+                <tr class="dcc-summary-row" data-region="{{ r.city }} {{ r.district }}" style="cursor:pointer;" onclick="dccFilterRegion('{{ r.city }} {{ r.district }}', this)">
+                    <td>{{ r.city }} {{ r.district }}</td><td>{{ r.total }}</td>
+                </tr>
+                {% endfor %}
+                </tbody></table>
+            </div>
+        </div>
+        {% endif %}
+        {% if org_stats %}
+        <div class="d-card">
+            <div class="d-card-head"><div><span class="d-eyebrow">Summary</span><h2>차량소속별 현황</h2></div></div>
+            <div class="d-table-wrap" style="max-height:320px;overflow-y:auto;">
+                <table class="d-table"><thead><tr><th>차량소속</th><th>대수</th></tr></thead>
+                <tbody>
+                {% for o in org_stats %}
+                <tr class="dcc-summary-row" data-org="{{ o.name }}" style="cursor:pointer;" onclick="dccFilterOrg('{{ o.name }}', this)">
+                    <td>{{ o.name }}</td><td>{{ o.total }}</td>
+                </tr>
+                {% endfor %}
+                </tbody></table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
     <div class="d-card">
-        <div class="d-card-head"><div><span class="d-eyebrow">차량 마스터</span><h2>세차 대상 리스트</h2></div><span class="d-badge-pill">{{ total_all }}대</span></div>
-        <div style="padding:0 20px 12px;">
-            <input id="dcc-search" placeholder="차량번호, 스팟, 차량소속, 담당업체, 지역 검색" oninput="renderDCC()" style="width:100%;height:40px;border:1px solid #e5e5e5;border-radius:10px;padding:0 14px;font-size:13px;outline:none;">
+        <div class="d-card-head"><div><span class="d-eyebrow">차량 마스터</span><h2>세차 대상 리스트</h2></div><span class="d-badge-pill" id="dcc-count-pill">{{ total_all }}대</span></div>
+        <div style="padding:0 20px 12px;display:flex;gap:10px;align-items:center;">
+            <input id="dcc-search" placeholder="차량번호, 스팟, 차량소속, 담당업체 검색" oninput="renderDCC()" style="flex:1;height:40px;border:1px solid #e5e5e5;border-radius:10px;padding:0 14px;font-size:13px;outline:none;">
+            <span id="dcc-active-filters" style="display:none;font-size:12px;color:#888;white-space:nowrap;"></span>
         </div>
         <div class="d-table-wrap">
             <table class="d-table"><thead><tr><th>차량번호</th><th>차종</th><th>차량소속</th><th>담당업체</th><th>스팟</th><th>지역</th><th>경과일</th><th>BM구분</th></tr></thead>
@@ -99,17 +188,41 @@ document.addEventListener('DOMContentLoaded', renderCC);
 <style>
 #desktop-mode #d-mv { display: block !important; }
 #desktop-mode .mv-page { display: none !important; }
+.dcc-summary-row.active { background:#fff2e9; }
 </style>
 <script>
+let _dccRegion='';
+let _dccOrg='';
+function dccFilterRegion(region, el){
+    _dccRegion = (_dccRegion===region) ? '' : region;
+    document.querySelectorAll('.dcc-summary-row').forEach(r=>r.classList.remove('active'));
+    if(_dccRegion) el.classList.add('active');
+    renderDCC();
+}
+function dccFilterOrg(org, el){
+    _dccOrg = (_dccOrg===org) ? '' : org;
+    document.querySelectorAll('.dcc-summary-row').forEach(r=>r.classList.remove('active'));
+    if(_dccOrg) el.classList.add('active');
+    renderDCC();
+}
 function renderDCC(){
     const q=(document.getElementById('dcc-search').value||'').toLowerCase();
     const tbody=document.getElementById('dcc-tbody');
+    const filterBar=document.getElementById('dcc-active-filters');
     let filtered=_ccVehicles.filter(v=>{
-        if(!q) return true;
-        const hay=[v['차량번호'],v['스팟'],v['차량소속'],v['담당업체'],v['지역시도'],v['지역구군']]
-            .map(x=>(x||'').toString().toLowerCase()).join(' ');
-        return hay.includes(q);
+        const matchQ = !q || [v['차량번호'],v['스팟'],v['차량소속'],v['담당업체']]
+            .map(x=>(x||'').toString().toLowerCase()).join(' ').includes(q);
+        const matchRegion = !_dccRegion || ((v['지역시도']||'')+' '+(v['지역구군']||'')).trim()===_dccRegion;
+        const matchOrg = !_dccOrg || (v['차량소속']||'소속 미지정')===_dccOrg;
+        return matchQ && matchRegion && matchOrg;
     });
+    if(_dccRegion || _dccOrg){
+        filterBar.style.display='inline';
+        filterBar.innerHTML = `필터: ${[_dccRegion, _dccOrg].filter(Boolean).join(' · ')} <a href="javascript:void(0)" onclick="dccClearFilters()" style="color:#D85A30;font-weight:700;margin-left:6px;">초기화</a>`;
+    } else {
+        filterBar.style.display='none';
+    }
+    document.getElementById('dcc-count-pill').textContent = filtered.length + '대';
     if(filtered.length===0){
         tbody.innerHTML='<tr><td colspan="8" class="d-empty-cell">검색 결과가 없습니다.</td></tr>';
         return;
@@ -130,6 +243,11 @@ function renderDCC(){
         </tr>`;
     });
     tbody.innerHTML=html;
+}
+function dccClearFilters(){
+    _dccRegion=''; _dccOrg='';
+    document.querySelectorAll('.dcc-summary-row').forEach(r=>r.classList.remove('active'));
+    renderDCC();
 }
 document.addEventListener('DOMContentLoaded', renderDCC);
 </script>

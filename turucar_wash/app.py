@@ -1371,12 +1371,23 @@ def wash_target_list():
         for name, cnt in sorted(org_counts.items(), key=lambda x: -x[1])
     ]
 
+    # BM구분별 집계
+    bm_counts = {}
+    for v in vehicles_list:
+        key = v["BM구분"] or "BM 미지정"
+        bm_counts[key] = bm_counts.get(key, 0) + 1
+    bm_stats = [
+        {"name": name, "total": cnt}
+        for name, cnt in sorted(bm_counts.items(), key=lambda x: -x[1])
+    ]
+
     return render_template(
         "contact_center_home.html",
         vehicles=vehicles_list,
         total_all=total_all,
         region_stats=region_stats,
         org_stats=org_stats,
+        bm_stats=bm_stats,
     )
 # =========================================================
 # 대시보드

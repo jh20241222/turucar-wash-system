@@ -37,7 +37,7 @@
             {% if request.endpoint != 'dashboard' %}
             <button type="button" class="icon-btn back-btn" onclick="history.length > 1 ? history.back() : location.href='{{ url_for('dashboard') }}'" aria-label="뒤로가기">‹</button>
             {% endif %}
-            {% if request.endpoint in ['wash_list','wash_status','profile','car_detail','support_choice','support_submit','damage_submit','damage_manage','urgent_wash','voc_manage'] %}
+            {% if request.endpoint in ['wash_list','wash_status','profile','car_detail','support_choice','support_submit','damage_submit','damage_manage','urgent_wash','voc_manage','wash_target_list'] %}
             <a href="{{ url_for('dashboard') }}" class="topbar-turu-brand-v27" aria-label="TURU CAR 홈">
                 <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=28" alt="TURU CAR">
             </a>
@@ -63,6 +63,11 @@
             <a href="{{ url_for('dashboard') }}" class="side-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
                 <i class="ti ti-home"></i><b>홈</b>
             </a>
+            {% if current_user.is_contact_center %}
+            <a href="{{ url_for('wash_target_list') }}" class="side-link {% if request.endpoint == 'wash_target_list' %}active{% endif %}">
+                <i class="ti ti-car"></i><b>세차 대상 리스트</b>
+            </a>
+            {% endif %}
             <a href="{{ url_for('wash_list') }}" class="side-link {% if request.endpoint in ['wash_list','car_detail'] %}active{% endif %}">
                 <i class="ti ti-car"></i><b>세차 오더</b>
             </a>
@@ -177,11 +182,11 @@
                     {% elif request.endpoint == 'voc_manage' %}계정 관리
                     {% elif request.endpoint == 'profile' %}내정보
                     {% elif request.endpoint == 'my_vehicles' %}내정보
-                    {% elif request.endpoint == 'dashboard' and current_user.is_contact_center %}세차 관리
+                    {% elif request.endpoint == 'wash_target_list' %}세차 관리
                     {% else %}홈{% endif %}
                 </p>
                 <h1 class="dt-topnav-title">
-                    {% if request.endpoint == 'dashboard' and current_user.is_contact_center %}세차 대상 리스트
+                    {% if request.endpoint == 'wash_target_list' %}세차 대상 리스트
                     {% elif request.endpoint in ['wash_list','car_detail'] %}세차 오더
                     {% elif request.endpoint == 'wash_status' %}완료 현황
                     {% elif request.endpoint == 'upload_wash_list' %}세차 스케줄 관리

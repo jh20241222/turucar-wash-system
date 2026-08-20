@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block document_title %}Turu Wash · 세차 대상 리스트{% endblock %}
+{% block content %}
+<section class="turu-app-page-v24 mv-page">
+    <div class="turu-page-topbar-v42"><header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
+    <div class="turu-page-head-v24 turu-page-head--single-v25"><div><h1>세차 대상 리스트</h1></div></div></div>
+
+    <div style="padding:12px 16px 0;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;padding:18px 16px;text-align:center;">
+            <div style="font-size:11px;font-weight:800;color:#aaa;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px;font-family:'NanumSquare',sans-serif;">전체 차량</div>
+            <div style="font-size:32px;font-weight:950;color:#111;letter-spacing:-.03em;line-height:1;font-family:'NanumSquare',sans-serif;">{{ total_all }}<span style="font-size:14px;color:#888;font-weight:600;margin-left:4px;">대</span></div>
+        </div>
+        <div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;padding:18px 16px;text-align:center;">
+            <div style="font-size:11px;font-weight:800;color:#aaa;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px;font-family:'NanumSquare',sans-serif;">장기미세차(14일↑)</div>
+            <div style="font-size:32px;font-weight:950;color:#D85A30;letter-spacing:-.03em;line-height:1;font-family:'NanumSquare',sans-serif;">{{ urgent_count }}<span style="font-size:14px;color:#888;font-weight:600;margin-left:4px;">대</span></div>
+        </div>
+    </div>
+
+    <div style="padding:10px 16px 0;">
+        <div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;display:flex;align-items:center;padding:0 14px;height:44px;gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+            <input id="cc-search" placeholder="차량번호, 스팟, 차량소속, 담당업체, 지역 검색" oninput="renderCC()" style="flex:1;border:none;outline:none;font-size:13px;font-family:'NanumSquare',sans-serif;background:transparent;color:#111;">
+        </div>
+    </div>
+
+    <div class="turu-card-list-v24" id="cc-list"></div>
+    <p id="cc-empty" style="display:none;text-align:center;color:var(--color-text-tertiary);font-size:13px;padding:24px 16px;">검색 결과가 없습니다.</p>
+</section>
+
+<style>
+@import url('https://cdn.jsdelivr.net/gh/moonspam/NanumSquare@2.0/nanumsquare.css');
+.mv-page, .mv-page * { font-family: 'NanumSquare', 'Apple SD Gothic Neo', sans-serif !important; }
+.cc-car-row { display:flex; align-items:center; padding:12px 14px; border-bottom:0.5px solid #f0f0f0; gap:10px; background:#fff; }
+.cc-car-row:last-child { border-bottom:none; }
+.cc-car-row.urg { border-left:3px solid #D85A30; }
+</style>
+
+<script>
+const _ccVehicles = {{ vehicles | tojson }};
+
+function renderCC(){
+    const q=(document.getElementById('cc-search').value||'').toLowerCase();
+    const list=document.getElementById('cc-list');
+    const empty=document.getElementById('cc-empty');
+
+    let filtered=_ccVehicles.filter(v=>{
+        if(!q) return true;
+        const hay=[v['차량번호'],v['스팟'],v['차량소속'],v['담당업체'],v['지역시도'],v['지역구군']]
+            .map(x=>(x||'').toString().toLowerCase()).join(' ');
+        return hay.includes(q);
+    });
+
+    if(filtered.length===0){ list.innerHTML=''; empty.style.display='block'; return; }
+    empty.style.display='none';
+
+    let html='<div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;overflow:hidden;margin:0 16px 16px;">';
+    filtered.forEach(v=>{
+        const elapsed=v['세차경과일']||0;
+        const isUrg=elapsed>=14;
+        html+=`<div class="cc-car-row${isUrg?' urg':''}">
+            <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap;">
+                    <span style="font-size:14px;font-weight:900;color:#111;">${v['차량번호']||'-'}</span>
+                    <span style="font-size:12px;font-weight:600;color:#555;">${v['차량소속']||''}</span>
+                    ${v['BM구분']?`<span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;background:#f0f0f0;color:#888;">${v['BM구분']}</span>`:''}
+                </div>
+                <div style="font-size:11px;color:#aaa;">${v['스팟']||'스팟 미지정'} · ${(v['지역시도']||'')} ${(v['지역구군']||'')} · ${v['담당업체']||'-'}</div>
+            </div>
+            <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;flex-shrink:0;${isUrg?'background:#FAECE7;color:#993C1D;':'background:#f0f0f0;color:#888;'}">D+${elapsed}</span>
+        </div>`;
+    });
+    html+='</div>';
+    list.innerHTML=html;
+}
+
+document.addEventListener('DOMContentLoaded', renderCC);
+</script>
+
+{# ── 데스크탑 전용 ── #}
+<div id="d-mv" style="display:none">
+<div class="d-wrap">
+    <div class="d-mv-grid">
+        <div class="d-mv-stat"><span>전체 차량</span><strong>{{ total_all }}</strong></div>
+        <div class="d-mv-stat urgent"><span>장기미세차</span><strong>{{ urgent_count }}</strong></div>
+    </div>
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">차량 마스터</span><h2>세차 대상 리스트</h2></div><span class="d-badge-pill">{{ total_all }}대</span></div>
+        <div style="padding:0 20px 12px;">
+            <input id="dcc-search" placeholder="차량번호, 스팟, 차량소속, 담당업체, 지역 검색" oninput="renderDCC()" style="width:100%;height:40px;border:1px solid #e5e5e5;border-radius:10px;padding:0 14px;font-size:13px;outline:none;">
+        </div>
+        <div class="d-table-wrap">
+            <table class="d-table"><thead><tr><th>차량번호</th><th>차종</th><th>차량소속</th><th>담당업체</th><th>스팟</th><th>지역</th><th>경과일</th><th>BM구분</th></tr></thead>
+            <tbody id="dcc-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</div>
+<style>
+#desktop-mode #d-mv { display: block !important; }
+#desktop-mode .mv-page { display: none !important; }
+</style>
+<script>
+function renderDCC(){
+    const q=(document.getElementById('dcc-search').value||'').toLowerCase();
+    const tbody=document.getElementById('dcc-tbody');
+    let filtered=_ccVehicles.filter(v=>{
+        if(!q) return true;
+        const hay=[v['차량번호'],v['스팟'],v['차량소속'],v['담당업체'],v['지역시도'],v['지역구군']]
+            .map(x=>(x||'').toString().toLowerCase()).join(' ');
+        return hay.includes(q);
+    });
+    if(filtered.length===0){
+        tbody.innerHTML='<tr><td colspan="8" class="d-empty-cell">검색 결과가 없습니다.</td></tr>';
+        return;
+    }
+    let html='';
+    filtered.forEach(v=>{
+        const elapsed=v['세차경과일']||0;
+        const urgStyle = elapsed>=14 ? 'style="color:#FF5F00;font-weight:700;"' : '';
+        html+=`<tr>
+            <td style="font-weight:700;">${v['차량번호']||''}</td>
+            <td>${v['차종명']||'-'}</td>
+            <td>${v['차량소속']||'-'}</td>
+            <td>${v['담당업체']||'-'}</td>
+            <td>${v['스팟']||'-'}</td>
+            <td>${(v['지역시도']||'')} ${(v['지역구군']||'')}</td>
+            <td ${urgStyle}>D+${elapsed}</td>
+            <td>${v['BM구분']||'-'}</td>
+        </tr>`;
+    });
+    tbody.innerHTML=html;
+}
+document.addEventListener('DOMContentLoaded', renderDCC);
+</script>
+{% endblock %}

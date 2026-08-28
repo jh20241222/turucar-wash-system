@@ -2526,6 +2526,14 @@ def wash_status():
     where_sql = " WHERE 1=1"
     params = []
     scope_sql, scope_params = scoped_condition("wash_history", current_user)
+    if current_user.is_staff:
+        # 완료 현황은 계정(작업자)별 실적 화면이어야 하는데, scoped_condition()은 업체+담당
+        # 지역까지만 걸러줘서 같은 지역에 작업자 계정이 여러 개 등록돼 있으면(예: 경기도
+        # 의정부시에 green63/green109 둘 다 배정) 서로의 완료 건이 섞여 보였다. 이 화면에
+        # 한해서만, 개별 작업자(staff) 계정은 로그인 아이디와 작업자 필드가 일치하는 자기
+        # 실적만 보이게 추가로 좁힌다 (master/admin은 기존처럼 전체/업체 전체를 그대로 본다).
+        scope_sql += " AND 작업자 = ?"
+        scope_params = scope_params + [current_user.username]
     where_sql += scope_sql
     params += scope_params
     if s:
@@ -2551,8 +2559,8 @@ def wash_status():
         where_sql += " AND 세차완료일 BETWEEN ? AND ?"
         params += [start, end]
 
-    # 차량번호/작업자/업체명 등으로 검색하는 게 일반적인 사용 패턴이라, 날짜 상관없이
-    # 전체 완료 이력을 대상으로 하고 페이지네이션으로 나눠서 보여준다.
+    # 차량번호나 스팟으로 검색하는 게 일반적인 사용 패턴이라, 날짜 상관없이 전체
+    # 완료 이력을 대상으로 하고 페이지네이션으로 나눠서 보여준다.
     filtered_count = cur.execute(
         "SELECT COUNT(*) AS c FROM wash_history" + where_sql, params
     ).fetchone()["c"]

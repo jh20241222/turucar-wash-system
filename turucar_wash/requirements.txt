@@ -9,3 +9,4 @@ requests
 xlrd
 urllib3
 pywebpush
+boto3

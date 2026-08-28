@@ -2279,6 +2279,60 @@ def car_history():
     ).fetchall()
     conn.close()
     return jsonify({"rows": [dict(r) for r in rows]})
+# =========================================================
+# 촬영 좌표 -> 한글 주소 변환 (카카오 로컬 API, 사진 워터마크용)
+# =========================================================
+KAKAO_REST_API_KEY = os.environ.get("KAKAO_REST_API_KEY", "")
+
+def _kakao_reverse_geocode(lat, lon):
+    """좌표를 카카오 로컬 API로 한글 지번 주소로 변환한다.
+    반환 형식은 워터마크에 위→아래로 찍힐 순서(상세 -> 구/군 -> 시/도)의
+    문자열 리스트. 키가 없거나 API 실패 시 None (호출부에서 좌표로 대체한다)."""
+    if not KAKAO_REST_API_KEY:
+        return None
+    try:
+        resp = _requests.get(
+            "https://dapi.kakao.com/v2/local/geo/coord2address.json",
+            params={"x": lon, "y": lat},
+            headers={"Authorization": f"KakaoAK {KAKAO_REST_API_KEY}"},
+            timeout=4,
+        )
+        if resp.status_code != 200:
+            print(f"[카카오 역지오코딩] HTTP {resp.status_code}: {resp.text[:200]}")
+            return None
+        docs = (resp.json() or {}).get("documents") or []
+        if not docs:
+            return None
+        addr = docs[0].get("address") or {}
+        region1 = (addr.get("region_1depth_name") or "").strip()  # 시/도
+        region2 = (addr.get("region_2depth_name") or "").strip()  # 구/군
+        region3 = (addr.get("region_3depth_name") or "").strip()  # 동/읍/면
+        main_no = (addr.get("main_address_no") or "").strip()
+        sub_no = (addr.get("sub_address_no") or "").strip()
+        if main_no:
+            detail = f"{main_no}-{sub_no} {region3}" if sub_no else f"{main_no} {region3}"
+        else:
+            detail = region3
+        lines = [l.strip() for l in [detail, region2, region1] if l and l.strip()]
+        return lines or None
+    except Exception as e:
+        print(f"[카카오 역지오코딩] 실패: {e}")
+        return None
+
+@app.route("/api/reverse_geocode")
+@login_required
+def api_reverse_geocode():
+    """세차 사진 촬영 화면에서 GPS 좌표를 한글 주소로 바꿔 워터마크에 쓰기 위한 엔드포인트.
+    REST API 키가 노출되면 안 되므로 브라우저가 카카오에 직접 호출하지 않고 이 서버를 거친다."""
+    try:
+        lat = float(request.args.get("lat", ""))
+        lon = float(request.args.get("lon", ""))
+    except (TypeError, ValueError):
+        return jsonify({"ok": False}), 400
+    lines = _kakao_reverse_geocode(lat, lon)
+    if not lines:
+        return jsonify({"ok": False})
+    return jsonify({"ok": True, "lines": lines})
 @app.route("/band_link/<int:id>", methods=["GET"])
 @login_required
 def band_link(id):

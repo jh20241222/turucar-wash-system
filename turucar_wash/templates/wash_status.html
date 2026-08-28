@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_pagination.html" import render_pagination %}
 {% block document_title %}Turu Wash · 완료 현황{% endblock %}
 {% block content %}
 <section class="turu-app-page-v24 turu-status-page-v24">
@@ -8,18 +9,10 @@
         <div><h1>완료 현황</h1><p>완료된 세차 기록을 확인합니다.</p></div>
     </div></div>
 
-    <div class="mob-date-card">
-        <button onclick="statusMoveDate(-1)" style="width:38px;height:38px;border:none;border-radius:12px;background:#FFF2E9;color:#FF5F00;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;">‹</button>
-        <div onclick="toggleStatusCalendar()" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 0;cursor:pointer;">
-            <span style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);letter-spacing:.04em;margin-bottom:3px;">완료일</span>
-            <strong style="font-size:18px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ selected_date }}</strong>
-        </div>
-        <button onclick="statusMoveDate(1)" style="width:38px;height:38px;border:none;border-radius:12px;background:#FFF2E9;color:#FF5F00;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;">›</button>
-    </div>
     <div class="mob-stat-row" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
         <div style="background:#fff;border:none;border-radius:14px;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;box-shadow:0 1px 8px rgba(0,0,0,0.07);">
-            <span style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);">완료</span>
-            <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ selected_date_count }}</strong>
+            <span style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);">검색결과</span>
+            <strong style="font-size:24px;font-weight:900;color:var(--color-text-primary);letter-spacing:-.02em;">{{ filtered_count }}</strong>
         </div>
         <div style="background:#fff;border:none;border-radius:14px;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;box-shadow:0 1px 8px rgba(0,0,0,0.07);">
             <span style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);">전체 완료</span>
@@ -39,7 +32,7 @@
     <div id="mobile-filter-backdrop" class="mobile-filter-backdrop" onclick="closeAnyMobileFilter()"></div>
     <section id="status-filter-sheet" class="filter-card app-card search-panel mobile-filter-sheet turu-filter-sheet-v24">
         <div class="mobile-filter-sheet-head"><strong>완료 이력 필터</strong><button type="button" onclick="closeMobileFilter('status-filter-sheet')" aria-label="닫기">×</button></div>
-        <div class="filter-head"><div><strong>완료 이력 검색</strong><small>차량, 지역, 기간으로 조회</small></div><span>{{ rows|length }}건</span></div>
+        <div class="filter-head"><div><strong>완료 이력 검색</strong><small>차량, 지역, 기간으로 조회</small></div><span>{{ filtered_count }}건</span></div>
         <div class="filter-grid status-filter-grid">
             <input type="text" id="search_input" class="app-input" placeholder="차량번호 또는 스팟 검색" value="{{ search_input }}">
             <select id="region1" class="app-input"><option value="">전체 시/도</option>{% for r in region1 %}<option value="{{ r }}" {% if selected_r1 == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
@@ -48,6 +41,11 @@
             <select id="spot" class="app-input"><option value="">전체 스팟</option>{% for s in spot_list %}<option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
             {% if current_user.is_master %}<select id="vendor" class="app-input"><option value="">전체 업체</option>{% for v in vendor_list %}<option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>{% endif %}
             <input type="date" id="start" class="app-input" value="{{ start }}"><input type="date" id="end" class="app-input" value="{{ end }}">
+            <select id="per_page_m" class="app-input" onchange="applyFilter()">
+                <option value="10" {% if per_page == 10 %}selected{% endif %}>10개씩 보기</option>
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50개씩 보기</option>
+                <option value="100" {% if per_page == 100 %}selected{% endif %}>100개씩 보기</option>
+            </select>
             <button type="button" onclick="applyFilter()" class="primary-btn">검색</button>
             <button type="button" onclick="downloadExcel()" class="blue-btn">엑셀 저장</button>
         </div>
@@ -60,7 +58,7 @@
     {% endif %}
 
     {% if search_input or selected_r1 or selected_r2 or selected_org or selected_spot or start or end %}
-    <p style="padding:6px 16px;font-size:12px;color:var(--color-text-secondary);"><strong style="color:var(--color-text-primary);">{{ rows|length }}건</strong>이 검색되었습니다.</p>
+    <p style="padding:6px 16px;font-size:12px;color:var(--color-text-secondary);"><strong style="color:var(--color-text-primary);">{{ filtered_count }}건</strong>이 검색되었습니다.</p>
     {% endif %}
     <div class="turu-card-list-v24">
         {% for r in rows %}
@@ -81,6 +79,7 @@
         <div class="turu-empty-v24"><strong>완료 내역이 없습니다.</strong><span>검색 조건을 바꿔보세요.</span></div>
         {% endfor %}
     </div>
+    <div class="turu-status-mobile-pagination">{{ render_pagination(current_page, total_pages) }}</div>
 
     {# ── 데스크탑 전용 ── #}
     <section class="desktop-table table-panel app-card turu-desktop-table-v24 turu-status-desktop">
@@ -88,18 +87,8 @@
         <div class="dt-toolbar">
             <div class="dt-toolbar-left"></div>
             <div class="dt-toolbar-center">
-                <div class="dt-date-nav">
-                    <button type="button" onclick="statusMoveDate(-1)">‹</button>
-                    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                        <span style="font-size:22px;font-weight:950;color:var(--color-text-primary);letter-spacing:-.02em;">{{ selected_date }}</span>
-                        <button type="button" onclick="event.stopPropagation();toggleStatusCalendar();" style="background:none;border:none;padding:2px;cursor:pointer;color:var(--color-text-tertiary);line-height:1;">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        </button>
-                    </div>
-                    <button type="button" onclick="statusMoveDate(1)">›</button>
-                </div>
                 <div class="dt-stats">
-                    <div class="dt-stat"><span>완료</span><strong>{{ selected_date_count }}</strong></div>
+                    <div class="dt-stat"><span>검색결과</span><strong>{{ filtered_count }}</strong></div>
                     <div class="dt-stat"><span>전체 완료</span><strong>{{ total_completed_count }}</strong></div>
                 </div>
             </div>
@@ -133,6 +122,11 @@
             <select id="dt_org_s"><option value="">전체 차량소속</option>{% for o in car_org_list %}<option value="{{ o }}" {% if selected_org == o %}selected{% endif %}>{{ o }}</option>{% endfor %}</select>
             <select id="dt_spot_s"><option value="">전체 스팟</option>{% for s in spot_list %}<option value="{{ s }}" {% if selected_spot == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
             {% if current_user.is_master %}<select id="dt_vendor_s"><option value="">전체 업체</option>{% for v in vendor_list %}<option value="{{ v }}" {% if selected_vendor == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>{% endif %}
+            <select id="dt_per_page_s" onchange="dtApplyStatusFilter()">
+                <option value="10" {% if per_page == 10 %}selected{% endif %}>10개씩</option>
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50개씩</option>
+                <option value="100" {% if per_page == 100 %}selected{% endif %}>100개씩</option>
+            </select>
             <div class="dt-filter-divider"></div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-text-tertiary);flex-shrink:0"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
             <input id="dt_search_s" placeholder="차량번호, 스팟 검색" value="{{ search_input }}" onkeydown="if(event.key==='Enter'){event.preventDefault();dtApplyStatusFilter();}">
@@ -166,6 +160,7 @@
                 </tbody>
             </table>
         </div>
+        {{ render_pagination(current_page, total_pages) }}
     </section>
 
     {% if current_user.is_master %}</form>{% endif %}
@@ -177,6 +172,7 @@
     .turu-stat-strip-v24,
     .turu-status-searchbar-v29,
     .turu-card-list-v24,
+    .turu-status-mobile-pagination,
     .master-delete-toolbar,
     #status-filter-sheet,
     .mobile-filter-backdrop { display: none !important; }
@@ -223,37 +219,6 @@
 </style>
 
 <script>
-const _statusDate = "{{ selected_date }}";
-function statusMoveDate(delta){
-    const d=new Date(_statusDate+'T00:00:00');
-    d.setDate(d.getDate()+delta);
-    const nd=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    window.location.href='/wash_status?date='+nd;
-}
-let _scy,_scm;
-function toggleStatusCalendar(){
-    const d=new Date(_statusDate+'T00:00:00');
-    _scy=d.getFullYear();_scm=d.getMonth();
-    renderStatusCal();
-    document.getElementById('status-cal-backdrop').classList.add('open');
-}
-function closeStatusCalendar(){document.getElementById('status-cal-backdrop').classList.remove('open');}
-function statusCalChangeMonth(delta){_scm+=delta;if(_scm>11){_scm=0;_scy++;}else if(_scm<0){_scm=11;_scy--;}renderStatusCal();}
-function renderStatusCal(){
-    document.getElementById('status-cal-title').textContent=`${_scy}년 ${_scm+1}월`;
-    const first=new Date(_scy,_scm,1).getDay();
-    const last=new Date(_scy,_scm+1,0).getDate();
-    let html='';
-    for(let i=0;i<first;i++)html+='<span></span>';
-    for(let day=1;day<=last;day++){
-        const ds=`${_scy}-${String(_scm+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-        const isSel=ds===_statusDate;
-        html+=`<button onclick="statusPickDate('${ds}')" style="border:none;border-radius:8px;padding:6px 2px;font-size:13px;font-weight:${isSel?900:600};background:${isSel?'#FF5F00':'transparent'};color:${isSel?'#fff':'var(--color-text-primary)'};cursor:pointer;">${day}</button>`;
-    }
-    document.getElementById('status-cal-days').innerHTML=html;
-}
-function statusPickDate(ds){closeStatusCalendar();window.location.href='/wash_status?date='+ds;}
-
 function getStatusVal(mobileId, desktopId){
     const desktop = document.getElementById(desktopId);
     const mobile = document.getElementById(mobileId);
@@ -262,15 +227,18 @@ function getStatusVal(mobileId, desktopId){
 }
 function buildStatusParams(){
     return new URLSearchParams({
-        date: _statusDate,
         s: getStatusVal("search_input","dt_search_s"),
         r1: getStatusVal("region1","dt_region1_s"),
         r2: getStatusVal("region2","dt_region2_s"),
         org: getStatusVal("car_org","dt_org_s"),
         spot: getStatusVal("spot","dt_spot_s"),
-        vendor: getStatusVal("vendor","dt_vendor_s")
+        vendor: getStatusVal("vendor","dt_vendor_s"),
+        start: (document.getElementById('start')||{}).value || "",
+        end: (document.getElementById('end')||{}).value || "",
+        per_page: getStatusVal("per_page_m","dt_per_page_s")
     });
 }
+// 검색/필터를 새로 적용할 때는 항상 1페이지부터 다시 보여준다 (page 파라미터를 넣지 않음).
 function applyFilter(){window.location.href=`/wash_status?${buildStatusParams().toString()}`;}
 function downloadExcel(){window.location.href=`/wash_status_excel?${buildStatusParams().toString()}`;}
 function dtApplyStatusFilter(){ applyFilter(); }
@@ -322,26 +290,4 @@ function confirmSelectedDelete(formId,message){const form=document.getElementByI
 
 
 </script>
-
-{# ── 달력 팝업 (section 밖 — 데스크탑/모바일 공용) ── #}
-<div class="notice-modal-backdrop" id="status-cal-backdrop" onclick="closeStatusCalendar()">
-    <div class="turu-mini-modal" style="padding:24px;max-width:320px;" onclick="event.stopPropagation()">
-        <button type="button" class="notice-modal-close" onclick="closeStatusCalendar()" aria-label="닫기">×</button>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-            <button onclick="statusCalChangeMonth(-1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 14px;cursor:pointer;">‹</button>
-            <strong id="status-cal-title" style="font-size:15px;font-weight:950;color:var(--color-text-primary);"></strong>
-            <button onclick="statusCalChangeMonth(1)" style="background:#FFF2E9;border:none;border-radius:8px;color:#FF5F00;font-size:18px;font-weight:900;padding:4px 14px;cursor:pointer;">›</button>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px;">
-            <span style="text-align:center;font-size:11px;font-weight:900;color:#E24B4A;padding:4px 0;">일</span>
-            <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">월</span>
-            <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">화</span>
-            <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">수</span>
-            <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">목</span>
-            <span style="text-align:center;font-size:11px;font-weight:900;color:#555;padding:4px 0;">금</span>
-            <span style="text-align:center;font-size:11px;font-weight:900;color:#185FA5;padding:4px 0;">토</span>
-        </div>
-        <div id="status-cal-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
-    </div>
-</div>
 {% endblock %}

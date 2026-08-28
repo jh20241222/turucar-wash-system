@@ -64,7 +64,7 @@
             <p class="photo-hint">항목을 눌러서 한 장씩 촬영해주세요. 전부 선택사항이에요.</p>
 
             {% for group in photo_slot_groups %}
-            <p class="slot-group-label">{{ group.group }} ({{ group['items']|length }})</p>
+            <p class="slot-group-label">{{ group.group }} ({{ group['items']|length }}){% if group.hint %}<br><small style="color:#8a8f99;font-weight:400;">{{ group.hint }}</small>{% endif %}</p>
             <div class="photo-slot-grid">
                 {% for item in group['items'] %}
                 <div class="photo-slot" data-slot-key="{{ item.key }}" data-multi="0">
@@ -76,16 +76,6 @@
                 {% endfor %}
             </div>
             {% endfor %}
-
-            <p class="slot-group-label">{{ damage_slot_label }} (최대 {{ damage_slot_max }}장)</p>
-            <div class="photo-slot-grid">
-                <div class="photo-slot photo-slot-multi" data-slot-key="{{ damage_slot_key }}" data-multi="1" data-max="{{ damage_slot_max }}">
-                    <input type="file" id="slot-input-{{ damage_slot_key }}" name="slot_{{ damage_slot_key }}" accept="image/*" multiple style="display:none;">
-                    <button type="button" class="photo-slot-clear" id="slot-clear-{{ damage_slot_key }}" style="display:none;">✕</button>
-                    <div class="photo-slot-thumb" id="slot-thumb-{{ damage_slot_key }}"><span class="photo-slot-icon">{{ damage_slot_icon }}</span></div>
-                    <div class="photo-slot-label">{{ damage_slot_label }}<br><small style="color:#8a8f99;">여러 장 촬영 시 훼손제보로 자동 접수돼요</small></div>
-                </div>
-            </div>
         </div>
         {% endif %}
 
@@ -514,7 +504,7 @@ async function openBand(){try{const response=await fetch("{{ url_for('band_link'
         {% endif %}
         <p class="photo-hint">항목을 눌러서 한 장씩 업로드해주세요. 전부 선택사항이에요.</p>
         {% for group in photo_slot_groups %}
-        <p class="slot-group-label">{{ group.group }} ({{ group['items']|length }})</p>
+        <p class="slot-group-label">{{ group.group }} ({{ group['items']|length }}){% if group.hint %}<br><small style="color:#8a8f99;font-weight:400;">{{ group.hint }}</small>{% endif %}</p>
         <div class="photo-slot-grid photo-slot-grid--desktop">
             {% for item in group['items'] %}
             <div class="d-photo-slot" data-slot-key="{{ item.key }}" data-multi="0">
@@ -526,15 +516,6 @@ async function openBand(){try{const response=await fetch("{{ url_for('band_link'
             {% endfor %}
         </div>
         {% endfor %}
-        <p class="slot-group-label">{{ damage_slot_label }} (최대 {{ damage_slot_max }}장)</p>
-        <div class="photo-slot-grid photo-slot-grid--desktop">
-            <div class="d-photo-slot d-photo-slot-multi" data-slot-key="{{ damage_slot_key }}" data-multi="1">
-                <input type="file" id="d-slot-input-{{ damage_slot_key }}" name="slot_{{ damage_slot_key }}" accept="image/*" multiple style="display:none;">
-                <button type="button" class="photo-slot-clear" id="d-slot-clear-{{ damage_slot_key }}" style="display:none;">✕</button>
-                <div class="photo-slot-thumb" id="d-slot-thumb-{{ damage_slot_key }}"><span class="photo-slot-icon">{{ damage_slot_icon }}</span></div>
-                <div class="photo-slot-label">{{ damage_slot_label }}<br><small style="color:#8a8f99;">여러 장 선택 시 훼손제보로 자동 접수돼요</small></div>
-            </div>
-        </div>
     </div>
 </div>
 {% endif %}
@@ -651,7 +632,7 @@ function dCopyInfo(){
 .photo-slot-clear{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#3d4451;color:#fff;border:2px solid #fff;font-size:11px;line-height:1;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center;padding:0;}
 
 .cam-overlay{position:fixed;inset:0;height:100dvh;z-index:9000;background:#0a0a0c;display:flex;flex-direction:column;overflow:hidden;}
-.cam-top{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;color:#fff;}
+.cam-top{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));color:#fff;}
 .cam-close,.cam-done{background:none;border:none;color:#fff;font-size:15px;font-weight:700;padding:6px 10px;cursor:pointer;}
 .cam-count{font-size:13px;color:#c8ccd4;}
 .cam-viewport{position:relative;flex:1 1 auto;min-height:0;overflow:hidden;background:#000;}

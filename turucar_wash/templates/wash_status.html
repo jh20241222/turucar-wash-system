@@ -66,7 +66,7 @@
         {% for r in rows %}
         <div class="turu-delete-item-v24">
             {% if current_user.is_master %}<label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>{% endif %}
-            <article class="turu-order-card-v24 turu-complete-card-v24">
+            <a href="{{ url_for('wash_record', id=r['id']) }}" class="turu-order-card-v24 turu-complete-card-v24">
 <div class="turu-card-copy-v24">
                     <div class="turu-card-title-v24"><strong>{{ r['차량번호'] }}</strong><em class="chip-green">완료</em></div>
                     <p><span>📍</span>{{ r['스팟'] or '-' }}{% if r['작업자'] %} | {{ r['작업자'] }}{% endif %}</p>
@@ -74,7 +74,8 @@
                     <p><span>☑</span>{{ r['차종명'] or '세차 완료' }}</p>
                     {% if r['특이사항'] %}<small class="turu-card-note-v24">{{ r['특이사항'] }}</small>{% endif %}
                 </div>
-            </article>
+                <span class="turu-row-arrow-v24">&#8250;</span>
+            </a>
         </div>
         {% else %}
         <div class="turu-empty-v24"><strong>완료 내역이 없습니다.</strong><span>검색 조건을 바꿔보세요.</span></div>
@@ -148,8 +149,8 @@
                 </thead>
                 <tbody>
                 {% for r in rows %}
-                <tr class="dt-row">
-                    {% if current_user.is_master %}<td class="dt-check-col"><input type="checkbox" name="ids" value="{{ r['id'] }}"></td>{% endif %}
+                <tr class="dt-row" onclick="location.href='{{ url_for('wash_record', id=r['id']) }}'" style="cursor:pointer;">
+                    {% if current_user.is_master %}<td class="dt-check-col" onclick="event.stopPropagation();"><input type="checkbox" name="ids" value="{{ r['id'] }}"></td>{% endif %}
                     <td>{{ r['세차완료일'] or '-' }}</td>
                     <td class="dt-car-num">{{ r['차량번호'] }}</td>
                     <td>{{ r['차종명'] or '-' }}</td>
@@ -212,6 +213,9 @@
     .dt-table td { padding: 10px 14px; color: var(--color-text-primary); border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; font-size: 14px; font-weight: 800; }
     .dt-table tr:last-child td { border-bottom: none; }
     .dt-row:hover td { background: var(--color-background-secondary); }
+    /* 행을 클릭할 때 텍스트가 드래그 선택되면서 클릭(상세 페이지 이동)이 씹히는 경우가 있어,
+       체크박스 칸을 제외한 나머지 칸은 텍스트 선택을 막아 클릭이 항상 먹히게 한다. */
+    .dt-row td:not(.dt-check-col) { user-select: none; -webkit-user-select: none; }
     .dt-check-col { width: 36px; }
     .dt-car-num { font-weight: 950; color: var(--color-text-primary); }
     .dt-empty { text-align: center; padding: 32px; color: var(--color-text-secondary); font-size: 14px; font-weight: 800; }

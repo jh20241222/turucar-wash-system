@@ -611,18 +611,18 @@ function dCopyInfo(){
 .photo-slot-count{position:absolute;right:2px;bottom:2px;background:rgba(0,0,0,.6);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:100px;}
 .photo-slot-clear{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#3d4451;color:#fff;border:2px solid #fff;font-size:11px;line-height:1;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center;padding:0;}
 
-.cam-overlay{position:fixed;inset:0;z-index:9000;background:#0a0a0c;display:flex;flex-direction:column;}
-.cam-top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;color:#fff;}
+.cam-overlay{position:fixed;inset:0;height:100dvh;z-index:9000;background:#0a0a0c;display:flex;flex-direction:column;overflow:hidden;}
+.cam-top{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;color:#fff;}
 .cam-close,.cam-done{background:none;border:none;color:#fff;font-size:15px;font-weight:700;padding:6px 10px;cursor:pointer;}
 .cam-count{font-size:13px;color:#c8ccd4;}
-.cam-viewport{position:relative;flex:1;overflow:hidden;background:#000;}
-.cam-viewport video{width:100%;height:100%;object-fit:cover;}
+.cam-viewport{position:relative;flex:1 1 auto;min-height:0;overflow:hidden;background:#000;}
+.cam-viewport video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
 .cam-status-row{position:absolute;top:14px;left:0;right:0;display:flex;justify-content:center;gap:8px;}
 .cam-pill{padding:6px 12px;border-radius:100px;font-size:12.5px;font-weight:700;background:rgba(20,20,24,.55);color:#c8ccd4;border:1px solid rgba(255,255,255,.14);}
 .cam-pill.ok{color:#8fe3bd;border-color:#204a3a;}
 .cam-pill.bad{color:#ffb3bf;border-color:#5c2530;}
 .cam-warning{position:absolute;left:14px;right:14px;bottom:110px;background:rgba(217,44,76,.9);color:#fff;font-size:13px;font-weight:600;padding:10px 12px;border-radius:10px;text-align:center;}
-.cam-bottom{background:#0a0a0c;padding:14px 16px 22px;display:flex;flex-direction:column;align-items:center;gap:14px;}
+.cam-bottom{flex:0 0 auto;background:#0a0a0c;padding:14px 16px 22px;display:flex;flex-direction:column;align-items:center;gap:14px;padding-bottom:calc(22px + env(safe-area-inset-bottom));}
 .cam-filmstrip{display:flex;gap:8px;width:100%;overflow-x:auto;min-height:4px;}
 .cam-thumb{position:relative;width:52px;height:52px;flex:0 0 auto;border-radius:8px;overflow:hidden;border:1.5px solid rgba(255,255,255,.2);}
 .cam-thumb img{width:100%;height:100%;object-fit:cover;display:block;}

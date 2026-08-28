@@ -2687,7 +2687,7 @@ def wash_record(id):
     # 정확히 찾아진다 (세차일 컬럼이 없는 과거 행은 완료일로 대신 채워져 있다).
     show_photo_section = (car["차량소속"] or "").strip() in PHOTO_UPLOAD_ORGS
     photo_lookup_date = car["세차일"] if "세차일" in car.keys() and car["세차일"] else car["세차완료일"]
-    car_photos = _get_wash_photos(car["차량번호"], photo_lookup_date) if show_photo_section else []
+    car_photos = _sort_photos_by_slot_order(_get_wash_photos(car["차량번호"], photo_lookup_date)) if show_photo_section else []
     return render_template(
         "wash_record.html", car=car,
         show_photo_section=show_photo_section, car_photos=car_photos,
@@ -2910,6 +2910,26 @@ DAMAGE_SLOT_KEY = "damage"
 DAMAGE_SLOT_LABEL = "무인훼손 제보"
 DAMAGE_SLOT_MAX = 5  # damage_reports 테이블의 photo_damage1~5 컬럼 수에 맞춤
 DAMAGE_SLOT_ICON = "📷"
+
+# 세차 내역 조회(wash_record)에서 사진을 촬영 순서(정면 → 45˚ → 측면 → ... → 무인훼손)
+# 그대로 보여주기 위한 라벨 → 순번 매핑. DB 저장 순서(id)에 의존하지 않고 항상 이
+# 순서로 정렬한다 (작업자가 슬롯을 건너뛰거나 나중에 추가로 올려도 순서가 흐트러지지 않음).
+_PHOTO_LABEL_ORDER = {}
+for _grp in PHOTO_SLOT_GROUPS:
+    for _item in _grp["items"]:
+        _PHOTO_LABEL_ORDER.setdefault(_item["label"], len(_PHOTO_LABEL_ORDER))
+_PHOTO_LABEL_ORDER.setdefault(DAMAGE_SLOT_LABEL, len(_PHOTO_LABEL_ORDER))
+del _grp, _item
+
+def _sort_photos_by_slot_order(photos):
+    """wash_photos 목록을 촬영 슬롯 순서대로 정렬한다. shot_label이 슬롯 라벨과
+    일치하지 않는(예전 데이터 등) 사진은 순서 매핑 목록 뒤쪽에, 원래 순서(업로드 id)
+    그대로 붙여 최소한 서로의 상대 순서는 유지한다."""
+    unknown = len(_PHOTO_LABEL_ORDER)
+    return sorted(
+        photos,
+        key=lambda p: (_PHOTO_LABEL_ORDER.get(p.get("shot_label"), unknown), p.get("id", 0))
+    )
 
 R2_ACCOUNT_ID = os.environ.get("R2_ACCOUNT_ID", "")
 R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID", "")

@@ -30,9 +30,9 @@
         <div class="photo-gallery-grid">
             {% for p in car_photos %}
             <div class="photo-gallery-item">
-                <a href="{{ url_for('car_photo_view', photo_id=p['id']) }}" target="_blank" rel="noopener">
+                <button type="button" class="photo-gallery-open" onclick="turuOpenPhotoViewer({{ loop.index0 }})" aria-label="사진 크게 보기">
                     <img src="{{ url_for('car_photo_view', photo_id=p['id']) }}" loading="lazy" alt="{{ p['shot_label'] or '세차 현장 사진' }}">
-                </a>
+                </button>
                 {% if p['shot_label'] %}
                 <span class="photo-gallery-cap">{{ p['shot_label'] }}</span>
                 {% endif %}
@@ -108,9 +108,9 @@
             <div class="photo-gallery-grid photo-gallery-grid--desktop">
                 {% for p in car_photos %}
                 <div class="photo-gallery-item">
-                    <a href="{{ url_for('car_photo_view', photo_id=p['id']) }}" target="_blank" rel="noopener">
-                        <img src="{{ url_for('car_photo_view', photo_id=p['id']) }}" loading="lazy" alt="세차 현장 사진">
-                    </a>
+                    <button type="button" class="photo-gallery-open" onclick="turuOpenPhotoViewer({{ loop.index0 }})" aria-label="사진 크게 보기">
+                        <img src="{{ url_for('car_photo_view', photo_id=p['id']) }}" loading="lazy" alt="{{ p['shot_label'] or '세차 현장 사진' }}">
+                    </button>
                     {% if current_user.is_master %}
                     <form action="{{ url_for('car_photo_delete', photo_id=p['id']) }}" method="POST" onsubmit="return confirm('이 사진을 삭제할까요?');">
                         <button type="submit" class="photo-delete-btn" aria-label="삭제">&#215;</button>
@@ -144,5 +144,86 @@
 .photo-gallery-cap{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);color:#fff;font-size:10px;font-weight:700;padding:3px 5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .photo-delete-btn{width:22px;height:22px;border-radius:50%;border:none;background:rgba(0,0,0,.6);color:#fff;font-size:13px;line-height:1;cursor:pointer;}
 .photo-empty{font-size:13px;color:#999;grid-column:1 / -1;}
+
+.photo-gallery-open{all:unset;display:block;width:100%;height:100%;cursor:pointer;}
+
+/* ── 사진 크게 보기(라이트박스) ── */
+.turu-photo-viewer{position:fixed;inset:0;height:100dvh;z-index:9500;background:#08080a;display:none;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;}
+.tpv-stage{position:relative;flex:1 1 auto;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;}
+.tpv-stage img{max-width:92vw;max-height:100%;object-fit:contain;display:block;}
+.tpv-close{position:absolute;top:14px;right:16px;background:none;border:none;color:#fff;font-size:20px;font-weight:700;cursor:pointer;padding:8px;z-index:2;line-height:1;}
+.tpv-counter{position:absolute;top:18px;left:18px;color:#c8ccd4;font-size:13px;font-weight:700;z-index:2;}
+.tpv-caption{flex:0 0 auto;color:#fff;font-size:14px;font-weight:700;padding:10px 16px calc(18px + env(safe-area-inset-bottom));text-align:center;}
+.tpv-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.14);border:none;color:#fff;font-size:28px;font-weight:900;width:44px;height:64px;border-radius:10px;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center;}
+.tpv-nav:hover{background:rgba(255,255,255,.22);}
+.tpv-nav:disabled{opacity:.25;cursor:default;}
+.tpv-prev{left:8px;}
+.tpv-next{right:8px;}
 </style>
+
+{# ── 사진 크게 보기 모달: 모바일/데스크탑 갤러리가 공유한다 ── #}
+<div id="turu-photo-viewer" class="turu-photo-viewer" role="dialog" aria-modal="true" aria-label="사진 크게 보기">
+    <span class="tpv-counter" id="tpv-counter"></span>
+    <button type="button" class="tpv-close" id="tpv-close-btn" aria-label="닫기">&#10005; 닫기</button>
+    <div class="tpv-stage">
+        <button type="button" class="tpv-nav tpv-prev" id="tpv-prev-btn" aria-label="이전 사진">&#8249;</button>
+        <img id="tpv-img" src="" alt="">
+        <button type="button" class="tpv-nav tpv-next" id="tpv-next-btn" aria-label="다음 사진">&#8250;</button>
+    </div>
+    <div class="tpv-caption" id="tpv-caption"></div>
+</div>
+
+<script>
+(function(){
+    var TURU_PHOTOS = [
+        {% for p in car_photos %}
+        { url: {{ url_for('car_photo_view', photo_id=p['id']) | tojson }}, label: {{ (p['shot_label'] or '세차 현장 사진') | tojson }} }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+    var viewer = document.getElementById('turu-photo-viewer');
+    var imgEl = document.getElementById('tpv-img');
+    var capEl = document.getElementById('tpv-caption');
+    var counterEl = document.getElementById('tpv-counter');
+    var prevBtn = document.getElementById('tpv-prev-btn');
+    var nextBtn = document.getElementById('tpv-next-btn');
+    var closeBtn = document.getElementById('tpv-close-btn');
+    var curIdx = 0;
+
+    function renderPhoto(){
+        var p = TURU_PHOTOS[curIdx];
+        if(!p) return;
+        imgEl.src = p.url;
+        imgEl.alt = p.label || '';
+        capEl.textContent = p.label || '';
+        counterEl.textContent = (curIdx + 1) + ' / ' + TURU_PHOTOS.length;
+        prevBtn.disabled = curIdx <= 0;
+        nextBtn.disabled = curIdx >= TURU_PHOTOS.length - 1;
+    }
+    function openViewer(idx){
+        if(!TURU_PHOTOS.length) return;
+        curIdx = idx;
+        renderPhoto();
+        viewer.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    function closeViewer(){
+        viewer.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    function goPrev(){ if(curIdx > 0){ curIdx--; renderPhoto(); } }
+    function goNext(){ if(curIdx < TURU_PHOTOS.length - 1){ curIdx++; renderPhoto(); } }
+
+    window.turuOpenPhotoViewer = openViewer;
+    closeBtn.addEventListener('click', closeViewer);
+    prevBtn.addEventListener('click', goPrev);
+    nextBtn.addEventListener('click', goNext);
+    viewer.addEventListener('click', function(e){ if(e.target === viewer){ closeViewer(); } });
+    document.addEventListener('keydown', function(e){
+        if(viewer.style.display !== 'flex') return;
+        if(e.key === 'Escape'){ closeViewer(); }
+        else if(e.key === 'ArrowLeft'){ goPrev(); }
+        else if(e.key === 'ArrowRight'){ goNext(); }
+    });
+})();
+</script>
 {% endblock %}

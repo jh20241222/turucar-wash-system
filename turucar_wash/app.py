@@ -542,6 +542,26 @@ def ensure_wash_schema():
         if "BM구분" not in vm_cols:
             cur.execute("ALTER TABLE vehicle_master ADD COLUMN BM구분 TEXT")
             print("[TuruWash] vehicle_master.BM구분 컬럼 추가됨")
+        # 세차 현장 사진 (현재는 차량소속 '카일이삼제스퍼' 전용) — Cloudflare R2에 실제 파일을
+        # 저장하고, 이 테이블에는 R2 오브젝트 키만 남긴다. 차량번호+세차일로 묶어서
+        # wash_list(진행중)든 wash_history(완료됨)든 상관없이 조회할 수 있게 한다.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS wash_photos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                차량번호 TEXT NOT NULL,
+                세차일 TEXT NOT NULL,
+                r2_key TEXT NOT NULL,
+                original_name TEXT,
+                shot_label TEXT,
+                uploaded_by TEXT,
+                uploaded_at TEXT NOT NULL
+            )
+        """)
+        # shot_label 컬럼 마이그레이션 (기존 DB 호환 — 촬영 슬롯별 라벨, 예: '전범퍼 정면')
+        _wp_cols = [row[1] for row in cur.execute("PRAGMA table_info(wash_photos)").fetchall()]
+        if "shot_label" not in _wp_cols:
+            cur.execute("ALTER TABLE wash_photos ADD COLUMN shot_label TEXT")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_wash_photos_car_date ON wash_photos(차량번호, 세차일)")
         conn.commit()
         print("[TuruWash] ensure_wash_schema 완료")
     except Exception as e:
@@ -2142,7 +2162,97 @@ def car_detail(id):
     except Exception:
         elapsed = 0
     is_long_wash = elapsed >= 14
-    return render_template("car_detail.html", car=car, elapsed=elapsed, is_long_wash=is_long_wash)
+    # 차량소속이 지정된 목록(현재 '카일이삼제스퍼')인 경우에만 세차 현장 사진
+    # 업로드/관리 섹션을 노출한다.
+    show_photo_section = (car["차량소속"] or "").strip() in PHOTO_UPLOAD_ORGS
+    car_photos = _get_wash_photos(car["차량번호"], car["세차일"]) if show_photo_section else []
+    return render_template(
+        "car_detail.html", car=car, elapsed=elapsed, is_long_wash=is_long_wash,
+        show_photo_section=show_photo_section, car_photos=car_photos,
+        r2_configured=bool(_get_r2_client()),
+        photo_slot_groups=PHOTO_SLOT_GROUPS, damage_slot_key=DAMAGE_SLOT_KEY,
+        damage_slot_label=DAMAGE_SLOT_LABEL, damage_slot_max=DAMAGE_SLOT_MAX,
+        damage_slot_icon=DAMAGE_SLOT_ICON
+    )
+# =========================================================
+# 세차 현장 사진 업로드 / 조회 / 삭제 (차량소속 '카일이삼제스퍼' 전용, R2 저장)
+# =========================================================
+@app.route("/car_photo_upload/<int:id>", methods=["POST"])
+@login_required
+def car_photo_upload(id):
+    target = _lookup_wash_car_for_photo(id, current_user)
+    if not target:
+        flash("❌ 차량 정보를 찾을 수 없습니다.")
+        return redirect(url_for("wash_list"))
+    if (target["차량소속"] or "").strip() not in PHOTO_UPLOAD_ORGS:
+        flash("❌ 이 차량소속은 사진 업로드 대상이 아닙니다.")
+        return redirect(url_for("car_detail", id=id))
+    client = _get_r2_client()
+    if not client:
+        flash("❌ 사진 저장소가 아직 설정되지 않았습니다. 관리자에게 R2 환경변수 설정을 요청하세요.")
+        return redirect(url_for("car_detail", id=id))
+    files = request.files.getlist("photos")
+    if not files or not any(f and f.filename for f in files):
+        flash("❌ 업로드할 사진을 선택하세요.")
+        return redirect(url_for("car_detail", id=id))
+    차량번호 = target["차량번호"]
+    세차일 = target["세차일"]
+    conn = get_wash_db()
+    uploaded, failed = _store_wash_photos(conn, client, files, 차량번호, 세차일, current_user.username)
+    conn.commit()
+    conn.close()
+    if uploaded and not failed:
+        flash(f"✔ 사진 {uploaded}장 업로드 완료")
+    elif uploaded:
+        flash(f"✔ 사진 {uploaded}장 업로드 완료 ({failed}장 실패 — 이미지 파일만 업로드 가능)")
+    else:
+        flash("❌ 업로드된 사진이 없습니다.")
+    return redirect(url_for("car_detail", id=id))
+@app.route("/car_photo/<int:photo_id>")
+@login_required
+def car_photo_view(photo_id):
+    """R2에 저장된 사진을 짧은 유효기간(1시간)의 서명된 URL로 리다이렉트한다.
+    R2 자격증명을 브라우저에 노출하지 않기 위한 방식."""
+    conn = get_wash_db()
+    row = conn.execute("SELECT r2_key FROM wash_photos WHERE id=?", (photo_id,)).fetchone()
+    conn.close()
+    if not row:
+        return "Not found", 404
+    client = _get_r2_client()
+    if not client:
+        return "사진 저장소가 설정되지 않았습니다.", 500
+    try:
+        url = client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": R2_BUCKET_NAME, "Key": row["r2_key"]},
+            ExpiresIn=3600,
+        )
+    except Exception as e:
+        print(f"[R2] presign 실패: {e}")
+        return "사진을 불러오지 못했습니다.", 502
+    return redirect(url)
+@app.route("/car_photo_delete/<int:photo_id>", methods=["POST"])
+@login_required
+def car_photo_delete(photo_id):
+    if not current_user.is_master:
+        return "Forbidden", 403
+    conn = get_wash_db()
+    row = conn.execute("SELECT * FROM wash_photos WHERE id=?", (photo_id,)).fetchone()
+    if not row:
+        conn.close()
+        flash("❌ 사진을 찾을 수 없습니다.")
+        return redirect(request.referrer or url_for("wash_list"))
+    client = _get_r2_client()
+    if client:
+        try:
+            client.delete_object(Bucket=R2_BUCKET_NAME, Key=row["r2_key"])
+        except Exception as e:
+            print(f"[R2] 삭제 실패: {e}")
+    conn.execute("DELETE FROM wash_photos WHERE id=?", (photo_id,))
+    conn.commit()
+    conn.close()
+    flash("✔ 사진이 삭제되었습니다.")
+    return redirect(request.referrer or url_for("wash_list"))
 # =========================================================
 # 밴드 링크 조회
 # =========================================================
@@ -2203,6 +2313,94 @@ def wash_complete(id):
         conn.close()
         flash("❌ 이미 완료 처리됐거나 존재하지 않는 오더입니다.")
         return redirect(url_for("wash_list"))
+    # 차량소속이 사진 업로드 대상(현재 '카일이삼제스퍼')이면, 이 화면엔 별도의
+    # 세차 기록 입력 폼/사진 업로드 버튼 없이 "내역업로드" 버튼 하나만 있다.
+    # 선택된 사진을 R2에 올리는 것과 완료 처리(wash_history 이관)를 한 번에 처리한다.
+    is_photo_org = (row["차량소속"] or "").strip() in PHOTO_UPLOAD_ORGS
+    photo_uploaded, photo_failed = 0, 0
+    damage_report_created = False
+    if is_photo_org:
+        # 슬롯별 사진 수집 (외부10+내부4+특이사항3 = 17컷, 전부 선택사항, 1장씩)
+        slot_files, slot_labels = [], []
+        for group in PHOTO_SLOT_GROUPS:
+            for item in group["items"]:
+                f = request.files.get(f"slot_{item['key']}")
+                if f and f.filename:
+                    slot_files.append(f)
+                    slot_labels.append(item["label"])
+        # 무인훼손 제보 슬롯 (여러 장 가능, 별도로 훼손제보/슬랙 연동)
+        damage_files = [f for f in request.files.getlist(f"slot_{DAMAGE_SLOT_KEY}") if f and f.filename][:DAMAGE_SLOT_MAX]
+
+        all_files = slot_files + damage_files
+        all_labels = slot_labels + [DAMAGE_SLOT_LABEL] * len(damage_files)
+        if all_files:
+            client = _get_r2_client()
+            if not client:
+                conn.close()
+                flash("❌ 사진 저장소가 아직 설정되지 않았습니다. 관리자에게 R2 환경변수 설정을 요청하세요.")
+                return redirect(url_for("car_detail", id=id))
+            photo_uploaded, photo_failed = _store_wash_photos(
+                conn, client, all_files, row["차량번호"], row["세차일"], current_user.username,
+                labels=all_labels
+            )
+
+        # 무인훼손 제보 슬롯에 사진이 있으면, 기존 훼손제보(damage_reports)/슬랙 알림
+        # 파이프라인에도 함께 등록한다 (damage_submit()과 동일한 로직 재사용).
+        if damage_files:
+            try:
+                damage_location = (request.form.get("damage") or "").strip() or "위치 미기재 (세차 중 무인훼손 사진 첨부)"
+                description = (request.form.get("etc") or "").strip()
+                saved_names = []
+                for f in damage_files:
+                    try:
+                        f.stream.seek(0)
+                    except Exception:
+                        pass
+                    fname = _save_damage_photo(f)
+                    if fname:
+                        saved_names.append(fname)
+                dmg_fields = ["photo_front", "photo_damage1", "photo_damage2", "photo_damage3", "photo_damage4", "photo_damage5"]
+                dmg_values = {field: None for field in dmg_fields}
+                for field, fname in zip(dmg_fields[1:], saved_names):  # photo_front는 비워두고 damage1~5부터 채움
+                    dmg_values[field] = fname
+                created_at = now_kst().strftime("%Y-%m-%d %H:%M")
+                # damage_reports 테이블은 wash.db가 아니라 계정 DB(USER_DB_PATH)에 있으므로
+                # 별도 커넥션을 연다 (damage_submit()과 동일한 방식).
+                udb = get_user_db()
+                dcur = udb.execute(
+                    """INSERT INTO damage_reports
+                       (car_number, wash_date, damage_location, description,
+                        photo_front, photo_damage1, photo_damage2,
+                        photo_damage3, photo_damage4, photo_damage5,
+                        reporter, vendor, created_at)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (row["차량번호"], row["세차일"], damage_location, description,
+                     dmg_values["photo_front"], dmg_values["photo_damage1"], dmg_values["photo_damage2"],
+                     dmg_values["photo_damage3"], dmg_values["photo_damage4"], dmg_values["photo_damage5"],
+                     current_user.username, getattr(current_user, "vendor", "") or "",
+                     created_at)
+                )
+                report_id = dcur.lastrowid
+                udb.commit()
+                photos_for_slack = []
+                for field, fname in zip(dmg_fields, [dmg_values[f] for f in dmg_fields]):
+                    if fname:
+                        photos_for_slack.append((field, fname, os.path.join(DAMAGE_UPLOAD_DIR, fname)))
+                car_org = _lookup_car_org(row["차량번호"])
+                slack_ts = _send_damage_slack({
+                    "car_number": row["차량번호"], "car_org": car_org, "wash_date": row["세차일"],
+                    "damage_location": damage_location, "description": description,
+                    "reporter": current_user.username,
+                    "vendor": getattr(current_user, "vendor", "") or "",
+                    "photos": photos_for_slack,
+                }, APP_BASE_URL)
+                if slack_ts:
+                    udb.execute("UPDATE damage_reports SET slack_ts=? WHERE id=?", (slack_ts, report_id))
+                    udb.commit()
+                udb.close()
+                damage_report_created = True
+            except Exception as e:
+                print(f"[훼손제보 연동] 오류: {e}")
     done_date = today_kst()
     try:
         cur.execute(
@@ -2229,6 +2427,15 @@ def wash_complete(id):
         flash(f"❌ 완료 처리 오류: {e}")
         return redirect(url_for("wash_list"))
     conn.close()
+    if is_photo_org:
+        if photo_uploaded and photo_failed:
+            flash(f"✔ 세차 내역이 업로드되었습니다. (사진 {photo_uploaded}장 등록, {photo_failed}장 실패 — 이미지 파일만 가능)")
+        elif photo_uploaded:
+            flash(f"✔ 세차 내역이 업로드되었습니다. (사진 {photo_uploaded}장 등록)")
+        else:
+            flash("✔ 세차 내역이 업로드되었습니다.")
+        if damage_report_created:
+            flash("🚩 무인훼손 제보도 함께 접수되어 슬랙으로 전송되었습니다.")
     return redirect(url_for("wash_status"))
 # =========================================================
 # 세차 현황
@@ -2439,13 +2646,43 @@ def wash_status_delete():
     if ids:
         conn = get_wash_db()
         conn.execute(
-            "DELETE FROM wash_complete WHERE id IN ({})".format(",".join("?" * len(ids))),
+            "DELETE FROM wash_history WHERE id IN ({})".format(",".join("?" * len(ids))),
             ids
         )
         conn.commit()
         conn.close()
         flash(f"\u2714 {len(ids)}건 삭제되었습니다.")
     return redirect(url_for("wash_status") + ("?" + return_query if return_query else ""))
+# =========================================================
+# 세차 내역 조회 (완료 현황 전용, 읽기 전용)
+# =========================================================
+@app.route("/wash_record/<int:id>")
+@login_required
+def wash_record(id):
+    """완료 현황(wash_status)에서만 진입하는 읽기 전용 상세 화면.
+    wash_history.id 기준으로 조회하며, 세차 기록 입력 폼이나 완료 처리
+    버튼은 없다 — 이미 완료된 오더를 확인만 하는 화면이다."""
+    conn = get_wash_db()
+    cur = conn.cursor()
+    query = "SELECT * FROM wash_history WHERE id=?"
+    params = [id]
+    scope_sql, scope_params = scoped_condition("wash_history", current_user)
+    query += scope_sql
+    params += scope_params
+    car = cur.execute(query, params).fetchone()
+    conn.close()
+    if not car:
+        return "❌ 세차 내역을 찾을 수 없습니다.", 404
+    # 차량소속이 사진 업로드 대상(현재 '카일이삼제스퍼')인 경우에만 사진 섹션 노출.
+    # 사진은 완료 처리 전(wash_list 단계)에 세차일 기준으로 저장되며, 완료 처리는
+    # 통상 같은 날 이루어지므로 세차완료일로 조회한다.
+    show_photo_section = (car["차량소속"] or "").strip() in PHOTO_UPLOAD_ORGS
+    car_photos = _get_wash_photos(car["차량번호"], car["세차완료일"]) if show_photo_section else []
+    return render_template(
+        "wash_record.html", car=car,
+        show_photo_section=show_photo_section, car_photos=car_photos,
+        r2_configured=bool(_get_r2_client())
+    )
 SLACK_DAMAGE_WEBHOOK = os.environ.get("SLACK_DAMAGE_WEBHOOK", "")
 SLACK_BOT_TOKEN      = os.environ.get("SLACK_BOT_TOKEN", "")
 SLACK_CHANNEL_ID     = os.environ.get("SLACK_CHANNEL_ID", "")
@@ -2469,8 +2706,8 @@ try:
 except Exception:
     _WEBPUSH_AVAILABLE = False
 ALLOWED_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp"}
-_PHOTO_MAX_PX = 1600   # 최대 해상도 (px)
-_PHOTO_QUALITY = 75    # JPEG 압축 품질 (%)
+_PHOTO_MAX_PX = 2400   # 최대 해상도 (px) — 무인훼손 등 흠집 확인용으로 고화질 유지 (2026-08-28 상향)
+_PHOTO_QUALITY = 92    # JPEG 압축 품질 (%) — 위와 동일한 이유로 상향
 
 def _save_damage_photo(file_obj):
     """사진 저장 — Pillow 사용 시 리사이즈+압축 후 저장 (용량 절감)."""
@@ -2524,6 +2761,296 @@ def _save_damage_photo(file_obj):
     fname = f"{uuid.uuid4().hex}{ext}"
     file_obj.save(os.path.join(DAMAGE_UPLOAD_DIR, fname))
     return fname
+# =========================================================
+# 세차 현장 사진 (Cloudflare R2 저장) — 지정 차량소속 전용
+# =========================================================
+# 이 차량소속에 한해서만 세차 현장 사진 업로드/관리 화면이 노출된다.
+# 소속을 더 늘리고 싶으면 이 set에 추가하면 된다.
+# "카일이삼제스퍼"는 추후 추가 예정이라 우선 제외 (2026-08-28 요청).
+PHOTO_UPLOAD_ORGS = {"피플카 카셰어링", "휴맥스모빌리티"}
+
+# 세차 사진 촬영 슬롯 정의 (실제 촬영가이드 기준: 외부 10 + 내부 4 + 특이사항 3 = 17컷,
+# 전부 1장씩. '무인훼손 제보' 슬롯은 별도(DAMAGE_SLOT_*)로 다루며 여러 장 촬영 가능하고
+# 기존 훼손제보(damage_reports)/슬랙 알림 파이프라인에도 함께 등록된다.
+# ---- 슬롯별 참고 이미지 (촬영 가이드 미니 아이콘) ----
+# 실제 사진 4장(전/후/운전석측면/조수석측면)은 훼손부위 체크에 쓰던 실사 사진을 재사용하고,
+# 나머지는 밝은 배경 타일에 맞춰 회색 선화(line-art)로 직접 그렸다.
+_ICON_STROKE = 'stroke="#8a93a3" stroke-opacity=".75" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"'
+
+
+def _icon_svg(inner):
+    return f'<svg viewBox="0 0 200 380" preserveAspectRatio="xMidYMid meet"><g {_ICON_STROKE}>{inner}</g></svg>'
+
+
+def _icon_corner(mirror=False, rear=False):
+    """45˚ 휀더(범퍼 모서리) 아이콘 — mirror=조수석 쪽, rear=후면 램프 모양"""
+    body = 'M20 210 L20 170 Q20 140 55 132 L150 132 Q168 140 172 168 L172 230 Q172 250 150 252 L40 252 Q20 250 20 230 Z'
+    if not rear:
+        lamp = '<ellipse cx="55" cy="165" rx="20" ry="11"/>'
+    else:
+        lamp = '<rect x="38" y="150" width="30" height="16" rx="4"/>'
+    arch = '<path d="M60 252 A34 34 0 0 0 128 252" stroke-opacity=".4"/>'
+    wheel = '<circle cx="94" cy="255" r="30" stroke-opacity=".5"/><circle cx="94" cy="255" r="14" stroke-opacity=".3"/>'
+    hood_line = '<path d="M40 170 L155 170" stroke-opacity=".25"/>'
+    inner = f'<path d="{body}"/>{lamp}{arch}{wheel}{hood_line}'
+    if mirror:
+        inner = f'<g transform="translate(200,0) scale(-1,1)">{inner}</g>'
+    return _icon_svg(inner)
+
+
+_ICON_DASH = _icon_svg('''
+  <path d="M40 280 A70 70 0 0 1 160 280"/>
+  <path d="M55 280 A55 55 0 0 1 145 280" stroke-opacity=".3"/>
+  <path d="M30 190 Q30 130 70 118 L130 118 Q170 130 170 190 Z"/>
+  <circle cx="75" cy="168" r="34"/>
+  <line x1="75" y1="168" x2="60" y2="148" stroke-width="2"/>
+  <circle cx="125" cy="168" r="34"/>
+  <line x1="125" y1="168" x2="140" y2="150" stroke-width="2"/>
+  <rect x="92" y="182" width="16" height="10" rx="2" stroke-opacity=".5"/>
+''')
+
+_ICON_SEAT_DRIVER = _icon_svg('''
+  <path d="M68 60 Q68 44 100 44 Q132 44 132 60 L132 96 Q132 112 100 112 Q68 112 68 96 Z"/>
+  <line x1="82" y1="112" x2="82" y2="128"/>
+  <line x1="118" y1="112" x2="118" y2="128"/>
+  <path d="M46 300 L46 165 Q46 128 100 128 Q154 128 154 165 L154 300 Q154 320 130 322 L70 322 Q46 320 46 300 Z"/>
+  <path d="M100 132 L100 300" stroke-opacity=".3" stroke-dasharray="3 5"/>
+  <path d="M46 200 Q34 210 38 250 Q40 280 58 300" stroke-opacity=".4"/>
+  <path d="M154 200 Q166 210 162 250 Q160 280 142 300" stroke-opacity=".4"/>
+''')
+
+_ICON_SEAT_REAR = _icon_svg('''
+  <path d="M40 150 Q40 118 70 112 L86 112 Q92 100 100 100 Q108 100 114 112 L130 112 Q160 118 160 150 L160 168 L40 168 Z"/>
+  <path d="M30 300 L30 185 Q30 160 60 160 L140 160 Q170 160 170 185 L170 300 Q170 316 150 318 L50 318 Q30 316 30 300 Z"/>
+  <path d="M100 164 L100 300" stroke-opacity=".25" stroke-dasharray="3 5"/>
+''')
+
+_ICON_BLACKBOX = _icon_svg('''
+  <path d="M30 90 Q100 60 170 90" stroke-opacity=".3"/>
+  <path d="M92 96 L92 118" stroke-opacity=".5"/>
+  <rect x="66" y="118" width="68" height="34" rx="8"/>
+  <circle cx="100" cy="135" r="10" stroke-opacity=".7"/>
+  <line x1="80" y1="152" x2="76" y2="168" stroke-opacity=".35"/>
+  <line x1="120" y1="152" x2="124" y2="168" stroke-opacity=".35"/>
+''')
+
+_ICON_CENTER_FASCIA = _icon_svg('''
+  <rect x="46" y="70" width="108" height="60" rx="10"/>
+  <rect x="66" y="82" width="68" height="36" rx="6" stroke-opacity=".45"/>
+  <path d="M40 150 L40 260 Q40 280 60 282 L140 282 Q160 280 160 260 L160 150 Z"/>
+  <line x1="52" y1="170" x2="76" y2="164" stroke-opacity=".5"/>
+  <line x1="52" y1="182" x2="76" y2="176" stroke-opacity=".5"/>
+  <line x1="52" y1="194" x2="76" y2="188" stroke-opacity=".5"/>
+  <line x1="148" y1="170" x2="124" y2="164" stroke-opacity=".5"/>
+  <line x1="148" y1="182" x2="124" y2="176" stroke-opacity=".5"/>
+  <line x1="148" y1="194" x2="124" y2="188" stroke-opacity=".5"/>
+  <circle cx="100" cy="230" r="18" stroke-opacity=".5"/>
+  <rect x="80" y="250" width="40" height="14" rx="4" stroke-opacity=".35"/>
+''')
+
+_ICON_CARD = _icon_svg('''
+  <rect x="42" y="140" width="116" height="76" rx="10"/>
+  <rect x="56" y="156" width="26" height="18" rx="3" stroke-opacity=".6"/>
+  <line x1="56" y1="188" x2="132" y2="188" stroke-opacity=".4"/>
+  <line x1="56" y1="200" x2="104" y2="200" stroke-opacity=".3"/>
+''')
+
+_ICON_DAMAGE = _icon_svg('''
+  <path d="M20 90 Q100 60 180 90 L180 290 Q100 320 20 290 Z" stroke-opacity=".55"/>
+  <path d="M20 150 Q100 122 180 150" stroke-opacity=".25"/>
+  <path d="M20 230 Q100 202 180 230" stroke-opacity=".2"/>
+  <path d="M55 140 L90 175 L80 195 L130 245" stroke-opacity=".9" stroke-width="2.2"/>
+''')
+
+PHOTO_SLOT_GROUPS = [
+    {
+        "group": "외부",
+        "items": [
+            {"key": "ext_1",  "label": "전범퍼 정면",          "icon_type": "photo", "icon_src": "wash_slot_ref/slot_ext_1.png"},
+            {"key": "ext_2",  "label": "전범퍼 (운전석 45˚)", "icon_type": "photo", "icon_src": "wash_slot_ref/slot_ext_2.png"},
+            {"key": "ext_3",  "label": "운전석 전측면",        "icon_type": "photo", "icon_src": "wash_slot_ref/slot_ext_3.png"},
+            {"key": "ext_4",  "label": "운전석 후측면",        "icon_type": "photo", "icon_src": "wash_slot_ref/slot_ext_4.png"},
+            {"key": "ext_5",  "label": "후범퍼 (운전석 45˚)", "icon_type": "photo", "icon_src": "wash_slot_ref/slot_ext_5.png"},
+            {"key": "ext_6",  "label": "후범퍼 정면",          "icon_type": "photo", "icon_src": "wash_slot_ref/slot_ext_6.png"},
+            {"key": "ext_7",  "label": "후범퍼 (조수석 45˚)", "icon_type": "photo", "icon_src": "wash_slot_ref/slot_ext_7.png"},
+            {"key": "ext_8",  "label": "조수석 후측면",        "icon_type": "photo", "icon_src": "wash_slot_ref/slot_ext_8.png"},
+            {"key": "ext_9",  "label": "조수석 전측면",        "icon_type": "photo", "icon_src": "wash_slot_ref/slot_ext_9.png"},
+            {"key": "ext_10", "label": "전범퍼 (조수석 45˚)", "icon_type": "photo", "icon_src": "wash_slot_ref/slot_ext_10.png"},
+        ],
+    },
+    {
+        "group": "내부",
+        "items": [
+            {"key": "int_1", "label": "운전석 1열 (계기판·핸들·시트)", "icon_type": "emoji", "icon_src": "📷"},
+            {"key": "int_2", "label": "운전석 2열",                    "icon_type": "emoji", "icon_src": "📷"},
+            {"key": "int_3", "label": "조수석 2열",                    "icon_type": "emoji", "icon_src": "📷"},
+            {"key": "int_4", "label": "조수석 1열 (도어·시트)",        "icon_type": "emoji", "icon_src": "📷"},
+        ],
+    },
+    {
+        "group": "특이사항",
+        "items": [
+            {"key": "etc_blackbox", "label": "블랙박스 작동화면",     "icon_type": "emoji", "icon_src": "📷"},
+            {"key": "etc_center",   "label": "센터페시아 및 공조기", "icon_type": "emoji", "icon_src": "📷"},
+            {"key": "etc_card",     "label": "카드 사진",             "icon_type": "emoji", "icon_src": "📷"},
+        ],
+    },
+]
+DAMAGE_SLOT_KEY = "damage"
+DAMAGE_SLOT_LABEL = "무인훼손 제보"
+DAMAGE_SLOT_MAX = 5  # damage_reports 테이블의 photo_damage1~5 컬럼 수에 맞춤
+DAMAGE_SLOT_ICON = "📷"
+
+R2_ACCOUNT_ID = os.environ.get("R2_ACCOUNT_ID", "")
+R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID", "")
+R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY", "")
+R2_BUCKET_NAME = os.environ.get("R2_BUCKET_NAME", "turu-wash-photos")
+R2_ENDPOINT_URL = f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com" if R2_ACCOUNT_ID else ""
+
+try:
+    import boto3
+    from botocore.client import Config as _BotoConfig
+    from botocore.exceptions import BotoCoreError as _BotoCoreError, ClientError as _BotoClientError
+    _BOTO3_AVAILABLE = True
+except ImportError:
+    _BOTO3_AVAILABLE = False
+
+_r2_client = None
+def _get_r2_client():
+    """Cloudflare R2용 S3 호환 클라이언트. 환경변수가 없으면 None을 반환한다
+    (앱은 정상 구동되고, 사진 업로드 화면에서만 '아직 설정 안 됨' 안내가 뜬다)."""
+    global _r2_client
+    if not (_BOTO3_AVAILABLE and R2_ACCOUNT_ID and R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY):
+        return None
+    if _r2_client is None:
+        try:
+            _r2_client = boto3.client(
+                "s3",
+                endpoint_url=R2_ENDPOINT_URL,
+                aws_access_key_id=R2_ACCESS_KEY_ID,
+                aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+                config=_BotoConfig(signature_version="s3v4"),
+                region_name="auto",
+            )
+        except Exception as e:
+            print(f"[R2] 클라이언트 생성 실패: {e}")
+            return None
+    return _r2_client
+
+def _compress_image_bytes(file_obj):
+    """업로드된 사진을 EXIF 회전 보정 + 긴 변 1600px 리사이즈 + JPEG 75% 압축 후
+    bytes로 반환한다 (훼손제보 사진 저장 로직과 동일한 설정). Pillow가 없거나
+    처리에 실패하면 원본 바이트를 그대로 반환한다."""
+    try:
+        file_obj.stream.seek(0)
+    except Exception:
+        pass
+    if not _PIL_AVAILABLE:
+        return file_obj.read()
+    try:
+        img = _PILImage.open(file_obj.stream)
+        try:
+            exif = img._getexif()
+            if exif:
+                for tag, val in exif.items():
+                    if _ExifTags.TAGS.get(tag) == "Orientation":
+                        if val == 3:
+                            img = img.rotate(180, expand=True)
+                        elif val == 6:
+                            img = img.rotate(270, expand=True)
+                        elif val == 8:
+                            img = img.rotate(90, expand=True)
+                        break
+        except Exception:
+            pass
+        if img.mode in ("RGBA", "P", "LA"):
+            img = img.convert("RGB")
+        elif img.mode != "RGB":
+            img = img.convert("RGB")
+        w, h = img.size
+        if max(w, h) > _PHOTO_MAX_PX:
+            ratio = _PHOTO_MAX_PX / max(w, h)
+            img = img.resize((int(w * ratio), int(h * ratio)), _PILImage.LANCZOS)
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=_PHOTO_QUALITY, optimize=True)
+        return buf.getvalue()
+    except Exception as e:
+        print(f"[Photo] 압축 실패, 원본 업로드로 대체: {e}")
+        try:
+            file_obj.stream.seek(0)
+            return file_obj.read()
+        except Exception:
+            return None
+
+def _store_wash_photos(conn, client, files, 차량번호, 세차일, uploaded_by, labels=None):
+    """선택된 사진 파일들을 압축해 R2에 올리고 wash_photos 테이블에 기록한다.
+    car_photo_upload(진행중 오더에 사진만 추가)와 wash_complete(사진 업로드 대상 소속의
+    '내역업로드' — 사진 등록과 완료 처리를 한 번에 처리) 양쪽에서 공유하는 로직이다.
+    labels가 주어지면 files와 같은 순서로 매칭해 shot_label(촬영 슬롯 라벨, 예:
+    '전범퍼 정면')을 함께 저장한다 — 없으면 NULL.
+    반환: (uploaded_count, failed_count)."""
+    uploaded_at = now_kst().strftime("%Y-%m-%d %H:%M:%S")
+    uploaded, failed = 0, 0
+    for idx, f in enumerate(files):
+        if not f or not f.filename:
+            continue
+        ext = os.path.splitext(secure_filename(f.filename))[1].lower()
+        if ext not in ALLOWED_IMAGE_EXTS:
+            failed += 1
+            continue
+        img_bytes = _compress_image_bytes(f)
+        if not img_bytes:
+            failed += 1
+            continue
+        key = f"wash_photos/{secure_filename(차량번호)}/{세차일}/{uuid.uuid4().hex}.jpg"
+        try:
+            client.put_object(Bucket=R2_BUCKET_NAME, Key=key, Body=img_bytes, ContentType="image/jpeg")
+        except Exception as e:
+            print(f"[R2] 업로드 실패: {e}")
+            failed += 1
+            continue
+        label = labels[idx] if labels and idx < len(labels) else None
+        conn.execute(
+            """INSERT INTO wash_photos (차량번호, 세차일, r2_key, original_name, shot_label, uploaded_by, uploaded_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (차량번호, 세차일, key, secure_filename(f.filename), label, uploaded_by, uploaded_at)
+        )
+        uploaded += 1
+    return uploaded, failed
+
+def _lookup_wash_car_for_photo(id, user):
+    """id로 세차 오더를 찾는다. 아직 진행중이면 wash_list에서, 이미 완료 처리돼
+    wash_list에서 삭제됐으면 wash_history(원본ID)에서 찾는다.
+    car_detail과 동일하게 scoped_condition으로 담당 업체/지역 범위를 벗어난
+    오더는 조회되지 않게 막는다 (다른 업체 오더에 사진을 붙이는 것 방지).
+    반환: {'차량번호':.., '세차일':.., '차량소속':.., '완료':bool} 또는 None."""
+    conn = get_wash_db()
+    scope_sql, scope_params = scoped_condition("wash_list", user)
+    row = conn.execute(
+        f"SELECT 차량번호, 세차일, 차량소속 FROM wash_list WHERE id=?{scope_sql}",
+        [id] + scope_params
+    ).fetchone()
+    if row:
+        conn.close()
+        return {"차량번호": row["차량번호"], "세차일": row["세차일"], "차량소속": row["차량소속"], "완료": False}
+    scope_sql, scope_params = scoped_condition("wash_history", user)
+    row = conn.execute(
+        f"SELECT 차량번호, 세차완료일, 차량소속 FROM wash_history WHERE 원본ID=?{scope_sql} ORDER BY id DESC LIMIT 1",
+        [id] + scope_params
+    ).fetchone()
+    conn.close()
+    if row:
+        return {"차량번호": row["차량번호"], "세차일": row["세차완료일"], "차량소속": row["차량소속"], "완료": True}
+    return None
+
+def _get_wash_photos(차량번호, 세차일):
+    conn = get_wash_db()
+    rows = conn.execute(
+        "SELECT * FROM wash_photos WHERE 차량번호=? AND 세차일=? ORDER BY id DESC",
+        (차량번호, 세차일)
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 def _lookup_car_org(car_number):
     """차량번호로 차량소속을 조회한다.
     세차 대상(wash_list, 최신순) → 차량마스터(vehicle_master) → 세차이력(wash_history, 최신순)

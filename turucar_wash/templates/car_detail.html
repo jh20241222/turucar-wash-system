@@ -40,7 +40,7 @@
 
     </article>
 
-    <form id="wash-form" class="work-form app-card work-form-clean" action="{{ url_for('wash_complete', id=car['id']) }}" method="POST">
+    <form id="wash-form" class="work-form app-card work-form-clean" action="{{ url_for('wash_complete', id=car['id']) }}" method="POST" {% if show_photo_section %}enctype="multipart/form-data" onsubmit="return handlePhotoFormSubmit(event);"{% endif %}>
         <div class="step-title clean-step-title"><span>01</span><strong>세차 기록 입력</strong></div>
         <label class="field-label" for="distance">주행거리</label>
         <input id="distance" class="app-input" name="distance" inputmode="numeric" placeholder="예: 12530km">
@@ -54,14 +54,73 @@
         <textarea id="warning" class="app-input" name="warning" placeholder="경고등 내용 입력"></textarea>
         <label class="field-label" for="etc">기타 특이사항</label>
         <textarea id="etc" class="app-input" name="etc" placeholder="추가로 공유할 내용 입력"></textarea>
+
+        {% if show_photo_section %}
+        <div class="photo-section-block">
+            <div class="step-title clean-step-title" style="margin-top:22px;"><span>📷</span><strong>세차 사진</strong></div>
+            {% if not r2_configured %}
+            <p class="photo-warn">사진 저장소가 아직 설정되지 않았습니다. 관리자에게 문의해주세요.</p>
+            {% endif %}
+            <p class="photo-hint">항목을 눌러서 한 장씩 촬영해주세요. 전부 선택사항이에요.</p>
+
+            {% for group in photo_slot_groups %}
+            <p class="slot-group-label">{{ group.group }} ({{ group['items']|length }})</p>
+            <div class="photo-slot-grid">
+                {% for item in group['items'] %}
+                <div class="photo-slot" data-slot-key="{{ item.key }}" data-multi="0">
+                    <input type="file" id="slot-input-{{ item.key }}" name="slot_{{ item.key }}" accept="image/*" style="display:none;">
+                    <button type="button" class="photo-slot-clear" id="slot-clear-{{ item.key }}" style="display:none;">✕</button>
+                    <div class="photo-slot-thumb" id="slot-thumb-{{ item.key }}">{% if item.icon_type == 'photo' %}<img class="photo-slot-icon-img" src="{{ url_for('static', filename='img/' + item.icon_src) }}" alt="">{% elif item.icon_type == 'svg' %}<span class="photo-slot-icon-svg">{{ item.icon_src | safe }}</span>{% else %}<span class="photo-slot-icon">{{ item.icon_src }}</span>{% endif %}</div>
+                    <div class="photo-slot-label">{{ item.label }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+
+            <p class="slot-group-label">{{ damage_slot_label }} (최대 {{ damage_slot_max }}장)</p>
+            <div class="photo-slot-grid">
+                <div class="photo-slot photo-slot-multi" data-slot-key="{{ damage_slot_key }}" data-multi="1" data-max="{{ damage_slot_max }}">
+                    <input type="file" id="slot-input-{{ damage_slot_key }}" name="slot_{{ damage_slot_key }}" accept="image/*" multiple style="display:none;">
+                    <button type="button" class="photo-slot-clear" id="slot-clear-{{ damage_slot_key }}" style="display:none;">✕</button>
+                    <div class="photo-slot-thumb" id="slot-thumb-{{ damage_slot_key }}"><span class="photo-slot-icon">{{ damage_slot_icon }}</span></div>
+                    <div class="photo-slot-label">{{ damage_slot_label }}<br><small style="color:#8a8f99;">여러 장 촬영 시 훼손제보로 자동 접수돼요</small></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="sticky-actions clean-action-area">
             <div class="action-grid">
+                {% if not show_photo_section %}
                 <button type="button" class="secondary-btn" onclick="copyInfo()">복사</button>
                 <button type="button" class="blue-btn" onclick="openBand()">밴드</button>
-                <button type="submit" class="primary-btn">완료 처리</button>
+                {% endif %}
+                <button type="submit" class="primary-btn" {% if show_photo_section %}style="grid-column:1/-1;"{% endif %} {% if show_photo_section and not r2_configured %}disabled{% endif %}>{{ '내역업로드' if show_photo_section else '완료 처리' }}</button>
             </div>
         </div>
     </form>
+
+    {% if show_photo_section %}
+    <div id="cam-overlay" class="cam-overlay" style="display:none;">
+        <div class="cam-top">
+            <button type="button" class="cam-close" id="cam-close-btn">✕ 닫기</button>
+            <div class="cam-count"><span id="cam-count-num">0</span>장 촬영됨</div>
+            <button type="button" class="cam-done" id="cam-done-btn">완료</button>
+        </div>
+        <div class="cam-viewport">
+            <video id="cam-video" autoplay playsinline muted></video>
+            <div class="cam-status-row">
+                <span id="cam-pill-focus" class="cam-pill">초점 확인중</span>
+                <span id="cam-pill-level" class="cam-pill">수평 확인중</span>
+            </div>
+            <div id="cam-warning" class="cam-warning" style="display:none;"></div>
+        </div>
+        <div class="cam-bottom">
+            <div id="cam-filmstrip" class="cam-filmstrip"></div>
+            <button type="button" id="cam-shutter" class="cam-shutter" aria-label="촬영"><span></span></button>
+        </div>
+    </div>
+    {% endif %}
 </section>
 </section>
 
@@ -71,9 +130,297 @@ async function copyToClipboard(text){if(navigator.clipboard&&window.isSecureCont
 async function copyInfo(){const distance=document.getElementById("distance").value||"없음";const damage=document.getElementById("damage").value||"없음";const warning=document.getElementById("warning").value||"없음";const etc=document.getElementById("etc").value||"없음";const text=[`[세차 완료 공유]`,`세차일자: ${carInfo.washDate||"-"}`,`차량번호: ${carInfo.number||"-"}`,`차종명: ${carInfo.model||"-"}`,`차량소속: ${carInfo.org||"-"}`,`스팟: ${carInfo.spot||"-"}`,`주소: ${carInfo.address||"-"}`,`지역: ${(carInfo.region1||"-")} ${(carInfo.region2||"")}`,`주행거리: ${distance}`,`훼손: ${damage}`,`경고등: ${warning}`,`특이사항: ${etc}`].join("\n");await copyToClipboard(text).catch(()=>null);alert("복사되었습니다.");}
 async function openBand(){try{const response=await fetch("{{ url_for('band_link', id=car['id']) }}");const data=await response.json();if(!response.ok||!data.ok||!data.band_link){alert(data.message||"등록된 밴드 링크가 없습니다.");return;}window.open(data.band_link,"_blank","noopener");}catch(error){alert("밴드 링크를 불러오는 중 오류가 발생했습니다.");}}
 </script>
+<script>
+(function(){
+    const slots = document.querySelectorAll('.photo-slot');
+    if(!slots.length) return; // 사진 업로드 대상 소속이 아니면 아무것도 하지 않음
+
+    // 슬롯별 기본 안내 이미지(서버에서 렌더된 참고 아이콘/사진) 원본 마크업을 저장해뒀다가
+    // 사진을 지웠을 때 그대로 복원한다.
+    const slotDefaultIcon = new Map();
+    slots.forEach(slotEl => {
+        const key = slotEl.dataset.slotKey;
+        const thumb = document.getElementById('slot-thumb-' + key);
+        if(thumb) slotDefaultIcon.set(key, thumb.innerHTML);
+    });
+
+    const overlay = document.getElementById('cam-overlay');
+    const video = document.getElementById('cam-video');
+    const shutterBtn = document.getElementById('cam-shutter');
+    const closeBtn = document.getElementById('cam-close-btn');
+    const doneBtn = document.getElementById('cam-done-btn');
+    const countNum = document.getElementById('cam-count-num');
+    const pillFocus = document.getElementById('cam-pill-focus');
+    const pillLevel = document.getElementById('cam-pill-level');
+    const warningBox = document.getElementById('cam-warning');
+    const filmstrip = document.getElementById('cam-filmstrip');
+
+    let mediaStream = null;
+    let sharpOK = true, levelOK = true;
+    let sharpnessTimer = null;
+    let lastGeo = null;
+    let pendingForceCapture = false;
+
+    let activeSlot = null;   // 현재 촬영 대상 .photo-slot 엘리먼트
+    let activeMulti = false;
+    let activeMax = 1;
+    let sessionBlobs = [];   // 이번 카메라 세션에서 찍은 것(다중 슬롯만 누적, 단일 슬롯은 즉시 반영 후 종료)
+
+    // ---- 위치 정보 (best-effort, 실패해도 촬영은 계속 진행) ----
+    function refreshGeo(){
+        if(!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition(
+            pos => { lastGeo = {lat: pos.coords.latitude, lon: pos.coords.longitude}; },
+            () => { lastGeo = null; },
+            {enableHighAccuracy:false, timeout:5000, maximumAge:60000}
+        );
+    }
+
+    // ---- 수평 감지: DeviceOrientationEvent의 gamma(좌우 기울기)로 판정 ----
+    // 임계값은 실사용 테스트 전 추정치라 실제 촬영 각도에 맞춰 튜닝이 필요할 수 있음.
+    function onOrientation(e){
+        if(e.gamma === null || e.gamma === undefined) return;
+        levelOK = Math.abs(e.gamma) < 8;
+        updatePills();
+    }
+    async function ensureOrientationPermission(){
+        if(typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function'){
+            try{
+                const res = await DeviceOrientationEvent.requestPermission();
+                if(res === 'granted'){ window.addEventListener('deviceorientation', onOrientation); }
+            }catch(e){ /* 권한 거부 시 수평 표시는 계속 '확인중' 상태로 둠 */ }
+        } else if('DeviceOrientationEvent' in window){
+            window.addEventListener('deviceorientation', onOrientation);
+        }
+    }
+
+    // ---- 흔들림/초점 감지: 저해상도 캔버스로 프레임 선명도(에지 변화량) 추정 ----
+    // 실제 임계값(14)은 정식 값이 아니라 대략치라, 현장 테스트 후 조정 권장.
+    const sharpCanvas = document.createElement('canvas');
+    sharpCanvas.width = 96; sharpCanvas.height = 54;
+    const sharpCtx = sharpCanvas.getContext('2d', {willReadFrequently:true});
+    function measureSharpness(){
+        if(!video.videoWidth) return;
+        sharpCtx.drawImage(video, 0, 0, sharpCanvas.width, sharpCanvas.height);
+        const data = sharpCtx.getImageData(0,0,sharpCanvas.width,sharpCanvas.height).data;
+        const w = sharpCanvas.width, h = sharpCanvas.height;
+        const gray = new Float32Array(w*h);
+        for(let i=0, p=0; i<data.length; i+=4, p++){
+            gray[p] = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
+        }
+        let sum=0, sumSq=0, n=0;
+        for(let y=0; y<h; y++){
+            for(let x=1; x<w; x++){
+                const d = gray[y*w+x] - gray[y*w+x-1];
+                sum += d; sumSq += d*d; n++;
+            }
+        }
+        const mean = sum/n;
+        const variance = sumSq/n - mean*mean;
+        sharpOK = variance > 14;
+        updatePills();
+    }
+    function startSharpnessLoop(){ stopSharpnessLoop(); sharpnessTimer = setInterval(measureSharpness, 220); }
+    function stopSharpnessLoop(){ if(sharpnessTimer){ clearInterval(sharpnessTimer); sharpnessTimer = null; } }
+
+    function updatePills(){
+        pillFocus.textContent = sharpOK ? '초점 ✓' : '흔들림 ✕';
+        pillFocus.className = 'cam-pill ' + (sharpOK ? 'ok' : 'bad');
+        pillLevel.textContent = levelOK ? '수평 ✓' : '수평 ✕';
+        pillLevel.className = 'cam-pill ' + (levelOK ? 'ok' : 'bad');
+    }
+
+    // ---- 슬롯 썸네일 렌더링 ----
+    function renderSlotThumb(slotEl){
+        const key = slotEl.dataset.slotKey;
+        const input = document.getElementById('slot-input-' + key);
+        const thumb = document.getElementById('slot-thumb-' + key);
+        const clearBtn = document.getElementById('slot-clear-' + key);
+        const files = input.files;
+        if(!files || files.length === 0){
+            thumb.innerHTML = slotDefaultIcon.get(key) || '<span class="photo-slot-icon">📷</span>';
+            slotEl.classList.remove('filled');
+            if(clearBtn) clearBtn.style.display = 'none';
+            return;
+        }
+        slotEl.classList.add('filled');
+        if(clearBtn) clearBtn.style.display = 'flex';
+        if(slotEl.dataset.multi === '1'){
+            let html = '<div class="photo-slot-multi-thumbs">';
+            for(const f of files){ html += `<img src="${URL.createObjectURL(f)}">`; }
+            html += '</div><div class="photo-slot-count">' + files.length + '장</div>';
+            thumb.innerHTML = html;
+        }else{
+            thumb.innerHTML = `<img src="${URL.createObjectURL(files[0])}"><span class="photo-slot-retake">다시 촬영</span>`;
+        }
+    }
+
+    // ---- 카메라 열기(슬롯 지정)/닫기 ----
+    function openCameraForSlot(slotEl){
+        activeSlot = slotEl;
+        activeMulti = slotEl.dataset.multi === '1';
+        activeMax = parseInt(slotEl.dataset.max || '1', 10);
+        sessionBlobs = [];
+        renderFilmstrip();
+        doneBtn.style.display = activeMulti ? '' : 'none';
+        openCamera();
+    }
+    async function openCamera(){
+        if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+            alert('이 브라우저에서는 카메라 촬영을 지원하지 않아요. 파일로 선택해주세요.');
+            fallbackToFilePicker();
+            return;
+        }
+        try{
+            mediaStream = await navigator.mediaDevices.getUserMedia({
+                video: {facingMode: {ideal:'environment'}, width:{ideal:3840}, height:{ideal:2160}},
+                audio: false
+            });
+        }catch(err){
+            alert('카메라를 사용할 수 없어요 (권한을 확인해주세요). 파일로 선택해주세요.');
+            fallbackToFilePicker();
+            return;
+        }
+        video.srcObject = mediaStream;
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        await ensureOrientationPermission();
+        refreshGeo();
+        startSharpnessLoop();
+    }
+    function fallbackToFilePicker(){
+        if(!activeSlot) return;
+        const input = document.getElementById('slot-input-' + activeSlot.dataset.slotKey);
+        input.click();
+    }
+    function closeCamera(){
+        stopSharpnessLoop();
+        if(mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); mediaStream = null; }
+        window.removeEventListener('deviceorientation', onOrientation);
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+        sessionBlobs = [];
+        activeSlot = null;
+    }
+
+    // ---- 촬영 + 날짜/위치 워터마크 합성 ----
+    function formatWatermark(){
+        const now = new Date();
+        const pad = n => String(n).padStart(2,'0');
+        const dateStr = `${now.getFullYear()}.${pad(now.getMonth()+1)}.${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        let line2 = carInfo.number || '';
+        if(lastGeo){ line2 += (line2?'  ·  ':'') + `${lastGeo.lat.toFixed(5)}, ${lastGeo.lon.toFixed(5)}`; }
+        return [dateStr, line2].filter(Boolean);
+    }
+    function capturePhoto(force){
+        if((!sharpOK || !levelOK) && !force){
+            warningBox.style.display = 'block';
+            warningBox.textContent = (!sharpOK ? '흔들렸을 수 있어요. ' : '') + (!levelOK ? '수평이 맞지 않아요. ' : '') + '그래도 촬영하려면 셔터를 한 번 더 눌러주세요.';
+            pendingForceCapture = true;
+            return;
+        }
+        warningBox.style.display = 'none';
+        pendingForceCapture = false;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const lines = formatWatermark();
+        const fs = Math.max(20, Math.round(canvas.width * 0.022));
+        ctx.font = `${fs}px sans-serif`;
+        ctx.textBaseline = 'bottom';
+        const padPx = Math.round(fs*0.6);
+        const barH = (fs+8) * lines.length + padPx;
+        ctx.fillStyle = 'rgba(0,0,0,0.42)';
+        ctx.fillRect(0, canvas.height - barH, canvas.width, barH);
+        ctx.fillStyle = '#ffffff';
+        let y = canvas.height - padPx;
+        for(let i=lines.length-1; i>=0; i--){
+            ctx.fillText(lines[i], padPx, y);
+            y -= (fs+8);
+        }
+
+        canvas.toBlob(blob => {
+            if(!blob) return;
+            if(activeMulti){
+                if(sessionBlobs.length >= activeMax){
+                    alert(`최대 ${activeMax}장까지 촬영할 수 있어요. "완료"를 눌러 저장해주세요.`);
+                    return;
+                }
+                sessionBlobs.push(blob);
+                renderFilmstrip();
+            }else{
+                commitToSlot([blob]);
+                closeCamera();
+            }
+        }, 'image/jpeg', 0.95);
+    }
+    shutterBtn.addEventListener('click', () => capturePhoto(pendingForceCapture));
+
+    function renderFilmstrip(){
+        countNum.textContent = sessionBlobs.length;
+        filmstrip.innerHTML = '';
+        sessionBlobs.forEach((blob, idx) => {
+            const wrap = document.createElement('div');
+            wrap.className = 'cam-thumb';
+            wrap.innerHTML = `<img src="${URL.createObjectURL(blob)}"><button type="button" class="cam-thumb-del" data-idx="${idx}">✕</button>`;
+            filmstrip.appendChild(wrap);
+        });
+        filmstrip.querySelectorAll('.cam-thumb-del').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(e.currentTarget.dataset.idx, 10);
+                sessionBlobs.splice(idx, 1);
+                renderFilmstrip();
+            });
+        });
+    }
+
+    function commitToSlot(blobs){
+        if(!activeSlot || !blobs.length) return;
+        const key = activeSlot.dataset.slotKey;
+        const input = document.getElementById('slot-input-' + key);
+        const dt = new DataTransfer();
+        if(activeMulti && input.files){ for(const f of input.files) dt.items.add(f); } // 기존 것 유지 후 추가
+        blobs.forEach((blob, idx) => {
+            dt.items.add(new File([blob], `${key}_${Date.now()}_${idx}.jpg`, {type:'image/jpeg'}));
+        });
+        input.files = dt.files;
+        renderSlotThumb(activeSlot);
+    }
+
+    doneBtn.addEventListener('click', () => {
+        if(activeMulti && sessionBlobs.length){ commitToSlot(sessionBlobs); }
+        closeCamera();
+    });
+    closeBtn.addEventListener('click', closeCamera);
+
+    slots.forEach(slotEl => {
+        const key = slotEl.dataset.slotKey;
+        const input = document.getElementById('slot-input-' + key);
+        const clearBtn = document.getElementById('slot-clear-' + key);
+        slotEl.addEventListener('click', () => openCameraForSlot(slotEl));
+        input.addEventListener('change', () => renderSlotThumb(slotEl));
+        if(clearBtn){
+            clearBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                input.value = '';
+                renderSlotThumb(slotEl);
+            });
+        }
+    });
+
+    window.handlePhotoFormSubmit = function(ev){
+        return confirm('입력한 내용으로 세차 내역을 업로드할까요?');
+    };
+})();
+</script>
 {# ── 데스크탑 전용 ── #}
 <div id="d-car-detail" style="display:none">
 <div class="d-wrap" style="max-width:1400px;padding:32px 40px;">
+<form id="d-wash-form" action="{{ url_for('wash_complete', id=car['id']) }}" method="POST" {% if show_photo_section %}enctype="multipart/form-data" onsubmit="return confirm('입력한 내용으로 세차 내역을 업로드할까요?');"{% endif %}>
 <div class="d-grid-2" style="max-width:100%;grid-template-columns:1fr 1fr;gap:28px;">
 
     <div class="d-card">
@@ -105,27 +452,62 @@ async function openBand(){try{const response=await fetch("{{ url_for('band_link'
     <div class="d-card">
         <div class="d-card-head"><div><span class="d-eyebrow">세차 기록 입력</span><h2>기록 작성</h2></div></div>
         <div class="d-card-body">
-            <form id="d-wash-form" action="{{ url_for('wash_complete', id=car['id']) }}" method="POST">
-                <div class="d-fg"><label class="d-label" for="d-distance">주행거리</label><input id="d-distance" name="distance" class="d-input" inputmode="numeric" placeholder="예: 12530km" style="height:44px;font-size:14px;"></div>
-                <div class="d-fg"><label class="d-label" for="d-damage">차량 훼손 부위</label>
+            <div class="d-fg"><label class="d-label" for="d-distance">주행거리</label><input id="d-distance" name="distance" class="d-input" inputmode="numeric" placeholder="예: 12530km" style="height:44px;font-size:14px;"></div>
+            <div class="d-fg"><label class="d-label" for="d-damage">차량 훼손 부위</label>
     <div id="cdp-wrap-d">
         <button type="button" class="cdp-toggle" onclick="cdpToggle(this,'cdp-wrap-d')"><span>부위 선택해서 입력하기</span><span class="cdp-arrow">▾</span></button>
         <div class="cdp-panel" id="cdp-root-d" style="display:none;"></div>
     </div>
     <textarea id="d-damage" name="damage" class="d-input" style="resize:vertical;min-height:80px;font-size:14px;" placeholder="없으면 비워두거나 '없음' 입력"></textarea>
 </div>
-                <div class="d-fg"><label class="d-label" for="d-warning">경고등</label><textarea id="d-warning" name="warning" class="d-input" style="resize:vertical;min-height:80px;font-size:14px;" placeholder="경고등 내용 입력"></textarea></div>
-                <div class="d-fg"><label class="d-label" for="d-etc">기타 특이사항</label><textarea id="d-etc" name="etc" class="d-input" style="resize:vertical;min-height:80px;font-size:14px;" placeholder="추가로 공유할 내용 입력"></textarea></div>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px;">
-                    <button type="button" class="d-btn d-btn-gray" style="height:46px;font-size:14px;" onclick="dCopyInfo()">복사</button>
-                    <button type="button" class="d-btn" style="background:#03C75A;color:#fff;margin:0;height:46px;font-size:14px;" onclick="openBand()">밴드</button>
-                    <button type="submit" class="d-btn d-btn-orange" style="margin:0;height:46px;font-size:14px;">완료 처리</button>
-                </div>
-            </form>
+            <div class="d-fg"><label class="d-label" for="d-warning">경고등</label><textarea id="d-warning" name="warning" class="d-input" style="resize:vertical;min-height:80px;font-size:14px;" placeholder="경고등 내용 입력"></textarea></div>
+            <div class="d-fg"><label class="d-label" for="d-etc">기타 특이사항</label><textarea id="d-etc" name="etc" class="d-input" style="resize:vertical;min-height:80px;font-size:14px;" placeholder="추가로 공유할 내용 입력"></textarea></div>
         </div>
     </div>
-
 </div>
+
+{% if show_photo_section %}
+<div class="d-card" style="margin-top:20px;">
+    <div class="d-card-head"><div><span class="d-eyebrow">📷</span><h2>세차 사진</h2></div></div>
+    <div class="d-card-body">
+        {% if not r2_configured %}
+        <p class="photo-warn">사진 저장소가 아직 설정되지 않았습니다. 관리자에게 문의해주세요.</p>
+        {% endif %}
+        <p class="photo-hint">항목을 눌러서 한 장씩 업로드해주세요. 전부 선택사항이에요.</p>
+        {% for group in photo_slot_groups %}
+        <p class="slot-group-label">{{ group.group }} ({{ group['items']|length }})</p>
+        <div class="photo-slot-grid photo-slot-grid--desktop">
+            {% for item in group['items'] %}
+            <div class="d-photo-slot" data-slot-key="{{ item.key }}" data-multi="0">
+                <input type="file" id="d-slot-input-{{ item.key }}" name="slot_{{ item.key }}" accept="image/*" style="display:none;">
+                <button type="button" class="photo-slot-clear" id="d-slot-clear-{{ item.key }}" style="display:none;">✕</button>
+                <div class="photo-slot-thumb" id="d-slot-thumb-{{ item.key }}">{% if item.icon_type == 'photo' %}<img class="photo-slot-icon-img" src="{{ url_for('static', filename='img/' + item.icon_src) }}" alt="">{% elif item.icon_type == 'svg' %}<span class="photo-slot-icon-svg">{{ item.icon_src | safe }}</span>{% else %}<span class="photo-slot-icon">{{ item.icon_src }}</span>{% endif %}</div>
+                <div class="photo-slot-label">{{ item.label }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+        <p class="slot-group-label">{{ damage_slot_label }} (최대 {{ damage_slot_max }}장)</p>
+        <div class="photo-slot-grid photo-slot-grid--desktop">
+            <div class="d-photo-slot d-photo-slot-multi" data-slot-key="{{ damage_slot_key }}" data-multi="1">
+                <input type="file" id="d-slot-input-{{ damage_slot_key }}" name="slot_{{ damage_slot_key }}" accept="image/*" multiple style="display:none;">
+                <button type="button" class="photo-slot-clear" id="d-slot-clear-{{ damage_slot_key }}" style="display:none;">✕</button>
+                <div class="photo-slot-thumb" id="d-slot-thumb-{{ damage_slot_key }}"><span class="photo-slot-icon">{{ damage_slot_icon }}</span></div>
+                <div class="photo-slot-label">{{ damage_slot_label }}<br><small style="color:#8a8f99;">여러 장 선택 시 훼손제보로 자동 접수돼요</small></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:20px;">
+    {% if not show_photo_section %}
+    <button type="button" class="d-btn d-btn-gray" style="height:46px;font-size:14px;" onclick="dCopyInfo()">복사</button>
+    <button type="button" class="d-btn" style="background:#03C75A;color:#fff;margin:0;height:46px;font-size:14px;" onclick="openBand()">밴드</button>
+    {% endif %}
+    <button type="submit" class="d-btn d-btn-orange" style="margin:0;height:46px;font-size:14px;{% if show_photo_section %}grid-column:1/-1;{% endif %}" {% if show_photo_section and not r2_configured %}disabled{% endif %}>{{ '내역업로드' if show_photo_section else '완료 처리' }}</button>
+</div>
+</form>
 </div>
 </div>
 <script>
@@ -137,6 +519,50 @@ function dCopyInfo(){
     const text=[`[세차 완료 공유]`,`세차일자: ${carInfo.washDate||'-'}`,`차량번호: ${carInfo.number||'-'}`,`차종명: ${carInfo.model||'-'}`,`차량소속: ${carInfo.org||'-'}`,`스팟: ${carInfo.spot||'-'}`,`주소: ${carInfo.address||'-'}`,`지역: ${carInfo.region1||'-'} ${carInfo.region2||''}`,`주행거리: ${distance}`,`훼손: ${damage}`,`경고등: ${warning}`,`특이사항: ${etc}`].join('\n');
     if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(text).then(()=>alert('복사되었습니다.'));}else{const t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);alert('복사되었습니다.');}
 }
+(function(){
+    // 데스크탑은 카메라 오버레이 없이 단순 파일선택(브라우저 기본 카메라/파일 선택 다이얼로그)만 지원.
+    const dSlots = document.querySelectorAll('.d-photo-slot');
+    if(!dSlots.length) return;
+    const dSlotDefaultIcon = new Map();
+    dSlots.forEach(slotEl => {
+        const key = slotEl.dataset.slotKey;
+        const thumb = document.getElementById('d-slot-thumb-' + key);
+        if(thumb) dSlotDefaultIcon.set(key, thumb.innerHTML);
+    });
+    function renderDSlotThumb(slotEl){
+        const key = slotEl.dataset.slotKey;
+        const input = document.getElementById('d-slot-input-' + key);
+        const thumb = document.getElementById('d-slot-thumb-' + key);
+        const clearBtn = document.getElementById('d-slot-clear-' + key);
+        const files = input.files;
+        if(!files || files.length === 0){
+            thumb.innerHTML = dSlotDefaultIcon.get(key) || '<span class="photo-slot-icon">📷</span>';
+            slotEl.classList.remove('filled');
+            if(clearBtn) clearBtn.style.display = 'none';
+            return;
+        }
+        slotEl.classList.add('filled');
+        if(clearBtn) clearBtn.style.display = 'flex';
+        if(slotEl.dataset.multi === '1'){
+            let html = '<div class="photo-slot-multi-thumbs">';
+            for(const f of files){ html += `<img src="${URL.createObjectURL(f)}">`; }
+            html += '</div><div class="photo-slot-count">' + files.length + '장</div>';
+            thumb.innerHTML = html;
+        }else{
+            thumb.innerHTML = `<img src="${URL.createObjectURL(files[0])}"><span class="photo-slot-retake">다시 선택</span>`;
+        }
+    }
+    dSlots.forEach(slotEl => {
+        const key = slotEl.dataset.slotKey;
+        const input = document.getElementById('d-slot-input-' + key);
+        const clearBtn = document.getElementById('d-slot-clear-' + key);
+        slotEl.addEventListener('click', () => input.click());
+        input.addEventListener('change', () => renderDSlotThumb(slotEl));
+        if(clearBtn){
+            clearBtn.addEventListener('click', (e) => { e.stopPropagation(); input.value = ''; renderDSlotThumb(slotEl); });
+        }
+    });
+})();
 </script>
 <style>
 #d-car-detail { display: none; }
@@ -161,6 +587,57 @@ function dCopyInfo(){
 .cdp-tag.is-on{border-color:#D85A30;}
 .cdp-tag .cdp-lbl{font-size:8px;font-weight:700;color:#333;white-space:nowrap;line-height:1;}
 .cdp-tag input[type=checkbox]{width:13px;height:13px;margin:0;accent-color:#D85A30;}
+
+.photo-card-clean{margin-top:14px;}
+.photo-warn{font-size:13px;color:#993C1D;background:#FAECE7;border-radius:8px;padding:8px 12px;margin:0 0 10px;}
+.photo-hint{font-size:13px;color:#8a8f99;margin:0 0 12px;}
+
+.slot-group-label{font-size:12px;font-weight:800;color:#8a8f99;text-transform:uppercase;letter-spacing:.03em;margin:16px 0 8px;}
+.slot-group-label:first-of-type{margin-top:0;}
+.photo-slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px;}
+.photo-slot-grid--desktop{grid-template-columns:repeat(5,1fr);gap:10px;}
+.photo-slot,.d-photo-slot{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 6px 10px;border-radius:12px;border:1.5px dashed #d9dce1;background:#fafafa;cursor:pointer;text-align:center;}
+.photo-slot.filled,.d-photo-slot.filled{border-style:solid;border-color:#D85A30;background:#fff;}
+.photo-slot-thumb{position:relative;width:100%;aspect-ratio:1/1;border-radius:8px;overflow:hidden;background:#f0f0f0;display:flex;align-items:center;justify-content:center;}
+.photo-slot-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-slot-icon{font-size:20px;opacity:.55;}
+.photo-slot-thumb img.photo-slot-icon-img{width:100%;height:100%;object-fit:contain;display:block;opacity:.4;filter:blur(.4px) grayscale(.15);margin:auto;}
+.photo-slot-icon-svg{width:70%;height:70%;display:flex;align-items:center;justify-content:center;}
+.photo-slot-icon-svg svg{width:100%;height:100%;}
+.photo-slot-label{font-size:11px;font-weight:700;color:#4a4f58;line-height:1.3;}
+.photo-slot-retake{position:absolute;inset:auto 0 0 0;background:rgba(0,0,0,.55);color:#fff;font-size:10px;font-weight:700;padding:3px 0;}
+.photo-slot-multi-thumbs{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:1px;}
+.photo-slot-multi-thumbs img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-slot-count{position:absolute;right:2px;bottom:2px;background:rgba(0,0,0,.6);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:100px;}
+.photo-slot-clear{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#3d4451;color:#fff;border:2px solid #fff;font-size:11px;line-height:1;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center;padding:0;}
+
+.cam-overlay{position:fixed;inset:0;z-index:9000;background:#0a0a0c;display:flex;flex-direction:column;}
+.cam-top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;color:#fff;}
+.cam-close,.cam-done{background:none;border:none;color:#fff;font-size:15px;font-weight:700;padding:6px 10px;cursor:pointer;}
+.cam-count{font-size:13px;color:#c8ccd4;}
+.cam-viewport{position:relative;flex:1;overflow:hidden;background:#000;}
+.cam-viewport video{width:100%;height:100%;object-fit:cover;}
+.cam-status-row{position:absolute;top:14px;left:0;right:0;display:flex;justify-content:center;gap:8px;}
+.cam-pill{padding:6px 12px;border-radius:100px;font-size:12.5px;font-weight:700;background:rgba(20,20,24,.55);color:#c8ccd4;border:1px solid rgba(255,255,255,.14);}
+.cam-pill.ok{color:#8fe3bd;border-color:#204a3a;}
+.cam-pill.bad{color:#ffb3bf;border-color:#5c2530;}
+.cam-warning{position:absolute;left:14px;right:14px;bottom:110px;background:rgba(217,44,76,.9);color:#fff;font-size:13px;font-weight:600;padding:10px 12px;border-radius:10px;text-align:center;}
+.cam-bottom{background:#0a0a0c;padding:14px 16px 22px;display:flex;flex-direction:column;align-items:center;gap:14px;}
+.cam-filmstrip{display:flex;gap:8px;width:100%;overflow-x:auto;min-height:4px;}
+.cam-thumb{position:relative;width:52px;height:52px;flex:0 0 auto;border-radius:8px;overflow:hidden;border:1.5px solid rgba(255,255,255,.2);}
+.cam-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.cam-thumb-del{position:absolute;top:0;right:0;width:18px;height:18px;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:11px;line-height:18px;cursor:pointer;}
+.cam-shutter{width:70px;height:70px;border-radius:50%;background:transparent;border:3px solid #fff;cursor:pointer;padding:4px;}
+.cam-shutter span{display:block;width:100%;height:100%;border-radius:50%;background:#fff;}
+.photo-upload-form{margin-bottom:14px;}
+.photo-file-input{width:100%;font-size:13px;}
+.photo-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;}
+.photo-gallery-grid--desktop{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));}
+.photo-gallery-item{position:relative;aspect-ratio:1/1;border-radius:8px;overflow:hidden;background:#f0f0f0;}
+.photo-gallery-item img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-gallery-item form{position:absolute;top:4px;right:4px;margin:0;}
+.photo-delete-btn{width:22px;height:22px;border-radius:50%;border:none;background:rgba(0,0,0,.6);color:#fff;font-size:13px;line-height:1;cursor:pointer;}
+.photo-empty{font-size:13px;color:#999;grid-column:1 / -1;}
 </style>
 
 <script>

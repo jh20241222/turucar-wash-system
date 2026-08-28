@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block document_title %}Turu Wash · 세차 내역 조회{% endblock %}
+{% block content %}
+<section class="turu-app-page-v24 detail-page-wrap-v24">
+    <div class="turu-page-topbar-v42"><header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
+    <div class="turu-page-head-v24 turu-page-head--single-v25"><div><h1>세차 내역 조회</h1><p>완료된 세차 기록을 확인합니다.</p></div></div></div>
+    <div class="detail-plate-chip-v40">{{ car['차량번호'] }}</div>
+
+<section class="detail-grid detail-grid-clean">
+    <article class="vehicle-card app-card vehicle-card-clean">
+        <div class="vehicle-topline">
+            <span class="status-pill" style="background:#EAF3DE;color:#3B6D11;">세차 완료</span>
+            <span>{{ car['업체'] or '-' }}</span>
+        </div>
+        <h2>{{ car['차량번호'] }}</h2>
+        <p>{{ car['차종명'] or '-' }} · {{ car['차량소속'] or '-' }}</p>
+
+        <div class="info-list">
+            <div><small>스팟</small><strong>{{ car['스팟'] or '-' }}</strong></div>
+            <div><small>주소</small><strong>{{ car['주소'] or '-' }}</strong></div>
+            <div><small>지역</small><strong>{{ car['지역시도'] or '-' }} {{ car['지역구군'] or '' }}</strong></div>
+            <div><small>완료일</small><strong>{{ car['세차완료일'] or '-' }}</strong></div>
+            <div><small>작업자</small><strong>{{ car['작업자'] or '-' }}</strong></div>
+        </div>
+    </article>
+
+    {% if show_photo_section %}
+    <article class="app-card photo-card-clean">
+        <div class="step-title clean-step-title"><span>📷</span><strong>세차 현장 사진</strong></div>
+        <div class="photo-gallery-grid">
+            {% for p in car_photos %}
+            <div class="photo-gallery-item">
+                <a href="{{ url_for('car_photo_view', photo_id=p['id']) }}" target="_blank" rel="noopener">
+                    <img src="{{ url_for('car_photo_view', photo_id=p['id']) }}" loading="lazy" alt="{{ p['shot_label'] or '세차 현장 사진' }}">
+                </a>
+                {% if p['shot_label'] %}
+                <span class="photo-gallery-cap">{{ p['shot_label'] }}</span>
+                {% endif %}
+                {% if current_user.is_master %}
+                <form action="{{ url_for('car_photo_delete', photo_id=p['id']) }}" method="POST" onsubmit="return confirm('이 사진을 삭제할까요?');">
+                    <button type="submit" class="photo-delete-btn" aria-label="삭제">&#215;</button>
+                </form>
+                {% endif %}
+            </div>
+            {% else %}
+            <p class="photo-empty">업로드된 사진이 없습니다.</p>
+            {% endfor %}
+        </div>
+    </article>
+    {% endif %}
+
+    <article class="app-card vehicle-card-clean">
+        <div class="step-title clean-step-title"><span>☑</span><strong>세차 기록</strong></div>
+        <div class="info-list">
+            <div><small>주행거리</small><strong>{{ car['주행거리'] or '-' }}</strong></div>
+            <div><small>차량 훼손 부위</small><strong>{{ car['훼손'] or '없음' }}</strong></div>
+            <div><small>경고등</small><strong>{{ car['경고등'] or '없음' }}</strong></div>
+            <div><small>기타 특이사항</small><strong>{{ car['특이사항'] or '없음' }}</strong></div>
+        </div>
+        <a href="{{ url_for('wash_status') }}" class="secondary-btn" style="display:block;text-align:center;text-decoration:none;margin-top:14px;">완료 현황으로</a>
+    </article>
+</section>
+</section>
+
+{# ── 데스크탑 전용 ── #}
+<div id="d-car-detail" style="display:none">
+<div class="d-wrap" style="max-width:1400px;padding:32px 40px;">
+<div class="d-grid-2" style="max-width:100%;grid-template-columns:1fr 1fr;gap:28px;">
+
+    <div class="d-card">
+        <div class="d-card-head">
+            <div>
+                <span class="d-eyebrow">차량 정보</span>
+                <h2>{{ car['차량번호'] }}</h2>
+            </div>
+            <span class="d-badge-pill" style="background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;">세차 완료</span>
+        </div>
+        <div class="d-card-body">
+            <div class="d-fg"><label class="d-label">차종</label><div style="font-size:15px;font-weight:600;color:var(--d-text);">{{ car['차종명'] or '-' }}</div></div>
+            <div class="d-fg"><label class="d-label">차량소속</label><div style="font-size:15px;font-weight:600;color:var(--d-text);">{{ car['차량소속'] or '-' }}</div></div>
+            <div class="d-fg"><label class="d-label">업체</label><div style="font-size:15px;font-weight:600;color:var(--d-text);">{{ car['업체'] or '-' }}</div></div>
+            <div class="d-fg"><label class="d-label">스팟</label><div style="font-size:15px;font-weight:600;color:var(--d-text);">{{ car['스팟'] or '-' }}</div></div>
+            <div class="d-fg"><label class="d-label">주소</label><div style="font-size:15px;font-weight:600;color:var(--d-text);">{{ car['주소'] or '-' }}</div></div>
+            <div class="d-row-2">
+                <div class="d-fg"><label class="d-label">지역</label><div style="font-size:15px;font-weight:600;color:var(--d-text);">{{ car['지역시도'] or '-' }} {{ car['지역구군'] or '' }}</div></div>
+                <div class="d-fg"><label class="d-label">완료일</label><div style="font-size:15px;font-weight:600;color:var(--d-text);">{{ car['세차완료일'] or '-' }}</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">세차 기록</span><h2>{{ car['작업자'] or '-' }} 작업</h2></div></div>
+        <div class="d-card-body">
+            <div class="d-fg"><label class="d-label">주행거리</label><div style="font-size:15px;font-weight:600;color:var(--d-text);">{{ car['주행거리'] or '-' }}</div></div>
+            <div class="d-fg"><label class="d-label">차량 훼손 부위</label><div style="font-size:15px;font-weight:600;color:var(--d-text);white-space:pre-wrap;">{{ car['훼손'] or '없음' }}</div></div>
+            <div class="d-fg"><label class="d-label">경고등</label><div style="font-size:15px;font-weight:600;color:var(--d-text);white-space:pre-wrap;">{{ car['경고등'] or '없음' }}</div></div>
+            <div class="d-fg"><label class="d-label">기타 특이사항</label><div style="font-size:15px;font-weight:600;color:var(--d-text);white-space:pre-wrap;">{{ car['특이사항'] or '없음' }}</div></div>
+            <div style="margin-top:16px;">
+                <a href="{{ url_for('wash_status') }}" class="d-btn d-btn-gray" style="height:44px;font-size:14px;display:flex;align-items:center;justify-content:center;text-decoration:none;">완료 현황으로</a>
+            </div>
+        </div>
+    </div>
+
+    {% if show_photo_section %}
+    <div class="d-card" style="grid-column:1 / -1;">
+        <div class="d-card-head"><div><span class="d-eyebrow">📷</span><h2>세차 현장 사진</h2></div></div>
+        <div class="d-card-body">
+            <div class="photo-gallery-grid photo-gallery-grid--desktop">
+                {% for p in car_photos %}
+                <div class="photo-gallery-item">
+                    <a href="{{ url_for('car_photo_view', photo_id=p['id']) }}" target="_blank" rel="noopener">
+                        <img src="{{ url_for('car_photo_view', photo_id=p['id']) }}" loading="lazy" alt="세차 현장 사진">
+                    </a>
+                    {% if current_user.is_master %}
+                    <form action="{{ url_for('car_photo_delete', photo_id=p['id']) }}" method="POST" onsubmit="return confirm('이 사진을 삭제할까요?');">
+                        <button type="submit" class="photo-delete-btn" aria-label="삭제">&#215;</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="photo-empty">업로드된 사진이 없습니다.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+</div>
+</div>
+<style>
+#d-car-detail { display: none; }
+#desktop-mode #d-car-detail { display: block !important; }
+#desktop-mode .detail-page-wrap-v24 { display: none !important; }
+
+.detail-plate-chip-v40{ margin:0 0 14px; padding:14px 20px; border-radius:16px; background:#fff; border:1px solid var(--turu-line); box-shadow:0 1px 8px rgba(0,0,0,.06); font-size:24px; font-weight:900; letter-spacing:-.03em; color:#3d4451; text-align:center; }
+
+.photo-card-clean{margin-top:14px;}
+.photo-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;}
+.photo-gallery-grid--desktop{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));}
+.photo-gallery-item{position:relative;aspect-ratio:1/1;border-radius:8px;overflow:hidden;background:#f0f0f0;}
+.photo-gallery-item img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-gallery-item form{position:absolute;top:4px;right:4px;margin:0;}
+.photo-gallery-cap{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);color:#fff;font-size:10px;font-weight:700;padding:3px 5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.photo-delete-btn{width:22px;height:22px;border-radius:50%;border:none;background:rgba(0,0,0,.6);color:#fff;font-size:13px;line-height:1;cursor:pointer;}
+.photo-empty{font-size:13px;color:#999;grid-column:1 / -1;}
+</style>
+{% endblock %}

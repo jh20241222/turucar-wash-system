@@ -538,6 +538,14 @@ def ensure_wash_schema():
         if "원본ID" not in hist_cols:
             cur.execute("ALTER TABLE wash_history ADD COLUMN 원본ID INTEGER")
             print("[TuruWash] wash_history.원본ID 컬럼 추가됨")
+        if "세차일" not in hist_cols:
+            # 이월된 오더는 세차일(원래 예정일)과 세차완료일(실제 완료일)이 다를 수 있는데,
+            # 사진은 완료 처리 시점에 세차일 기준으로 저장되므로 완료 후 조회 시에도
+            # 세차일로 찾아야 정확하다. 기존 행은 값이 없으니 세차완료일로 채워 최소한
+            # 이월 안 된 과거 기록은 계속 조회되게 해둔다.
+            cur.execute("ALTER TABLE wash_history ADD COLUMN 세차일 TEXT")
+            cur.execute("UPDATE wash_history SET 세차일 = 세차완료일 WHERE 세차일 IS NULL")
+            print("[TuruWash] wash_history.세차일 컬럼 추가됨")
         vm_cols = [row[1] for row in cur.execute("PRAGMA table_info(vehicle_master)").fetchall()]
         if "BM구분" not in vm_cols:
             cur.execute("ALTER TABLE vehicle_master ADD COLUMN BM구분 TEXT")
@@ -2407,13 +2415,13 @@ def wash_complete(id):
             """
             INSERT INTO wash_history
             (차량번호, 차종명, 차량소속, 스팟, 주소,
-             지역시도, 지역구군, 업체, 세차완료일,
+             지역시도, 지역구군, 업체, 세차완료일, 세차일,
              주행거리, 훼손, 경고등, 특이사항, 작업자, 원본ID)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 row["차량번호"], row["차종명"], row["차량소속"], row["스팟"], row["주소"],
-                row["지역시도"], row["지역구군"], row["업체"], done_date,
+                row["지역시도"], row["지역구군"], row["업체"], done_date, row["세차일"],
                 request.form.get("distance"), request.form.get("damage"),
                 request.form.get("warning"), request.form.get("etc"),
                 current_user.username, id
@@ -2673,11 +2681,13 @@ def wash_record(id):
     conn.close()
     if not car:
         return "❌ 세차 내역을 찾을 수 없습니다.", 404
-    # 차량소속이 사진 업로드 대상(현재 '카일이삼제스퍼')인 경우에만 사진 섹션 노출.
-    # 사진은 완료 처리 전(wash_list 단계)에 세차일 기준으로 저장되며, 완료 처리는
-    # 통상 같은 날 이루어지므로 세차완료일로 조회한다.
+    # 차량소속이 사진 업로드 대상(PHOTO_UPLOAD_ORGS)인 경우에만 사진 섹션 노출.
+    # 사진은 완료 처리 시점에 (이월 여부와 무관한) 원래 세차일 기준으로 저장되므로,
+    # 완료일이 아니라 wash_history에 함께 저장해 둔 세차일로 조회해야 이월된 오더도
+    # 정확히 찾아진다 (세차일 컬럼이 없는 과거 행은 완료일로 대신 채워져 있다).
     show_photo_section = (car["차량소속"] or "").strip() in PHOTO_UPLOAD_ORGS
-    car_photos = _get_wash_photos(car["차량번호"], car["세차완료일"]) if show_photo_section else []
+    photo_lookup_date = car["세차일"] if "세차일" in car.keys() and car["세차일"] else car["세차완료일"]
+    car_photos = _get_wash_photos(car["차량번호"], photo_lookup_date) if show_photo_section else []
     return render_template(
         "wash_record.html", car=car,
         show_photo_section=show_photo_section, car_photos=car_photos,

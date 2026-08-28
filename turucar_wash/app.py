@@ -2178,9 +2178,7 @@ def car_detail(id):
         "car_detail.html", car=car, elapsed=elapsed, is_long_wash=is_long_wash,
         show_photo_section=show_photo_section, car_photos=car_photos,
         r2_configured=bool(_get_r2_client()),
-        photo_slot_groups=PHOTO_SLOT_GROUPS, damage_slot_key=DAMAGE_SLOT_KEY,
-        damage_slot_label=DAMAGE_SLOT_LABEL, damage_slot_max=DAMAGE_SLOT_MAX,
-        damage_slot_icon=DAMAGE_SLOT_ICON
+        photo_slot_groups=PHOTO_SLOT_GROUPS
     )
 # =========================================================
 # 세차 현장 사진 업로드 / 조회 / 삭제 (차량소속 '카일이삼제스퍼' 전용, R2 저장)
@@ -2382,19 +2380,22 @@ def wash_complete(id):
     photo_uploaded, photo_failed = 0, 0
     damage_report_created = False
     if is_photo_org:
-        # 슬롯별 사진 수집 (외부10+내부4+특이사항3 = 17컷, 전부 선택사항, 1장씩)
-        slot_files, slot_labels = [], []
+        # 슬롯별 사진 수집 (외부10+내부4+특이사항3+무인훼손제보5 = 22컷, 전부 선택사항, 1장씩).
+        # 무인훼손 제보 슬롯(damage_1~5)도 이제 다른 슬롯과 동일하게 한 장씩 찍는 개별 슬롯이라
+        # 같은 루프에서 함께 수집하고, 그중 damage_* 키에 해당하는 파일만 따로 모아
+        # 기존 훼손제보(damage_reports)/슬랙 연동에 사용한다.
+        slot_files, slot_labels, damage_files = [], [], []
         for group in PHOTO_SLOT_GROUPS:
             for item in group["items"]:
                 f = request.files.get(f"slot_{item['key']}")
                 if f and f.filename:
                     slot_files.append(f)
                     slot_labels.append(item["label"])
-        # 무인훼손 제보 슬롯 (여러 장 가능, 별도로 훼손제보/슬랙 연동)
-        damage_files = [f for f in request.files.getlist(f"slot_{DAMAGE_SLOT_KEY}") if f and f.filename][:DAMAGE_SLOT_MAX]
+                    if item["key"] in DAMAGE_SLOT_KEYS:
+                        damage_files.append(f)
 
-        all_files = slot_files + damage_files
-        all_labels = slot_labels + [DAMAGE_SLOT_LABEL] * len(damage_files)
+        all_files = slot_files
+        all_labels = slot_labels
         if all_files:
             client = _get_r2_client()
             if not client:
@@ -2514,41 +2515,55 @@ def wash_status():
     start = request.args.get("start", "")
     end = request.args.get("end", "")
     today_str = today_kst()
-    selected_date = request.args.get("date", today_str)
+    page = request.args.get("page", 1, type=int) or 1
+    per_page = request.args.get("per_page", 10, type=int) or 10
+    if per_page not in (10, 50, 100):
+        per_page = 10
+    if page < 1:
+        page = 1
     conn = get_wash_db()
     cur = conn.cursor()
-    query = "SELECT * FROM wash_history WHERE 1=1"
+    where_sql = " WHERE 1=1"
     params = []
     scope_sql, scope_params = scoped_condition("wash_history", current_user)
-    query += scope_sql
+    where_sql += scope_sql
     params += scope_params
     if s:
-        query += " AND (차량번호 LIKE ? OR 스팟 LIKE ?)"
+        where_sql += " AND (차량번호 LIKE ? OR 스팟 LIKE ?)"
         params += [f"%{s}%", f"%{s}%"]
     if r1:
-        query += " AND 지역시도=?"
+        where_sql += " AND 지역시도=?"
         params.append(r1)
     if r2:
-        query += " AND 지역구군=?"
+        where_sql += " AND 지역구군=?"
         params.append(r2)
     if org:
-        query += " AND 차량소속=?"
+        where_sql += " AND 차량소속=?"
         params.append(org)
     if sp:
-        query += " AND 스팟=?"
+        where_sql += " AND 스팟=?"
         params.append(sp)
     if vendor and current_user.is_master:
-        query += " AND 업체=?"
+        where_sql += " AND 업체=?"
         params.append(vendor)
     if start and end:
-        query += " AND 세차완료일 BETWEEN ? AND ?"
+        # 날짜는 더 이상 기본 필터가 아니고, 필요할 때만 선택적으로 기간을 지정하는 용도
+        where_sql += " AND 세차완료일 BETWEEN ? AND ?"
         params += [start, end]
-    else:
-        # 날짜 네비게이터 기준 단일 날짜 필터
-        query += " AND 세차완료일=?"
-        params.append(selected_date)
-    query += " ORDER BY id DESC"
-    rows = cur.execute(query, params).fetchall()
+
+    # 차량번호/작업자/업체명 등으로 검색하는 게 일반적인 사용 패턴이라, 날짜 상관없이
+    # 전체 완료 이력을 대상으로 하고 페이지네이션으로 나눠서 보여준다.
+    filtered_count = cur.execute(
+        "SELECT COUNT(*) AS c FROM wash_history" + where_sql, params
+    ).fetchone()["c"]
+    total_pages = max(1, -(-filtered_count // per_page))
+    page = min(page, total_pages)
+    offset = (page - 1) * per_page
+    rows = cur.execute(
+        "SELECT * FROM wash_history" + where_sql + " ORDER BY id DESC LIMIT ? OFFSET ?",
+        params + [per_page, offset]
+    ).fetchall()
+
     region1 = filter_distinct_values(cur, "wash_history", "지역시도", scope_sql, scope_params)
     region2 = filter_distinct_values(cur, "wash_history", "지역구군", scope_sql, scope_params)
     car_org_list = filter_distinct_values(cur, "wash_history", "차량소속", scope_sql, scope_params)
@@ -2558,15 +2573,10 @@ def wash_status():
         "SELECT COUNT(*) AS c FROM wash_history WHERE 세차완료일 = ?" + scope_sql,
         [today_str] + scope_params
     ).fetchone()["c"]
-    selected_date_count = cur.execute(
-        "SELECT COUNT(*) AS c FROM wash_history WHERE 세차완료일 = ?" + scope_sql,
-        [selected_date] + scope_params
-    ).fetchone()["c"]
     total_completed_count = cur.execute(
         "SELECT COUNT(*) AS c FROM wash_history WHERE 1=1" + scope_sql,
         scope_params
     ).fetchone()["c"]
-    filtered_count = len(rows)
     conn.close()
     return render_template(
         "wash_status.html",
@@ -2585,11 +2595,12 @@ def wash_status():
         start=start,
         end=end,
         today=today_str,
-        selected_date=selected_date,
         today_completed_count=today_completed_count,
-        selected_date_count=selected_date_count,
         total_completed_count=total_completed_count,
-        filtered_count=filtered_count
+        filtered_count=filtered_count,
+        current_page=page,
+        total_pages=total_pages,
+        per_page=per_page
     )
 # =============================================
 # =========================================================
@@ -2926,6 +2937,10 @@ _ICON_DAMAGE = _icon_svg('''
   <path d="M55 140 L90 175 L80 195 L130 245" stroke-opacity=".9" stroke-width="2.2"/>
 ''')
 
+DAMAGE_SLOT_LABEL = "무인훼손 제보"
+DAMAGE_SLOT_MAX = 5  # damage_reports 테이블의 photo_damage1~5 컬럼 수에 맞춤
+DAMAGE_SLOT_ICON = "📷"
+
 PHOTO_SLOT_GROUPS = [
     {
         "group": "외부",
@@ -2959,11 +2974,18 @@ PHOTO_SLOT_GROUPS = [
             {"key": "etc_card",     "label": "카드 사진",             "icon_type": "emoji", "icon_src": "📷"},
         ],
     },
+    {
+        # 무인훼손 제보: 기존엔 슬롯 1개에 여러 장을 올리고 '완료' 버튼을 눌러야 했는데,
+        # 외부/내부 슬롯처럼 한 장씩 바로 찍히는 슬롯 5개로 대체 (완료 버튼 불필요).
+        "group": DAMAGE_SLOT_LABEL,
+        "hint": "촬영하면 자동으로 훼손 제보가 접수돼요",
+        "items": [
+            {"key": f"damage_{n}", "label": f"{DAMAGE_SLOT_LABEL} {n}", "icon_type": "emoji", "icon_src": DAMAGE_SLOT_ICON}
+            for n in range(1, DAMAGE_SLOT_MAX + 1)
+        ],
+    },
 ]
-DAMAGE_SLOT_KEY = "damage"
-DAMAGE_SLOT_LABEL = "무인훼손 제보"
-DAMAGE_SLOT_MAX = 5  # damage_reports 테이블의 photo_damage1~5 컬럼 수에 맞춤
-DAMAGE_SLOT_ICON = "📷"
+DAMAGE_SLOT_KEYS = {item["key"] for item in PHOTO_SLOT_GROUPS[-1]["items"]}
 
 # 세차 내역 조회(wash_record)에서 사진을 촬영 순서(정면 → 45˚ → 측면 → ... → 무인훼손)
 # 그대로 보여주기 위한 라벨 → 순번 매핑. DB 저장 순서(id)에 의존하지 않고 항상 이
@@ -2972,7 +2994,9 @@ _PHOTO_LABEL_ORDER = {}
 for _grp in PHOTO_SLOT_GROUPS:
     for _item in _grp["items"]:
         _PHOTO_LABEL_ORDER.setdefault(_item["label"], len(_PHOTO_LABEL_ORDER))
-_PHOTO_LABEL_ORDER.setdefault(DAMAGE_SLOT_LABEL, len(_PHOTO_LABEL_ORDER))
+# 예전 방식(무인훼손 제보 슬롯 1개에 여러 장 업로드)으로 저장된 과거 사진들은
+# shot_label이 "무인훼손 제보"(번호 없음)로 남아있으므로, 새 슬롯들과 같은 자리로 정렬되게 매핑해준다.
+_PHOTO_LABEL_ORDER.setdefault(DAMAGE_SLOT_LABEL, _PHOTO_LABEL_ORDER.get(f"{DAMAGE_SLOT_LABEL} 1", len(_PHOTO_LABEL_ORDER)))
 del _grp, _item
 
 def _sort_photos_by_slot_order(photos):

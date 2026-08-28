@@ -159,6 +159,7 @@ async function openBand(){try{const response=await fetch("{{ url_for('band_link'
     let sharpOK = true, levelOK = true;
     let sharpnessTimer = null;
     let lastGeo = null;
+    let lastAddress = null;  // 카카오 역지오코딩 결과([상세, 구/군, 시/도]) — 준비 전이면 null
     let pendingForceCapture = false;
 
     let activeSlot = null;   // 현재 촬영 대상 .photo-slot 엘리먼트
@@ -167,10 +168,18 @@ async function openBand(){try{const response=await fetch("{{ url_for('band_link'
     let sessionBlobs = [];   // 이번 카메라 세션에서 찍은 것(다중 슬롯만 누적, 단일 슬롯은 즉시 반영 후 종료)
 
     // ---- 위치 정보 (best-effort, 실패해도 촬영은 계속 진행) ----
+    // 좌표를 구하는 즉시 한글 주소로도 변환해 lastAddress에 캐싱해둔다(비동기라 촬영
+    // 시점엔 아직 준비 안 됐을 수도 있음 — 그럴 땐 formatWatermarkLines()가 좌표로 대체함).
     function refreshGeo(){
         if(!navigator.geolocation) return;
         navigator.geolocation.getCurrentPosition(
-            pos => { lastGeo = {lat: pos.coords.latitude, lon: pos.coords.longitude}; },
+            pos => {
+                lastGeo = {lat: pos.coords.latitude, lon: pos.coords.longitude};
+                fetch(`/api/reverse_geocode?lat=${lastGeo.lat}&lon=${lastGeo.lon}`)
+                    .then(r => r.ok ? r.json() : null)
+                    .then(data => { if(data && data.ok && data.lines && data.lines.length){ lastAddress = data.lines; } })
+                    .catch(() => {});
+            },
             () => { lastGeo = null; },
             {enableHighAccuracy:false, timeout:5000, maximumAge:60000}
         );
@@ -304,13 +313,56 @@ async function openBand(){try{const response=await fetch("{{ url_for('band_link'
     }
 
     // ---- 촬영 + 날짜/위치 워터마크 합성 ----
-    function formatWatermark(){
+    // 큰 날짜/시간(요일 포함) 한 줄 + 그 아래 한글 주소(상세 -> 구/군 -> 시/도) 여러 줄을
+    // 우측 하단에 찍는다. 주소가 아직(비동기 역지오코딩 응답 전) 준비 안 됐으면 좌표로,
+    // 좌표조차 없으면 날짜/시간만 찍는다.
+    function formatWatermarkLines(){
         const now = new Date();
         const pad = n => String(n).padStart(2,'0');
-        const dateStr = `${now.getFullYear()}.${pad(now.getMonth()+1)}.${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-        let line2 = carInfo.number || '';
-        if(lastGeo){ line2 += (line2?'  ·  ':'') + `${lastGeo.lat.toFixed(5)}, ${lastGeo.lon.toFixed(5)}`; }
-        return [dateStr, line2].filter(Boolean);
+        const days = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+        const dateStr = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${days[now.getDay()]} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+        let addrLines = [];
+        if(lastAddress && lastAddress.length){
+            addrLines = lastAddress;
+        } else if(lastGeo){
+            addrLines = [`${lastGeo.lat.toFixed(5)}, ${lastGeo.lon.toFixed(5)}`];
+        }
+        return {dateStr, addrLines};
+    }
+    function drawWatermark(ctx, canvas){
+        const wm = formatWatermarkLines();
+        const smallFs = Math.max(18, Math.round(canvas.width * 0.021));
+        const bigFs = Math.max(26, Math.round(canvas.width * 0.032));
+        const padRight = Math.round(bigFs * 0.55);
+        const padBottom = Math.round(bigFs * 0.5);
+        const lineGapSmall = Math.round(smallFs * 1.4);
+
+        ctx.save();
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'alphabetic';
+        ctx.shadowColor = 'rgba(0,0,0,0.9)';
+        ctx.shadowBlur = Math.round(smallFs * 0.45);
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = Math.max(1, Math.round(smallFs * 0.08));
+        ctx.fillStyle = '#ffffff';
+
+        const x = canvas.width - padRight;
+        let y = canvas.height - padBottom;
+
+        // 주소: 아래→위로 시/도 -> 구/군 -> 상세 순서로 찍어서, 화면에는 위→아래로
+        // "상세 / 구·군 / 시·도" 순으로 보이게 한다.
+        ctx.font = `600 ${smallFs}px sans-serif`;
+        for(let i = wm.addrLines.length - 1; i >= 0; i--){
+            ctx.fillText(wm.addrLines[i], x, y);
+            y -= lineGapSmall;
+        }
+
+        // 날짜/시간: 더 크고 굵게, 주소 블록 바로 위
+        y -= Math.round((bigFs - smallFs) * 0.5);
+        ctx.font = `800 ${bigFs}px sans-serif`;
+        ctx.fillText(wm.dateStr, x, y);
+
+        ctx.restore();
     }
     function capturePhoto(force){
         if((!sharpOK || !levelOK) && !force){
@@ -328,20 +380,7 @@ async function openBand(){try{const response=await fetch("{{ url_for('band_link'
         const ctx = canvas.getContext('2d');
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        const lines = formatWatermark();
-        const fs = Math.max(20, Math.round(canvas.width * 0.022));
-        ctx.font = `${fs}px sans-serif`;
-        ctx.textBaseline = 'bottom';
-        const padPx = Math.round(fs*0.6);
-        const barH = (fs+8) * lines.length + padPx;
-        ctx.fillStyle = 'rgba(0,0,0,0.42)';
-        ctx.fillRect(0, canvas.height - barH, canvas.width, barH);
-        ctx.fillStyle = '#ffffff';
-        let y = canvas.height - padPx;
-        for(let i=lines.length-1; i>=0; i--){
-            ctx.fillText(lines[i], padPx, y);
-            y -= (fs+8);
-        }
+        drawWatermark(ctx, canvas);
 
         canvas.toBlob(blob => {
             if(!blob) return;

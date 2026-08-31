@@ -121,6 +121,57 @@ async function copyInfo(){const distance=document.getElementById("distance").val
 async function openBand(){try{const response=await fetch("{{ url_for('band_link', id=car['id']) }}");const data=await response.json();if(!response.ok||!data.ok||!data.band_link){alert(data.message||"등록된 밴드 링크가 없습니다.");return;}window.open(data.band_link,"_blank","noopener");}catch(error){alert("밴드 링크를 불러오는 중 오류가 발생했습니다.");}}
 </script>
 <script>
+// ---- 파일선택(갤러리/데스크탑)으로 들어온 사진의 흔들림 감지 ----
+// 카메라 미리보기 중 실시간 판정(위 cam-overlay 로직)과 같은 방식(저해상도 캔버스 에지 변화량)을
+// 그대로 "이미 찍힌 사진 파일"에 적용한다. 카메라 권한이 없거나(파일 선택 대체) 데스크탑에서
+// 업로드할 때는 실시간 판정이 아예 없었기 때문에, 여기서 한 번 더 걸러준다.
+// 임계값(14)은 실시간 판정과 동일 — 하나 조정하면 두 곳 다 맞춰서 바꿔줄 것.
+const TURU_BLUR_VARIANCE_THRESHOLD = 14;
+function turuMeasureBlurVariance(ctx, w, h){
+    const data = ctx.getImageData(0, 0, w, h).data;
+    const gray = new Float32Array(w * h);
+    for(let i = 0, p = 0; i < data.length; i += 4, p++){
+        gray[p] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+    }
+    let sum = 0, sumSq = 0, n = 0;
+    for(let y = 0; y < h; y++){
+        for(let x = 1; x < w; x++){
+            const d = gray[y * w + x] - gray[y * w + x - 1];
+            sum += d; sumSq += d * d; n++;
+        }
+    }
+    const mean = sum / n;
+    return sumSq / n - mean * mean;
+}
+function turuCheckFileSharpness(file){
+    return new Promise(resolve => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        const cleanup = () => URL.revokeObjectURL(url);
+        img.onload = () => {
+            try{
+                const w = 96, h = 54;
+                const c = document.createElement('canvas');
+                c.width = w; c.height = h;
+                const ctx = c.getContext('2d', {willReadFrequently:true});
+                ctx.drawImage(img, 0, 0, w, h);
+                resolve(turuMeasureBlurVariance(ctx, w, h));
+            }catch(e){ resolve(null); } // 측정 실패 시 판정 보류(막지 않음)
+            finally{ cleanup(); }
+        };
+        img.onerror = () => { cleanup(); resolve(null); };
+        img.src = url;
+    });
+}
+// true = 이대로 사용, false = 사용자가 다시 찍기로 선택(호출부에서 input 비워야 함)
+async function turuConfirmIfBlurry(file){
+    if(!file || !file.type || file.type.indexOf('image/') !== 0) return true;
+    const variance = await turuCheckFileSharpness(file);
+    if(variance === null || variance > TURU_BLUR_VARIANCE_THRESHOLD) return true;
+    return confirm('이 사진이 너무 흔들렸어요. 다시 찍어주세요.\n\n그래도 이 사진을 사용하시려면 확인을 눌러주세요.');
+}
+</script>
+<script>
 (function(){
     const slots = document.querySelectorAll('.photo-slot');
     if(!slots.length) return; // 사진 업로드 대상 소속이 아니면 아무것도 하지 않음
@@ -431,7 +482,17 @@ async function openBand(){try{const response=await fetch("{{ url_for('band_link'
         const input = document.getElementById('slot-input-' + key);
         const clearBtn = document.getElementById('slot-clear-' + key);
         slotEl.addEventListener('click', () => openCameraForSlot(slotEl));
-        input.addEventListener('change', () => renderSlotThumb(slotEl));
+        input.addEventListener('change', async () => {
+            // 카메라 촬영본(commitToSlot)은 이미 실시간 판정을 통과했고, 여기 change 이벤트는
+            // 카메라를 못 쓸 때의 파일선택 대체 경로(fallbackToFilePicker)에서만 발생한다.
+            const file = input.files && input.files[0];
+            if(file && !(await turuConfirmIfBlurry(file))){
+                input.value = '';
+                renderSlotThumb(slotEl);
+                return;
+            }
+            renderSlotThumb(slotEl);
+        });
         if(clearBtn){
             clearBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -577,7 +638,17 @@ function dCopyInfo(){
         const input = document.getElementById('d-slot-input-' + key);
         const clearBtn = document.getElementById('d-slot-clear-' + key);
         slotEl.addEventListener('click', () => input.click());
-        input.addEventListener('change', () => renderDSlotThumb(slotEl));
+        input.addEventListener('change', async () => {
+            // 데스크탑은 카메라 오버레이가 없어(순수 파일선택) 실시간 판정이 아예 없으므로
+            // 여기서 매번 확인한다.
+            const file = input.files && input.files[0];
+            if(file && !(await turuConfirmIfBlurry(file))){
+                input.value = '';
+                renderDSlotThumb(slotEl);
+                return;
+            }
+            renderDSlotThumb(slotEl);
+        });
         if(clearBtn){
             clearBtn.addEventListener('click', (e) => { e.stopPropagation(); input.value = ''; renderDSlotThumb(slotEl); });
         }

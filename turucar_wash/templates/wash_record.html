@@ -380,6 +380,12 @@
         delete pointers[e.pointerId];
         var pts = pointerArray();
         if(pts.length < 2){ pinch = null; }
+        if(pts.length === 1 && zoom.scale > 1.001){
+            // 핀치줌 도중 손가락 하나를 뗀 경우, 남은 손가락으로 바로 팬을 이어갈 수 있게 한다
+            var remaining = pts[0];
+            pan = { startX: remaining.x, startY: remaining.y, x0: zoom.x, y0: zoom.y };
+            imgEl.classList.add('tpv-panning');
+        }
         if(pts.length === 0){ pan = null; imgEl.classList.remove('tpv-panning'); }
     }
     imgEl.addEventListener('pointerup', endPointer);

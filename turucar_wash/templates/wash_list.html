@@ -52,6 +52,7 @@
             <input id="search_input" class="app-input" placeholder="차량번호, 스팟, 차량소속 검색" value="{{ search_input }}">
             <button type="button" onclick="applyFilter()" class="primary-btn">검색</button>
             <button type="button" onclick="downloadOrderExcel()" class="blue-btn order-excel-btn">엑셀 저장</button>
+            <button type="button" onclick="openMixedCarModal()" class="blue-btn">혼용차량 등록</button>
         </div>
     </section>
     {% if current_user.is_master %}
@@ -158,6 +159,9 @@
             <div class="dt-toolbar-right">
                 <button type="button" class="dt-btn" onclick="downloadOrderExcel()">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>엑셀
+                </button>
+                <button type="button" class="dt-btn dt-btn--primary" onclick="openMixedCarModal()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>혼용차량 등록
                 </button>
                 {% if current_user.is_master %}
                 <button type="button" id="dt-delete-toggle-btn" class="dt-btn dt-btn--danger" onclick="enterDeleteMode()">
@@ -325,6 +329,8 @@ function enterDeleteMode(){const form=document.getElementById('order-delete-form
 function exitDeleteMode(){const form=document.getElementById('order-delete-form');if(!form)return;form.classList.remove('delete-mode');form.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);document.getElementById('dt-delete-bar').style.display='none';document.getElementById('dt-delete-toggle-btn').style.display='';document.getElementById('dt-select-all-check').checked=false;updateDeleteCount();}
 function updateDeleteCount(){const form=document.getElementById('order-delete-form');if(!form)return;const count=form.querySelectorAll('input[name="ids"]:checked').length;const el=document.getElementById('dt-delete-count');if(el)el.textContent=count+'건 선택';}
 function submitDeleteForm(){const form=document.getElementById('order-delete-form');if(!form)return;const count=form.querySelectorAll('input[name="ids"]:checked').length;if(count<1){alert('삭제할 항목을 선택해주세요.');return;}if(confirm(count+'건을 삭제할까요?'))form.submit();}
+function openMixedCarModal(){const bd=document.getElementById('mixed-car-backdrop');if(!bd)return;bd.classList.add('open');const input=document.getElementById('mixed-car-plate');if(input){input.value='';setTimeout(()=>input.focus(),50);}}
+function closeMixedCarModal(){const bd=document.getElementById('mixed-car-backdrop');if(bd)bd.classList.remove('open');}
 </script>
 
 <div class="notice-modal-backdrop" id="cal-backdrop" onclick="closeCalendar()">
@@ -345,6 +351,19 @@ function submitDeleteForm(){const form=document.getElementById('order-delete-for
             <span style="text-align:center;font-size:11px;font-weight:900;color:#185FA5;padding:4px 0;">토</span>
         </div>
         <div id="cal-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
+    </div>
+</div>
+
+{# ── 혼용 차량 바로 등록 모달 ── #}
+<div class="notice-modal-backdrop" id="mixed-car-backdrop" onclick="closeMixedCarModal()">
+    <div class="turu-mini-modal" style="padding:24px;max-width:340px;" onclick="event.stopPropagation()">
+        <button type="button" class="notice-modal-close" onclick="closeMixedCarModal()" aria-label="닫기">&#215;</button>
+        <strong style="display:block;font-size:16px;font-weight:950;color:var(--color-text-primary);margin-bottom:6px;">혼용 차량 등록</strong>
+        <p style="font-size:12.5px;color:var(--color-text-secondary);margin:0 0 14px;line-height:1.5;">정기 오더가 없는 혼용 차량을 세차했을 때, 차량번호만 입력하면 바로 세차 기록 입력 화면으로 이동합니다.</p>
+        <form method="post" action="{{ url_for('mixed_car_register') }}">
+            <input type="text" id="mixed-car-plate" name="plate" class="app-input" placeholder="차량번호 입력 (예: 12가3456)" required style="width:100%;box-sizing:border-box;margin-bottom:12px;">
+            <button type="submit" class="primary-btn" style="width:100%;">조회 후 등록</button>
+        </form>
     </div>
 </div>
 {% endblock %}

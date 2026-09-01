@@ -163,12 +163,52 @@ function turuCheckFileSharpness(file){
         img.src = url;
     });
 }
+// 흔들림 경고를 네이티브 confirm()이 아니라 페이지 안의 커스텀 모달로 띄운다.
+// (2026-09-01 수정) async 함수에서 await로 이미지 디코딩을 기다린 "뒤에" 네이티브
+// confirm()을 호출하면, 브라우저가 그 사이 사용자 조작(user activation) 컨텍스트를
+// 잃었다고 판단해 모바일 웹뷰 등에서 대화상자가 뜨지 않거나 즉시 취소로 처리되는
+// 경우가 있었다. 이 경우 turuConfirmIfBlurry가 계속 false를 반환해서, 흔들리지 않은
+// 사진까지 포함해 파일선택으로 고른 사진이 조용히 지워지며 "사진이 갑자기 안
+// 올라온다"는 증상으로 나타났다. 네이티브 대화상자 대신 우리가 직접 그리는 모달을
+// 쓰면 이 문제가 없다.
+function turuShowBlurConfirm(){
+    return new Promise(resolve => {
+        let modal = document.getElementById('turu-blur-modal');
+        if(!modal){
+            modal = document.createElement('div');
+            modal.id = 'turu-blur-modal';
+            modal.style.cssText = 'display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:20px;';
+            modal.innerHTML =
+                '<div style="background:#fff;border-radius:14px;max-width:340px;width:100%;padding:22px 20px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.25);">' +
+                    '<p style="font-size:15px;font-weight:600;color:#1a1d24;line-height:1.5;margin:0 0 18px;">이 사진이 너무 흔들렸어요.<br>다시 찍어주세요.</p>' +
+                    '<div style="display:flex;gap:8px;">' +
+                        '<button type="button" id="turu-blur-retake" style="flex:1;height:44px;border-radius:10px;border:1px solid #dcdfe4;background:#fff;color:#4b5563;font-size:14px;font-weight:600;">다시 찍기</button>' +
+                        '<button type="button" id="turu-blur-use" style="flex:1;height:44px;border-radius:10px;border:none;background:#ff5b24;color:#fff;font-size:14px;font-weight:600;">이대로 사용</button>' +
+                    '</div>' +
+                '</div>';
+            document.body.appendChild(modal);
+        }
+        modal.style.display = 'flex';
+        const retakeBtn = document.getElementById('turu-blur-retake');
+        const useBtn = document.getElementById('turu-blur-use');
+        function cleanup(result){
+            modal.style.display = 'none';
+            retakeBtn.removeEventListener('click', onRetake);
+            useBtn.removeEventListener('click', onUse);
+            resolve(result);
+        }
+        function onRetake(){ cleanup(false); }
+        function onUse(){ cleanup(true); }
+        retakeBtn.addEventListener('click', onRetake);
+        useBtn.addEventListener('click', onUse);
+    });
+}
 // true = 이대로 사용, false = 사용자가 다시 찍기로 선택(호출부에서 input 비워야 함)
 async function turuConfirmIfBlurry(file){
     if(!file || !file.type || file.type.indexOf('image/') !== 0) return true;
     const variance = await turuCheckFileSharpness(file);
     if(variance === null || variance > TURU_BLUR_VARIANCE_THRESHOLD) return true;
-    return confirm('이 사진이 너무 흔들렸어요. 다시 찍어주세요.\n\n그래도 이 사진을 사용하시려면 확인을 눌러주세요.');
+    return await turuShowBlurConfirm();
 }
 </script>
 <script>

@@ -445,6 +445,24 @@ async function turuConfirmIfBlurry(file){
 
         ctx.restore();
     }
+    // 미리보기 <video>는 CSS object-fit:cover로 화면(.cam-viewport) 박스에 꽉 차게
+    // 잘려서 보이는데, 예전 코드는 캡처할 때 카메라가 실제로 찍은 원본 프레임 전체
+    // (video.videoWidth x video.videoHeight)를 그대로 저장해버려서, 화면에 보이던
+    // 프레임보다 실제 저장된 사진이 더 넓게(광각으로) 찍히는 문제가 있었다. 화면에
+    // 보이는 만큼만 저장되도록, object-fit:cover가 실제로 잘라내는 영역을 그대로
+    // 계산해서 그 부분만 캡처한다.
+    function computeCoverCrop(vw, vh, boxW, boxH){
+        if(!vw || !vh || !boxW || !boxH) return {sx: 0, sy: 0, sw: vw || 0, sh: vh || 0};
+        const scale = Math.max(boxW / vw, boxH / vh);
+        const visibleW = boxW / scale;
+        const visibleH = boxH / scale;
+        return {
+            sx: Math.max(0, (vw - visibleW) / 2),
+            sy: Math.max(0, (vh - visibleH) / 2),
+            sw: Math.min(vw, visibleW),
+            sh: Math.min(vh, visibleH)
+        };
+    }
     function capturePhoto(force){
         if((!sharpOK || !levelOK) && !force){
             warningBox.style.display = 'block';
@@ -455,11 +473,14 @@ async function turuConfirmIfBlurry(file){
         warningBox.style.display = 'none';
         pendingForceCapture = false;
 
+        const box = video.getBoundingClientRect();
+        const crop = computeCoverCrop(video.videoWidth, video.videoHeight, box.width, box.height);
+
         const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        canvas.width = Math.max(1, Math.round(crop.sw));
+        canvas.height = Math.max(1, Math.round(crop.sh));
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, canvas.width, canvas.height);
 
         drawWatermark(ctx, canvas);
 

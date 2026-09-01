@@ -7,16 +7,16 @@
 
     <div style="padding:12px 16px 0;display:grid;grid-template-columns:1fr;gap:10px;">
         <div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;padding:18px 16px;text-align:center;">
-            <div style="font-size:11px;font-weight:800;color:#aaa;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px;font-family:'NanumSquare',sans-serif;">총 차량</div>
-            <div style="font-size:36px;font-weight:950;color:#111;letter-spacing:-.03em;line-height:1;font-family:'NanumSquare',sans-serif;">{{ total }}<span style="font-size:16px;color:#888;font-weight:600;margin-left:4px;">대</span></div>
+            <div style="font-size:11px;font-weight:800;color:#aaa;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px;font-family:'Pretendard',sans-serif;">총 차량</div>
+            <div style="font-size:36px;font-weight:950;color:#111;letter-spacing:-.03em;line-height:1;font-family:'Pretendard',sans-serif;">{{ total }}<span style="font-size:16px;color:#888;font-weight:600;margin-left:4px;">대</span></div>
         </div>
 
         {% if region_stats %}
         <div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;overflow:hidden;">
-            <div style="font-size:10px;font-weight:800;color:#aaa;letter-spacing:.06em;text-transform:uppercase;padding:10px 14px 6px;font-family:'NanumSquare',sans-serif;">담당 지역</div>
+            <div style="font-size:10px;font-weight:800;color:#aaa;letter-spacing:.06em;text-transform:uppercase;padding:10px 14px 6px;font-family:'Pretendard',sans-serif;">담당 지역</div>
             {% for r in region_stats %}
             <div onclick="filterRegion('{{ r.city }} {{ r.district }}', this)" style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-top:0.5px solid #f0f0f0;cursor:pointer;" class="mv-region-row">
-                <span style="font-size:14px;font-weight:700;color:#111;font-family:'NanumSquare',sans-serif;">{{ r.city }} {{ r.district }}</span>
+                <span style="font-size:14px;font-weight:700;color:#111;font-family:'Pretendard',sans-serif;">{{ r.city }} {{ r.district }}</span>
                 <span style="font-size:13px;font-weight:700;color:#888;">{{ r.total }}대 ›</span>
             </div>
             {% endfor %}
@@ -27,7 +27,7 @@
     <div style="padding:10px 16px 0;">
         <div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;display:flex;align-items:center;padding:0 14px;height:44px;gap:8px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
-            <input id="mv-search" placeholder="차량번호, 스팟, 차량소속 검색" oninput="renderGroups()" style="flex:1;border:none;outline:none;font-size:13px;font-family:'NanumSquare',sans-serif;background:transparent;color:#111;">
+            <input id="mv-search" placeholder="차량번호, 스팟, 차량소속 검색" oninput="renderGroups()" style="flex:1;border:none;outline:none;font-size:13px;font-family:'Pretendard',sans-serif;background:transparent;color:#111;">
         </div>
     </div>
 
@@ -36,8 +36,7 @@
 </section>
 
 <style>
-@import url('https://cdn.jsdelivr.net/gh/moonspam/NanumSquare@2.0/nanumsquare.css');
-.mv-page, .mv-page * { font-family: 'NanumSquare', 'Apple SD Gothic Neo', sans-serif !important; }
+.mv-page, .mv-page * { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif !important; }
 .mv-stat-card { background:var(--color-background-primary); border:0.5px solid var(--color-border-tertiary); border-radius:16px; padding:16px; text-align:center; margin:12px 16px 0; }
 .mv-stat-label { font-size:11px; font-weight:800; color:var(--color-text-tertiary); letter-spacing:.05em; text-transform:uppercase; margin-bottom:6px; }
 .mv-stat-val { font-size:34px; font-weight:950; color:var(--color-text-primary); letter-spacing:-.03em; line-height:1; }
@@ -106,7 +105,7 @@ function renderGroups(){
         html+=`<div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;overflow:hidden;margin-bottom:8px;">
             <div onclick="toggleSpot('${gid}')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;">
                 <div>
-                    <div style="font-size:13px;font-weight:800;color:#111;font-family:'NanumSquare',sans-serif;">${spot}</div>
+                    <div style="font-size:13px;font-weight:800;color:#111;font-family:'Pretendard',sans-serif;">${spot}</div>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px;">
                     <span style="font-size:11px;font-weight:700;color:#aaa;background:#f5f5f5;padding:2px 8px;border-radius:20px;">${cars.length}대</span>
@@ -123,7 +122,7 @@ function renderGroups(){
             html+=`<div style="display:flex;align-items:center;padding:11px 14px 11px 0;gap:10px;${bl}${ul}">
                 <div style="flex:1;min-width:0;">
                     <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
-                        <span style="font-size:14px;font-weight:900;color:#111;font-family:'NanumSquare',sans-serif;">${v['차량번호']||'-'}</span>
+                        <span style="font-size:14px;font-weight:900;color:#111;font-family:'Pretendard',sans-serif;">${v['차량번호']||'-'}</span>
                         <span style="font-size:12px;font-weight:600;color:#555;">${v['차량소속']||''}</span>
                     </div>
                     <div style="font-size:11px;color:#aaa;">${v['차종명']||'-'}</div>

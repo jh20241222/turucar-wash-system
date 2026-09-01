@@ -14,8 +14,8 @@
     <link rel="icon" type="image/png" sizes="64x64" href="{{ url_for('static', filename='img/icons/favicon-64.png') }}">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=48">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/desktop.css') }}?v=20">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=49">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/desktop.css') }}?v=21">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <script>
     // FOUC 방지
@@ -37,7 +37,7 @@
             {% if request.endpoint != 'dashboard' %}
             <button type="button" class="icon-btn back-btn" onclick="history.length > 1 ? history.back() : location.href='{{ url_for('dashboard') }}'" aria-label="뒤로가기">‹</button>
             {% endif %}
-            {% if request.endpoint in ['wash_list','wash_status','profile','car_detail','support_choice','support_submit','damage_submit','damage_manage','urgent_wash','voc_manage','wash_target_list'] %}
+            {% if request.endpoint in ['wash_list','wash_status','profile','car_detail','wash_record','support_choice','support_submit','damage_submit','damage_manage','urgent_wash','voc_manage','wash_target_list'] %}
             <a href="{{ url_for('dashboard') }}" class="topbar-turu-brand-v27" aria-label="TURU CAR 홈">
                 <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}?v=28" alt="TURU CAR">
             </a>
@@ -74,7 +74,7 @@
             <a href="https://pm.peoplecar.co.kr:8082/#" class="side-link admin-app-link" target="_blank">
                 <i class="ti ti-calendar"></i><b>예약/제어</b>
             </a>
-            <a href="{{ url_for('wash_status') }}" class="side-link {% if request.endpoint == 'wash_status' %}active{% endif %}">
+            <a href="{{ url_for('wash_status') }}" class="side-link {% if request.endpoint in ['wash_status','wash_record'] %}active{% endif %}">
                 <i class="ti ti-check"></i><b>완료 현황</b>
             </a>
             <a href="{{ url_for('urgent_wash') }}" class="side-link side-link-with-badge {% if request.endpoint == 'urgent_wash' %}active{% endif %}">
@@ -171,7 +171,7 @@
             <div class="dt-topnav-left">
                 <p class="dt-topnav-crumb">
                     {% if request.endpoint in ['wash_list','car_detail'] %}세차 관리
-                    {% elif request.endpoint == 'wash_status' %}세차 관리
+                    {% elif request.endpoint in ['wash_status','wash_record'] %}세차 관리
                     {% elif request.endpoint == 'upload_wash_list' %}세차 관리 / 데이터 관리
                     {% elif request.endpoint == 'order_generate' %}데이터 관리
                     {% elif request.endpoint in ['account_manage'] %}계정 관리
@@ -189,6 +189,7 @@
                     {% if request.endpoint == 'wash_target_list' %}세차 대상 리스트
                     {% elif request.endpoint in ['wash_list','car_detail'] %}세차 오더
                     {% elif request.endpoint == 'wash_status' %}완료 현황
+                    {% elif request.endpoint == 'wash_record' %}세차 내역 조회
                     {% elif request.endpoint == 'upload_wash_list' %}세차 스케줄 관리
                     {% elif request.endpoint == 'order_generate' %}오더 자동생성
                     {% elif request.endpoint == 'account_manage' %}계정/지역

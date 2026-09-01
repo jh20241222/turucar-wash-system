@@ -50,7 +50,7 @@ bindRegionSelect("create_city","create_district");bindRegionSelect("assign_city"
 <div class="d-wrap">
     <div class="d-grid-2">
         <div class="d-card">
-            <div class="d-card-head"><div><span class="d-eyebrow">01 Create</span><h2>아이디 생성</h2></div><span class="d-badge-pill">신규</span></div>
+            <div class="d-card-head"><div><span class="d-eyebrow">01 Create</span><h2>아이디 생성</h2></div></div>
             <div class="d-card-body">
                 <form method="POST">
                     <input type="hidden" name="action" value="create_account">
@@ -78,7 +78,7 @@ bindRegionSelect("create_city","create_district");bindRegionSelect("assign_city"
             </div>
         </div>
         <div class="d-card">
-            <div class="d-card-head"><div><span class="d-eyebrow">02 Region</span><h2>지역 추가</h2></div><span class="d-badge-pill">권한</span></div>
+            <div class="d-card-head"><div><span class="d-eyebrow">02 Region</span><h2>지역 추가</h2></div></div>
             <div class="d-card-body">
                 <form method="POST">
                     <input type="hidden" name="action" value="assign_region">
@@ -94,22 +94,42 @@ bindRegionSelect("create_city","create_district");bindRegionSelect("assign_city"
     </div>
 
     <div class="d-card">
-        <div class="d-card-head"><div><span class="d-eyebrow">계정 목록</span><h2>전체 계정</h2></div><span class="d-badge-pill">{{ accounts|length }}개</span></div>
-        <div class="d-table-wrap">
-            <table class="d-table"><thead><tr><th>계정</th><th>권한</th><th>업체</th><th>구조</th><th>관리</th></tr></thead>
-            <tbody>{% for a in accounts_page %}<tr><td>{{ a.username }}</td><td><span class="d-badge-pill">{{ a.role }}</span></td><td>{{ a.vendor or '-' }}</td><td>{% if a.role == 'master' %}최상위{% elif a.role == 'admin' %}업체 관리자{% else %}하위 계정{% endif %}</td><td>{% if a.role != 'master' and (current_user.is_master or (a.role == 'staff' and a.parent_id == current_user.id)) %}<form method="POST" style="display:inline" onsubmit="return confirm('계정을 삭제할까요?');"><input type="hidden" name="action" value="delete_account"><input type="hidden" name="delete_username" value="{{ a.username }}"><button type="submit" class="d-btn-danger-sm">삭제</button></form>{% else %}-{% endif %}</td></tr>{% else %}<tr><td colspan="5" class="d-empty-cell">계정이 없습니다.</td></tr>{% endfor %}</tbody>
-            </table>
-            {{ render_pagination(acct_current_page, acct_total_pages, 'acct_page') }}
+        <div class="d-card-head">
+            <div><span class="d-eyebrow">목록</span><h2>계정 &amp; 지역</h2></div>
+            <div class="d-tab-switch">
+                <button type="button" class="d-tab-btn{% if active_tab == 'acct' %} active{% endif %}" data-tab="acct">계정 목록 <span class="d-tab-count">{{ accounts_filtered|length }}</span></button>
+                <button type="button" class="d-tab-btn{% if active_tab == 'region' %} active{% endif %}" data-tab="region">지역 권한 <span class="d-tab-count">{{ region_list_filtered|length }}</span></button>
+            </div>
         </div>
-    </div>
-
-    <div class="d-card">
-        <div class="d-card-head"><div><span class="d-eyebrow">지역 권한</span><h2>담당 지역</h2></div><span class="d-badge-pill">{{ region_list|length }}개</span></div>
-        <div class="d-table-wrap">
-            <table class="d-table"><thead><tr><th>계정</th><th>권한</th><th>업체</th><th>시/도</th><th>구/군</th><th>관리</th></tr></thead>
-            <tbody>{% for r in region_list_page %}<tr><td>{{ r.username }}</td><td>{{ r.role }}</td><td>{{ r.vendor or '-' }}</td><td>{{ r.city }}</td><td>{{ r.district }}</td><td>{% if current_user.is_master or (r.parent_id == current_user.id) %}<form method="POST" style="display:inline" onsubmit="return confirm('지역 권한을 삭제할까요?');"><input type="hidden" name="action" value="delete_region"><input type="hidden" name="region_id" value="{{ r.id }}"><button type="submit" class="d-btn-danger-sm">삭제</button></form>{% else %}-{% endif %}</td></tr>{% else %}<tr><td colspan="6" class="d-empty-cell">등록된 지역이 없습니다.</td></tr>{% endfor %}</tbody>
-            </table>
-            {{ render_pagination(region_current_page, region_total_pages, 'region_page') }}
+        <div class="d-tab-panel" data-panel="acct" style="{% if active_tab != 'acct' %}display:none;{% endif %}">
+            <form method="GET" class="d-search-box">
+                <input type="hidden" name="tab" value="acct">
+                <input type="hidden" name="region_q" value="{{ region_q }}">
+                <i class="ti ti-search"></i>
+                <input type="text" name="acct_q" value="{{ acct_q }}" placeholder="계정, 업체명 검색" autocomplete="off">
+                {% if acct_q %}<a class="d-search-clear" href="{{ url_for('account_manage', tab='acct', region_q=region_q) }}">✕</a>{% endif %}
+            </form>
+            <div class="d-table-wrap">
+                <table class="d-table"><thead><tr><th>계정</th><th>권한</th><th>업체</th><th>구조</th><th>관리</th></tr></thead>
+                <tbody>{% for a in accounts_page %}<tr><td>{{ a.username }}</td><td><span class="d-badge-pill">{{ a.role }}</span></td><td>{{ a.vendor or '-' }}</td><td>{% if a.role == 'master' %}최상위{% elif a.role == 'admin' %}업체 관리자{% else %}하위 계정{% endif %}</td><td>{% if a.role != 'master' and (current_user.is_master or (a.role == 'staff' and a.parent_id == current_user.id)) %}<form method="POST" style="display:inline" onsubmit="return confirm('계정을 삭제할까요?');"><input type="hidden" name="action" value="delete_account"><input type="hidden" name="delete_username" value="{{ a.username }}"><button type="submit" class="d-btn-danger-sm">삭제</button></form>{% else %}-{% endif %}</td></tr>{% else %}<tr><td colspan="5" class="d-empty-cell">{% if acct_q %}'{{ acct_q }}'와(과) 일치하는 계정이 없습니다.{% else %}계정이 없습니다.{% endif %}</td></tr>{% endfor %}</tbody>
+                </table>
+                {{ render_pagination(acct_current_page, acct_total_pages, 'acct_page') }}
+            </div>
+        </div>
+        <div class="d-tab-panel" data-panel="region" style="{% if active_tab != 'region' %}display:none;{% endif %}">
+            <form method="GET" class="d-search-box">
+                <input type="hidden" name="tab" value="region">
+                <input type="hidden" name="acct_q" value="{{ acct_q }}">
+                <i class="ti ti-search"></i>
+                <input type="text" name="region_q" value="{{ region_q }}" placeholder="계정, 업체, 시/도, 구/군 검색" autocomplete="off">
+                {% if region_q %}<a class="d-search-clear" href="{{ url_for('account_manage', tab='region', acct_q=acct_q) }}">✕</a>{% endif %}
+            </form>
+            <div class="d-table-wrap">
+                <table class="d-table"><thead><tr><th>계정</th><th>권한</th><th>업체</th><th>시/도</th><th>구/군</th><th>관리</th></tr></thead>
+                <tbody>{% for r in region_list_page %}<tr><td>{{ r.username }}</td><td>{{ r.role }}</td><td>{{ r.vendor or '-' }}</td><td>{{ r.city }}</td><td>{{ r.district }}</td><td>{% if current_user.is_master or (r.parent_id == current_user.id) %}<form method="POST" style="display:inline" onsubmit="return confirm('지역 권한을 삭제할까요?');"><input type="hidden" name="action" value="delete_region"><input type="hidden" name="region_id" value="{{ r.id }}"><button type="submit" class="d-btn-danger-sm">삭제</button></form>{% else %}-{% endif %}</td></tr>{% else %}<tr><td colspan="6" class="d-empty-cell">{% if region_q %}'{{ region_q }}'와(과) 일치하는 지역이 없습니다.{% else %}등록된 지역이 없습니다.{% endif %}</td></tr>{% endfor %}</tbody>
+                </table>
+                {{ render_pagination(region_current_page, region_total_pages, 'region_page') }}
+            </div>
         </div>
     </div>
 </div>
@@ -126,10 +146,56 @@ function _bindR(cId,dId){
 }
 _bindR('d_create_city','d_create_district');
 _bindR('d_assign_city','d_assign_district');
+
+// 검색창은 입력할 때마다(살짝 텀을 두고) 자동으로 다시 조회한다 — 페이지네이션과
+// 마찬가지로 서버에서 걸러서 내려주기 때문에, 지금 보이는 페이지뿐 아니라 전체
+// 계정/지역을 대상으로 검색된다.
+document.querySelectorAll('#d-acct .d-search-box').forEach(form => {
+    const input = form.querySelector('input[type="text"]');
+    if(!input) return;
+    let timer = null;
+    input.addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => form.submit(), 450);
+    });
+});
+
+document.querySelectorAll('#d-acct .d-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('#d-acct .d-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tab = btn.dataset.tab;
+        document.querySelectorAll('#d-acct .d-tab-panel').forEach(p => {
+            p.style.display = (p.dataset.panel === tab) ? '' : 'none';
+        });
+    });
+});
 </script>
 <style>
 #desktop-mode #d-acct { display: block !important; }
 #desktop-mode .turu-account-manage-page-v24 { display: none !important; }
+/* 계정/지역 데스크탑 화면 정리 (2026-09-01) — 계정 목록/지역 권한을 카드 두 개로
+   따로 나눠서 반복되던 카드 테두리·헤더·카운트 뱃지를 탭 하나로 합쳐서 줄였다. */
+#desktop-mode #d-acct .d-card-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+#desktop-mode #d-acct .d-tab-switch { display: flex; gap: 4px; background: var(--d-bg); padding: 4px; border-radius: 10px; }
+#desktop-mode #d-acct .d-tab-btn { border: none; background: transparent; padding: 8px 14px; border-radius: 7px; font-size: 13px; font-weight: 700; color: var(--d-muted); cursor: pointer; font-family: 'Pretendard', sans-serif; display: flex; align-items: center; gap: 7px; transition: background .12s, color .12s; }
+#desktop-mode #d-acct .d-tab-btn:hover { color: var(--d-text); }
+#desktop-mode #d-acct .d-tab-btn.active { background: var(--d-surface); color: var(--d-text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+#desktop-mode #d-acct .d-tab-count { font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 20px; background: var(--d-th); color: var(--d-muted); }
+#desktop-mode #d-acct .d-tab-btn.active .d-tab-count { background: var(--d-bg); }
+#desktop-mode #d-acct .d-search-box { position: relative; display: flex; align-items: center; margin: 16px 20px 4px; }
+#desktop-mode #d-acct .d-search-box .ti-search { position: absolute; left: 14px; font-size: 16px; color: var(--d-muted); pointer-events: none; }
+#desktop-mode #d-acct .d-search-box input[type="text"] { width: 100%; height: 40px; padding: 0 36px 0 38px; border-radius: 9px; border: 1px solid var(--d-border); background: var(--d-bg); color: var(--d-text); font-size: 13px; font-family: 'Pretendard', sans-serif; outline: none; }
+#desktop-mode #d-acct .d-search-box input[type="text"]:focus { border-color: #cbd2db; background: var(--d-surface); }
+#desktop-mode #d-acct .d-search-clear { position: absolute; right: 12px; font-size: 12px; color: var(--d-muted); text-decoration: none; padding: 4px; }
+#desktop-mode #d-acct .d-search-clear:hover { color: var(--d-text); }
+/* 이 페이지의 등록 버튼은 브랜드 오렌지/블루 대신 톤을 낮춘 중립 색으로 (2026-09-01) */
+#desktop-mode #d-acct .d-btn-orange { background: var(--d-text) !important; }
+#desktop-mode #d-acct .d-btn-orange:hover { background: #000 !important; }
+#desktop-mode #d-acct .d-btn-blue { background: var(--d-muted) !important; }
+#desktop-mode #d-acct .d-btn-blue:hover { background: var(--d-text) !important; }
+.turu-account-manage-page-v24 .primary-btn { background: #212121 !important; color: #fff !important; box-shadow: none !important; }
+.turu-account-manage-page-v24 .blue-btn { background: #6b7280 !important; color: #fff !important; }
 </style>
 
 {% endblock %}

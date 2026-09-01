@@ -19,8 +19,19 @@ import io
 import requests as _requests
 import pandas as pd
 try:
-    from PIL import Image as _PILImage, ExifTags as _ExifTags
+    from PIL import Image as _PILImage, ExifTags as _ExifTags, ImageOps as _ImageOps
     _PIL_AVAILABLE = True
+    try:
+        # 아이폰이 "고효율성(HEIC)" 카메라 설정일 때 올라오는 .heic/.heif 사진 지원.
+        # 이 플러그인이 없으면 Pillow가 HEIC를 열지 못해 아래 압축 로직이 통째로 실패하고
+        # 원본 HEIC 바이트가 그대로 저장되는데, 저장/응답 시 Content-Type은 항상
+        # image/jpeg로 고정돼 있어(_store_wash_photos 등) 브라우저가 이를 JPEG로 잘못
+        # 해석하면서 사진이 깨지거나 색이 이상하게(예: 파랗게) 보이는 원인이 된다
+        # (2026-09-01, "사진이 파랗다"/"화질이 별로다" 제보로 확인).
+        import pillow_heif as _pillow_heif
+        _pillow_heif.register_heif_opener()
+    except ImportError:
+        pass
 except ImportError:
     _PIL_AVAILABLE = False
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -1990,6 +2001,67 @@ def wash_schedule_delete():
         flash("❌ 올바른 삭제 방식을 선택하세요.")
     return redirect(url_for("upload_wash_list"))
 # =========================================================
+# 혼용 차량 바로 등록 (오더 없이 완료처리)
+# =========================================================
+@app.route("/mixed_car_register", methods=["POST"])
+@login_required
+def mixed_car_register():
+    """혼용(BM구분='혼용') 차량은 스팟이 수시로 바뀌어 정기 오더 생성 대상에서 제외되지만,
+    작업자가 현장에서 우연히 마주쳐 세차하는 경우가 있다. 그런 경우 정식 오더 없이도
+    차량번호만으로 wash_list에 오늘자 임시 오더를 하나 만들어 곧장 car_detail(완료 입력
+    화면)으로 보내준다. 완료 처리(wash_complete)는 기존 로직을 그대로 타므로 사진 업로드,
+    작업자 기록(완료 현황 계정별 스코프 포함) 등이 정상 오더와 완전히 동일하게 동작한다."""
+    plate_input = request.form.get("plate", "").strip()
+    if not plate_input:
+        flash("❌ 차량번호를 입력해주세요.")
+        return redirect(url_for("wash_list"))
+    norm_target = _norm_plate(plate_input)
+    conn = get_wash_db()
+    cur = conn.cursor()
+    vm_rows = cur.execute("SELECT * FROM vehicle_master WHERE TRIM(BM구분)='혼용'").fetchall()
+    vm_row = next((r for r in vm_rows if _norm_plate(r["차량번호"]) == norm_target), None)
+    if not vm_row:
+        conn.close()
+        flash(f"❌ 혼용 차량 목록에서 '{plate_input}' 차량을 찾을 수 없습니다. 차량마스터를 확인해주세요.")
+        return redirect(url_for("wash_list"))
+    # 스코프 확인 — scoped_condition()과 동일한 규칙(마스터/컨택센터: 무제한, 업체 관리자: 업체
+    # 일치, 개별 작업자: 업체+담당 지역까지 일치)을 vehicle_master 조회 결과에 대해 그대로 적용해,
+    # 다른 업체/지역 차량을 임의로 등록하는 걸 막는다.
+    if not (current_user.is_master or getattr(current_user, "is_contact_center", False)):
+        if (vm_row["담당업체"] or "") != (current_user.vendor or ""):
+            conn.close()
+            flash("❌ 담당 업체가 달라 등록할 수 없는 차량입니다.")
+            return redirect(url_for("wash_list"))
+        if current_user.is_staff:
+            regions = _account_regions(current_user.username)
+            if (vm_row["지역시도"], vm_row["지역구군"]) not in regions:
+                conn.close()
+                flash("❌ 담당 지역이 아니어서 등록할 수 없는 차량입니다.")
+                return redirect(url_for("wash_list"))
+    today_str = today_kst()
+    # 오늘 이미 등록된(미완료) 오더가 있으면 중복 생성하지 않고 그 화면으로 이동
+    existing = cur.execute(
+        "SELECT id FROM wash_list WHERE 차량번호=? AND 완료=0 AND 세차일=?",
+        (vm_row["차량번호"], today_str)
+    ).fetchone()
+    if existing:
+        conn.close()
+        flash("ℹ 오늘 이미 등록된 오더가 있어 해당 화면으로 이동합니다.")
+        return redirect(url_for("car_detail", id=existing["id"]))
+    cur.execute(
+        """INSERT INTO wash_list
+        (차량번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 세차일, 업체, 밴드링크, 작업자, 완료, 등록일, 이월횟수, 세차경과일)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,0,?,0,0)""",
+        (vm_row["차량번호"], vm_row["차종명"], vm_row["차량소속"], vm_row["스팟"], vm_row["주소"],
+         vm_row["지역시도"], vm_row["지역구군"], today_str, vm_row["담당업체"], "",
+         current_user.username, today_str)
+    )
+    new_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+    flash(f"✔ 혼용 차량 '{vm_row['차량번호']}' 등록 완료 — 세차 기록을 입력해주세요.")
+    return redirect(url_for("car_detail", id=new_id))
+# =========================================================
 # 세차 대상 리스트
 # =========================================================
 @app.route("/wash_list", methods=["GET"])
@@ -2790,7 +2862,7 @@ except Exception:
     _WEBPUSH_AVAILABLE = False
 ALLOWED_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp"}
 _PHOTO_MAX_PX = 2400   # 최대 해상도 (px) — 무인훼손 등 흠집 확인용으로 고화질 유지 (2026-08-28 상향)
-_PHOTO_QUALITY = 92    # JPEG 압축 품질 (%) — 위와 동일한 이유로 상향
+_PHOTO_QUALITY = 95    # JPEG 압축 품질 (%) — 화질 불만 접수 후 92 → 95로 재상향 (2026-09-01)
 
 def _save_damage_photo(file_obj):
     """사진 저장 — Pillow 사용 시 리사이즈+압축 후 저장 (용량 절감)."""
@@ -2805,17 +2877,16 @@ def _save_damage_photo(file_obj):
         try:
             img = _PILImage.open(file_obj.stream)
 
-            # EXIF 회전 보정 (핸드폰 세로 사진)
+            # 저장 전 원본 색 프로필(ICC)을 미리 챙겨둔다 — 아이폰 등에서 Display P3 같은
+            # 광색역 프로필로 찍힌 사진은, 이 프로필을 저장 시 함께 넣어주지 않으면 브라우저가
+            # 픽셀값을 sRGB로 잘못 해석해서 사진이 탁하거나 푸르스름하게 보이는 색 틀어짐이
+            # 생긴다(2026-09-01, "사진이 파랗게 보인다" 제보로 확인).
+            icc_profile = img.info.get("icc_profile")
+
+            # EXIF 회전 보정 (핸드폰 세로 사진) — exif_transpose가 미러링 포함 8종 orientation을
+            # 전부 정확히 처리하고 처리 후 EXIF orientation 태그도 정리해준다.
             try:
-                for tag, val in img._getexif().items():
-                    if _ExifTags.TAGS.get(tag) == "Orientation":
-                        if val == 3:
-                            img = img.rotate(180, expand=True)
-                        elif val == 6:
-                            img = img.rotate(270, expand=True)
-                        elif val == 8:
-                            img = img.rotate(90, expand=True)
-                        break
+                img = _ImageOps.exif_transpose(img)
             except Exception:
                 pass
 
@@ -2831,10 +2902,12 @@ def _save_damage_photo(file_obj):
                 ratio = _PHOTO_MAX_PX / max(w, h)
                 img = img.resize((int(w * ratio), int(h * ratio)), _PILImage.LANCZOS)
 
-            # 항상 .jpg 로 저장
+            # 항상 .jpg 로 저장 (원본에 ICC 프로필이 있었다면 그대로 함께 저장해 색 틀어짐 방지)
             fname = f"{uuid.uuid4().hex}.jpg"
-            img.save(os.path.join(DAMAGE_UPLOAD_DIR, fname),
-                     format="JPEG", quality=_PHOTO_QUALITY, optimize=True)
+            save_kwargs = {"format": "JPEG", "quality": _PHOTO_QUALITY, "optimize": True}
+            if icc_profile:
+                save_kwargs["icc_profile"] = icc_profile
+            img.save(os.path.join(DAMAGE_UPLOAD_DIR, fname), **save_kwargs)
             return fname
         except Exception as e:
             print(f"[Photo] Pillow 압축 실패, 원본 저장: {e}")
@@ -3054,8 +3127,8 @@ def _get_r2_client():
     return _r2_client
 
 def _compress_image_bytes(file_obj):
-    """업로드된 사진을 EXIF 회전 보정 + 긴 변 1600px 리사이즈 + JPEG 75% 압축 후
-    bytes로 반환한다 (훼손제보 사진 저장 로직과 동일한 설정). Pillow가 없거나
+    """업로드된 사진을 EXIF 회전 보정 + 긴 변 _PHOTO_MAX_PX 리사이즈 + JPEG _PHOTO_QUALITY%
+    압축 후 bytes로 반환한다 (훼손제보 사진 저장 로직과 동일한 설정). Pillow가 없거나
     처리에 실패하면 원본 바이트를 그대로 반환한다."""
     try:
         file_obj.stream.seek(0)
@@ -3065,18 +3138,11 @@ def _compress_image_bytes(file_obj):
         return file_obj.read()
     try:
         img = _PILImage.open(file_obj.stream)
+        # 원본 색 프로필(ICC) 보존 — _save_damage_photo와 동일한 이유(아이폰 Display P3
+        # 사진의 색 틀어짐/파랗게 보임 방지).
+        icc_profile = img.info.get("icc_profile")
         try:
-            exif = img._getexif()
-            if exif:
-                for tag, val in exif.items():
-                    if _ExifTags.TAGS.get(tag) == "Orientation":
-                        if val == 3:
-                            img = img.rotate(180, expand=True)
-                        elif val == 6:
-                            img = img.rotate(270, expand=True)
-                        elif val == 8:
-                            img = img.rotate(90, expand=True)
-                        break
+            img = _ImageOps.exif_transpose(img)
         except Exception:
             pass
         if img.mode in ("RGBA", "P", "LA"):
@@ -3088,7 +3154,10 @@ def _compress_image_bytes(file_obj):
             ratio = _PHOTO_MAX_PX / max(w, h)
             img = img.resize((int(w * ratio), int(h * ratio)), _PILImage.LANCZOS)
         buf = io.BytesIO()
-        img.save(buf, format="JPEG", quality=_PHOTO_QUALITY, optimize=True)
+        save_kwargs = {"format": "JPEG", "quality": _PHOTO_QUALITY, "optimize": True}
+        if icc_profile:
+            save_kwargs["icc_profile"] = icc_profile
+        img.save(buf, **save_kwargs)
         return buf.getvalue()
     except Exception as e:
         print(f"[Photo] 압축 실패, 원본 업로드로 대체: {e}")

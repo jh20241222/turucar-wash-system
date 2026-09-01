@@ -10,3 +10,5 @@ xlrd
 urllib3
 pywebpush
 boto3
+Pillow
+pillow-heif

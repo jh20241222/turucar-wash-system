@@ -1672,24 +1672,59 @@ def account_manage():
     city_options = list(KOREA_REGIONS.keys())
     region_map = KOREA_REGIONS
     conn.close()
+
+    # 계정/지역 검색 (2026-09-01 추가) — 계정이 60개+로 늘어나면서 페이지를 여러 장 넘겨야
+    # 원하는 계정을 찾을 수 있었다. 계정명·업체명(계정 목록), 계정명·업체명·시/도·구/군
+    # (지역 권한)으로 부분일치 검색해서 페이지네이션 이전에 걸러낸다 — 그래서 검색은
+    # 현재 페이지에 보이는 것만이 아니라 전체를 대상으로 동작한다.
+    acct_q = request.args.get("acct_q", "").strip()
+    region_q = request.args.get("region_q", "").strip()
+    active_tab = request.args.get("tab", "acct")
+    if active_tab not in ("acct", "region"):
+        active_tab = "acct"
+
+    if acct_q:
+        _q = acct_q.lower()
+        accounts_filtered = [
+            a for a in accounts
+            if _q in (a["username"] or "").lower() or _q in (a["vendor"] or "").lower()
+        ]
+    else:
+        accounts_filtered = accounts
+
+    if region_q:
+        _q = region_q.lower()
+        region_list_filtered = [
+            r for r in region_list
+            if _q in (r["username"] or "").lower() or _q in (r["vendor"] or "").lower()
+            or _q in (r["city"] or "").lower() or _q in (r["district"] or "").lower()
+        ]
+    else:
+        region_list_filtered = region_list
+
     acct_page = request.args.get("acct_page", 1, type=int)
     region_page = request.args.get("region_page", 1, type=int)
-    accounts_page, acct_current_page, acct_total_pages = paginate_list(accounts, acct_page, per_page=10)
-    region_list_page, region_current_page, region_total_pages = paginate_list(region_list, region_page, per_page=10)
+    accounts_page, acct_current_page, acct_total_pages = paginate_list(accounts_filtered, acct_page, per_page=10)
+    region_list_page, region_current_page, region_total_pages = paginate_list(region_list_filtered, region_page, per_page=10)
     return render_template(
         "account_manage.html",
         accounts=accounts,
+        accounts_filtered=accounts_filtered,
         accounts_page=accounts_page,
         acct_current_page=acct_current_page,
         acct_total_pages=acct_total_pages,
         region_list=region_list,
+        region_list_filtered=region_list_filtered,
         region_list_page=region_list_page,
         region_current_page=region_current_page,
         region_total_pages=region_total_pages,
         vendors=vendors,
         creatable_accounts=creatable_accounts,
         city_options=city_options,
-        region_map=region_map
+        region_map=region_map,
+        acct_q=acct_q,
+        region_q=region_q,
+        active_tab=active_tab
     )
 # =========================================================
 # 차량 마스터 업로드 (마스터 전용)

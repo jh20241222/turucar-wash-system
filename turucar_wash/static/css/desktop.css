@@ -4,10 +4,11 @@
 
 /* ═══════════════════════════════════════════════
    Turu Wash — desktop.css
-   CARPLAT 스타일 기준 / 나눔스퀘어
+   CARPLAT 스타일 기준 / Pretendard
+   (2026-09-01: 나눔스퀘어는 로컬에 설치돼 있을 때만 적용되고 없으면 폴백돼서
+   PC마다 폰트가 다르게 보이는 원인이었다. base.html에서 이미 CDN으로 확실히
+   불러오고 있는 Pretendard로 통일해서 항상 같은 폰트로 보이게 한다.)
 ═══════════════════════════════════════════════ */
-
-@import url('https://cdn.jsdelivr.net/gh/moonspam/NanumSquare@2.0/nanumsquare.css');
 
 /* ── 라이트 모드 ── */
 [data-theme="light"] {
@@ -62,7 +63,7 @@
     background: var(--d-bg) !important;
     background-image: none !important;
     color: var(--d-text) !important;
-    font-family: 'NanumSquare', 'Pretendard', 'Apple SD Gothic Neo', sans-serif !important;
+    font-family: 'Pretendard', 'Pretendard', 'Apple SD Gothic Neo', sans-serif !important;
     font-size: 14px !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -70,7 +71,7 @@
 }
 
 #desktop-mode * {
-    font-family: 'NanumSquare', 'Pretendard', 'Apple SD Gothic Neo', sans-serif !important;
+    font-family: 'Pretendard', 'Pretendard', 'Apple SD Gothic Neo', sans-serif !important;
 }
 
 /* ══ 모바일 요소 숨기기 ══ */
@@ -196,7 +197,7 @@
     color: var(--d-sb-group) !important;
     padding: 16px 20px 6px !important;
     margin: 0 !important;
-    font-family: 'NanumSquare', sans-serif !important;
+    font-family: 'Pretendard', sans-serif !important;
 }
 #desktop-mode .side-link {
     display: flex !important;
@@ -206,7 +207,7 @@
     color: var(--d-sb-text) !important;
     font-size: 14px !important;
     font-weight: 700 !important;
-    font-family: 'NanumSquare', sans-serif !important;
+    font-family: 'Pretendard', sans-serif !important;
     text-decoration: none !important;
     border-radius: 0 !important;
     min-height: unset !important;
@@ -255,7 +256,7 @@
     padding: 5px 10px !important; border-radius: 6px !important;
     border: 1px solid var(--d-sb-border) !important; white-space: nowrap !important;
     background: transparent !important; flex-shrink: 0 !important;
-    font-family: 'NanumSquare', sans-serif !important; font-weight: 700 !important;
+    font-family: 'Pretendard', sans-serif !important; font-weight: 700 !important;
 }
 #desktop-mode .sidebar-profile a:hover { color: var(--d-text) !important; border-color: var(--d-border) !important; }
 
@@ -292,12 +293,12 @@
 #desktop-mode .dt-topnav > div:first-child { display: flex !important; flex-direction: column !important; justify-content: center !important; gap: 2px !important; }
 #desktop-mode .dt-topnav-crumb {
     font-size: 12px !important; color: var(--d-muted) !important; margin: 0 !important; line-height: 1 !important;
-    font-family: 'NanumSquare', sans-serif !important; font-weight: 400 !important;
+    font-family: 'Pretendard', sans-serif !important; font-weight: 400 !important;
 }
 #desktop-mode .dt-topnav-title {
     font-size: 24px !important; font-weight: 800 !important; color: var(--d-text) !important;
     margin: 0 !important; line-height: 1.2 !important;
-    font-family: 'NanumSquare', sans-serif !important; letter-spacing: -0.03em !important;
+    font-family: 'Pretendard', sans-serif !important; letter-spacing: -0.03em !important;
 }
 #desktop-mode .dt-topnav-right { display: flex !important; align-items: center !important; gap: 10px !important; }
 #desktop-mode .dt-theme-btn {
@@ -305,19 +306,19 @@
     padding: 7px 14px !important; border-radius: 8px !important;
     border: 1px solid var(--d-border) !important; background: var(--d-bg) !important;
     color: var(--d-muted) !important; font-size: 12px !important; cursor: pointer !important;
-    font-family: 'NanumSquare', sans-serif !important; font-weight: 700 !important;
+    font-family: 'Pretendard', sans-serif !important; font-weight: 700 !important;
 }
 #desktop-mode .dt-theme-btn i { font-size: 14px !important; }
 #desktop-mode .dt-theme-btn:hover { background: var(--d-surface) !important; color: var(--d-text) !important; }
 #desktop-mode .dt-topnav-user {
     font-size: 13px !important; color: var(--d-muted) !important;
-    font-family: 'NanumSquare', sans-serif !important; font-weight: 700 !important;
+    font-family: 'Pretendard', sans-serif !important; font-weight: 700 !important;
 }
 #desktop-mode .dt-logout-btn {
     font-size: 12px !important; padding: 7px 14px !important; border-radius: 8px !important;
     border: 1px solid var(--d-border) !important; background: transparent !important;
     color: var(--d-muted) !important; text-decoration: none !important; cursor: pointer !important;
-    font-family: 'NanumSquare', sans-serif !important; font-weight: 700 !important;
+    font-family: 'Pretendard', sans-serif !important; font-weight: 700 !important;
 }
 #desktop-mode .dt-logout-btn:hover { background: var(--d-surface) !important; color: var(--d-text) !important; }
 
@@ -327,7 +328,7 @@
     background: var(--d-surface) !important; border: 1px solid var(--d-border) !important;
     border-radius: 8px !important; padding: 12px 16px !important;
     font-size: 13px !important; color: var(--d-text) !important; margin-bottom: 8px !important;
-    font-family: 'NanumSquare', sans-serif !important;
+    font-family: 'Pretendard', sans-serif !important;
 }
 
 /* ══ 테이블 페이지 ══ */
@@ -393,7 +394,7 @@
 #desktop-mode .dt-date-nav span {
     font-size: 24px !important; font-weight: 800 !important; color: var(--d-text) !important;
     min-width: 150px !important; text-align: center !important; cursor: pointer !important;
-    font-family: 'NanumSquare', sans-serif !important; letter-spacing: -0.03em !important;
+    font-family: 'Pretendard', sans-serif !important; letter-spacing: -0.03em !important;
 }
 #desktop-mode .dt-stats,
 #desktop-mode .dt-status-stats { display: flex !important; align-items: center !important; }
@@ -405,11 +406,11 @@
 #desktop-mode .dt-stat span {
     font-size: 11px !important; color: var(--d-muted) !important; font-weight: 800 !important;
     letter-spacing: 0.04em !important; text-transform: uppercase !important;
-    margin-bottom: 4px !important; font-family: 'NanumSquare', sans-serif !important;
+    margin-bottom: 4px !important; font-family: 'Pretendard', sans-serif !important;
 }
 #desktop-mode .dt-stat strong {
     font-size: 28px !important; font-weight: 800 !important; color: var(--d-text) !important;
-    line-height: 1 !important; font-family: 'NanumSquare', sans-serif !important; letter-spacing: -0.03em !important;
+    line-height: 1 !important; font-family: 'Pretendard', sans-serif !important; letter-spacing: -0.03em !important;
 }
 #desktop-mode .dt-stat--urgent strong { color: #FF5F00 !important; }
 
@@ -418,7 +419,7 @@
     padding: 8px 16px !important; border-radius: 8px !important; font-size: 13px !important;
     font-weight: 700 !important; cursor: pointer !important;
     border: 1px solid var(--d-border) !important; background: var(--d-bg) !important;
-    color: var(--d-text) !important; font-family: 'NanumSquare', sans-serif !important;
+    color: var(--d-text) !important; font-family: 'Pretendard', sans-serif !important;
     text-decoration: none !important; white-space: nowrap !important;
 }
 #desktop-mode .dt-btn:hover { background: var(--d-hover) !important; }
@@ -436,16 +437,16 @@
 #desktop-mode .dt-filterbar input:not([type="date"]):not([type="checkbox"]) {
     flex: 1 !important; min-width: 160px !important; border: none !important;
     background: transparent !important; font-size: 14px !important; color: var(--d-text) !important;
-    outline: none !important; font-family: 'NanumSquare', sans-serif !important; font-weight: 700 !important;
+    outline: none !important; font-family: 'Pretendard', sans-serif !important; font-weight: 700 !important;
 }
 #desktop-mode .dt-filterbar input[type="date"] {
     border: none !important; background: transparent !important; font-size: 13px !important;
-    color: var(--d-muted) !important; outline: none !important; font-family: 'NanumSquare', sans-serif !important;
+    color: var(--d-muted) !important; outline: none !important; font-family: 'Pretendard', sans-serif !important;
 }
 #desktop-mode .dt-filterbar select {
     border: none !important; background: transparent !important; font-size: 13px !important;
     color: var(--d-muted) !important; outline: none !important; cursor: pointer !important;
-    font-family: 'NanumSquare', sans-serif !important; font-weight: 700 !important;
+    font-family: 'Pretendard', sans-serif !important; font-weight: 700 !important;
 }
 #desktop-mode .dt-filter-divider { width: 1px !important; height: 18px !important; background: var(--d-border) !important; flex-shrink: 0 !important; }
 
@@ -458,7 +459,7 @@
     padding: 13px 20px !important; font-size: 14px !important; color: var(--d-muted) !important;
     cursor: pointer !important; background: none !important; border: none !important;
     border-bottom: 2px solid transparent !important; margin-bottom: -1px !important;
-    font-weight: 700 !important; font-family: 'NanumSquare', sans-serif !important;
+    font-weight: 700 !important; font-family: 'Pretendard', sans-serif !important;
 }
 #desktop-mode .dt-tab.active { color: #FF5F00 !important; border-bottom-color: #FF5F00 !important; }
 #desktop-mode .dt-tab-badge {
@@ -474,13 +475,13 @@
     padding: 12px 18px !important; text-align: left !important; font-weight: 800 !important;
     color: var(--d-muted) !important; border-bottom: 1px solid var(--d-border) !important;
     white-space: nowrap !important; font-size: 12px !important; letter-spacing: 0.04em !important;
-    text-transform: uppercase !important; font-family: 'NanumSquare', sans-serif !important;
+    text-transform: uppercase !important; font-family: 'Pretendard', sans-serif !important;
 }
 #desktop-mode .dt-table td {
     padding: 13px 18px !important; color: var(--d-text) !important;
     border-bottom: 1px solid var(--d-border) !important;
     white-space: nowrap !important; font-size: 14px !important; font-weight: 600 !important;
-    font-family: 'NanumSquare', sans-serif !important;
+    font-family: 'Pretendard', sans-serif !important;
 }
 #desktop-mode .dt-table tr:last-child td { border-bottom: none !important; }
 #desktop-mode .dt-row--urgent td { background: transparent !important; }
@@ -490,7 +491,7 @@
 #desktop-mode .dt-car-link:hover { text-decoration: underline !important; }
 #desktop-mode .dt-badge {
     display: inline-block !important; font-size: 12px !important; padding: 3px 10px !important;
-    border-radius: 20px !important; font-weight: 700 !important; font-family: 'NanumSquare', sans-serif !important;
+    border-radius: 20px !important; font-weight: 700 !important; font-family: 'Pretendard', sans-serif !important;
 }
 #desktop-mode .dt-badge--urgent { background: #FFF2E9 !important; color: #dc4000 !important; }
 #desktop-mode .dt-badge--regular { background: #f0fdf4 !important; color: #16a34a !important; }
@@ -498,7 +499,7 @@
 #desktop-mode .dt-elapsed--urgent { color: #FF5F00 !important; font-weight: 800 !important; }
 #desktop-mode .dt-empty {
     text-align: center !important; padding: 56px !important; color: var(--d-muted) !important;
-    font-size: 14px !important; font-family: 'NanumSquare', sans-serif !important;
+    font-size: 14px !important; font-family: 'Pretendard', sans-serif !important;
 }
 
 /* ══ 어드민 공통 ══ */
@@ -509,41 +510,41 @@
 
 #desktop-mode .d-card { background: var(--d-surface) !important; border: 1px solid var(--d-border) !important; border-radius: 10px !important; overflow: hidden !important; }
 #desktop-mode .d-card-head { display: flex !important; align-items: center !important; justify-content: space-between !important; padding: 16px 22px !important; border-bottom: 1px solid var(--d-border) !important; }
-#desktop-mode .d-card-head h2 { font-size: 15px !important; font-weight: 800 !important; color: var(--d-text) !important; margin: 0 !important; font-family: 'NanumSquare', sans-serif !important; }
-#desktop-mode .d-eyebrow { font-size: 11px !important; font-weight: 800 !important; letter-spacing: 0.07em !important; color: var(--d-muted) !important; text-transform: uppercase !important; margin: 0 0 3px !important; display: block !important; font-family: 'NanumSquare', sans-serif !important; }
+#desktop-mode .d-card-head h2 { font-size: 15px !important; font-weight: 800 !important; color: var(--d-text) !important; margin: 0 !important; font-family: 'Pretendard', sans-serif !important; }
+#desktop-mode .d-eyebrow { font-size: 11px !important; font-weight: 800 !important; letter-spacing: 0.07em !important; color: var(--d-muted) !important; text-transform: uppercase !important; margin: 0 0 3px !important; display: block !important; font-family: 'Pretendard', sans-serif !important; }
 #desktop-mode .d-card-body { padding: 22px !important; }
-#desktop-mode .d-badge-pill { font-size: 12px !important; font-weight: 700 !important; padding: 4px 12px !important; border-radius: 20px !important; background: var(--d-bg) !important; color: var(--d-muted) !important; border: 1px solid var(--d-border) !important; font-family: 'NanumSquare', sans-serif !important; }
-#desktop-mode .d-label { display: block !important; font-size: 12px !important; font-weight: 800 !important; color: var(--d-muted) !important; margin-bottom: 6px !important; font-family: 'NanumSquare', sans-serif !important; }
+#desktop-mode .d-badge-pill { font-size: 12px !important; font-weight: 700 !important; padding: 4px 12px !important; border-radius: 20px !important; background: var(--d-bg) !important; color: var(--d-muted) !important; border: 1px solid var(--d-border) !important; font-family: 'Pretendard', sans-serif !important; }
+#desktop-mode .d-label { display: block !important; font-size: 12px !important; font-weight: 800 !important; color: var(--d-muted) !important; margin-bottom: 6px !important; font-family: 'Pretendard', sans-serif !important; }
 #desktop-mode .d-fg { margin-bottom: 16px !important; }
 #desktop-mode .d-fg:last-child { margin-bottom: 0 !important; }
 #desktop-mode .d-input, #desktop-mode select.d-input {
     display: block !important; width: 100% !important; padding: 9px 13px !important;
     border: 1px solid var(--d-border) !important; border-radius: 8px !important;
     background: var(--d-input) !important; color: var(--d-text) !important;
-    font-size: 14px !important; font-family: 'NanumSquare', sans-serif !important;
+    font-size: 14px !important; font-family: 'Pretendard', sans-serif !important;
     font-weight: 600 !important; outline: none !important; box-sizing: border-box !important;
 }
 #desktop-mode .d-input:focus { border-color: #FF5F00 !important; box-shadow: 0 0 0 3px rgba(255,95,0,0.1) !important; }
 #desktop-mode .d-row-2 { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
-#desktop-mode .d-btn { display: block !important; width: 100% !important; padding: 10px 18px !important; border-radius: 8px !important; font-size: 14px !important; font-weight: 800 !important; cursor: pointer !important; font-family: 'NanumSquare', sans-serif !important; margin-top: 12px !important; text-align: center !important; text-decoration: none !important; border: none !important; }
+#desktop-mode .d-btn { display: block !important; width: 100% !important; padding: 10px 18px !important; border-radius: 8px !important; font-size: 14px !important; font-weight: 800 !important; cursor: pointer !important; font-family: 'Pretendard', sans-serif !important; margin-top: 12px !important; text-align: center !important; text-decoration: none !important; border: none !important; }
 #desktop-mode .d-btn-orange { background: #FF5F00 !important; color: #fff !important; }
 #desktop-mode .d-btn-orange:hover { background: #e05400 !important; }
 #desktop-mode .d-btn-gray { background: var(--d-bg) !important; color: var(--d-text) !important; border: 1px solid var(--d-border) !important; }
 #desktop-mode .d-btn-blue { background: #2563eb !important; color: #fff !important; }
-#desktop-mode .d-btn-danger-sm { display: inline-flex !important; align-items: center !important; padding: 6px 13px !important; border-radius: 7px !important; font-size: 13px !important; font-weight: 700 !important; cursor: pointer !important; font-family: 'NanumSquare', sans-serif !important; background: transparent !important; color: #dc2626 !important; border: 1px solid #fca5a5 !important; }
+#desktop-mode .d-btn-danger-sm { display: inline-flex !important; align-items: center !important; padding: 6px 13px !important; border-radius: 7px !important; font-size: 13px !important; font-weight: 700 !important; cursor: pointer !important; font-family: 'Pretendard', sans-serif !important; background: transparent !important; color: #dc2626 !important; border: 1px solid #fca5a5 !important; }
 #desktop-mode .d-btn-danger-sm:hover { background: #fef2f2 !important; }
 #desktop-mode .d-file-zone { display: flex !important; flex-direction: column !important; align-items: center !important; padding: 32px 20px !important; border: 2px dashed var(--d-border) !important; border-radius: 10px !important; cursor: pointer !important; margin-bottom: 14px !important; text-align: center !important; background: var(--d-th) !important; }
 #desktop-mode .d-file-zone:hover { border-color: #FF5F00 !important; }
 #desktop-mode .d-file-zone input[type="file"] { display: none !important; }
 #desktop-mode .d-file-zone-icon { font-size: 28px !important; margin-bottom: 10px !important; color: var(--d-muted) !important; }
-#desktop-mode .d-file-zone strong { font-size: 14px !important; color: var(--d-text) !important; display: block !important; margin-bottom: 4px !important; font-weight: 800 !important; font-family: 'NanumSquare', sans-serif !important; }
+#desktop-mode .d-file-zone strong { font-size: 14px !important; color: var(--d-text) !important; display: block !important; margin-bottom: 4px !important; font-weight: 800 !important; font-family: 'Pretendard', sans-serif !important; }
 #desktop-mode .d-file-zone small { font-size: 12px !important; color: var(--d-muted) !important; line-height: 1.5 !important; }
 #desktop-mode .d-inline-row { display: flex !important; gap: 10px !important; align-items: center !important; }
 #desktop-mode .d-inline-row .d-input { flex: 1 !important; }
 #desktop-mode .d-table-wrap { overflow-x: auto !important; }
 #desktop-mode .d-table { width: 100% !important; border-collapse: collapse !important; }
-#desktop-mode .d-table th { padding: 12px 18px !important; text-align: left !important; font-weight: 800 !important; color: var(--d-muted) !important; border-bottom: 1px solid var(--d-border) !important; background: var(--d-th) !important; font-size: 12px !important; white-space: nowrap !important; text-transform: uppercase !important; letter-spacing: 0.04em !important; font-family: 'NanumSquare', sans-serif !important; }
-#desktop-mode .d-table td { padding: 13px 18px !important; color: var(--d-text) !important; border-bottom: 1px solid var(--d-border) !important; font-size: 14px !important; font-weight: 600 !important; font-family: 'NanumSquare', sans-serif !important; }
+#desktop-mode .d-table th { padding: 12px 18px !important; text-align: left !important; font-weight: 800 !important; color: var(--d-muted) !important; border-bottom: 1px solid var(--d-border) !important; background: var(--d-th) !important; font-size: 12px !important; white-space: nowrap !important; text-transform: uppercase !important; letter-spacing: 0.04em !important; font-family: 'Pretendard', sans-serif !important; }
+#desktop-mode .d-table td { padding: 13px 18px !important; color: var(--d-text) !important; border-bottom: 1px solid var(--d-border) !important; font-size: 14px !important; font-weight: 600 !important; font-family: 'Pretendard', sans-serif !important; }
 #desktop-mode .d-table tr:last-child td { border-bottom: none !important; }
 #desktop-mode .d-table tr:hover td { background: var(--d-hover) !important; }
 #desktop-mode .d-empty-cell { text-align: center !important; padding: 32px !important; color: var(--d-muted) !important; }
@@ -551,14 +552,14 @@
 #desktop-mode .d-checklist li { font-size: 13px !important; color: var(--d-muted) !important; padding-left: 16px !important; position: relative !important; }
 #desktop-mode .d-checklist li::before { content: "·" !important; position: absolute !important; left: 0 !important; color: #FF5F00 !important; font-weight: 900 !important; }
 #desktop-mode .d-divider { border: none !important; border-top: 1px solid var(--d-border) !important; margin: 18px 0 !important; }
-#desktop-mode .d-sched-item { display: flex !important; align-items: center !important; justify-content: space-between !important; padding: 10px 0 !important; border-bottom: 1px solid var(--d-border) !important; font-size: 14px !important; color: var(--d-text) !important; font-family: 'NanumSquare', sans-serif !important; font-weight: 600 !important; }
+#desktop-mode .d-sched-item { display: flex !important; align-items: center !important; justify-content: space-between !important; padding: 10px 0 !important; border-bottom: 1px solid var(--d-border) !important; font-size: 14px !important; color: var(--d-text) !important; font-family: 'Pretendard', sans-serif !important; font-weight: 600 !important; }
 #desktop-mode .d-sched-item:last-child { border-bottom: none !important; }
 
 /* 문의 티켓 */
 #desktop-mode .d-ticket { background: var(--d-surface) !important; border: 1px solid var(--d-border) !important; border-radius: 10px !important; padding: 20px 22px !important; margin-bottom: 14px !important; }
 #desktop-mode .d-ticket-head { display: flex !important; align-items: center !important; gap: 10px !important; margin-bottom: 10px !important; }
-#desktop-mode .d-ticket-badge { font-size: 12px !important; font-weight: 800 !important; padding: 3px 10px !important; border-radius: 20px !important; background: #FFF2E9 !important; color: #dc4000 !important; font-family: 'NanumSquare', sans-serif !important; }
-#desktop-mode .d-ticket-title { font-size: 15px !important; font-weight: 800 !important; color: var(--d-text) !important; font-family: 'NanumSquare', sans-serif !important; }
+#desktop-mode .d-ticket-badge { font-size: 12px !important; font-weight: 800 !important; padding: 3px 10px !important; border-radius: 20px !important; background: #FFF2E9 !important; color: #dc4000 !important; font-family: 'Pretendard', sans-serif !important; }
+#desktop-mode .d-ticket-title { font-size: 15px !important; font-weight: 800 !important; color: var(--d-text) !important; font-family: 'Pretendard', sans-serif !important; }
 #desktop-mode .d-ticket-time { font-size: 12px !important; color: var(--d-muted) !important; margin-left: auto !important; }
 #desktop-mode .d-ticket-meta { display: flex !important; gap: 16px !important; font-size: 13px !important; color: var(--d-muted) !important; margin-bottom: 10px !important; }
 #desktop-mode .d-ticket-msg { font-size: 14px !important; color: var(--d-text) !important; margin-bottom: 14px !important; line-height: 1.6 !important; }
@@ -573,31 +574,31 @@
 #desktop-mode .d-profile-layout { display: grid !important; grid-template-columns: 280px 1fr !important; gap: 24px !important; padding: 28px !important; align-items: start !important; }
 #desktop-mode .d-profile-card-left { display: flex !important; flex-direction: column !important; gap: 12px !important; }
 #desktop-mode .d-avatar { width: 64px !important; height: 64px !important; background: var(--d-th) !important; border-radius: 50% !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 28px !important; border: 2px solid var(--d-border) !important; }
-#desktop-mode .d-profile-name { font-size: 20px !important; font-weight: 800 !important; color: var(--d-text) !important; margin: 0 !important; font-family: 'NanumSquare', sans-serif !important; }
+#desktop-mode .d-profile-name { font-size: 20px !important; font-weight: 800 !important; color: var(--d-text) !important; margin: 0 !important; font-family: 'Pretendard', sans-serif !important; }
 #desktop-mode .d-profile-role { font-size: 13px !important; color: var(--d-muted) !important; margin: 2px 0 0 !important; }
 #desktop-mode .d-profile-vendor { font-size: 14px !important; color: var(--d-text) !important; font-weight: 700 !important; }
-#desktop-mode .d-region-tag { display: inline-block !important; font-size: 12px !important; padding: 4px 12px !important; border-radius: 20px !important; background: var(--d-th) !important; border: 1px solid var(--d-border) !important; color: var(--d-text) !important; margin: 2px !important; font-family: 'NanumSquare', sans-serif !important; font-weight: 700 !important; }
+#desktop-mode .d-region-tag { display: inline-block !important; font-size: 12px !important; padding: 4px 12px !important; border-radius: 20px !important; background: var(--d-th) !important; border: 1px solid var(--d-border) !important; color: var(--d-text) !important; margin: 2px !important; font-family: 'Pretendard', sans-serif !important; font-weight: 700 !important; }
 
 /* 홈 공지사항 */
 #desktop-mode .d-notice-section { padding: 28px !important; }
 #desktop-mode .d-notice-card { background: var(--d-surface) !important; border: 1px solid var(--d-border) !important; border-radius: 10px !important; overflow: hidden !important; }
 #desktop-mode .d-notice-head { display: flex !important; align-items: center !important; justify-content: space-between !important; padding: 18px 22px !important; border-bottom: 1px solid var(--d-border) !important; }
-#desktop-mode .d-notice-head h2 { font-size: 16px !important; font-weight: 800 !important; color: var(--d-text) !important; margin: 0 !important; font-family: 'NanumSquare', sans-serif !important; }
-#desktop-mode .d-notice-more { font-size: 13px !important; color: var(--d-muted) !important; text-decoration: none !important; border: 1px solid var(--d-border) !important; padding: 6px 14px !important; border-radius: 8px !important; background: transparent !important; font-family: 'NanumSquare', sans-serif !important; font-weight: 700 !important; }
+#desktop-mode .d-notice-head h2 { font-size: 16px !important; font-weight: 800 !important; color: var(--d-text) !important; margin: 0 !important; font-family: 'Pretendard', sans-serif !important; }
+#desktop-mode .d-notice-more { font-size: 13px !important; color: var(--d-muted) !important; text-decoration: none !important; border: 1px solid var(--d-border) !important; padding: 6px 14px !important; border-radius: 8px !important; background: transparent !important; font-family: 'Pretendard', sans-serif !important; font-weight: 700 !important; }
 #desktop-mode .d-notice-more:hover { background: var(--d-bg) !important; color: var(--d-text) !important; }
 #desktop-mode .d-notice-row { display: flex !important; align-items: center !important; gap: 20px !important; padding: 16px 22px !important; border-bottom: 1px solid var(--d-border) !important; cursor: pointer !important; }
 #desktop-mode .d-notice-row:last-child { border-bottom: none !important; }
 #desktop-mode .d-notice-row:hover { background: var(--d-hover) !important; }
-#desktop-mode .d-notice-title { font-size: 14px !important; font-weight: 700 !important; color: var(--d-text) !important; flex: 1 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; font-family: 'NanumSquare', sans-serif !important; }
+#desktop-mode .d-notice-title { font-size: 14px !important; font-weight: 700 !important; color: var(--d-text) !important; flex: 1 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; font-family: 'Pretendard', sans-serif !important; }
 #desktop-mode .d-notice-body-text { font-size: 13px !important; color: var(--d-muted) !important; flex: 2 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
 #desktop-mode .d-notice-date { font-size: 12px !important; color: var(--d-muted) !important; white-space: nowrap !important; }
-#desktop-mode .d-notice-empty { text-align: center !important; padding: 56px !important; color: var(--d-muted) !important; font-size: 15px !important; font-family: 'NanumSquare', sans-serif !important; }
+#desktop-mode .d-notice-empty { text-align: center !important; padding: 56px !important; color: var(--d-muted) !important; font-size: 15px !important; font-family: 'Pretendard', sans-serif !important; }
 
 /* 내 담당 차량 */
 #desktop-mode .d-mv-grid { display: grid !important; grid-template-columns: repeat(3,1fr) !important; gap: 16px !important; padding: 28px 28px 0 !important; }
 #desktop-mode .d-mv-stat { background: var(--d-surface) !important; border: 1px solid var(--d-border) !important; border-radius: 10px !important; padding: 20px !important; text-align: center !important; }
-#desktop-mode .d-mv-stat span { display: block !important; font-size: 11px !important; font-weight: 800 !important; color: var(--d-muted) !important; letter-spacing: 0.05em !important; text-transform: uppercase !important; margin-bottom: 8px !important; font-family: 'NanumSquare', sans-serif !important; }
-#desktop-mode .d-mv-stat strong { font-size: 32px !important; font-weight: 800 !important; color: var(--d-text) !important; line-height: 1 !important; font-family: 'NanumSquare', sans-serif !important; letter-spacing: -0.03em !important; }
+#desktop-mode .d-mv-stat span { display: block !important; font-size: 11px !important; font-weight: 800 !important; color: var(--d-muted) !important; letter-spacing: 0.05em !important; text-transform: uppercase !important; margin-bottom: 8px !important; font-family: 'Pretendard', sans-serif !important; }
+#desktop-mode .d-mv-stat strong { font-size: 32px !important; font-weight: 800 !important; color: var(--d-text) !important; line-height: 1 !important; font-family: 'Pretendard', sans-serif !important; letter-spacing: -0.03em !important; }
 #desktop-mode .d-mv-stat.urgent strong { color: #FF5F00 !important; }
 #desktop-mode .d-mv-stat.regular strong { color: #16a34a !important; }
 

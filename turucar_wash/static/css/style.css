@@ -33,7 +33,7 @@ html { min-height: 100%; -webkit-text-size-adjust: 100%; }
 body {
     margin: 0;
     min-height: 100vh;
-    font-family: "NanumSquare", "NanumSquare Neo", "Apple SD Gothic Neo", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     color: var(--ink);
     background: #FFFFFF;
     -webkit-font-smoothing: antialiased;
@@ -2276,7 +2276,7 @@ body.modal-open {
 
 /* Non-home screens app polish. Home dashboard is intentionally untouched. */
 :root {
-    --app-font: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", sans-serif;
+    --app-font: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", sans-serif;
 }
 .endpoint-wash_list,
 .endpoint-wash_status,
@@ -3708,7 +3708,7 @@ body.modal-open {
 .endpoint-car_detail,
 .endpoint-wash_status,
 .endpoint-wash_list {
-    --clean-font: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", sans-serif;
+    --clean-font: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", sans-serif;
 }
 
 .endpoint-car_detail *,
@@ -4336,7 +4336,7 @@ body.modal-open {
 
 /* Profile screen cleanup + common mobile title sizing */
 .endpoint-profile {
-    --clean-font: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", sans-serif;
+    --clean-font: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", sans-serif;
 }
 
 .endpoint-profile *,
@@ -4558,7 +4558,7 @@ body.modal-open {
 
 /* Force centered page heroes + match home notice title tone */
 :root {
-    --turu-title-font: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", sans-serif;
+    --turu-title-font: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", sans-serif;
 }
 
 /* Hard reset for non-home page hero alignment */

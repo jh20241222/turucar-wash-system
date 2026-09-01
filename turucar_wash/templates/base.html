@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" data-theme="light">
+<html lang="ko" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -14,8 +14,8 @@
     <link rel="icon" type="image/png" sizes="64x64" href="{{ url_for('static', filename='img/icons/favicon-64.png') }}">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=49">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/desktop.css') }}?v=21">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=50">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/desktop.css') }}?v=22">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <script>
     // FOUC 방지
@@ -208,8 +208,8 @@
             </div>
             <div class="dt-topnav-right">
                 <button class="dt-theme-btn" onclick="toggleTheme()" aria-label="테마 전환">
-                    <i class="ti ti-sun" id="dt-theme-icon"></i>
-                    <span id="dt-theme-label">라이트</span>
+                    <i class="ti ti-moon" id="dt-theme-icon"></i>
+                    <span id="dt-theme-label">다크</span>
                 </button>
                 <span class="dt-topnav-user">{{ current_user.username }}</span>
                 <a href="{{ url_for('logout') }}" class="dt-logout-btn">로그아웃</a>
@@ -285,9 +285,31 @@
     </script>
     <script>
     (function() {
-        const saved = localStorage.getItem('turu-theme') || 'light';
+        const saved = localStorage.getItem('turu-theme') || 'dark';
         document.documentElement.setAttribute('data-theme', saved);
-        // ... toggleTheme() function
+
+        function syncThemeButton(theme) {
+            var icon = document.getElementById('dt-theme-icon');
+            var label = document.getElementById('dt-theme-label');
+            if (!icon || !label) return;
+            if (theme === 'dark') {
+                icon.className = 'ti ti-moon';
+                label.textContent = '다크';
+            } else {
+                icon.className = 'ti ti-sun';
+                label.textContent = '라이트';
+            }
+        }
+
+        window.toggleTheme = function() {
+            var current = document.documentElement.getAttribute('data-theme') || 'dark';
+            var next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('turu-theme', next);
+            syncThemeButton(next);
+        };
+
+        document.addEventListener('DOMContentLoaded', function() { syncThemeButton(saved); });
     })();
     </script>
 </body>

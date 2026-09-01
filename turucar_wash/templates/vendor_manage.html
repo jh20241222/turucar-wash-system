@@ -5,8 +5,7 @@
 <div class="turu-page-topbar-v42"><header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
 <div class="turu-page-head-v24 turu-page-head--single-v25"><div><h1>업체 관리</h1><p>업체명은 계정 생성과 오더 업로드의 담당업체 값에 연결됩니다.</p></div></div></div>
 <section class="admin-layout single">
-    <article class="admin-card app-card"><div class="admin-card-head"><div><p class="eyebrow">Create Vendor</p><h2>업체 등록</h2></div></div><form method="POST" class="inline-create-form"><input type="hidden" name="action" value="create_vendor"><input id="vendor_name" type="text" name="name" class="app-input" placeholder="업체명 입력" required><button type="submit" class="primary-btn">등록</button></form></article>
-    <aside class="guide-card app-card"><p class="eyebrow">Guide</p><h3>운영 팁</h3><ul class="check-list"><li>담당업체 값과 같은 이름으로 등록하세요.</li><li>계정 생성 시 업체 선택지로 사용됩니다.</li></ul></aside>
+    <article class="admin-card app-card"><div class="admin-card-head"><div><p class="eyebrow">Create Vendor</p><h2>업체 등록</h2></div></div><form method="POST" class="inline-create-form"><input type="hidden" name="action" value="create_vendor"><input id="vendor_name" type="text" name="name" class="app-input" placeholder="업체명 입력" required><button type="submit" class="primary-btn">등록</button></form><small class="field-hint">담당업체 값과 같은 이름으로 등록하세요. 계정 생성 시 업체 선택지로 사용됩니다.</small></article>
 </section>
 <section class="app-section app-card vendor-list"><div class="section-title-row" style="padding:16px 16px 4px;"><h2>등록 업체</h2><span class="soft-badge">{{ vendors|length }}개</span></div>{% for v in vendors %}<div class="vendor-row"><div><strong>{{ v.name }}</strong><small>#{{ loop.index }}</small></div><form method="POST" class="inline-form" onsubmit="return confirm('정말 이 업체를 삭제할까요?');"><input type="hidden" name="action" value="delete_vendor"><input type="hidden" name="vendor_id" value="{{ v.id }}"><button type="submit" class="danger-btn">삭제</button></form></div>{% else %}<div class="empty-state compact"><strong>등록된 업체가 없습니다.</strong><span>위 입력창에서 업체를 등록하세요.</span></div>{% endfor %}</section>
 </section>
@@ -14,25 +13,15 @@
 {# ── 데스크탑 전용 ── #}
 <div id="d-vendor" style="display:none">
 <div class="d-wrap">
-    <div class="d-grid-2">
-        <div class="d-card">
-            <div class="d-card-head"><div><span class="d-eyebrow">Create</span><h2>업체 등록</h2></div></div>
-            <div class="d-card-body">
-                <form method="POST">
-                    <input type="hidden" name="action" value="create_vendor">
-                    <div class="d-fg"><label class="d-label">업체명</label><input type="text" name="name" class="d-input" placeholder="업체명 입력" required></div>
-                    <button type="submit" class="d-btn d-btn-orange">등록</button>
-                </form>
-            </div>
-        </div>
-        <div class="d-card">
-            <div class="d-card-head"><div><span class="d-eyebrow">Guide</span><h2>운영 팁</h2></div></div>
-            <div class="d-card-body">
-                <ul class="d-checklist">
-                    <li>담당업체 값과 같은 이름으로 등록하세요.</li>
-                    <li>계정 생성 시 업체 선택지로 사용됩니다.</li>
-                </ul>
-            </div>
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">Create</span><h2>업체 등록</h2></div></div>
+        <div class="d-card-body">
+            <form method="POST">
+                <input type="hidden" name="action" value="create_vendor">
+                <div class="d-fg"><label class="d-label">업체명</label><input type="text" name="name" class="d-input" placeholder="업체명 입력" required></div>
+                <button type="submit" class="d-btn d-btn-orange">등록</button>
+                <p class="d-field-hint">담당업체 값과 같은 이름으로 등록하세요. 계정 생성 시 업체 선택지로 사용됩니다.</p>
+            </form>
         </div>
     </div>
     <div class="d-card">
@@ -48,5 +37,7 @@
 <style>
 #desktop-mode #d-vendor { display: block !important; }
 #desktop-mode .turu-vendor-manage-page-v24 { display: none !important; }
+#desktop-mode #d-vendor .d-field-hint { margin: 10px 0 0; font-size: 12px; color: var(--d-muted); line-height: 1.5; }
+.turu-vendor-manage-page-v24 .field-hint { display: block; margin-top: 8px; font-size: 12px; color: var(--color-text-tertiary, #9ca3af); line-height: 1.5; }
 </style>
 {% endblock %}

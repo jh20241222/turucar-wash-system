@@ -27,8 +27,8 @@
     --d-sb-text:       #374151;
     --d-sb-group:      #9ca3af;
     --d-sb-hover:      #f3f4f6;
-    --d-sb-active-bg:  #fff2e9;
-    --d-sb-active-txt: #FF5F00;
+    --d-sb-active-bg:  #eef0f3;
+    --d-sb-active-txt: #111827;
     --d-sb-sub:        #9ca3af;
 }
 
@@ -49,7 +49,7 @@
     --d-sb-text:       #8b909a;
     --d-sb-group:      #3d4250;
     --d-sb-hover:      rgba(255,255,255,0.04);
-    --d-sb-active-bg:  #FF5F00;
+    --d-sb-active-bg:  #1e2128;
     --d-sb-active-txt: #ffffff;
     --d-sb-sub:        #3d4250;
 }
@@ -231,7 +231,7 @@
 #desktop-mode .side-link.active i,
 #desktop-mode .side-link.active b { color: var(--d-sb-active-txt) !important; }
 #desktop-mode .side-menu-bubble {
-    margin-left: auto !important; background: #FF5F00 !important; color: #fff !important;
+    margin-left: auto !important; background: #dc2626 !important; color: #fff !important;
     font-size: 10px !important; font-weight: 800 !important; padding: 2px 7px !important;
     border-radius: 20px !important; flex-shrink: 0 !important;
 }
@@ -527,14 +527,16 @@
 #desktop-mode .d-input:focus { border-color: #FF5F00 !important; box-shadow: 0 0 0 3px rgba(255,95,0,0.1) !important; }
 #desktop-mode .d-row-2 { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
 #desktop-mode .d-btn { display: block !important; width: 100% !important; padding: 10px 18px !important; border-radius: 8px !important; font-size: 14px !important; font-weight: 800 !important; cursor: pointer !important; font-family: 'Pretendard', sans-serif !important; margin-top: 12px !important; text-align: center !important; text-decoration: none !important; border: none !important; }
-#desktop-mode .d-btn-orange { background: #FF5F00 !important; color: #fff !important; }
-#desktop-mode .d-btn-orange:hover { background: #e05400 !important; }
+/* 2026-09-01: 브랜드 오렌지/블루 대신 화면 전체에 통일된 중립 톤 사용 (계정/지역, 업체, 오더 업로드 등 모든 관리 화면 공통) */
+#desktop-mode .d-btn-orange { background: #212121 !important; color: #fff !important; }
+#desktop-mode .d-btn-orange:hover { background: #000 !important; }
 #desktop-mode .d-btn-gray { background: var(--d-bg) !important; color: var(--d-text) !important; border: 1px solid var(--d-border) !important; }
-#desktop-mode .d-btn-blue { background: #2563eb !important; color: #fff !important; }
+#desktop-mode .d-btn-blue { background: #6b7280 !important; color: #fff !important; }
+#desktop-mode .d-btn-blue:hover { background: #4b5563 !important; }
 #desktop-mode .d-btn-danger-sm { display: inline-flex !important; align-items: center !important; padding: 6px 13px !important; border-radius: 7px !important; font-size: 13px !important; font-weight: 700 !important; cursor: pointer !important; font-family: 'Pretendard', sans-serif !important; background: transparent !important; color: #dc2626 !important; border: 1px solid #fca5a5 !important; }
 #desktop-mode .d-btn-danger-sm:hover { background: #fef2f2 !important; }
 #desktop-mode .d-file-zone { display: flex !important; flex-direction: column !important; align-items: center !important; padding: 32px 20px !important; border: 2px dashed var(--d-border) !important; border-radius: 10px !important; cursor: pointer !important; margin-bottom: 14px !important; text-align: center !important; background: var(--d-th) !important; }
-#desktop-mode .d-file-zone:hover { border-color: #FF5F00 !important; }
+#desktop-mode .d-file-zone:hover { border-color: var(--d-muted) !important; }
 #desktop-mode .d-file-zone input[type="file"] { display: none !important; }
 #desktop-mode .d-file-zone-icon { font-size: 28px !important; margin-bottom: 10px !important; color: var(--d-muted) !important; }
 #desktop-mode .d-file-zone strong { font-size: 14px !important; color: var(--d-text) !important; display: block !important; margin-bottom: 4px !important; font-weight: 800 !important; font-family: 'Pretendard', sans-serif !important; }

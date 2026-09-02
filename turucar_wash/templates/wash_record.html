@@ -161,6 +161,11 @@
 .tpv-nav:disabled{opacity:.25;cursor:default;}
 .tpv-prev{left:8px;}
 .tpv-next{right:8px;}
+.tpv-zoom-ctrl{position:absolute;right:12px;bottom:12px;z-index:2;display:flex;flex-direction:column;background:rgba(255,255,255,.14);border-radius:10px;overflow:hidden;}
+.tpv-zoom-btn{background:none;border:none;color:#fff;font-size:20px;font-weight:900;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;}
+.tpv-zoom-btn:hover{background:rgba(255,255,255,.16);}
+.tpv-zoom-btn:disabled{opacity:.3;cursor:default;}
+.tpv-zoom-btn+.tpv-zoom-btn{border-top:1px solid rgba(255,255,255,.18);}
 </style>
 
 {# ── 사진 크게 보기 모달: 모바일/데스크탑 갤러리가 공유한다 ── #}
@@ -171,6 +176,10 @@
         <button type="button" class="tpv-nav tpv-prev" id="tpv-prev-btn" aria-label="이전 사진">&#8249;</button>
         <img id="tpv-img" src="" alt="">
         <button type="button" class="tpv-nav tpv-next" id="tpv-next-btn" aria-label="다음 사진">&#8250;</button>
+        <div class="tpv-zoom-ctrl">
+            <button type="button" class="tpv-zoom-btn" id="tpv-zoom-in-btn" aria-label="확대">&#43;</button>
+            <button type="button" class="tpv-zoom-btn" id="tpv-zoom-out-btn" aria-label="축소">&#8722;</button>
+        </div>
     </div>
     <div class="tpv-caption" id="tpv-caption"></div>
 </div>
@@ -189,6 +198,8 @@
     var prevBtn = document.getElementById('tpv-prev-btn');
     var nextBtn = document.getElementById('tpv-next-btn');
     var closeBtn = document.getElementById('tpv-close-btn');
+    var zoomInBtn = document.getElementById('tpv-zoom-in-btn');
+    var zoomOutBtn = document.getElementById('tpv-zoom-out-btn');
     var curIdx = 0;
 
     // ── 확대(핀치줌)/이동(드래그팬) ──
@@ -198,7 +209,7 @@
     // 그래서 브라우저 기본 제스처는 막고(touch-action:none), 이미지 자체를
     // transform으로 직접 확대/이동시키는 방식으로 바꿨다.
     var zoomState = { scale: 1, tx: 0, ty: 0 };
-    var MIN_SCALE = 1, MAX_SCALE = 4, TAP_ZOOM_SCALE = 2.5;
+    var MIN_SCALE = 1, MAX_SCALE = 4, TAP_ZOOM_SCALE = 2.5, ZOOM_STEP = 1.5;
     var activePointers = new Map();
     var dragStart = null;
     var pinchStartDist = 0, pinchStartScale = 1, pinchStartTx = 0, pinchStartTy = 0, pinchAnchor = null;
@@ -209,6 +220,14 @@
         imgEl.style.transition = animate ? 'transform .18s ease-out' : 'none';
         imgEl.style.transform = 'translate(' + zoomState.tx + 'px,' + zoomState.ty + 'px) scale(' + zoomState.scale + ')';
         imgEl.classList.toggle('tpv-zoomed', zoomState.scale > 1.01);
+        if(zoomInBtn) zoomInBtn.disabled = zoomState.scale >= MAX_SCALE - 0.01;
+        if(zoomOutBtn) zoomOutBtn.disabled = zoomState.scale <= MIN_SCALE + 0.01;
+    }
+    function zoomByStep(factor){
+        var stageRect = imgEl.parentElement.getBoundingClientRect();
+        var targetScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, zoomState.scale * factor));
+        if(Math.abs(targetScale - zoomState.scale) < 0.001) return;
+        zoomAtPoint(stageRect.left + stageRect.width / 2, stageRect.top + stageRect.height / 2, targetScale);
     }
     function clampPan(){
         if(zoomState.scale <= 1){ zoomState.tx = 0; zoomState.ty = 0; return; }
@@ -321,11 +340,13 @@
     imgEl.addEventListener('pointerup', endPointer);
     imgEl.addEventListener('pointercancel', endPointer);
     imgEl.addEventListener('pointerleave', function(e){ if(activePointers.has(e.pointerId)) endPointer(e); });
-    imgEl.addEventListener('dblclick', function(e){
-        e.preventDefault();
-        if(zoomState.scale > 1.01){ resetZoom(); }
-        else { zoomAtPoint(e.clientX, e.clientY, TAP_ZOOM_SCALE); }
-    });
+    // 더블클릭/더블탭 확대는 위 pointerup의 "깨끗한 탭 두 번" 판정에서 이미 처리한다.
+    // 예전엔 여기에 브라우저 네이티브 dblclick 리스너가 따로 하나 더 있었는데, 데스크탑에서
+    // 더블클릭하면 그 판정이 확대를 먼저 적용한 직후 이 dblclick이 곧바로 또 실행되면서
+    // (scale>1이니 resetZoom) 확대했다가 바로 원복돼버려 "데스크탑은 확대가 안 된다"는
+    // 현상의 원인이었다. 판정을 한쪽(pointerup)으로 합쳐서 제거했다.
+    if(zoomInBtn) zoomInBtn.addEventListener('click', function(){ zoomByStep(ZOOM_STEP); });
+    if(zoomOutBtn) zoomOutBtn.addEventListener('click', function(){ zoomByStep(1 / ZOOM_STEP); });
 
     function renderPhoto(){
         var p = TURU_PHOTOS[curIdx];

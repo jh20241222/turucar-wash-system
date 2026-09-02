@@ -40,7 +40,7 @@
 
     </article>
 
-    <form id="wash-form" class="work-form app-card work-form-clean" action="{{ url_for('wash_complete', id=car['id']) }}" method="POST" {% if show_photo_section %}enctype="multipart/form-data" onsubmit="return handlePhotoFormSubmit(event);"{% endif %}>
+    <form id="wash-form" class="work-form app-card work-form-clean" action="{{ url_for('wash_complete', id=car['id']) }}" method="POST" {% if show_photo_section %}enctype="multipart/form-data"{% endif %} onsubmit="return turuHandleWashSubmit(event, this);">
         <div class="step-title clean-step-title"><span>01</span><strong>세차 기록 입력</strong></div>
         <label class="field-label" for="distance">주행거리</label>
         <input id="distance" class="app-input" name="distance" inputmode="numeric" placeholder="예: 12530km">
@@ -85,7 +85,7 @@
                 <button type="button" class="secondary-btn" onclick="copyInfo()">복사</button>
                 <button type="button" class="blue-btn" onclick="openBand()">밴드</button>
                 {% endif %}
-                <button type="submit" class="primary-btn" {% if show_photo_section %}style="grid-column:1/-1;"{% endif %} {% if show_photo_section and not r2_configured %}disabled{% endif %}>{{ '내역업로드' if show_photo_section else '완료 처리' }}</button>
+                <button type="submit" id="wash-submit-btn" class="primary-btn" {% if show_photo_section %}style="grid-column:1/-1;"{% endif %} {% if show_photo_section and not r2_configured %}disabled{% endif %}>{{ '내역업로드' if show_photo_section else '완료 처리' }}</button>
             </div>
         </div>
     </form>
@@ -563,15 +563,12 @@ async function turuConfirmIfBlurry(file){
         }
     });
 
-    window.handlePhotoFormSubmit = function(ev){
-        return confirm('입력한 내용으로 세차 내역을 업로드할까요?');
-    };
 })();
 </script>
 {# ── 데스크탑 전용 ── #}
 <div id="d-car-detail" style="display:none">
 <div class="d-wrap" style="max-width:1400px;padding:32px 40px;">
-<form id="d-wash-form" action="{{ url_for('wash_complete', id=car['id']) }}" method="POST" {% if show_photo_section %}enctype="multipart/form-data" onsubmit="return confirm('입력한 내용으로 세차 내역을 업로드할까요?');"{% endif %}>
+<form id="d-wash-form" action="{{ url_for('wash_complete', id=car['id']) }}" method="POST" {% if show_photo_section %}enctype="multipart/form-data"{% endif %} onsubmit="return turuHandleWashSubmit(event, this);">
 <div class="d-grid-2" style="max-width:100%;grid-template-columns:1fr 1fr;gap:28px;">
 
     <div class="d-card">
@@ -647,7 +644,7 @@ async function turuConfirmIfBlurry(file){
     <button type="button" class="d-btn d-btn-gray" style="height:46px;font-size:14px;" onclick="dCopyInfo()">복사</button>
     <button type="button" class="d-btn" style="background:#03C75A;color:#fff;margin:0;height:46px;font-size:14px;" onclick="openBand()">밴드</button>
     {% endif %}
-    <button type="submit" class="d-btn d-btn-orange" style="margin:0;height:46px;font-size:14px;{% if show_photo_section %}grid-column:1/-1;{% endif %}" {% if show_photo_section and not r2_configured %}disabled{% endif %}>{{ '내역업로드' if show_photo_section else '완료 처리' }}</button>
+    <button type="submit" id="d-wash-submit-btn" class="d-btn d-btn-orange" style="margin:0;height:46px;font-size:14px;{% if show_photo_section %}grid-column:1/-1;{% endif %}" {% if show_photo_section and not r2_configured %}disabled{% endif %}>{{ '내역업로드' if show_photo_section else '완료 처리' }}</button>
 </div>
 </form>
 </div>
@@ -889,6 +886,44 @@ function cdpToggle(btn, rootWrapId){
 }
 renderCarDamagePicker('cdp-root-m', 'damage');
 renderCarDamagePicker('cdp-root-d', 'd-damage');
+</script>
+
+{# ── 세차 완료 업로드 공통: 이중 제출 방지 + 업로드 진행 안내 ──
+   사진이 많은 오더는 업로드가 몇 초~몇십 초 걸릴 수 있는데, 예전엔 버튼을 눌러도 화면에
+   아무 변화가 없어서 "멈춘 줄" 알고 다시 누르거나 뒤로가기를 하는 경우가 있었다.
+   그러다 느린 네트워크에서 업로드가 중간에 끊기면 사진/내역이 통째로 반영되지 않고,
+   다시 이 화면으로 돌아왔을 때 이미 처리된 걸로 보여 "차량 정보를 찾을 수 없습니다"만
+   뜨는 것처럼 보일 수 있다. 그래서 제출 시 버튼을 바로 잠그고 "업로드 중" 화면을 띄워서
+   중복 제출을 막고, 최소한 지금 진행 중이라는 걸 명확히 보여준다. #}
+<div id="turu-upload-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(8,8,10,0.82);color:#fff;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;">
+    <div style="width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,0.25);border-top-color:#fff;animation:turu-spin 0.8s linear infinite;"></div>
+    <div style="font-size:15px;font-weight:700;">업로드 중입니다. 잠시만 기다려주세요…</div>
+    <div style="font-size:12px;color:#c8ccd4;">사진이 많거나 네트워크가 느리면 시간이 걸릴 수 있어요.<br>화면을 벗어나거나 새로고침하지 마세요.</div>
+</div>
+<style>@keyframes turu-spin{to{transform:rotate(360deg);}}</style>
+<script>
+(function(){
+    var TURU_SHOW_PHOTO_SECTION = {{ 'true' if show_photo_section else 'false' }};
+    var submitted = false;
+    window.turuHandleWashSubmit = function(ev, formEl){
+        if(submitted){
+            // 이미 제출 처리 중인데 어떤 경로로든 또 submit이 발생하면 완전히 막는다
+            // (이중 탭/이중 submit으로 같은 오더가 두 번 처리되는 것 방지).
+            return false;
+        }
+        if(TURU_SHOW_PHOTO_SECTION && !confirm('입력한 내용으로 세차 내역을 업로드할까요?')){
+            return false;
+        }
+        submitted = true;
+        ['wash-submit-btn', 'd-wash-submit-btn'].forEach(function(id){
+            var btn = document.getElementById(id);
+            if(btn) btn.disabled = true;
+        });
+        var overlay = document.getElementById('turu-upload-overlay');
+        if(overlay) overlay.style.display = 'flex';
+        return true;
+    };
+})();
 </script>
 
 {% endblock %}

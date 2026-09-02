@@ -36,7 +36,7 @@ except ImportError:
     _PIL_AVAILABLE = False
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import (
-    Flask, Response, flash, jsonify, redirect, render_template,
+    Flask, Response, flash, jsonify, redirect, render_template, render_template_string,
     request, send_file, send_from_directory, url_for
 )
 from flask_login import (
@@ -2267,9 +2267,49 @@ def car_detail(id):
     query += scope_sql
     params += scope_params
     car = cur.execute(query, params).fetchone()
-    conn.close()
     if not car:
-        return "❌ 차량 정보를 찾을 수 없습니다.", 404
+        # 이 화면(오더 진행중 목록)에서만 사라졌을 뿐, 이미 완료 처리(wash_complete)돼
+        # wash_history로 넘어간 것일 수 있다 — 특히 사진 업로드가 오래 걸려 화면이 멈춘
+        #것처럼 보이다가 다시 이 페이지로 돌아왔을 때 "정보를 찾을 수 없다"는 식으로만
+        # 뜨면, 실제로는 정상 처리된 건지 진짜 유실된 건지 알 수가 없어서 혼란스러웠다.
+        # wash_history.원본ID로 이미 완료된 기록이 있는지 확인해서, 있으면 그 결과 화면
+        # 링크를 바로 보여준다.
+        hist_scope_sql, hist_scope_params = scoped_condition("wash_history", current_user)
+        completed = cur.execute(
+            "SELECT id FROM wash_history WHERE 원본ID=?" + hist_scope_sql + " ORDER BY id DESC LIMIT 1",
+            [id] + hist_scope_params
+        ).fetchone()
+        conn.close()
+        if completed:
+            return render_template_string("""
+{% extends "base.html" %}{% block content %}
+<div style="max-width:420px;margin:60px auto;text-align:center;padding:0 20px;font-family:'Pretendard',sans-serif;">
+    <div style="font-size:40px;margin-bottom:10px;">✅</div>
+    <h2 style="margin:0 0 8px;">이미 처리된 오더입니다</h2>
+    <p style="color:#6b7280;font-size:14px;line-height:1.6;margin:0 0 22px;">
+        이 오더는 세차 완료 처리가 정상적으로 접수되어 이미 완료 기록으로 옮겨졌습니다.<br>
+        사진이나 내역이 궁금하면 아래에서 바로 확인하세요.
+    </p>
+    <a href="{{ url_for('wash_record', id=completed_id) }}" style="display:inline-block;background:#212121;color:#fff;font-weight:700;padding:12px 22px;border-radius:10px;text-decoration:none;margin-bottom:10px;">완료된 내역 보기</a><br>
+    <a href="{{ url_for('wash_list') }}" style="display:inline-block;color:#6b7280;font-size:13px;text-decoration:underline;margin-top:6px;">세차 오더 목록으로</a>
+</div>
+{% endblock %}
+""", completed_id=completed["id"])
+        return render_template_string("""
+{% extends "base.html" %}{% block content %}
+<div style="max-width:420px;margin:60px auto;text-align:center;padding:0 20px;font-family:'Pretendard',sans-serif;">
+    <div style="font-size:40px;margin-bottom:10px;">❌</div>
+    <h2 style="margin:0 0 8px;">차량 정보를 찾을 수 없습니다</h2>
+    <p style="color:#6b7280;font-size:14px;line-height:1.6;margin:0 0 22px;">
+        이미 삭제되었거나, 담당 범위 밖의 오더일 수 있습니다.<br>
+        완료 처리 중이었다면 완료 현황에서 반영 여부를 확인해보세요.
+    </p>
+    <a href="{{ url_for('wash_status') }}" style="display:inline-block;background:#212121;color:#fff;font-weight:700;padding:12px 22px;border-radius:10px;text-decoration:none;margin-bottom:10px;">완료 현황에서 확인</a><br>
+    <a href="{{ url_for('wash_list') }}" style="display:inline-block;color:#6b7280;font-size:13px;text-decoration:underline;margin-top:6px;">세차 오더 목록으로</a>
+</div>
+{% endblock %}
+"""), 404
+    conn.close()
     from datetime import date as _date
     try:
         reg_date = (car["등록일"] or car["세차일"] or today_kst())[:10]
@@ -3230,11 +3270,20 @@ def _store_wash_photos(conn, client, files, 차량번호, 세차일, uploaded_by
             failed += 1
             continue
         label = labels[idx] if labels and idx < len(labels) else None
-        conn.execute(
-            """INSERT INTO wash_photos (차량번호, 세차일, r2_key, original_name, shot_label, uploaded_by, uploaded_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (차량번호, 세차일, key, secure_filename(f.filename), label, uploaded_by, uploaded_at)
-        )
+        try:
+            conn.execute(
+                """INSERT INTO wash_photos (차량번호, 세차일, r2_key, original_name, shot_label, uploaded_by, uploaded_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (차량번호, 세차일, key, secure_filename(f.filename), label, uploaded_by, uploaded_at)
+            )
+        except Exception as e:
+            # R2에는 이미 올라갔는데 DB 기록만 실패한 경우 — 이 한 장 때문에 나머지 사진과
+            # 세차 내역(wash_history) 전체가 통째로 날아가면 안 되므로, 실패로 집계만 하고
+            # 계속 진행한다 (예전엔 여기서 예외가 그대로 올라가 wash_complete()의 뒷부분
+            # — 완료 이력 저장 자체 — 까지 실행되지 못하고 통째로 무산되는 위험이 있었다).
+            print(f"[Photo] wash_photos 기록 실패: {e}")
+            failed += 1
+            continue
         uploaded += 1
     return uploaded, failed
 

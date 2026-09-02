@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', renderCC);
             <span id="dcc-active-filters" style="display:none;font-size:12px;color:#888;white-space:nowrap;"></span>
         </div>
         <div class="d-table-wrap">
-            <table class="d-table"><thead><tr><th>차량번호</th><th>차종</th><th>차량소속</th><th>담당업체</th><th>스팟</th><th>지역</th><th>경과일</th></tr></thead>
+            <table class="d-table"><thead><tr><th>차량번호</th><th>차종</th><th>차량소속</th><th>담당업체</th><th>스팟</th><th>지역</th></tr></thead>
             <tbody id="dcc-tbody"></tbody>
             </table>
         </div>
@@ -261,13 +261,11 @@ function renderDCC(){
     }
     document.getElementById('dcc-count-pill').textContent = filtered.length + '대';
     if(filtered.length===0){
-        tbody.innerHTML='<tr><td colspan="7" class="d-empty-cell">검색 결과가 없습니다.</td></tr>';
+        tbody.innerHTML='<tr><td colspan="6" class="d-empty-cell">검색 결과가 없습니다.</td></tr>';
         return;
     }
     let html='';
     filtered.forEach(v=>{
-        const elapsed=v['세차경과일']||0;
-        const urgStyle = elapsed>=14 ? 'style="color:#FF5F00;font-weight:700;"' : '';
         const isMixed = v['BM구분']==='혼용';
         const spotDisp = isMixed ? '혼용' : (v['스팟']||'-');
         const regionDisp = isMixed ? '혼용' : `${(v['지역시도']||'')} ${(v['지역구군']||'')}`.trim();
@@ -279,7 +277,6 @@ function renderDCC(){
             <td>${vendorDisp}</td>
             <td>${spotDisp}</td>
             <td>${regionDisp}</td>
-            <td ${urgStyle}>D+${elapsed}</td>
         </tr>`;
     });
     tbody.innerHTML=html;

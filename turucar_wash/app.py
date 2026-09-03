@@ -5,6 +5,7 @@ import re
 import shutil
 import sqlite3
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlencode
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -43,6 +44,7 @@ from flask_login import (
     LoginManager, UserMixin, current_user,
     login_required, login_user, logout_user
 )
+from werkzeug.datastructures import FileStorage
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
@@ -2361,6 +2363,103 @@ def car_photo_upload(id):
     else:
         flash("❌ 업로드된 사진이 없습니다.")
     return redirect(url_for("car_detail", id=id))
+# =========================================================
+# 세차 사진 슬롯 즉시 업로드 (2026-09-03)
+# =========================================================
+# 세차완료(내역업로드) 버튼을 누른 "순간"에 슬롯 최대 22장을 한꺼번에 업로드하면
+# 현장 LTE 환경에서 체감 대기시간이 길고, 사진이 많을 때는 서버 처리시간이 gunicorn
+# 워커 타임아웃에 걸려 요청 자체가 실패하는 사고(ERR_HTTP2_PROTOCOL_ERROR)까지
+# 있었다. 그래서 사진을 "찍는 즉시" 이 API로 백그라운드 업로드해두고, 완료처리
+# 버튼을 누르는 시점에는 이미 R2에 올라간 사진들을 그대로 인정만 하도록 구조를
+# 바꿨다(wash_complete() 쪽 처리는 아래 참고). 같은 슬롯을 다시 찍으면(재촬영)
+# 이전에 올라간 사진은 지우고 새 걸로 교체한다.
+@app.route("/car_slot_photo_upload/<int:id>", methods=["POST"])
+@login_required
+def car_slot_photo_upload(id):
+    target = _lookup_wash_car_for_photo(id, current_user)
+    if not target:
+        return jsonify({"ok": False, "message": "차량 정보를 찾을 수 없습니다."}), 404
+    if (target["차량소속"] or "").strip() not in PHOTO_UPLOAD_ORGS:
+        return jsonify({"ok": False, "message": "사진 업로드 대상이 아닙니다."}), 403
+    # 라벨은 클라이언트가 보낸 값을 그대로 믿지 않고, 서버가 알고 있는 슬롯 정의에서
+    # slot_key로 조회한 값만 사용한다.
+    slot_key = (request.form.get("slot_key") or "").strip()
+    label = _SLOT_LABEL_BY_KEY.get(slot_key)
+    if not label:
+        return jsonify({"ok": False, "message": "알 수 없는 슬롯입니다."}), 400
+    f = request.files.get("photo")
+    if not f or not f.filename:
+        return jsonify({"ok": False, "message": "사진이 없습니다."}), 400
+    ext = os.path.splitext(secure_filename(f.filename))[1].lower()
+    if ext not in ALLOWED_IMAGE_EXTS:
+        return jsonify({"ok": False, "message": "이미지 파일만 올릴 수 있습니다."}), 400
+    client = _get_r2_client()
+    if not client:
+        return jsonify({"ok": False, "message": "사진 저장소가 아직 설정되지 않았습니다."}), 503
+    img_bytes = _compress_image_bytes(f)
+    if not img_bytes:
+        return jsonify({"ok": False, "message": "이미지 처리에 실패했습니다."}), 500
+    차량번호, 세차일 = target["차량번호"], target["세차일"]
+    key = f"wash_photos/{secure_filename(차량번호)}/{세차일}/{uuid.uuid4().hex}.jpg"
+    try:
+        client.put_object(Bucket=R2_BUCKET_NAME, Key=key, Body=img_bytes, ContentType="image/jpeg")
+    except Exception as e:
+        print(f"[R2] 슬롯 즉시업로드 실패: {e}")
+        return jsonify({"ok": False, "message": "업로드에 실패했습니다."}), 502
+    conn = get_wash_db()
+    # 같은 슬롯(차량번호+세차일+shot_label)에 이미 올라간 사진이 있으면 재촬영으로 보고 교체
+    old_rows = conn.execute(
+        "SELECT id, r2_key FROM wash_photos WHERE 차량번호=? AND 세차일=? AND shot_label=?",
+        (차량번호, 세차일, label)
+    ).fetchall()
+    uploaded_at = now_kst().strftime("%Y-%m-%d %H:%M:%S")
+    cur = conn.execute(
+        """INSERT INTO wash_photos (차량번호, 세차일, r2_key, original_name, shot_label, uploaded_by, uploaded_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (차량번호, 세차일, key, secure_filename(f.filename), label, current_user.username, uploaded_at)
+    )
+    new_id = cur.lastrowid
+    for old in old_rows:
+        conn.execute("DELETE FROM wash_photos WHERE id=?", (old["id"],))
+    conn.commit()
+    conn.close()
+    for old in old_rows:
+        try:
+            client.delete_object(Bucket=R2_BUCKET_NAME, Key=old["r2_key"])
+        except Exception as e:
+            print(f"[R2] 재촬영으로 교체된 이전 사진 삭제 실패: {e}")
+    return jsonify({"ok": True, "photo_id": new_id})
+
+@app.route("/car_slot_photo_clear/<int:id>", methods=["POST"])
+@login_required
+def car_slot_photo_clear(id):
+    """사용자가 완료처리 전에 슬롯 사진을 지우기(✕)만 하고 다시 찍지 않은 경우,
+    이미 백그라운드로 올라가 있던 사진을 R2/DB에서 함께 정리한다."""
+    target = _lookup_wash_car_for_photo(id, current_user)
+    if not target:
+        return jsonify({"ok": False}), 404
+    slot_key = (request.form.get("slot_key") or "").strip()
+    label = _SLOT_LABEL_BY_KEY.get(slot_key)
+    if not label:
+        return jsonify({"ok": False}), 400
+    차량번호, 세차일 = target["차량번호"], target["세차일"]
+    conn = get_wash_db()
+    old_rows = conn.execute(
+        "SELECT id, r2_key FROM wash_photos WHERE 차량번호=? AND 세차일=? AND shot_label=?",
+        (차량번호, 세차일, label)
+    ).fetchall()
+    for old in old_rows:
+        conn.execute("DELETE FROM wash_photos WHERE id=?", (old["id"],))
+    conn.commit()
+    conn.close()
+    client = _get_r2_client()
+    if client:
+        for old in old_rows:
+            try:
+                client.delete_object(Bucket=R2_BUCKET_NAME, Key=old["r2_key"])
+            except Exception as e:
+                print(f"[R2] 슬롯 사진 삭제 실패: {e}")
+    return jsonify({"ok": True})
 @app.route("/car_photo/<int:photo_id>")
 @login_required
 def car_photo_view(photo_id):
@@ -2531,28 +2630,86 @@ def wash_complete(id):
         # 무인훼손 제보 슬롯(damage_1~5)도 이제 다른 슬롯과 동일하게 한 장씩 찍는 개별 슬롯이라
         # 같은 루프에서 함께 수집하고, 그중 damage_* 키에 해당하는 파일만 따로 모아
         # 기존 훼손제보(damage_reports)/슬랙 연동에 사용한다.
+        #
+        # (2026-09-03) 슬롯 사진은 이제 찍는 즉시 /car_slot_photo_upload로 미리 R2에
+        # 올라가 있을 수 있다(현장 업로드 체감속도 개선 — 완료 버튼 누르는 순간엔 이미
+        # 다 올라가 있어서 그때 가서 새로 올릴 게 없게 하는 게 목적). 그런 슬롯은 여기서
+        # 다시 올리지 않고 이미 올라간 걸 그대로 인정한다. 이번 요청에 원본 파일이 직접
+        # 첨부돼 있으면(즉시업로드가 실패했거나, 막판에 재촬영해서 아직 확인 전인 경우)
+        # 그 파일을 우선 처리하고 — 기존에 올라가 있던 스테이징 사진이 있었다면 새 걸로
+        # 교체한다.
+        existing_rows = conn.execute(
+            "SELECT shot_label, r2_key FROM wash_photos WHERE 차량번호=? AND 세차일=?",
+            (row["차량번호"], row["세차일"])
+        ).fetchall()
+        existing_key_by_label = {r["shot_label"]: r["r2_key"] for r in existing_rows if r["shot_label"]}
+
         slot_files, slot_labels, damage_files = [], [], []
+        staged_labels = []       # 이미 업로드되어 있어 다시 올릴 필요 없는 라벨들
+        needs_client = False     # 훼손 슬롯이 스테이징돼 있으면 R2에서 다시 읽어와야 함
         for group in PHOTO_SLOT_GROUPS:
             for item in group["items"]:
+                label = item["label"]
                 f = request.files.get(f"slot_{item['key']}")
                 if f and f.filename:
                     slot_files.append(f)
-                    slot_labels.append(item["label"])
+                    slot_labels.append(label)
                     if item["key"] in DAMAGE_SLOT_KEYS:
                         damage_files.append(f)
+                elif label in existing_key_by_label:
+                    staged_labels.append(label)
+                    if item["key"] in DAMAGE_SLOT_KEYS:
+                        needs_client = True
 
         all_files = slot_files
         all_labels = slot_labels
-        if all_files:
+        client = None
+        if all_files or needs_client:
             client = _get_r2_client()
             if not client:
                 conn.close()
                 flash("❌ 사진 저장소가 아직 설정되지 않았습니다. 관리자에게 R2 환경변수 설정을 요청하세요.")
                 return redirect(url_for("car_detail", id=id))
+        # 이번 요청에서 원본 파일로 새로 처리하는 슬롯 중, 이미 스테이징된 사진이 있던
+        # 라벨은 재촬영으로 보고 기존 걸 먼저 정리한다 (그대로 두면 같은 슬롯 사진이
+        # 두 장 남는다).
+        labels_to_replace = [l for l in slot_labels if l in existing_key_by_label]
+        if labels_to_replace:
+            for label in labels_to_replace:
+                conn.execute(
+                    "DELETE FROM wash_photos WHERE 차량번호=? AND 세차일=? AND shot_label=?",
+                    (row["차량번호"], row["세차일"], label)
+                )
+            conn.commit()
+            if client:
+                for label in labels_to_replace:
+                    try:
+                        client.delete_object(Bucket=R2_BUCKET_NAME, Key=existing_key_by_label[label])
+                    except Exception as e:
+                        print(f"[R2] 재촬영 교체 삭제 실패: {e}")
+        if all_files:
             photo_uploaded, photo_failed = _store_wash_photos(
                 conn, client, all_files, row["차량번호"], row["세차일"], current_user.username,
                 labels=all_labels
             )
+        photo_uploaded += len(staged_labels)  # 이미 올라가 있던 사진들도 등록 수량에 포함
+
+        # 이미 업로드돼 있던 무인훼손 슬롯은 damage_reports/슬랙 연동을 위해 R2에서
+        # 바이트를 다시 받아와 기존 로직(FileStorage 기반 _save_damage_photo)에 그대로
+        # 넘길 수 있도록 감싼다.
+        if needs_client:
+            for item in PHOTO_SLOT_GROUPS[-1]["items"]:
+                key = existing_key_by_label.get(item["label"])
+                if not key or item["label"] in labels_to_replace:
+                    continue
+                try:
+                    obj = client.get_object(Bucket=R2_BUCKET_NAME, Key=key)
+                    body = obj["Body"].read()
+                    damage_files.append(FileStorage(
+                        stream=io.BytesIO(body), filename=f"{item['key']}.jpg", content_type="image/jpeg"
+                    ))
+                except Exception as e:
+                    print(f"[훼손제보] 기업로드 사진 재조회 실패: {e}")
 
         # 무인훼손 제보 슬롯에 사진이 있으면, 기존 훼손제보(damage_reports)/슬랙 알림
         # 파이프라인에도 함께 등록한다 (damage_submit()과 동일한 로직 재사용).
@@ -3148,6 +3305,9 @@ PHOTO_SLOT_GROUPS = [
     },
 ]
 DAMAGE_SLOT_KEYS = {item["key"] for item in PHOTO_SLOT_GROUPS[-1]["items"]}
+# 슬롯 key -> 라벨 조회용 (즉시업로드 API에서 클라이언트가 보낸 slot_key를 서버가 신뢰할
+# 수 있는 라벨로 변환할 때 사용 — 라벨 자체를 클라이언트 입력값으로 받지 않는다).
+_SLOT_LABEL_BY_KEY = {item["key"]: item["label"] for group in PHOTO_SLOT_GROUPS for item in group["items"]}
 
 # 세차 내역 조회(wash_record)에서 사진을 촬영 순서(정면 → 45˚ → 측면 → ... → 무인훼손)
 # 그대로 보여주기 위한 라벨 → 순번 매핑. DB 저장 순서(id)에 의존하지 않고 항상 이
@@ -3248,31 +3408,56 @@ def _compress_image_bytes(file_obj):
         except Exception:
             return None
 
+_PHOTO_UPLOAD_MAX_WORKERS = 6  # 압축+R2 업로드를 몇 장까지 동시에 처리할지
+
 def _store_wash_photos(conn, client, files, 차량번호, 세차일, uploaded_by, labels=None):
     """선택된 사진 파일들을 압축해 R2에 올리고 wash_photos 테이블에 기록한다.
     car_photo_upload(진행중 오더에 사진만 추가)와 wash_complete(사진 업로드 대상 소속의
     '내역업로드' — 사진 등록과 완료 처리를 한 번에 처리) 양쪽에서 공유하는 로직이다.
     labels가 주어지면 files와 같은 순서로 매칭해 shot_label(촬영 슬롯 라벨, 예:
     '전범퍼 정면')을 함께 저장한다 — 없으면 NULL.
-    반환: (uploaded_count, failed_count)."""
+    반환: (uploaded_count, failed_count).
+
+    (2026-09-02) 파일별 압축(Pillow)과 R2 업로드는 서로 독립적이라 스레드풀로 동시에
+    처리한다 — R2 업로드는 대부분 네트워크 대기 시간이고 Pillow 처리도 대부분 시간을
+    C 확장 안에서 보내(GIL 해제) 스레드로 실제 병렬 이득이 있다. 세차완료 한 번에
+    최대 22장까지 순서대로 처리하던 예전 방식은 사진이 많을 때 전체 요청이 gunicorn
+    워커 타임아웃(30초)보다 오래 걸려 요청 자체가 통째로 죽는 문제가 있었다(실사용
+    중 확인, ERR_HTTP2_PROTOCOL_ERROR로 관측됨). sqlite 커넥션은 스레드 간에 공유하면
+    안 되므로, DB 기록만은 전부 끝난 뒤 메인 스레드에서 순서대로 처리한다."""
     uploaded_at = now_kst().strftime("%Y-%m-%d %H:%M:%S")
-    uploaded, failed = 0, 0
-    for idx, f in enumerate(files):
-        if not f or not f.filename:
-            continue
+
+    def _compress_and_upload(item):
+        idx, f = item
         ext = os.path.splitext(secure_filename(f.filename))[1].lower()
         if ext not in ALLOWED_IMAGE_EXTS:
-            failed += 1
-            continue
+            return (idx, None)
         img_bytes = _compress_image_bytes(f)
         if not img_bytes:
-            failed += 1
-            continue
+            return (idx, None)
         key = f"wash_photos/{secure_filename(차량번호)}/{세차일}/{uuid.uuid4().hex}.jpg"
         try:
             client.put_object(Bucket=R2_BUCKET_NAME, Key=key, Body=img_bytes, ContentType="image/jpeg")
         except Exception as e:
             print(f"[R2] 업로드 실패: {e}")
+            return (idx, None)
+        return (idx, {"key": key, "original_name": secure_filename(f.filename)})
+
+    valid_items = [(idx, f) for idx, f in enumerate(files) if f and f.filename]
+    results = {}
+    if valid_items:
+        max_workers = min(_PHOTO_UPLOAD_MAX_WORKERS, len(valid_items))
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            for idx, result in pool.map(_compress_and_upload, valid_items):
+                results[idx] = result
+
+    uploaded, failed = 0, 0
+    for idx in range(len(files)):
+        f = files[idx]
+        if not f or not f.filename:
+            continue
+        result = results.get(idx)
+        if not result:
             failed += 1
             continue
         label = labels[idx] if labels and idx < len(labels) else None
@@ -3280,7 +3465,7 @@ def _store_wash_photos(conn, client, files, 차량번호, 세차일, uploaded_by
             conn.execute(
                 """INSERT INTO wash_photos (차량번호, 세차일, r2_key, original_name, shot_label, uploaded_by, uploaded_at)
                    VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                (차량번호, 세차일, key, secure_filename(f.filename), label, uploaded_by, uploaded_at)
+                (차량번호, 세차일, result["key"], result["original_name"], label, uploaded_by, uploaded_at)
             )
         except Exception as e:
             # R2에는 이미 올라갔는데 DB 기록만 실패한 경우 — 이 한 장 때문에 나머지 사진과

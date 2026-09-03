@@ -305,15 +305,26 @@ async function turuConfirmIfBlurry(file){
 
     // 기본 카메라 앱이 돌려준 File을 캔버스에 그대로(원본 해상도) 다시 그린 뒤 워터마크를
     // 찍어서 새 File로 반환한다. 실패하면 null을 반환하고, 호출부는 원본 파일을 그대로 쓴다.
+    // 서버 저장 상한(_PHOTO_MAX_PX=3840)과 맞춰서, 그보다 큰 원본은 여기서 미리 줄여서
+    // 올린다. 기본 카메라 앱은 폰에 따라 12MP~100MP+ 원본을 그대로 돌려주는데, 그걸
+    // 그대로(리사이즈 없이) 서버로 올리면 (1) 현장 LTE 환경에서 업로드 자체가 오래 걸리고
+    // (2) 서버가 여러 장을 한 번에 처리할 때(디코딩+리사이즈+R2 업로드) 시간이 늘어나서
+    // gunicorn 워커 타임아웃으로 요청 자체가 죽는 문제(2026-09-02 실사용 중 확인)가
+    // 있었다. 워터마크를 찍기 전에 먼저 이 상한 안으로 줄여서, 어차피 서버에도 이 이상은
+    // 저장되지 않을 해상도를 처음부터 올리지 않게 한다.
+    const CLIENT_MAX_DIM = 3840;
     function applyWatermarkToFile(file){
         return new Promise(resolve => {
             const img = new Image();
             const url = URL.createObjectURL(file);
             img.onload = () => {
                 try{
+                    const srcW = img.naturalWidth || img.width;
+                    const srcH = img.naturalHeight || img.height;
+                    const scale = Math.min(1, CLIENT_MAX_DIM / Math.max(srcW, srcH));
                     const canvas = document.createElement('canvas');
-                    canvas.width = img.naturalWidth || img.width;
-                    canvas.height = img.naturalHeight || img.height;
+                    canvas.width = Math.max(1, Math.round(srcW * scale));
+                    canvas.height = Math.max(1, Math.round(srcH * scale));
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     drawWatermark(ctx, canvas);
@@ -321,7 +332,7 @@ async function turuConfirmIfBlurry(file){
                         URL.revokeObjectURL(url);
                         if(!blob){ resolve(null); return; }
                         resolve(new File([blob], file.name || 'photo.jpg', {type: 'image/jpeg'}));
-                    }, 'image/jpeg', 0.95);
+                    }, 'image/jpeg', 0.9);
                 }catch(e){
                     URL.revokeObjectURL(url);
                     resolve(null);
@@ -331,6 +342,63 @@ async function turuConfirmIfBlurry(file){
             img.src = url;
         });
     }
+
+    // (2026-09-03) 완료처리 버튼을 누른 "순간"에 슬롯 사진을 한꺼번에 올리면 현장에서
+    // 체감 대기시간이 길고(사진 최대 22장), 그만큼 서버 처리시간이 늘어나 타임아웃으로
+    // 요청 자체가 실패하는 사고도 있었다. 그래서 사진을 찍는 즉시 백그라운드로 미리
+    // 올려두고, 완료처리 버튼을 누르는 순간엔 이미 올라간 사진은 다시 보내지 않는다
+    // (turuHandleWashSubmit이 제출 직전에 이 슬롯들의 파일을 비워서 중복 전송을 막음).
+    // 즉시 업로드가 실패하면(네트워크 문제 등) 파일을 input에 그대로 남겨둬서, 기존
+    // 방식대로 완료처리 제출에 함께 실려 올라가게 한다 — 어떤 경우에도 사진이 조용히
+    // 사라지지 않도록 하는 안전장치.
+    const CAR_ORDER_ID = {{ car['id'] | tojson }};
+    const pendingSlotUploads = new Map(); // slotKey -> in-flight Promise
+
+    async function uploadSlotPhotoInBackground(slotEl, file){
+        const key = slotEl.dataset.slotKey;
+        slotEl.dataset.uploaded = '0';
+        slotEl.classList.add('slot-uploading');
+        const fd = new FormData();
+        fd.append('slot_key', key);
+        fd.append('photo', file, file.name || 'photo.jpg');
+        const task = fetch(`/car_slot_photo_upload/${CAR_ORDER_ID}`, {method: 'POST', body: fd})
+            .then(r => r.ok ? r.json() : {ok: false})
+            .catch(() => ({ok: false}))
+            .then(data => {
+                slotEl.classList.remove('slot-uploading');
+                if(data && data.ok){
+                    slotEl.dataset.uploaded = '1';
+                }
+                return data;
+            });
+        pendingSlotUploads.set(key, task);
+        task.finally(() => {
+            if(pendingSlotUploads.get(key) === task) pendingSlotUploads.delete(key);
+        });
+        return task;
+    }
+
+    function clearSlotPhotoOnServer(slotKey){
+        const fd = new FormData();
+        fd.append('slot_key', slotKey);
+        // 굳이 응답을 기다리지 않는다 — 실패해도 다음에 그 슬롯을 다시 찍으면 어차피
+        // 교체되고, 완료처리 자체를 막을 이유는 아니다.
+        fetch(`/car_slot_photo_clear/${CAR_ORDER_ID}`, {method: 'POST', body: fd}).catch(() => {});
+    }
+
+    // turuHandleWashSubmit(제출 처리 스크립트, 아래쪽에 정의됨)이 제출 직전에 호출한다.
+    window.turuWaitForPendingSlotUploads = function(timeoutMs){
+        const tasks = Array.from(pendingSlotUploads.values());
+        if(!tasks.length) return Promise.resolve();
+        const timeout = new Promise(resolve => setTimeout(resolve, timeoutMs || 5000));
+        return Promise.race([Promise.allSettled(tasks), timeout]);
+    };
+    window.turuClearUploadedSlotInputs = function(formEl){
+        formEl.querySelectorAll('.photo-slot[data-uploaded="1"]').forEach(slotEl => {
+            const input = document.getElementById('slot-input-' + slotEl.dataset.slotKey);
+            if(input) input.value = '';
+        });
+    };
 
     slots.forEach(slotEl => {
         const key = slotEl.dataset.slotKey;
@@ -355,10 +423,14 @@ async function turuConfirmIfBlurry(file){
                 input.files = dt.files;
             }
             renderSlotThumb(slotEl);
+            const finalFile = input.files && input.files[0];
+            if(finalFile) uploadSlotPhotoInBackground(slotEl, finalFile);
         });
         if(clearBtn){
             clearBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                if(slotEl.dataset.uploaded === '1') clearSlotPhotoOnServer(key);
+                slotEl.dataset.uploaded = '0';
                 input.value = '';
                 renderSlotThumb(slotEl);
             });
@@ -549,6 +621,9 @@ function dCopyInfo(){
 .photo-slot-grid--desktop{grid-template-columns:repeat(5,1fr);gap:10px;}
 .photo-slot,.d-photo-slot{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 6px 10px;border-radius:12px;border:1.5px dashed #d9dce1;background:#fafafa;cursor:pointer;text-align:center;}
 .photo-slot.filled,.d-photo-slot.filled{border-style:solid;border-color:#D85A30;background:#fff;}
+/* 찍은 사진이 백그라운드로 서버에 올라가는 동안(완료처리 전) 살짝 어둡게 표시 */
+.photo-slot.slot-uploading .photo-slot-thumb{opacity:.55;}
+.photo-slot.slot-uploading .photo-slot-thumb::after{content:'업로드중…';position:absolute;inset:auto 0 0 0;background:rgba(0,0,0,.6);color:#fff;font-size:9px;font-weight:700;padding:3px 0;}
 .photo-slot-thumb{position:relative;width:100%;aspect-ratio:1/1;border-radius:8px;overflow:hidden;background:#f0f0f0;display:flex;align-items:center;justify-content:center;}
 .photo-slot-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .photo-slot-icon{font-size:20px;opacity:.55;}
@@ -705,7 +780,25 @@ renderCarDamagePicker('cdp-root-d', 'd-damage');
         });
         var overlay = document.getElementById('turu-upload-overlay');
         if(overlay) overlay.style.display = 'flex';
-        return true;
+
+        // (2026-09-03) 슬롯 사진은 찍는 즉시 백그라운드로 미리 올라가 있을 수 있다
+        // (turuWaitForPendingSlotUploads/turuClearUploadedSlotInputs — 위쪽 사진슬롯
+        // 스크립트에서 정의됨, 사진업로드 대상 소속이 아니면 정의 자체가 안 되므로
+        // typeof로 안전하게 체크). 제출 직전에 잠깐(최대 5초) 아직 끝나지 않은 업로드를
+        // 기다렸다가, 이미 확인된 슬롯의 파일은 지워서 완료처리 요청에 다시 실리지 않게
+        // 한다 — 안 끝난 슬롯은 파일이 그대로 남아있어 기존 방식대로 이번 요청에 함께
+        // 업로드되니 사진이 사라질 걱정은 없다.
+        ev.preventDefault();
+        (async function(){
+            if(typeof window.turuWaitForPendingSlotUploads === 'function'){
+                await window.turuWaitForPendingSlotUploads(5000);
+            }
+            if(typeof window.turuClearUploadedSlotInputs === 'function'){
+                window.turuClearUploadedSlotInputs(formEl);
+            }
+            formEl.submit();
+        })();
+        return false;
     };
 })();
 </script>

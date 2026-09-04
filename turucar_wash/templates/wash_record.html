@@ -53,7 +53,7 @@
         <div class="step-title clean-step-title"><span>☑</span><strong>세차 기록</strong></div>
         <div class="info-list">
             <div><small>주행거리</small><strong>{{ car['주행거리'] or '-' }}</strong></div>
-            <div><small>차량 훼손 부위</small><strong>{{ car['훼손'] or '없음' }}</strong></div>
+            <div><small>차량 훼손 부위</small><strong>{{ (car['훼손']|damage_order) or '없음' }}</strong></div>
             <div><small>경고등</small><strong>{{ car['경고등'] or '없음' }}</strong></div>
             <div><small>기타 특이사항</small><strong>{{ car['특이사항'] or '없음' }}</strong></div>
         </div>
@@ -92,7 +92,7 @@
         <div class="d-card-head"><div><span class="d-eyebrow">세차 기록</span><h2>{{ car['작업자'] or '-' }} 작업</h2></div></div>
         <div class="d-card-body">
             <div class="d-fg"><label class="d-label">주행거리</label><div style="font-size:15px;font-weight:600;color:var(--d-text);">{{ car['주행거리'] or '-' }}</div></div>
-            <div class="d-fg"><label class="d-label">차량 훼손 부위</label><div style="font-size:15px;font-weight:600;color:var(--d-text);white-space:pre-wrap;">{{ car['훼손'] or '없음' }}</div></div>
+            <div class="d-fg"><label class="d-label">차량 훼손 부위</label><div style="font-size:15px;font-weight:600;color:var(--d-text);white-space:pre-wrap;">{{ (car['훼손']|damage_order) or '없음' }}</div></div>
             <div class="d-fg"><label class="d-label">경고등</label><div style="font-size:15px;font-weight:600;color:var(--d-text);white-space:pre-wrap;">{{ car['경고등'] or '없음' }}</div></div>
             <div class="d-fg"><label class="d-label">기타 특이사항</label><div style="font-size:15px;font-weight:600;color:var(--d-text);white-space:pre-wrap;">{{ car['특이사항'] or '없음' }}</div></div>
             <div style="margin-top:16px;">

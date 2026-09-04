@@ -47,7 +47,7 @@
                 <span class="vdd-date">{{ h['세차완료일'] }}</span>
             </div>
             <div class="vdd-row-notes">
-                <span class="vdd-note">훼손 · {{ h['훼손'] or '-' }}</span>
+                <span class="vdd-note">훼손 · {{ (h['훼손']|damage_order) or '-' }}</span>
                 <span class="vdd-note">경고등 · {{ h['경고등'] or '-' }}</span>
             </div>
         </a>
@@ -84,7 +84,7 @@
                 {% for h in rows %}
                 <tr class="dt-row {% if h['id'] in new_damage_ids %}dt-row-new{% endif %}" style="cursor:pointer;" onclick="location.href='{{ url_for('vehicle_damage_detail', plate=h['차량번호']) }}'">
                     <td style="font-weight:700;">{{ h['차량번호'] }}{% if h['id'] in new_damage_ids %}<span class="vdd-new-badge" style="margin-left:6px;">신규 훼손</span>{% endif %}</td>
-                    <td>{{ h['훼손'] or '-' }}</td>
+                    <td>{{ (h['훼손']|damage_order) or '-' }}</td>
                     <td>{{ h['경고등'] or '-' }}</td>
                     <td>{{ h['세차완료일'] }}</td>
                 </tr>

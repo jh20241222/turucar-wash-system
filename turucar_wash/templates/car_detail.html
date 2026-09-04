@@ -718,6 +718,16 @@ function renderCarDamagePicker(rootId, textareaId){
   const zoneEls = root.querySelectorAll('.cdp-zone');
   const checkboxes = root.querySelectorAll('.cdp-tag input[type=checkbox]');
   const tagEls = root.querySelectorAll('.cdp-tag');
+  // 부위를 클릭한 순서(Set 삽입 순서) 그대로 저장하면, 같은 부위 조합이라도 작업자가
+  // 클릭한 순서에 따라 매번 다르게 저장돼서(예: "운)후도어, 운)후휀더, 조)후도어, 조)전휀더")
+  // 세차 이력을 눈으로 비교하기 어렵다는 피드백에 따라, 항상 정해진 순서(앞모습 → 뒷모습
+  // → 운전석 쪽 → 조수석 쪽, 각 쪽은 앞→뒤)로 저장한다. app.py의 _DAMAGE_PART_ORDER와
+  // 같은 순서를 유지해야 한다(표시할 땐 그쪽에서 한 번 더 이 순서로 재정렬한다).
+  const CANONICAL_PART_ORDER = frontTags.map(function(t){ return t.part; }).concat(
+    rearTags.map(function(t){ return t.part; }),
+    ['운)전휀더','운)전도어','운)후도어','운)후휀더','운)스텝'],
+    ['조)전휀더','조)전도어','조)후도어','조)후휀더','조)스텝']
+  );
   function toggle(part){
     if (selected.has(part)) selected.delete(part); else selected.add(part);
     render();
@@ -726,7 +736,7 @@ function renderCarDamagePicker(rootId, textareaId){
     zoneEls.forEach(function(z){ z.classList.toggle('is-on', selected.has(z.dataset.part)); });
     checkboxes.forEach(function(cb){ cb.checked = selected.has(cb.dataset.part); });
     tagEls.forEach(function(t){ t.classList.toggle('is-on', selected.has(t.dataset.part)); });
-    const auto = Array.from(selected).join(', ');
+    const auto = CANONICAL_PART_ORDER.filter(function(p){ return selected.has(p); }).join(', ');
     let extra = textarea.value.startsWith(lastAuto) ? textarea.value.slice(lastAuto.length) : textarea.value;
     lastAuto = auto;
     if (auto && extra && extra.charAt(0) !== ' ') extra = ' ' + extra;

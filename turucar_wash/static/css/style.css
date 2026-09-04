@@ -5563,6 +5563,7 @@ body.endpoint-dashboard .app-main {
 .home-notice-card-v12,
 .home-main-card-v12,
 .home-support-card-v12,
+.home-mixedcar-card-v12,
 .home-tabbar-v12 {
     background: var(--card);
     border: 1px solid rgba(221, 229, 239, .95);
@@ -5754,6 +5755,65 @@ body.endpoint-dashboard .app-main {
     font-weight: 500;
     line-height: 1;
     font-style: normal;
+}
+/* 혼용 차량 — 세차 오더/예약제어/완료 현황 바로 아래, 한 줄 전체를 차지하는 진입점 (2026-09-04) */
+.home-mixedcar-grid-v12 {
+    display: grid;
+    grid-template-columns: 1fr;
+    margin-bottom: 24px;
+}
+.home-mixedcar-card-v12 {
+    min-height: 88px;
+    border-radius: 24px;
+    padding: 16px 28px;
+    display: grid;
+    grid-template-columns: 62px 1fr 18px;
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 16px;
+    row-gap: 2px;
+    color: inherit;
+    text-decoration: none;
+}
+.home-mixedcar-card-v12 .support-visual-v12 {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    overflow: hidden;
+}
+.home-mixedcar-card-v12 .support-visual-v12 img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.home-mixedcar-card-v12 strong {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    color: var(--ink);
+    font-size: 20px;
+    font-weight: 760;
+    letter-spacing: -.05em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.home-mixedcar-card-v12 small {
+    grid-column: 2;
+    grid-row: 2;
+    min-width: 0;
+    color: #687385;
+    font-size: 12.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.home-mixedcar-arrow-v12 {
+    grid-column: 3;
+    grid-row: 1 / 3;
+    color: #5D6572;
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 1;
 }
 .home-tabbar-v12 {
     width: min(760px, 100%);

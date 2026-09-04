@@ -4213,7 +4213,7 @@ def vehicle_damage_dashboard():
     q = request.args.get("q", "").strip()
     org = request.args.get("org", "").strip()
     tab = request.args.get("tab", "all").strip()
-    if tab not in ("all", "new"):
+    if tab not in ("all", "new", "warning"):
         tab = "all"
     page = request.args.get("page", 1, type=int)
     conn = get_wash_db()
@@ -4235,10 +4235,14 @@ def vehicle_damage_dashboard():
     # "신규 훼손" 강조 — 전체 스코프 기준으로 계산해야 하므로 검색/필터 조건과 무관하게 별도 조회한다.
     new_damage_ids = _compute_new_damage_ids(conn, scope_sql, scope_params)
     # 세차 오더(wash_list) 화면의 "전체 / 장기 미세차" 탭과 동일한 패턴 —
-    # q/org 검색조건은 그대로 유지한 채, "신규 훼손" 탭을 고르면 그 조건을 만족하는
-    # 행 중 new_damage_ids에 속한 것만 다시 추려서 페이지네이션한다.
+    # q/org 검색조건은 그대로 유지한 채, "신규 훼손"/"경고등" 탭을 고르면 그 조건을
+    # 만족하는 행 중 각 조건에 해당하는 것만 다시 추려서 페이지네이션한다.
     new_rows = [r for r in all_rows if r["id"] in new_damage_ids]
-    display_rows = new_rows if tab == "new" else all_rows
+    # "경고등" 탭: 경고등에 실제로 뭔가 적힌(=없음/공란이 아닌) 행만. 목록/상세 화면의
+    # "{{ h['경고등'] or '-' }}" 표시용 '-'는 화면에서만 붙는 placeholder이지 DB에 저장된
+    # 값이 아니므로, 여기서는 DB 원본 기준(없음/공란)으로 판단하면 된다.
+    warning_rows = [r for r in all_rows if (r["경고등"] or "").strip() not in _NO_ISSUE_VALUES]
+    display_rows = new_rows if tab == "new" else (warning_rows if tab == "warning" else all_rows)
     org_list = filter_distinct_values(cur, "wash_history", "차량소속", scope_sql, scope_params)
     conn.close()
     page_rows, current_page, total_pages = paginate_list(display_rows, page, per_page=20)
@@ -4246,6 +4250,7 @@ def vehicle_damage_dashboard():
         "vehicle_damage_dashboard.html",
         rows=page_rows, current_page=current_page, total_pages=total_pages,
         total_count=len(display_rows), all_count=len(all_rows), new_count=len(new_rows),
+        warning_count=len(warning_rows),
         q=q, org=org, org_list=org_list, tab=tab,
         new_damage_ids=new_damage_ids,
     )
@@ -4258,7 +4263,7 @@ def vehicle_damage_dashboard_export():
     q = request.args.get("q", "").strip()
     org = request.args.get("org", "").strip()
     tab = request.args.get("tab", "all").strip()
-    if tab not in ("all", "new"):
+    if tab not in ("all", "new", "warning"):
         tab = "all"
     conn = get_wash_db()
     scope_sql, scope_params = scoped_condition("wash_history", current_user)
@@ -4276,6 +4281,8 @@ def vehicle_damage_dashboard_export():
     if tab == "new":
         new_damage_ids = _compute_new_damage_ids(conn, scope_sql, scope_params)
         df = df[df["id"].isin(new_damage_ids)]
+    elif tab == "warning":
+        df = df[~df["경고등"].fillna("").str.strip().isin(_NO_ISSUE_VALUES)]
     df = df.drop(columns=["id"])
     df["훼손부위"] = df["훼손부위"].apply(_format_damage_text)
     conn.close()

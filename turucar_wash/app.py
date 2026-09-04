@@ -4240,10 +4240,6 @@ def vehicle_damage_detail(plate):
         "SELECT * FROM wash_history WHERE 차량번호=? ORDER BY 세차완료일 DESC, id DESC LIMIT 30",
         (plate,)
     ).fetchall()
-    photo_rows = conn.execute(
-        "SELECT * FROM wash_photos WHERE 차량번호=? ORDER BY uploaded_at DESC LIMIT 60",
-        (plate,)
-    ).fetchall()
     conn.close()
     uconn = get_user_db()
     damage_rows = uconn.execute(
@@ -4251,10 +4247,12 @@ def vehicle_damage_detail(plate):
         (plate,)
     ).fetchall()
     uconn.close()
+    # (2026-09-04) 세차 이력의 사진은 이 페이지에서 별도로 모아 보여주지 않고, 각 행을
+    # 눌러서 완료현황의 실제 완료내역(wash_record)으로 이동해 그 안에서 확인하도록 변경.
     return render_template(
         "vehicle_damage_detail.html",
         vehicle=vehicle, wash_history_rows=wash_history_rows,
-        photo_rows=photo_rows, damage_rows=damage_rows, plate=plate,
+        damage_rows=damage_rows, plate=plate,
     )
 @app.route("/damage_ai_label", methods=["GET", "POST"])
 @login_required

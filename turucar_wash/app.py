@@ -4123,6 +4123,26 @@ def _wash_history_damage_where():
         f"OR TRIM(COALESCE(경고등,'')) NOT IN ({placeholders}))",
         list(_NO_ISSUE_VALUES) + list(_NO_ISSUE_VALUES)
     )
+def _compute_new_damage_ids(conn, scope_sql, scope_params):
+    """스코프 내 전체 훼손 이력을 차량번호별로 세차완료일 순서대로 훑어서, 그 차량이 과거
+    세차건에서는 한 번도 언급되지 않았던 훼손 내용이 처음 등장한 wash_history.id 집합을 반환한다.
+    (텍스트 완전일치 기준 비교 — 작업자가 표현을 다르게 적으면 놓칠 수 있는 v1 한계가 있다.)"""
+    rows = conn.execute(
+        "SELECT id, 차량번호, 훼손 FROM wash_history "
+        "WHERE TRIM(COALESCE(훼손,'')) NOT IN ('', '없음')" + scope_sql +
+        " ORDER BY 차량번호, 세차완료일 ASC, id ASC",
+        scope_params
+    ).fetchall()
+    seen_by_plate = {}
+    new_ids = set()
+    for r in rows:
+        plate = r["차량번호"]
+        text = (r["훼손"] or "").strip()
+        seen = seen_by_plate.setdefault(plate, set())
+        if text not in seen:
+            new_ids.add(r["id"])
+        seen.add(text)
+    return new_ids
 @app.route("/vehicle_damage_dashboard")
 @login_required
 def vehicle_damage_dashboard():
@@ -4130,60 +4150,35 @@ def vehicle_damage_dashboard():
         flash("❌ 접근 권한이 없습니다.")
         return redirect(url_for("dashboard"))
     q = request.args.get("q", "").strip()
+    org = request.args.get("org", "").strip()
     page = request.args.get("page", 1, type=int)
     conn = get_wash_db()
+    cur = conn.cursor()
     scope_sql, scope_params = scoped_condition("wash_history", current_user)
     issue_sql, issue_params = _wash_history_damage_where()
     base_query = f"SELECT * FROM wash_history WHERE {issue_sql}" + scope_sql
     base_params = list(issue_params) + list(scope_params)
+    if org:
+        base_query += " AND 차량소속 = ?"
+        base_params.append(org)
     if q:
         base_query += " AND 차량번호 LIKE ?"
         base_params.append(f"%{q}%")
-    # 위쪽 "확인 필요" — 아직 관리자가 확인 처리하지 않은 훼손/경고등 건.
-    needs_check_rows = conn.execute(
-        base_query + " AND (damage_checked IS NULL OR damage_checked = 0) ORDER BY 세차완료일 DESC, id DESC LIMIT 200",
-        base_params
-    ).fetchall()
-    # 아래쪽 — 확인 여부와 상관없이 훼손/경고등 메모가 있었던 전체 세차완료 기록.
-    all_rows = conn.execute(
+    all_rows = cur.execute(
         base_query + " ORDER BY 세차완료일 DESC, id DESC",
         base_params
     ).fetchall()
+    # "신규 훼손" 강조 — 전체 스코프 기준으로 계산해야 하므로 검색/필터 조건과 무관하게 별도 조회한다.
+    new_damage_ids = _compute_new_damage_ids(conn, scope_sql, scope_params)
+    org_list = filter_distinct_values(cur, "wash_history", "차량소속", scope_sql, scope_params)
     conn.close()
     page_rows, current_page, total_pages = paginate_list(all_rows, page, per_page=20)
     return render_template(
         "vehicle_damage_dashboard.html",
-        needs_check_rows=needs_check_rows,
         rows=page_rows, current_page=current_page, total_pages=total_pages,
-        total_count=len(all_rows), q=q,
+        total_count=len(all_rows), q=q, org=org, org_list=org_list,
+        new_damage_ids=new_damage_ids,
     )
-@app.route("/vehicle_damage_dashboard/mark_checked", methods=["POST"])
-@login_required
-def vehicle_damage_mark_checked():
-    if not _can_view_vehicle_management():
-        return "Forbidden", 403
-    history_id = request.form.get("history_id", type=int)
-    if not history_id:
-        flash("❌ 대상을 찾을 수 없습니다.")
-        return redirect(url_for("vehicle_damage_dashboard"))
-    conn = get_wash_db()
-    scope_sql, scope_params = scoped_condition("wash_history", current_user)
-    row = conn.execute(
-        "SELECT id FROM wash_history WHERE id=?" + scope_sql,
-        [history_id] + list(scope_params)
-    ).fetchone()
-    if not row:
-        conn.close()
-        flash("❌ 해당 기록을 찾을 수 없거나 확인 권한이 없습니다.")
-        return redirect(url_for("vehicle_damage_dashboard"))
-    conn.execute(
-        "UPDATE wash_history SET damage_checked=1, damage_checked_by=?, damage_checked_at=? WHERE id=?",
-        (current_user.username, now_kst().strftime("%Y-%m-%d %H:%M:%S"), history_id)
-    )
-    conn.commit()
-    conn.close()
-    flash("✔ 확인 처리되었습니다.")
-    return redirect(request.referrer or url_for("vehicle_damage_dashboard"))
 @app.route("/vehicle_damage_dashboard/export")
 @login_required
 def vehicle_damage_dashboard_export():
@@ -4191,11 +4186,15 @@ def vehicle_damage_dashboard_export():
         flash("❌ 접근 권한이 없습니다.")
         return redirect(url_for("dashboard"))
     q = request.args.get("q", "").strip()
+    org = request.args.get("org", "").strip()
     conn = get_wash_db()
     scope_sql, scope_params = scoped_condition("wash_history", current_user)
     issue_sql, issue_params = _wash_history_damage_where()
     query = f"SELECT 차량번호, 훼손 AS 훼손부위, 경고등, 세차완료일 FROM wash_history WHERE {issue_sql}" + scope_sql
     params = list(issue_params) + list(scope_params)
+    if org:
+        query += " AND 차량소속 = ?"
+        params.append(org)
     if q:
         query += " AND 차량번호 LIKE ?"
         params.append(f"%{q}%")

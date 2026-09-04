@@ -34,7 +34,7 @@
     </section>
 
     {% set section_label = '신규 훼손 목록' if tab == 'new' else ('경고등 목록' if tab == 'warning' else '전체 목록') %}
-    {% set empty_msg = '신규 훼손으로 표시된 기록이 없습니다.' if tab == 'new' else ('경고등이 있는 기록이 없습니다.' if tab == 'warning' else ('조건과 일치하는 기록이 없습니다.' if (q or org) else '훼손·경고등 메모가 있는 세차완료 기록이 없습니다.')) %}
+    {% set empty_msg = '신규 훼손으로 표시된 기록이 없습니다.' if tab == 'new' else ('경고등이 있는 기록이 없습니다.' if tab == 'warning' else ('조건과 일치하는 차량이 없습니다.' if (q or org) else '등록된 차량이 없습니다.')) %}
     <input type="hidden" id="vdd_tab" value="{{ tab }}">
     <div class="wash-type-filter-bar vdd-tab-bar">
         <button type="button" class="wash-type-btn wash-type-btn--all {% if tab == 'all' %}active{% endif %}" onclick="setVddTab('all')">전체 <em class="vdd-tab-count">{{ all_count }}</em></button>
@@ -47,7 +47,7 @@
         <a href="{{ url_for('vehicle_damage_detail', plate=h['차량번호']) }}" class="vdd-row vdd-row-link {% if h['id'] in new_damage_ids %}vdd-row-new{% endif %}">
             <div class="vdd-row-main">
                 <span class="vdd-plate">{{ h['차량번호'] }}{% if h['id'] in new_damage_ids %}<em class="vdd-new-badge">신규 훼손</em>{% endif %}</span>
-                <span class="vdd-date">{{ h['세차완료일'] }}</span>
+                <span class="vdd-date">{{ h['세차완료일'] or '세차 이력 없음' }}</span>
             </div>
             <div class="vdd-row-notes">
                 <span class="vdd-note">훼손 · {{ (h['훼손']|damage_order) or '-' }}</span>
@@ -90,7 +90,7 @@
                     <td style="font-weight:700;">{{ h['차량번호'] }}{% if h['id'] in new_damage_ids %}<span class="vdd-new-badge" style="margin-left:6px;">신규 훼손</span>{% endif %}</td>
                     <td>{{ (h['훼손']|damage_order) or '-' }}</td>
                     <td>{{ h['경고등'] or '-' }}</td>
-                    <td>{{ h['세차완료일'] }}</td>
+                    <td>{{ h['세차완료일'] or '세차 이력 없음' }}</td>
                 </tr>
                 {% else %}
                 <tr><td colspan="4" class="dt-empty">{{ empty_msg }}</td></tr>

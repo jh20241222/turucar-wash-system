@@ -4124,24 +4124,28 @@ def _wash_history_damage_where():
         list(_NO_ISSUE_VALUES) + list(_NO_ISSUE_VALUES)
     )
 def _compute_new_damage_ids(conn, scope_sql, scope_params):
-    """스코프 내 전체 훼손 이력을 차량번호별로 세차완료일 순서대로 훑어서, 그 차량이 과거
-    세차건에서는 한 번도 언급되지 않았던 훼손 내용이 처음 등장한 wash_history.id 집합을 반환한다.
-    (텍스트 완전일치 기준 비교 — 작업자가 표현을 다르게 적으면 놓칠 수 있는 v1 한계가 있다.)"""
+    """차량별로 '가장 최근' 세차완료 기록의 훼손 텍스트가 그 이전 모든 기록에는 한 번도
+    등장한 적이 없으면, 그 최신 기록 하나만 wash_history.id로 반환한다(신규 훼손 강조 대상).
+    같은 차량의 더 오래된 기록들은 — 그 자체가 당시엔 새로 등장한 표현이었더라도 — 다시
+    강조하지 않는다. 지금 확인이 필요한 것은 "가장 최근 세차에서 새로 생긴 훼손이 있는가"이지,
+    과거 이력 전체를 훑어 처음 등장한 문구를 전부 표시하는 게 아니기 때문이다(그렇게 하면
+    오래된 차량일수록 이력 대부분이 붉게 표시되어 오히려 눈에 띄어야 할 것을 가려버린다).
+    텍스트 완전일치 기준 비교라 작업자가 표현을 다르게 적으면 놓칠 수 있는 v1 한계가 있다."""
     rows = conn.execute(
         "SELECT id, 차량번호, 훼손 FROM wash_history "
         "WHERE TRIM(COALESCE(훼손,'')) NOT IN ('', '없음')" + scope_sql +
         " ORDER BY 차량번호, 세차완료일 ASC, id ASC",
         scope_params
     ).fetchall()
-    seen_by_plate = {}
-    new_ids = set()
+    rows_by_plate = {}
     for r in rows:
-        plate = r["차량번호"]
-        text = (r["훼손"] or "").strip()
-        seen = seen_by_plate.setdefault(plate, set())
-        if text not in seen:
-            new_ids.add(r["id"])
-        seen.add(text)
+        rows_by_plate.setdefault(r["차량번호"], []).append(r)
+    new_ids = set()
+    for plate_rows in rows_by_plate.values():
+        latest = plate_rows[-1]
+        prior_texts = {(r["훼손"] or "").strip() for r in plate_rows[:-1]}
+        if (latest["훼손"] or "").strip() not in prior_texts:
+            new_ids.add(latest["id"])
     return new_ids
 @app.route("/vehicle_damage_dashboard")
 @login_required

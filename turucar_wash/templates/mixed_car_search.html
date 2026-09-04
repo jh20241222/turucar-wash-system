@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block document_title %}Turu Wash · 혼용 차량{% endblock %}
+{% block content %}
+<section class="turu-app-page-v24 mcs-page">
+    <div class="turu-page-topbar-v42"><header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
+    <div class="turu-page-head-v24 turu-page-head--single-v25"><div><h1>혼용 차량</h1><p>정기 오더가 없는 혼용 차량을 찾아서 눌러 세차 기록을 시작하세요.</p></div></div></div>
+
+    <div style="padding:10px 16px 0;">
+        <div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;display:flex;align-items:center;padding:0 14px;height:44px;gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+            <input id="mcs-search" placeholder="차량번호, 스팟, 차량소속 검색" oninput="mcsRender()" autofocus style="flex:1;border:none;outline:none;font-size:13px;font-family:'Pretendard',sans-serif;background:transparent;color:#111;">
+        </div>
+    </div>
+
+    <div id="mcs-list" class="mcs-list"></div>
+    <p id="mcs-empty" style="display:none;text-align:center;color:var(--color-text-tertiary);font-size:13px;padding:24px 16px;">일치하는 혼용 차량이 없습니다.</p>
+</section>
+
+<form id="mcsRegisterForm" method="post" action="{{ url_for('mixed_car_register') }}" style="display:none;">
+    <input type="hidden" name="plate" id="mcsRegisterPlate">
+</form>
+
+<style>
+.mcs-page, .mcs-page * { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif !important; }
+.mcs-list { padding:10px 16px 24px; }
+.mcs-row { display:flex; align-items:center; justify-content:space-between; gap:10px; background:#fff; border:0.5px solid #e5e5e5; border-radius:16px; padding:14px 16px; margin-bottom:8px; cursor:pointer; }
+.mcs-row:active { background:#FFF6EE; }
+.mcs-row-info { min-width:0; }
+.mcs-row-top { display:flex; align-items:center; gap:6px; margin-bottom:3px; }
+.mcs-plate { font-size:15px; font-weight:900; color:#111; }
+.mcs-org { font-size:12px; font-weight:600; color:#666; }
+.mcs-sub { font-size:11px; color:#999; }
+.mcs-arrow { font-size:18px; color:#ccc; flex-shrink:0; }
+</style>
+
+<script>
+const _mixedVehicles = {{ rows | tojson }};
+
+function mcsRender(){
+    const q = (document.getElementById('mcs-search').value || '').toLowerCase();
+    const list = document.getElementById('mcs-list');
+    const empty = document.getElementById('mcs-empty');
+    const filtered = _mixedVehicles.filter(v => !q ||
+        (v['차량번호']||'').toLowerCase().includes(q) ||
+        (v['스팟']||'').toLowerCase().includes(q) ||
+        (v['차량소속']||'').toLowerCase().includes(q));
+    if (filtered.length === 0) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    list.innerHTML = filtered.map(v => `
+        <div class="mcs-row" onclick="mcsRegister('${(v['차량번호']||'').replace(/'/g, "\\'")}')">
+            <div class="mcs-row-info">
+                <div class="mcs-row-top"><span class="mcs-plate">${v['차량번호']||'-'}</span><span class="mcs-org">${v['차량소속']||''}</span></div>
+                <div class="mcs-sub">${v['스팟']||'스팟 미지정'} · ${v['차종명']||'-'}</div>
+            </div>
+            <span class="mcs-arrow">›</span>
+        </div>
+    `).join('');
+}
+
+function mcsRegister(plate){
+    document.getElementById('mcsRegisterPlate').value = plate;
+    document.getElementById('mcsRegisterForm').submit();
+}
+
+document.addEventListener('DOMContentLoaded', mcsRender);
+</script>
+
+{# ── 데스크탑 전용 ── #}
+<section class="desktop-table table-panel app-card turu-desktop-table-v24 mcs-desktop">
+    <div class="dt-toolbar">
+        <div class="dt-toolbar-left"><h2 style="margin:0;font-size:19px;font-weight:800;">혼용 차량 검색</h2></div>
+        <div class="dt-toolbar-right"><span class="d-badge-pill">{{ rows|length }}대</span></div>
+    </div>
+    <div class="dt-filterbar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-text-tertiary);flex-shrink:0"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+        <input id="dt_mcs_search" placeholder="차량번호, 스팟, 차량소속 검색" oninput="dtMcsRender()">
+    </div>
+    <div class="dt-table-scroll">
+        <table class="dt-table">
+            <thead><tr><th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th></tr></thead>
+            <tbody id="dt-mcs-tbody"></tbody>
+        </table>
+        <p id="dt-mcs-empty" style="display:none;text-align:center;color:var(--color-text-tertiary);font-size:13px;padding:24px 16px;">일치하는 혼용 차량이 없습니다.</p>
+    </div>
+</section>
+
+<style>
+#desktop-mode .mcs-desktop { display: flex !important; }
+#desktop-mode .mcs-page { display: none !important; }
+</style>
+
+<script>
+function dtMcsRender(){
+    const q = (document.getElementById('dt_mcs_search').value || '').toLowerCase();
+    const tbody = document.getElementById('dt-mcs-tbody');
+    const empty = document.getElementById('dt-mcs-empty');
+    const filtered = _mixedVehicles.filter(v => !q ||
+        (v['차량번호']||'').toLowerCase().includes(q) ||
+        (v['스팟']||'').toLowerCase().includes(q) ||
+        (v['차량소속']||'').toLowerCase().includes(q));
+    if (filtered.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = filtered.map(v => `
+        <tr class="dt-row" style="cursor:pointer;" onclick="mcsRegister('${(v['차량번호']||'').replace(/'/g, "\\'")}')">
+            <td style="font-weight:700;">${v['차량번호']||'-'}</td>
+            <td>${v['차종명']||'-'}</td>
+            <td>${v['차량소속']||'-'}</td>
+            <td>${v['스팟']||'-'}</td>
+        </tr>
+    `).join('');
+}
+document.addEventListener('DOMContentLoaded', dtMcsRender);
+</script>
+{% endblock %}

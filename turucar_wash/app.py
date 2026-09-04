@@ -4165,47 +4165,68 @@ def _split_damage_tokens(text):
     if not text or not isinstance(text, str):
         return []
     return [t.strip() for t in text.split(",") if t.strip()]
-def _vehicle_damage_summary_rows(conn, scope_sql, scope_params):
+def _chunked(seq, size):
+    for i in range(0, len(seq), size):
+        yield seq[i:i + size]
+def _vehicle_damage_summary_rows(conn, veh_scope_sql, veh_scope_params):
     """차량별 훼손관리 대시보드용 데이터를 한 번에 만든다.
 
-    (2026-09-04) 예전에는 wash_history에서 "훼손/경고등이 있는" 행을 그대로 다 나열해서,
-    한 차량이 세차완료를 여러 번 하며 훼손 메모를 남기면 그 차량이 목록에 여러 줄로
-    중복 표시됐다. 이 화면은 "지금 이 차량 상태가 어떤가"를 보는 화면이므로, 차량당
-    "가장 최근" 세차완료 기록 1건만 대표로 보여준다. 그 최신 기록에 훼손/경고등이 둘 다
-    없으면(=문제 없음) 그 차량은 목록에서 아예 빠진다.
+    (2026-09-04) "전체" 탭은 차량소속에 배정된 vehicle_master의 차량을 전부 보여줘야
+    한다 — 세차 이력이 아예 없거나, 있어도 최신 기록에 훼손/경고등이 없는 차량도
+    포함(예전엔 "훼손/경고등이 있는 wash_history 행"만 골라 보여줘서 세차 이력이 없는
+    차량이나 최신 상태가 깨끗한 차량은 아예 목록에서 빠졌었다 — 사용자 피드백으로 수정).
+    차량마다 wash_history의 "가장 최근" 기록 1건만 대표로 붙이고(세차 이력이 없으면
+    훼손/경고등/세차완료일은 비워둔다), 한 차량이 여러 줄로 중복 표시되지 않게 한다.
 
-    "신규 훼손" 판단 기준도 함께 바뀐다 — 예전엔 그 차량의 과거 전체 이력에 한 번이라도
-    등장한 적 없는 부위면 신규로 봤지만, 이제는 "바로 직전" 세차완료 기록에 없던 부위만
-    신규로 본다(최신 vs 직전, 1:1 비교). 부위 비교는 여전히 _split_damage_tokens()로
-    쉼표 단위 토큰 집합 비교를 한다(문자열 전체 비교가 아님 — 이유는 그 함수 설명 참고).
+    "신규 훼손" 판단은 그 차량의 전체 이력이 아니라 "바로 직전" 세차완료 기록에 없던
+    부위만 신규로 본다(최신 vs 직전, 1:1 비교). 부위 비교는 여전히
+    _split_damage_tokens()로 쉼표 단위 토큰 집합 비교를 한다(문자열 전체 비교가 아님
+    — 이유는 그 함수 설명 참고).
 
-    반환값: (latest_rows: 훼손/경고등이 있는 차량들의 최신 wash_history Row 리스트,
-             new_damage_ids: 그 중 신규훼손으로 판단된 id 집합)"""
-    rows = conn.execute(
-        "SELECT * FROM wash_history WHERE 1=1" + scope_sql +
-        " ORDER BY 차량번호, 세차완료일 ASC, id ASC",
-        scope_params
+    반환값: (all_rows: 스코프 내 모든 차량 1건씩(dict) 리스트,
+             new_damage_ids: 그 중 신규훼손으로 판단된 wash_history id 집합)"""
+    vehicles = conn.execute(
+        "SELECT * FROM vehicle_master WHERE 1=1" + veh_scope_sql + " ORDER BY 차량번호",
+        veh_scope_params
     ).fetchall()
-    rows_by_plate = {}
-    for r in rows:
-        rows_by_plate.setdefault(r["차량번호"], []).append(r)
-    latest_rows = []
+    plates = [v["차량번호"] for v in vehicles]
+    hist_rows = []
+    for chunk in _chunked(plates, 500):
+        placeholders = ",".join(["?"] * len(chunk))
+        hist_rows.extend(conn.execute(
+            f"SELECT * FROM wash_history WHERE 차량번호 IN ({placeholders}) "
+            "ORDER BY 세차완료일 ASC, id ASC",
+            chunk
+        ).fetchall())
+    hist_by_plate = {}
+    for r in hist_rows:
+        hist_by_plate.setdefault(r["차량번호"], []).append(r)
+    all_rows = []
     new_damage_ids = set()
-    for plate_rows in rows_by_plate.values():
-        latest = plate_rows[-1]
-        damage = (latest["훼손"] or "").strip()
-        warn = (latest["경고등"] or "").strip()
-        if damage in _NO_ISSUE_VALUES and warn in _NO_ISSUE_VALUES:
+    for v in vehicles:
+        plate = v["차량번호"]
+        plate_hist = hist_by_plate.get(plate) or []
+        if not plate_hist:
+            all_rows.append({
+                "id": None, "차량번호": plate, "차량소속": v["차량소속"],
+                "훼손": None, "경고등": None, "세차완료일": None,
+            })
             continue
-        latest_rows.append(latest)
-        # 최신 기록 자체에 훼손이 없으면(경고등만 있는 경우) 비교할 신규 훼손이 없으므로 스킵.
+        latest = plate_hist[-1]
+        all_rows.append({
+            "id": latest["id"], "차량번호": plate, "차량소속": v["차량소속"],
+            "훼손": latest["훼손"], "경고등": latest["경고등"], "세차완료일": latest["세차완료일"],
+        })
+        damage = (latest["훼손"] or "").strip()
+        # 최신 기록 자체에 훼손이 없으면(경고등만 있거나 아예 특이사항 없는 경우)
+        # 비교할 신규 훼손이 없으므로 스킵.
         if damage not in _NO_ISSUE_VALUES:
-            prev = plate_rows[-2] if len(plate_rows) >= 2 else None
+            prev = plate_hist[-2] if len(plate_hist) >= 2 else None
             prev_tokens = set(_split_damage_tokens(prev["훼손"])) if prev else set()
             latest_tokens = _split_damage_tokens(latest["훼손"])
             if any(tok not in prev_tokens for tok in latest_tokens):
                 new_damage_ids.add(latest["id"])
-    return latest_rows, new_damage_ids
+    return all_rows, new_damage_ids
 @app.route("/vehicle_damage_dashboard")
 @login_required
 def vehicle_damage_dashboard():
@@ -4220,14 +4241,15 @@ def vehicle_damage_dashboard():
     page = request.args.get("page", 1, type=int)
     conn = get_wash_db()
     cur = conn.cursor()
-    scope_sql, scope_params = scoped_condition("wash_history", current_user)
-    # 차량당 "가장 최근" 세차완료 기록 1건만 대표로 골라온다(중복 표시 방지).
-    latest_rows, new_damage_ids = _vehicle_damage_summary_rows(conn, scope_sql, scope_params)
+    veh_scope_sql, veh_scope_params = _vehicle_scope_condition(current_user)
+    # "전체" 탭은 스코프 내 vehicle_master 차량을 전부 보여준다(세차 이력이 없거나
+    # 최신 기록이 깨끗한 차량 포함) — 차량마다 wash_history의 가장 최근 기록 1건만 붙인다.
+    latest_rows, new_damage_ids = _vehicle_damage_summary_rows(conn, veh_scope_sql, veh_scope_params)
     if org:
         latest_rows = [r for r in latest_rows if r["차량소속"] == org]
     if q:
         latest_rows = [r for r in latest_rows if q in (r["차량번호"] or "")]
-    all_rows = sorted(latest_rows, key=lambda r: (r["세차완료일"] or "", r["id"]), reverse=True)
+    all_rows = sorted(latest_rows, key=lambda r: (r["세차완료일"] or "", r["id"] or 0), reverse=True)
     # 세차 오더(wash_list) 화면의 "전체 / 장기 미세차" 탭과 동일한 패턴 —
     # q/org 검색조건은 그대로 유지한 채, "신규 훼손"/"경고등" 탭을 고르면 그 조건을
     # 만족하는 행 중 각 조건에 해당하는 것만 다시 추려서 페이지네이션한다.
@@ -4237,7 +4259,7 @@ def vehicle_damage_dashboard():
     # 값이 아니므로, 여기서는 DB 원본 기준(없음/공란)으로 판단하면 된다.
     warning_rows = [r for r in all_rows if (r["경고등"] or "").strip() not in _NO_ISSUE_VALUES]
     display_rows = new_rows if tab == "new" else (warning_rows if tab == "warning" else all_rows)
-    org_list = filter_distinct_values(cur, "wash_history", "차량소속", scope_sql, scope_params)
+    org_list = filter_distinct_values(cur, "vehicle_master", "차량소속", veh_scope_sql, veh_scope_params)
     conn.close()
     page_rows, current_page, total_pages = paginate_list(display_rows, page, per_page=20)
     return render_template(
@@ -4260,13 +4282,13 @@ def vehicle_damage_dashboard_export():
     if tab not in ("all", "new", "warning"):
         tab = "all"
     conn = get_wash_db()
-    scope_sql, scope_params = scoped_condition("wash_history", current_user)
-    latest_rows, new_damage_ids = _vehicle_damage_summary_rows(conn, scope_sql, scope_params)
+    veh_scope_sql, veh_scope_params = _vehicle_scope_condition(current_user)
+    latest_rows, new_damage_ids = _vehicle_damage_summary_rows(conn, veh_scope_sql, veh_scope_params)
     if org:
         latest_rows = [r for r in latest_rows if r["차량소속"] == org]
     if q:
         latest_rows = [r for r in latest_rows if q in (r["차량번호"] or "")]
-    all_rows = sorted(latest_rows, key=lambda r: (r["세차완료일"] or "", r["id"]), reverse=True)
+    all_rows = sorted(latest_rows, key=lambda r: (r["세차완료일"] or "", r["id"] or 0), reverse=True)
     if tab == "new":
         all_rows = [r for r in all_rows if r["id"] in new_damage_ids]
     elif tab == "warning":

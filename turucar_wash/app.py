@@ -2196,6 +2196,39 @@ def wash_schedule_delete():
 # =========================================================
 # 혼용 차량 바로 등록 (오더 없이 완료처리)
 # =========================================================
+def _mixed_car_scope_check(vm_row, user):
+    """혼용 차량 등록 시 vehicle_master 행이 로그인한 사용자 범위에 속하는지 확인한다.
+    scoped_condition()과 동일한 규칙 — 마스터/컨택센터는 무제한, 업체 관리자는 업체 일치,
+    개별 작업자는 업체+담당 지역까지 일치해야 한다. 범위를 벗어나면 사용자에게 보여줄
+    오류 메시지를 반환하고, 문제 없으면 빈 문자열("")을 반환한다. /mixed_car_register(등록
+    실행)와 /mixed_car_search(검색 목록) 양쪽에서 같은 기준을 쓰도록 공통 함수로 뺐다."""
+    if user.is_master or getattr(user, "is_contact_center", False):
+        return ""
+    if (vm_row["담당업체"] or "") != (user.vendor or ""):
+        return "❌ 담당 업체가 달라 등록할 수 없는 차량입니다."
+    if user.is_staff:
+        regions = _account_regions(user.username)
+        if (vm_row["지역시도"], vm_row["지역구군"]) not in regions:
+            return "❌ 담당 지역이 아니어서 등록할 수 없는 차량입니다."
+    return ""
+@app.route("/mixed_car_search")
+@login_required
+def mixed_car_search():
+    """혼용 차량을 홈 화면에서 바로 검색해서 등록하는 모바일 전용 목록 화면(2026-09-04
+    추가). 정기 오더가 없는 혼용 차량을 세차 오더 화면의 필터 시트에 파묻어 놓으니 다들
+    못 찾는다는 피드백에 따라, 홈 화면 메인 메뉴에 별도 진입점을 만든다. 목록에서 차량을
+    누르면 /mixed_car_register와 완전히 같은 로직(오늘자 임시 오더 생성 후 car_detail로
+    이동)을 그대로 탄다 — 이 화면은 등록 로직을 새로 만들지 않고 "차량번호를 찾아서 눌러
+    넣어주는" 검색 UI만 앞에 붙인 것."""
+    conn = get_wash_db()
+    vm_rows = conn.execute(
+        "SELECT * FROM vehicle_master WHERE TRIM(BM구분)='혼용' ORDER BY 차량번호"
+    ).fetchall()
+    conn.close()
+    # dict()로 변환 — 템플릿에서 tojson으로 그대로 JS 배열에 넘겨야 하는데 sqlite3.Row는
+    # JSON으로 직렬화되지 않는다.
+    rows = [dict(r) for r in vm_rows if not _mixed_car_scope_check(r, current_user)]
+    return render_template("mixed_car_search.html", rows=rows)
 @app.route("/mixed_car_register", methods=["POST"])
 @login_required
 def mixed_car_register():
@@ -2203,7 +2236,9 @@ def mixed_car_register():
     작업자가 현장에서 우연히 마주쳐 세차하는 경우가 있다. 그런 경우 정식 오더 없이도
     차량번호만으로 wash_list에 오늘자 임시 오더를 하나 만들어 곧장 car_detail(완료 입력
     화면)으로 보내준다. 완료 처리(wash_complete)는 기존 로직을 그대로 타므로 사진 업로드,
-    작업자 기록(완료 현황 계정별 스코프 포함) 등이 정상 오더와 완전히 동일하게 동작한다."""
+    작업자 기록(완료 현황 계정별 스코프 포함) 등이 정상 오더와 완전히 동일하게 동작한다.
+    (2026-09-04) 세차 오더 화면의 필터 시트 안 버튼(직접 차량번호 입력)뿐 아니라, 홈 화면의
+    /mixed_car_search 목록에서 차량을 눌렀을 때도 이 라우트로 들어온다."""
     plate_input = request.form.get("plate", "").strip()
     if not plate_input:
         flash("❌ 차량번호를 입력해주세요.")
@@ -2217,20 +2252,12 @@ def mixed_car_register():
         conn.close()
         flash(f"❌ 혼용 차량 목록에서 '{plate_input}' 차량을 찾을 수 없습니다. 차량마스터를 확인해주세요.")
         return redirect(url_for("wash_list"))
-    # 스코프 확인 — scoped_condition()과 동일한 규칙(마스터/컨택센터: 무제한, 업체 관리자: 업체
-    # 일치, 개별 작업자: 업체+담당 지역까지 일치)을 vehicle_master 조회 결과에 대해 그대로 적용해,
-    # 다른 업체/지역 차량을 임의로 등록하는 걸 막는다.
-    if not (current_user.is_master or getattr(current_user, "is_contact_center", False)):
-        if (vm_row["담당업체"] or "") != (current_user.vendor or ""):
-            conn.close()
-            flash("❌ 담당 업체가 달라 등록할 수 없는 차량입니다.")
-            return redirect(url_for("wash_list"))
-        if current_user.is_staff:
-            regions = _account_regions(current_user.username)
-            if (vm_row["지역시도"], vm_row["지역구군"]) not in regions:
-                conn.close()
-                flash("❌ 담당 지역이 아니어서 등록할 수 없는 차량입니다.")
-                return redirect(url_for("wash_list"))
+    # 스코프 확인 — 다른 업체/지역 차량을 임의로 등록하는 걸 막는다.
+    scope_err = _mixed_car_scope_check(vm_row, current_user)
+    if scope_err:
+        conn.close()
+        flash(scope_err)
+        return redirect(url_for("wash_list"))
     today_str = today_kst()
     # 오늘 이미 등록된(미완료) 오더가 있으면 중복 생성하지 않고 그 화면으로 이동
     existing = cur.execute(

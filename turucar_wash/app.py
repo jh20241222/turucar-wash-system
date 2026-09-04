@@ -2782,7 +2782,7 @@ def wash_complete(id):
     photo_uploaded, photo_failed = 0, 0
     damage_report_created = False
     if is_photo_org:
-        # 슬롯별 사진 수집 (외부10+내부5+특이사항5+무인훼손제보5 = 25컷, 전부 선택사항, 1장씩).
+        # 슬롯별 사진 수집 (외부10+내부5+특이사항7+무인훼손제보5 = 27컷, 전부 선택사항, 1장씩).
         # 무인훼손 제보 슬롯(damage_1~5)도 이제 다른 슬롯과 동일하게 한 장씩 찍는 개별 슬롯이라
         # 같은 루프에서 함께 수집하고, 그중 damage_* 키에 해당하는 파일만 따로 모아
         # 기존 훼손제보(damage_reports)/슬랙 연동에 사용한다.
@@ -3456,7 +3456,11 @@ PHOTO_SLOT_GROUPS = [
             {"key": "etc_center",   "label": "센터페시아 및 공조기", "icon_type": "emoji", "icon_src": "📷"},
             {"key": "etc_card",     "label": "카드 사진",             "icon_type": "emoji", "icon_src": "📷"},
             {"key": "etc_trunk",    "label": "트렁크 내부",           "icon_type": "emoji", "icon_src": "📷"},
-            {"key": "etc_tire",     "label": "타이어 상태 (4륜)",     "icon_type": "emoji", "icon_src": "📷"},
+            # 특정 부위를 정해두지 않은 여분의 슬롯 — 위 항목들에 안 맞는 특이사항이나
+            # 애매한 부위를 자유롭게 찍어 남길 수 있게 한다.
+            {"key": "etc_extra_1",  "label": "추가 사진 1",           "icon_type": "emoji", "icon_src": "📷"},
+            {"key": "etc_extra_2",  "label": "추가 사진 2",           "icon_type": "emoji", "icon_src": "📷"},
+            {"key": "etc_extra_3",  "label": "추가 사진 3",           "icon_type": "emoji", "icon_src": "📷"},
         ],
     },
     {

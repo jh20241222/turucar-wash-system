@@ -15,7 +15,15 @@
             <div class="form-grid two"><div><label class="field-label">아이디</label><input type="text" name="username" class="app-input" placeholder="아이디" required></div><div><label class="field-label">비밀번호</label><input type="password" name="password" class="app-input" placeholder="비밀번호" required></div></div>
             {% if current_user.is_master %}
             <div class="form-grid two"><div><label class="field-label">권한</label><select name="role" class="app-input"><option value="admin">admin 계정</option><option value="staff">하위 계정</option></select></div><div><label class="field-label">업체</label><select name="vendor" class="app-input"><option value="">업체 선택(차량소속 지정 시 생략 가능)</option>{% for v in vendors %}<option value="{{ v.name }}">{{ v.name }}</option>{% endfor %}</select></div></div>
-            <div><label class="field-label">차량소속 (차량소속별 담당자 계정일 때만 선택 — 여러 개 선택 가능)</label><select name="fleet" class="app-input" multiple size="4">{% for f in fleet_options %}<option value="{{ f }}">{{ f }}</option>{% endfor %}</select></div>
+            <div><label class="field-label">차량소속 (차량소속별 담당자 계정일 때만 선택 — 여러 개 선택 가능)</label>
+                <div class="fleet-checkbox-grid">
+                    {% for f in fleet_options %}
+                    <label class="fleet-checkbox-item"><input type="checkbox" name="fleet" value="{{ f }}"><span>{{ f }}</span></label>
+                    {% else %}
+                    <span class="fleet-checkbox-empty">등록된 차량소속이 없습니다.</span>
+                    {% endfor %}
+                </div>
+            </div>
             {% else %}
             <div class="form-grid two"><div><label class="field-label">권한</label><input type="text" class="app-input" value="하위 계정" readonly></div><div><label class="field-label">업체</label><input type="text" class="app-input" value="{{ current_user.vendor }}" readonly></div></div>
             {% endif %}
@@ -80,7 +88,15 @@ bindRegionSelect("create_city","create_district");bindRegionSelect("assign_city"
                         <div class="d-fg"><label class="d-label">권한</label><select name="role" class="d-input"><option value="admin">admin</option><option value="staff">하위 계정</option></select></div>
                         <div class="d-fg"><label class="d-label">업체</label><select name="vendor" class="d-input"><option value="">업체 선택(차량소속 지정 시 생략 가능)</option>{% for v in vendors %}<option value="{{ v.name }}">{{ v.name }}</option>{% endfor %}</select></div>
                     </div>
-                    <div class="d-fg"><label class="d-label">차량소속 (차량소속별 담당자 계정일 때만, 복수 선택 가능)</label><select name="fleet" class="d-input" multiple size="4">{% for f in fleet_options %}<option value="{{ f }}">{{ f }}</option>{% endfor %}</select></div>
+                    <div class="d-fg"><label class="d-label">차량소속 (차량소속별 담당자 계정일 때만, 복수 선택 가능)</label>
+                        <div class="fleet-checkbox-grid fleet-checkbox-grid--desktop">
+                            {% for f in fleet_options %}
+                            <label class="fleet-checkbox-item"><input type="checkbox" name="fleet" value="{{ f }}"><span>{{ f }}</span></label>
+                            {% else %}
+                            <span class="fleet-checkbox-empty">등록된 차량소속이 없습니다.</span>
+                            {% endfor %}
+                        </div>
+                    </div>
                     {% else %}
                     <div class="d-row-2">
                         <div class="d-fg"><label class="d-label">권한</label><input class="d-input" value="하위 계정" readonly></div>
@@ -248,6 +264,15 @@ document.querySelectorAll('#d-acct .d-tab-btn').forEach(btn => {
    화면 전체(계정/지역, 업체, 오더 업로드 등)에 일괄 적용되므로 이 페이지 전용 override는 제거함 */
 .turu-account-manage-page-v24 .primary-btn { background: #212121 !important; color: #fff !important; box-shadow: none !important; }
 .turu-account-manage-page-v24 .blue-btn { background: #6b7280 !important; color: #fff !important; }
+/* 차량소속 다중 선택 — 기존 select multiple 대신 체크박스 목록 (2026-09-04) */
+.fleet-checkbox-grid { display: flex; flex-direction: column; gap: 2px; max-height: 180px; overflow-y: auto; border: 1px solid var(--line, #D8E0EB); border-radius: 14px; padding: 6px; background: #fff; }
+.fleet-checkbox-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 9px; font-size: 13px; font-weight: 700; color: var(--ink, #212121); cursor: pointer; }
+.fleet-checkbox-item:hover { background: #F6F7F9; }
+.fleet-checkbox-item input[type="checkbox"] { width: 17px; height: 17px; flex-shrink: 0; accent-color: #FF5F00; cursor: pointer; }
+.fleet-checkbox-empty { padding: 10px; font-size: 13px; color: var(--muted, #888); }
+#desktop-mode .fleet-checkbox-grid--desktop { border-color: var(--d-border) !important; background: var(--d-surface) !important; }
+#desktop-mode .fleet-checkbox-grid--desktop .fleet-checkbox-item { color: var(--d-text) !important; }
+#desktop-mode .fleet-checkbox-grid--desktop .fleet-checkbox-item:hover { background: var(--d-bg) !important; }
 </style>
 
 {% endblock %}

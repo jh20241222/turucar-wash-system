@@ -77,12 +77,14 @@
             <a href="{{ url_for('wash_status') }}" class="side-link {% if request.endpoint in ['wash_status','wash_record'] %}active{% endif %}">
                 <i class="ti ti-check"></i><b>완료 현황</b>
             </a>
+            {% if not current_user.fleets %}
             <a href="{{ url_for('urgent_wash') }}" class="side-link side-link-with-badge {% if request.endpoint == 'urgent_wash' %}active{% endif %}">
                 <i class="ti ti-alert-octagon"></i><b>긴급세차</b>
                 <em class="side-menu-bubble{% if not field_request_badge_count %} is-hidden{% endif %}">
                     {{ field_request_badge_count or 0 }}
                 </em>
             </a>
+            {% endif %}
 
             {% if current_user.is_admin or current_user.fleets %}
             <!-- 차량 관리 (2026-09-03 추가) -->
@@ -123,7 +125,7 @@
             </a>
             {% endif %}
 
-            {% if current_user.is_admin and not current_user.is_master %}
+            {% if current_user.is_admin and not current_user.is_master and not current_user.fleets %}
             <p class="side-nav-group" style="margin-top:4px;">관리</p>
             <a href="{{ url_for('account_manage') }}" class="side-link {% if request.endpoint == 'account_manage' %}active{% endif %}">
                 <i class="ti ti-users"></i><b>계정/지역</b>
@@ -155,9 +157,11 @@
             <a href="{{ url_for('profile') }}" class="side-link {% if request.endpoint == 'profile' %}active{% endif %}">
                 <i class="ti ti-user"></i><b>계정 정보</b>
             </a>
+            {% if not current_user.fleets %}
             <a href="{{ url_for('my_vehicles') }}" class="side-link {% if request.endpoint == 'my_vehicles' %}active{% endif %}">
                 <i class="ti ti-car"></i><b>내 담당 차량</b>
             </a>
+            {% endif %}
             {% endif %}
         </nav>
 

@@ -33,12 +33,15 @@
         </div>
     </section>
 
+    {% set section_label = '신규 훼손 목록' if tab == 'new' else ('경고등 목록' if tab == 'warning' else '전체 목록') %}
+    {% set empty_msg = '신규 훼손으로 표시된 기록이 없습니다.' if tab == 'new' else ('경고등이 있는 기록이 없습니다.' if tab == 'warning' else ('조건과 일치하는 기록이 없습니다.' if (q or org) else '훼손·경고등 메모가 있는 세차완료 기록이 없습니다.')) %}
     <input type="hidden" id="vdd_tab" value="{{ tab }}">
     <div class="wash-type-filter-bar vdd-tab-bar">
-        <button type="button" class="wash-type-btn wash-type-btn--all {% if tab != 'new' %}active{% endif %}" onclick="setVddTab('all')">전체 <em class="vdd-tab-count">{{ all_count }}</em></button>
+        <button type="button" class="wash-type-btn wash-type-btn--all {% if tab == 'all' %}active{% endif %}" onclick="setVddTab('all')">전체 <em class="vdd-tab-count">{{ all_count }}</em></button>
         <button type="button" class="wash-type-btn wash-type-btn--newdamage {% if tab == 'new' %}active{% endif %}" onclick="setVddTab('new')">🔴 신규 훼손 <em class="vdd-tab-count">{{ new_count }}</em></button>
+        <button type="button" class="wash-type-btn wash-type-btn--warning {% if tab == 'warning' %}active{% endif %}" onclick="setVddTab('warning')">⚠️ 경고등 <em class="vdd-tab-count">{{ warning_count }}</em></button>
     </div>
-    <div class="vdd-section-label">{{ '신규 훼손 목록' if tab == 'new' else '전체 목록' }}<em class="vdd-chip">{{ total_count }}건</em></div>
+    <div class="vdd-section-label">{{ section_label }}<em class="vdd-chip">{{ total_count }}건</em></div>
     <div class="vdd-card">
         {% for h in rows %}
         <a href="{{ url_for('vehicle_damage_detail', plate=h['차량번호']) }}" class="vdd-row vdd-row-link {% if h['id'] in new_damage_ids %}vdd-row-new{% endif %}">
@@ -52,7 +55,7 @@
             </div>
         </a>
         {% else %}
-        <div class="vdd-empty">{% if tab == 'new' %}신규 훼손으로 표시된 기록이 없습니다.{% elif q or org %}조건과 일치하는 기록이 없습니다.{% else %}훼손·경고등 메모가 있는 세차완료 기록이 없습니다.{% endif %}</div>
+        <div class="vdd-empty">{{ empty_msg }}</div>
         {% endfor %}
     </div>
     {{ render_pagination(current_page, total_pages, 'page') }}
@@ -60,7 +63,7 @@
     {# ── 데스크탑 전용 ── #}
     <section class="desktop-table table-panel app-card turu-desktop-table-v24">
         <div class="dt-toolbar">
-            <div class="dt-toolbar-left"><h2 style="margin:0;font-size:19px;font-weight:800;">차량별 훼손관리 · {{ '신규 훼손 목록' if tab == 'new' else '전체 목록' }}</h2></div>
+            <div class="dt-toolbar-left"><h2 style="margin:0;font-size:19px;font-weight:800;">차량별 훼손관리 · {{ section_label }}</h2></div>
             <div class="dt-toolbar-right"><span class="d-badge-pill">{{ total_count }}건</span></div>
         </div>
         <div class="dt-filterbar">
@@ -74,8 +77,9 @@
             </button>
         </div>
         <div class="dt-tab-bar">
-            <button type="button" class="dt-tab {% if tab != 'new' %}active{% endif %}" onclick="setVddTab('all')">전체 <span>{{ all_count }}</span></button>
+            <button type="button" class="dt-tab {% if tab == 'all' %}active{% endif %}" onclick="setVddTab('all')">전체 <span>{{ all_count }}</span></button>
             <button type="button" class="dt-tab {% if tab == 'new' %}active{% endif %}" onclick="setVddTab('new')">신규 훼손 <span class="dt-tab-badge">{{ new_count }}</span></button>
+            <button type="button" class="dt-tab {% if tab == 'warning' %}active{% endif %}" onclick="setVddTab('warning')">경고등 <span class="dt-tab-badge">{{ warning_count }}</span></button>
         </div>
         <div class="dt-table-scroll">
             <table class="dt-table">
@@ -89,7 +93,7 @@
                     <td>{{ h['세차완료일'] }}</td>
                 </tr>
                 {% else %}
-                <tr><td colspan="4" class="dt-empty">{% if tab == 'new' %}신규 훼손으로 표시된 기록이 없습니다.{% elif q or org %}조건과 일치하는 기록이 없습니다.{% else %}훼손·경고등 메모가 있는 세차완료 기록이 없습니다.{% endif %}</td></tr>
+                <tr><td colspan="4" class="dt-empty">{{ empty_msg }}</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
@@ -119,6 +123,7 @@
 .wash-type-btn{flex-shrink:0;font-size:13px;font-weight:500;padding:6px 14px;border-radius:20px;border:1.5px solid var(--color-border-tertiary);background:var(--color-background-primary);color:var(--color-text-secondary);cursor:pointer;display:inline-flex;align-items:center;gap:5px;}
 .wash-type-btn.active{color:var(--color-text-primary);border-color:var(--color-border-primary);background:var(--color-background-secondary);}
 .wash-type-btn--newdamage.active{background:#FDF1F0;border-color:#D85A30;color:#9A3B2E;}
+.wash-type-btn--warning.active{background:#FFF6E0;border-color:#D8A02F;color:#8A5F00;}
 .vdd-tab-count{font-style:normal;font-size:11px;font-weight:800;opacity:.75;}
 @media (min-width: 901px) {
     .turu-app-page-v24 > .turu-page-topbar-v42,.turu-app-page-v24 > .turu-searchbar-v24,.turu-app-page-v24 > .wash-type-filter-bar,.turu-app-page-v24 > .vdd-section-label,.turu-app-page-v24 > .vdd-card,#vdd-filter-sheet,.mobile-filter-backdrop,.turu-app-page-v24 > .pg-pagination{display:none !important;}

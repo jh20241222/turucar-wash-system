@@ -14,7 +14,8 @@
             <input type="hidden" name="action" value="create_account">
             <div class="form-grid two"><div><label class="field-label">아이디</label><input type="text" name="username" class="app-input" placeholder="아이디" required></div><div><label class="field-label">비밀번호</label><input type="password" name="password" class="app-input" placeholder="비밀번호" required></div></div>
             {% if current_user.is_master %}
-            <div class="form-grid two"><div><label class="field-label">권한</label><select name="role" class="app-input"><option value="admin">admin 계정</option><option value="staff">하위 계정</option></select></div><div><label class="field-label">업체</label><select name="vendor" class="app-input" required><option value="">업체 선택</option>{% for v in vendors %}<option value="{{ v.name }}">{{ v.name }}</option>{% endfor %}</select></div></div>
+            <div class="form-grid two"><div><label class="field-label">권한</label><select name="role" class="app-input"><option value="admin">admin 계정</option><option value="staff">하위 계정</option></select></div><div><label class="field-label">업체</label><select name="vendor" class="app-input"><option value="">업체 선택(차량소속 지정 시 생략 가능)</option>{% for v in vendors %}<option value="{{ v.name }}">{{ v.name }}</option>{% endfor %}</select></div></div>
+            <div><label class="field-label">차량소속 (차량소속별 담당자 계정일 때만 선택 — 여러 개 선택 가능)</label><select name="fleet" class="app-input" multiple size="4">{% for f in fleet_options %}<option value="{{ f }}">{{ f }}</option>{% endfor %}</select></div>
             {% else %}
             <div class="form-grid two"><div><label class="field-label">권한</label><input type="text" class="app-input" value="하위 계정" readonly></div><div><label class="field-label">업체</label><input type="text" class="app-input" value="{{ current_user.vendor }}" readonly></div></div>
             {% endif %}
@@ -32,11 +33,27 @@
             <button class="blue-btn tall full" type="submit">지역 등록</button>
         </form>
     </article>
+
+    {% if current_user.is_master %}
+    <article class="admin-card app-card">
+        <div class="admin-card-head"><div><p class="eyebrow">03 Assign Fleet</p><h2>차량소속 배정</h2></div><span class="badge">권한</span></div>
+        <form method="POST" class="stack-form">
+            <input type="hidden" name="action" value="assign_fleet">
+            <label class="field-label">계정</label><select name="fleet_username" class="app-input" required><option value="">계정 선택</option>{% for a in creatable_accounts %}<option value="{{ a.username }}">{{ a.username }}{% if a.vendor %} · {{ a.vendor }}{% endif %}</option>{% endfor %}</select>
+            <label class="field-label">차량소속</label><select name="fleet_value" class="app-input" required><option value="">차량소속 선택</option>{% for f in fleet_options %}<option value="{{ f }}">{{ f }}</option>{% endfor %}</select>
+            <button class="blue-btn tall full" type="submit">차량소속 등록</button>
+        </form>
+    </article>
+    {% endif %}
 </section>
 
 <section class="app-section table-panel app-card"><div class="table-title-row"><h2>계정 목록</h2><span>{{ accounts|length }}개</span></div><div class="table-wrap"><table><thead><tr><th>계정</th><th>권한</th><th>업체</th><th>소속 구조</th><th>관리</th></tr></thead><tbody>{% for a in accounts_page %}<tr><td>{{ a.username }}</td><td><span class="badge">{{ a.role }}</span></td><td>{{ a.vendor or '-' }}</td><td>{% if a.role == 'master' %}최상위{% elif a.role == 'admin' %}업체 관리자{% else %}하위 계정{% endif %}</td><td>{% if a.role != 'master' and (current_user.is_master or (a.role == 'staff' and a.parent_id == current_user.id)) %}<form method="POST" class="inline-form" onsubmit="return confirm('정말 이 계정을 삭제할까요?');"><input type="hidden" name="action" value="delete_account"><input type="hidden" name="delete_username" value="{{ a.username }}"><button type="submit" class="btn-del">삭제</button></form>{% else %}-{% endif %}</td></tr>{% else %}<tr><td colspan="5" class="empty-cell">계정이 없습니다.</td></tr>{% endfor %}</tbody></table></div>{{ render_pagination(acct_current_page, acct_total_pages, 'acct_page') }}</section>
 
 <section class="app-section table-panel app-card"><div class="table-title-row"><h2>지역 권한</h2><span>{{ region_list|length }}개</span></div><div class="table-wrap"><table><thead><tr><th>계정</th><th>권한</th><th>업체</th><th>시/도</th><th>구/군</th><th>관리</th></tr></thead><tbody>{% for r in region_list_page %}<tr><td>{{ r.username }}</td><td>{{ r.role }}</td><td>{{ r.vendor or '-' }}</td><td>{{ r.city }}</td><td>{{ r.district }}</td><td>{% if current_user.is_master or (r.parent_id == current_user.id) %}<form method="POST" class="inline-form" onsubmit="return confirm('이 지역 권한을 삭제할까요?');"><input type="hidden" name="action" value="delete_region"><input type="hidden" name="region_id" value="{{ r.id }}"><button type="submit" class="btn-del">삭제</button></form>{% else %}-{% endif %}</td></tr>{% else %}<tr><td colspan="6" class="empty-cell">등록된 지역이 없습니다.</td></tr>{% endfor %}</tbody></table></div>{{ render_pagination(region_current_page, region_total_pages, 'region_page') }}</section>
+
+{% if current_user.is_master %}
+<section class="app-section table-panel app-card"><div class="table-title-row"><h2>차량소속 배정</h2><span>{{ fleet_list|length }}개</span></div><div class="table-wrap"><table><thead><tr><th>계정</th><th>권한</th><th>차량소속</th><th>관리</th></tr></thead><tbody>{% for f in fleet_list_page %}<tr><td>{{ f.username }}</td><td>{{ f.role }}</td><td>{{ f.차량소속 }}</td><td><form method="POST" class="inline-form" onsubmit="return confirm('이 차량소속 배정을 삭제할까요?');"><input type="hidden" name="action" value="delete_fleet"><input type="hidden" name="fleet_id" value="{{ f.id }}"><button type="submit" class="btn-del">삭제</button></form></td></tr>{% else %}<tr><td colspan="4" class="empty-cell">배정된 차량소속이 없습니다.</td></tr>{% endfor %}</tbody></table></div>{{ render_pagination(fleet_current_page, fleet_total_pages, 'fleet_page') }}</section>
+{% endif %}
 </section>
 
 <script>
@@ -61,8 +78,9 @@ bindRegionSelect("create_city","create_district");bindRegionSelect("assign_city"
                     {% if current_user.is_master %}
                     <div class="d-row-2">
                         <div class="d-fg"><label class="d-label">권한</label><select name="role" class="d-input"><option value="admin">admin</option><option value="staff">하위 계정</option></select></div>
-                        <div class="d-fg"><label class="d-label">업체</label><select name="vendor" class="d-input" required><option value="">업체 선택</option>{% for v in vendors %}<option value="{{ v.name }}">{{ v.name }}</option>{% endfor %}</select></div>
+                        <div class="d-fg"><label class="d-label">업체</label><select name="vendor" class="d-input"><option value="">업체 선택(차량소속 지정 시 생략 가능)</option>{% for v in vendors %}<option value="{{ v.name }}">{{ v.name }}</option>{% endfor %}</select></div>
                     </div>
+                    <div class="d-fg"><label class="d-label">차량소속 (차량소속별 담당자 계정일 때만, 복수 선택 가능)</label><select name="fleet" class="d-input" multiple size="4">{% for f in fleet_options %}<option value="{{ f }}">{{ f }}</option>{% endfor %}</select></div>
                     {% else %}
                     <div class="d-row-2">
                         <div class="d-fg"><label class="d-label">권한</label><input class="d-input" value="하위 계정" readonly></div>
@@ -93,21 +111,39 @@ bindRegionSelect("create_city","create_district");bindRegionSelect("assign_city"
         </div>
     </div>
 
+    {% if current_user.is_master %}
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">03 Fleet</span><h2>차량소속 배정</h2></div></div>
+        <div class="d-card-body">
+            <form method="POST">
+                <input type="hidden" name="action" value="assign_fleet">
+                <div class="d-row-2">
+                    <div class="d-fg"><label class="d-label">계정</label><select name="fleet_username" class="d-input" required><option value="">계정 선택</option>{% for a in creatable_accounts %}<option value="{{ a.username }}">{{ a.username }}{% if a.vendor %} · {{ a.vendor }}{% endif %}</option>{% endfor %}</select></div>
+                    <div class="d-fg"><label class="d-label">차량소속</label><select name="fleet_value" class="d-input" required><option value="">차량소속 선택</option>{% for f in fleet_options %}<option value="{{ f }}">{{ f }}</option>{% endfor %}</select></div>
+                </div>
+                <button type="submit" class="d-btn d-btn-blue">차량소속 등록</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="d-card">
         <div class="d-card-head">
             <div><span class="d-eyebrow">목록</span><h2>계정 &amp; 지역</h2></div>
             <div class="d-tab-switch">
                 <button type="button" class="d-tab-btn{% if active_tab == 'acct' %} active{% endif %}" data-tab="acct">계정 목록 <span class="d-tab-count">{{ accounts_filtered|length }}</span></button>
                 <button type="button" class="d-tab-btn{% if active_tab == 'region' %} active{% endif %}" data-tab="region">지역 권한 <span class="d-tab-count">{{ region_list_filtered|length }}</span></button>
+                {% if current_user.is_master %}<button type="button" class="d-tab-btn{% if active_tab == 'fleet' %} active{% endif %}" data-tab="fleet">차량소속 배정 <span class="d-tab-count">{{ fleet_list_filtered|length }}</span></button>{% endif %}
             </div>
         </div>
         <div class="d-tab-panel" data-panel="acct" style="{% if active_tab != 'acct' %}display:none;{% endif %}">
             <form method="GET" class="d-search-box">
                 <input type="hidden" name="tab" value="acct">
                 <input type="hidden" name="region_q" value="{{ region_q }}">
+                <input type="hidden" name="fleet_q" value="{{ fleet_q }}">
                 <i class="ti ti-search"></i>
                 <input type="text" name="acct_q" value="{{ acct_q }}" placeholder="계정, 업체명 검색" autocomplete="off">
-                {% if acct_q %}<a class="d-search-clear" href="{{ url_for('account_manage', tab='acct', region_q=region_q) }}">✕</a>{% endif %}
+                {% if acct_q %}<a class="d-search-clear" href="{{ url_for('account_manage', tab='acct', region_q=region_q, fleet_q=fleet_q) }}">✕</a>{% endif %}
             </form>
             <div class="d-table-wrap">
                 <table class="d-table"><thead><tr><th>계정</th><th>권한</th><th>업체</th><th>구조</th><th>관리</th></tr></thead>
@@ -120,9 +156,10 @@ bindRegionSelect("create_city","create_district");bindRegionSelect("assign_city"
             <form method="GET" class="d-search-box">
                 <input type="hidden" name="tab" value="region">
                 <input type="hidden" name="acct_q" value="{{ acct_q }}">
+                <input type="hidden" name="fleet_q" value="{{ fleet_q }}">
                 <i class="ti ti-search"></i>
                 <input type="text" name="region_q" value="{{ region_q }}" placeholder="계정, 업체, 시/도, 구/군 검색" autocomplete="off">
-                {% if region_q %}<a class="d-search-clear" href="{{ url_for('account_manage', tab='region', acct_q=acct_q) }}">✕</a>{% endif %}
+                {% if region_q %}<a class="d-search-clear" href="{{ url_for('account_manage', tab='region', acct_q=acct_q, fleet_q=fleet_q) }}">✕</a>{% endif %}
             </form>
             <div class="d-table-wrap">
                 <table class="d-table"><thead><tr><th>계정</th><th>권한</th><th>업체</th><th>시/도</th><th>구/군</th><th>관리</th></tr></thead>
@@ -131,6 +168,24 @@ bindRegionSelect("create_city","create_district");bindRegionSelect("assign_city"
                 {{ render_pagination(region_current_page, region_total_pages, 'region_page') }}
             </div>
         </div>
+        {% if current_user.is_master %}
+        <div class="d-tab-panel" data-panel="fleet" style="{% if active_tab != 'fleet' %}display:none;{% endif %}">
+            <form method="GET" class="d-search-box">
+                <input type="hidden" name="tab" value="fleet">
+                <input type="hidden" name="acct_q" value="{{ acct_q }}">
+                <input type="hidden" name="region_q" value="{{ region_q }}">
+                <i class="ti ti-search"></i>
+                <input type="text" name="fleet_q" value="{{ fleet_q }}" placeholder="계정, 차량소속 검색" autocomplete="off">
+                {% if fleet_q %}<a class="d-search-clear" href="{{ url_for('account_manage', tab='fleet', acct_q=acct_q, region_q=region_q) }}">✕</a>{% endif %}
+            </form>
+            <div class="d-table-wrap">
+                <table class="d-table"><thead><tr><th>계정</th><th>권한</th><th>차량소속</th><th>관리</th></tr></thead>
+                <tbody>{% for f in fleet_list_page %}<tr><td>{{ f.username }}</td><td>{{ f.role }}</td><td>{{ f.차량소속 }}</td><td><form method="POST" style="display:inline" onsubmit="return confirm('이 차량소속 배정을 삭제할까요?');"><input type="hidden" name="action" value="delete_fleet"><input type="hidden" name="fleet_id" value="{{ f.id }}"><button type="submit" class="d-btn-danger-sm">삭제</button></form></td></tr>{% else %}<tr><td colspan="4" class="d-empty-cell">{% if fleet_q %}'{{ fleet_q }}'와(과) 일치하는 배정이 없습니다.{% else %}배정된 차량소속이 없습니다.{% endif %}</td></tr>{% endfor %}</tbody>
+                </table>
+                {{ render_pagination(fleet_current_page, fleet_total_pages, 'fleet_page') }}
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 </div>

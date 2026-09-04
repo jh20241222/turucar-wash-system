@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_pagination.html" import render_pagination %}
+{% block document_title %}Turu Wash · 차량별 훼손관리{% endblock %}
+{% block content %}
+<section class="turu-app-page-v24">
+    <div class="turu-page-topbar-v42"><header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
+    <div class="turu-page-head-v24 turu-page-head--single-v25"><div><h1>차량별 훼손관리</h1><p>차량마다 세차 이력, 사진, 훼손 제보를 한 화면에서 확인합니다.</p></div></div></div>
+    <div class="hero-chip-stack" style="margin-bottom:14px;"><span>{{ total_count }}</span><strong>차량</strong></div>
+
+    <section class="app-section app-card" style="padding:14px;margin-bottom:12px;">
+        <form method="GET" class="stack-form">
+            <input type="text" name="q" value="{{ q }}" class="app-input" placeholder="차량번호, 차종, 차량소속 검색">
+            <button class="primary-btn tall full" type="submit">검색</button>
+        </form>
+    </section>
+
+    <section class="app-section table-panel app-card"><div class="table-title-row"><h2>차량 목록</h2><span>{{ total_count }}대</span></div><div class="table-wrap"><table><thead><tr><th>차량번호</th><th>차종</th><th>차량소속</th><th>담당업체</th><th>훼손 제보</th></tr></thead><tbody>{% for v in vehicles %}<tr onclick="location.href='{{ url_for('vehicle_damage_detail', plate=v['차량번호']) }}'" style="cursor:pointer;"><td>{{ v['차량번호'] }}</td><td>{{ v['차종명'] or '-' }}</td><td>{{ v['차량소속'] or '-' }}</td><td>{{ v['담당업체'] or '-' }}</td><td>{% set c = damage_counts.get(v['차량번호'], 0) %}{% if c %}<span class="badge" style="background:#FAECE7;color:#993C1D;">{{ c }}건</span>{% else %}-{% endif %}</td></tr>{% else %}<tr><td colspan="5" class="empty-cell">{% if q %}'{{ q }}'와(과) 일치하는 차량이 없습니다.{% else %}차량이 없습니다.{% endif %}</td></tr>{% endfor %}</tbody></table></div>{{ render_pagination(current_page, total_pages, 'page') }}</section>
+</section>
+
+{# ── 데스크탑 전용 ── #}
+<div id="d-vdd" style="display:none">
+<div class="d-wrap">
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">차량 관리</span><h2>차량별 훼손관리</h2></div><span class="d-badge-pill">{{ total_count }}대</span></div>
+        <form method="GET" class="d-search-box" style="margin:16px 20px 4px;">
+            <i class="ti ti-search"></i>
+            <input type="text" name="q" value="{{ q }}" placeholder="차량번호, 차종, 차량소속 검색" autocomplete="off">
+        </form>
+        <div class="d-table-wrap">
+            <table class="d-table"><thead><tr><th>차량번호</th><th>차종</th><th>차량소속</th><th>담당업체</th><th>훼손 제보</th></tr></thead>
+            <tbody>{% for v in vehicles %}<tr style="cursor:pointer;" onclick="location.href='{{ url_for('vehicle_damage_detail', plate=v['차량번호']) }}'"><td style="font-weight:700;">{{ v['차량번호'] }}</td><td>{{ v['차종명'] or '-' }}</td><td>{{ v['차량소속'] or '-' }}</td><td>{{ v['담당업체'] or '-' }}</td><td>{% set c = damage_counts.get(v['차량번호'], 0) %}{% if c %}<span class="d-badge-pill" style="background:#FAECE7;color:#993C1D;">{{ c }}건</span>{% else %}-{% endif %}</td></tr>{% else %}<tr><td colspan="5" class="d-empty-cell">{% if q %}'{{ q }}'와(과) 일치하는 차량이 없습니다.{% else %}차량이 없습니다.{% endif %}</td></tr>{% endfor %}</tbody>
+            </table>
+            {{ render_pagination(current_page, total_pages, 'page') }}
+        </div>
+    </div>
+</div>
+</div>
+<style>
+#desktop-mode #d-vdd { display: block !important; }
+#desktop-mode .turu-app-page-v24 { display: none !important; }
+</style>
+{% endblock %}

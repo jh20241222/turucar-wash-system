@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block document_title %}Turu Wash · {{ plate }} 훼손관리{% endblock %}
+{% block content %}
+<section class="turu-app-page-v24">
+    <div class="turu-page-topbar-v42"><header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
+    <div class="turu-page-head-v24 turu-page-head--single-v25"><div><h1>{{ plate }}</h1><p>{{ vehicle['차종명'] or '-' }} · {{ vehicle['차량소속'] or '-' }}</p></div></div></div>
+    <p style="padding:0 16px;"><a href="{{ url_for('vehicle_damage_dashboard') }}">‹ 차량별 훼손관리 목록으로</a></p>
+
+    <section class="app-section app-card" style="padding:14px;margin-bottom:12px;">
+        <div class="form-grid two"><div><span class="field-label">담당업체</span><div>{{ vehicle['담당업체'] or '-' }}</div></div><div><span class="field-label">스팟</span><div>{{ vehicle['스팟'] or '-' }}</div></div></div>
+        <div class="form-grid two"><div><span class="field-label">지역</span><div>{{ vehicle['지역시도'] or '-' }} {{ vehicle['지역구군'] or '-' }}</div></div><div><span class="field-label">최근세차일</span><div>{{ vehicle['최근세차일'] or '-' }}</div></div></div>
+    </section>
+
+    <section class="app-section table-panel app-card"><div class="table-title-row"><h2>세차 이력</h2><span>{{ wash_history_rows|length }}건</span></div><div class="table-wrap"><table><thead><tr><th>완료일</th><th>주행거리</th><th>훼손</th><th>경고등</th><th>작업자</th></tr></thead><tbody>{% for h in wash_history_rows %}<tr><td>{{ h['세차완료일'] }}</td><td>{{ h['주행거리'] or '-' }}</td><td>{{ h['훼손'] or '-' }}</td><td>{{ h['경고등'] or '-' }}</td><td>{{ h['작업자'] or '-' }}</td></tr>{% else %}<tr><td colspan="5" class="empty-cell">세차 이력이 없습니다.</td></tr>{% endfor %}</tbody></table></div></section>
+
+    <section class="app-section table-panel app-card"><div class="table-title-row"><h2>훼손 제보</h2><span>{{ damage_rows|length }}건</span></div><div class="table-wrap"><table><thead><tr><th>제보일</th><th>부위</th><th>상태</th><th>내용</th></tr></thead><tbody>{% for d in damage_rows %}<tr><td>{{ d['created_at'] }}</td><td>{{ d['damage_location'] }}</td><td><span class="badge">{{ d['status'] }}</span></td><td>{{ d['description'] or '-' }}</td></tr>{% else %}<tr><td colspan="4" class="empty-cell">훼손 제보 이력이 없습니다.</td></tr>{% endfor %}</tbody></table></div></section>
+
+    <section class="app-section app-card" style="padding:14px;">
+        <div class="table-title-row"><h2>세차 현장 사진</h2><span>{{ photo_rows|length }}장</span></div>
+        {% if photo_rows %}
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;">
+            {% for p in photo_rows %}
+            <a href="{{ url_for('car_photo_view', photo_id=p['id']) }}" target="_blank" style="display:block;aspect-ratio:1;border-radius:10px;overflow:hidden;background:#f0f0f0;">
+                <img src="{{ url_for('car_photo_view', photo_id=p['id']) }}" loading="lazy" style="width:100%;height:100%;object-fit:cover;" alt="{{ p['shot_label'] or '' }}">
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-cell">등록된 사진이 없습니다.</p>
+        {% endif %}
+    </section>
+</section>
+
+{# ── 데스크탑 전용 ── #}
+<div id="d-vdd-detail" style="display:none">
+<div class="d-wrap">
+    <p style="margin:0 0 12px;"><a href="{{ url_for('vehicle_damage_dashboard') }}">‹ 차량별 훼손관리 목록으로</a></p>
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">차량 정보</span><h2>{{ plate }}</h2></div></div>
+        <div class="d-card-body">
+            <div class="d-row-2"><div class="d-fg"><label class="d-label">차종</label><div>{{ vehicle['차종명'] or '-' }}</div></div><div class="d-fg"><label class="d-label">차량소속</label><div>{{ vehicle['차량소속'] or '-' }}</div></div></div>
+            <div class="d-row-2"><div class="d-fg"><label class="d-label">담당업체</label><div>{{ vehicle['담당업체'] or '-' }}</div></div><div class="d-fg"><label class="d-label">스팟</label><div>{{ vehicle['스팟'] or '-' }}</div></div></div>
+            <div class="d-row-2"><div class="d-fg"><label class="d-label">지역</label><div>{{ vehicle['지역시도'] or '-' }} {{ vehicle['지역구군'] or '-' }}</div></div><div class="d-fg"><label class="d-label">최근세차일</label><div>{{ vehicle['최근세차일'] or '-' }}</div></div></div>
+        </div>
+    </div>
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">이력</span><h2>세차 이력</h2></div><span class="d-badge-pill">{{ wash_history_rows|length }}건</span></div>
+        <div class="d-table-wrap"><table class="d-table"><thead><tr><th>완료일</th><th>주행거리</th><th>훼손</th><th>경고등</th><th>작업자</th></tr></thead>
+        <tbody>{% for h in wash_history_rows %}<tr><td>{{ h['세차완료일'] }}</td><td>{{ h['주행거리'] or '-' }}</td><td>{{ h['훼손'] or '-' }}</td><td>{{ h['경고등'] or '-' }}</td><td>{{ h['작업자'] or '-' }}</td></tr>{% else %}<tr><td colspan="5" class="d-empty-cell">세차 이력이 없습니다.</td></tr>{% endfor %}</tbody></table></div>
+    </div>
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">제보</span><h2>훼손 제보</h2></div><span class="d-badge-pill">{{ damage_rows|length }}건</span></div>
+        <div class="d-table-wrap"><table class="d-table"><thead><tr><th>제보일</th><th>부위</th><th>상태</th><th>내용</th></tr></thead>
+        <tbody>{% for d in damage_rows %}<tr><td>{{ d['created_at'] }}</td><td>{{ d['damage_location'] }}</td><td><span class="d-badge-pill">{{ d['status'] }}</span></td><td>{{ d['description'] or '-' }}</td></tr>{% else %}<tr><td colspan="4" class="d-empty-cell">훼손 제보 이력이 없습니다.</td></tr>{% endfor %}</tbody></table></div>
+    </div>
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">사진</span><h2>세차 현장 사진</h2></div><span class="d-badge-pill">{{ photo_rows|length }}장</span></div>
+        <div class="d-card-body">
+            {% if photo_rows %}
+            <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;">
+                {% for p in photo_rows %}
+                <a href="{{ url_for('car_photo_view', photo_id=p['id']) }}" target="_blank" style="display:block;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--d-bg);">
+                    <img src="{{ url_for('car_photo_view', photo_id=p['id']) }}" loading="lazy" style="width:100%;height:100%;object-fit:cover;" alt="{{ p['shot_label'] or '' }}">
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="d-empty-cell">등록된 사진이 없습니다.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+</div>
+<style>
+#desktop-mode #d-vdd-detail { display: block !important; }
+#desktop-mode .turu-app-page-v24 { display: none !important; }
+</style>
+{% endblock %}

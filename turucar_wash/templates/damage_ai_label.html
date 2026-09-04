@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block document_title %}Turu Wash · AI 훼손 판독{% endblock %}
+{% block content %}
+<section class="turu-app-page-v24">
+    <div class="turu-page-topbar-v42"><header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
+    <div class="turu-page-head-v24 turu-page-head--single-v25"><div><h1>AI 훼손 판독</h1><p>사진을 정상/훼손의심으로 태깅해 학습 데이터를 만듭니다.</p></div></div></div>
+
+    <div class="hero-chip-stack" style="margin-bottom:14px;"><span>{{ labeled_total }}</span><strong>라벨링 완료</strong></div>
+
+    <section class="app-section app-card" style="padding:14px;margin-bottom:12px;">
+        <div class="form-grid two">
+            <div><span class="field-label">전체 사진</span><div style="font-size:20px;font-weight:800;">{{ total_photos }}</div></div>
+            <div><span class="field-label">남은 사진</span><div style="font-size:20px;font-weight:800;">{{ remaining }}</div></div>
+        </div>
+        <div class="form-grid two">
+            <div><span class="field-label">정상</span><div style="font-size:16px;font-weight:700;color:#3B6D11;">{{ label_summary.normal }}</div></div>
+            <div><span class="field-label">훼손의심</span><div style="font-size:16px;font-weight:700;color:#993C1D;">{{ label_summary.suspect }}</div></div>
+        </div>
+        {% if labeled_total < 40 %}
+        <p style="font-size:12px;color:#888;margin-top:8px;">모델 학습을 시작하려면 최소 40장 정도는 라벨링해두는 게 좋아요 (지금 {{ labeled_total }}장). 라벨이 적을수록 판독 정확도는 참고용 수준에 그칩니다 — 계속 쌓으면서 재학습하면 점점 나아집니다.</p>
+        {% endif %}
+    </section>
+
+    {% if next_photo %}
+    <section class="app-section app-card" style="padding:14px;">
+        <div style="border-radius:14px;overflow:hidden;background:#f0f0f0;margin-bottom:12px;">
+            <img src="{{ url_for('car_photo_view', photo_id=next_photo['id']) }}" style="width:100%;display:block;" alt="라벨링 대상 사진">
+        </div>
+        <p style="font-size:13px;color:#888;margin:0 0 12px;">차량번호 {{ next_photo['차량번호'] }} · {{ next_photo['shot_label'] or '-' }}</p>
+        <form method="POST" class="stack-form">
+            <input type="hidden" name="photo_id" value="{{ next_photo['id'] }}">
+            <div class="form-grid two">
+                <button type="submit" name="label" value="normal" class="primary-btn tall full" style="background:#3B6D11;">정상</button>
+                <button type="submit" name="label" value="suspect" class="primary-btn tall full" style="background:#993C1D;">훼손의심</button>
+            </div>
+        </form>
+    </section>
+    {% else %}
+    <section class="app-section app-card" style="padding:24px;text-align:center;">
+        <p>라벨링할 사진이 더 없습니다. 새 완료 현황 사진이 올라오면 여기 다시 나타납니다.</p>
+    </section>
+    {% endif %}
+</section>
+
+{# ── 데스크탑 전용 ── #}
+<div id="d-ai-label" style="display:none">
+<div class="d-wrap">
+    <div class="d-mv-grid">
+        <div class="d-mv-stat"><span>전체 사진</span><strong>{{ total_photos }}</strong></div>
+        <div class="d-mv-stat"><span>라벨링 완료</span><strong>{{ labeled_total }}</strong></div>
+        <div class="d-mv-stat"><span>남은 사진</span><strong>{{ remaining }}</strong></div>
+    </div>
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">라벨 현황</span><h2>정상 / 훼손의심</h2></div></div>
+        <div class="d-card-body">
+            <div class="d-row-2">
+                <div class="d-fg"><label class="d-label">정상</label><div style="font-size:20px;font-weight:800;color:#3B6D11;">{{ label_summary.normal }}</div></div>
+                <div class="d-fg"><label class="d-label">훼손의심</label><div style="font-size:20px;font-weight:800;color:#993C1D;">{{ label_summary.suspect }}</div></div>
+            </div>
+            {% if labeled_total < 40 %}
+            <p style="font-size:12px;color:var(--d-muted);margin-top:8px;">모델 학습을 시작하려면 최소 40장 정도는 라벨링해두는 게 좋아요 (지금 {{ labeled_total }}장).</p>
+            {% endif %}
+        </div>
+    </div>
+    {% if next_photo %}
+    <div class="d-card">
+        <div class="d-card-head"><div><span class="d-eyebrow">차량번호 {{ next_photo['차량번호'] }}</span><h2>{{ next_photo['shot_label'] or '사진' }}</h2></div></div>
+        <div class="d-card-body">
+            <div style="max-width:480px;margin:0 auto 16px;border-radius:14px;overflow:hidden;background:var(--d-bg);">
+                <img src="{{ url_for('car_photo_view', photo_id=next_photo['id']) }}" style="width:100%;display:block;" alt="라벨링 대상 사진">
+            </div>
+            <form method="POST" style="max-width:480px;margin:0 auto;">
+                <input type="hidden" name="photo_id" value="{{ next_photo['id'] }}">
+                <div class="d-row-2">
+                    <button type="submit" name="label" value="normal" class="d-btn" style="background:#3B6D11;color:#fff;">정상</button>
+                    <button type="submit" name="label" value="suspect" class="d-btn" style="background:#993C1D;color:#fff;">훼손의심</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="d-card"><div class="d-card-body" style="text-align:center;">라벨링할 사진이 더 없습니다. 새 완료 현황 사진이 올라오면 여기 다시 나타납니다.</div></div>
+    {% endif %}
+</div>
+</div>
+<style>
+#desktop-mode #d-ai-label { display: block !important; }
+#desktop-mode .turu-app-page-v24 { display: none !important; }
+</style>
+{% endblock %}

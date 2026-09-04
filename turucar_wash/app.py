@@ -572,6 +572,15 @@ def ensure_wash_schema():
             cur.execute("ALTER TABLE wash_history ADD COLUMN 세차일 TEXT")
             cur.execute("UPDATE wash_history SET 세차일 = 세차완료일 WHERE 세차일 IS NULL")
             print("[TuruWash] wash_history.세차일 컬럼 추가됨")
+        # (2026-09-04) 차량별 훼손관리 대시보드용 — 세차완료 시 작업자가 입력한 훼손/경고등
+        # 메모가 있는 건을 관리자가 "확인"했는지 추적한다. 체크 안 된 건은 대시보드 상단에
+        # "확인 필요"로 노출되고, 관리자가 확인 처리하면 이 플래그가 세워져 더 이상 상단에
+        # 뜨지 않는다.
+        if "damage_checked" not in hist_cols:
+            cur.execute("ALTER TABLE wash_history ADD COLUMN damage_checked INTEGER DEFAULT 0")
+            cur.execute("ALTER TABLE wash_history ADD COLUMN damage_checked_by TEXT")
+            cur.execute("ALTER TABLE wash_history ADD COLUMN damage_checked_at TEXT")
+            print("[TuruWash] wash_history.damage_checked 컬럼 추가됨")
         vm_cols = [row[1] for row in cur.execute("PRAGMA table_info(vehicle_master)").fetchall()]
         if "BM구분" not in vm_cols:
             cur.execute("ALTER TABLE vehicle_master ADD COLUMN BM구분 TEXT")
@@ -4103,6 +4112,17 @@ def _vehicle_scope_condition(user):
     return " AND 1=0", []
 def _can_view_vehicle_management():
     return current_user.is_admin or bool(current_user.fleets)
+# 세차완료 시 작업자가 입력한 훼손/경고등 메모 중 "특이사항 없음"으로 볼 수 있는 값들.
+# 이 값이 아니면(즉 뭔가 적혀 있으면) 차량별 훼손관리 대시보드에서 훼손 관련 건으로 취급한다.
+_NO_ISSUE_VALUES = ("", "없음")
+def _wash_history_damage_where():
+    """훼손 또는 경고등에 뭔가 적힌(=특이사항 있는) wash_history 행만 골라내는 조건."""
+    placeholders = ",".join(["?"] * len(_NO_ISSUE_VALUES))
+    return (
+        f"(TRIM(COALESCE(훼손,'')) NOT IN ({placeholders}) "
+        f"OR TRIM(COALESCE(경고등,'')) NOT IN ({placeholders}))",
+        list(_NO_ISSUE_VALUES) + list(_NO_ISSUE_VALUES)
+    )
 @app.route("/vehicle_damage_dashboard")
 @login_required
 def vehicle_damage_dashboard():
@@ -4112,27 +4132,94 @@ def vehicle_damage_dashboard():
     q = request.args.get("q", "").strip()
     page = request.args.get("page", 1, type=int)
     conn = get_wash_db()
-    scope_sql, scope_params = _vehicle_scope_condition(current_user)
-    query = "SELECT * FROM vehicle_master WHERE 1=1" + scope_sql
-    params = list(scope_params)
+    scope_sql, scope_params = scoped_condition("wash_history", current_user)
+    issue_sql, issue_params = _wash_history_damage_where()
+    base_query = f"SELECT * FROM wash_history WHERE {issue_sql}" + scope_sql
+    base_params = list(issue_params) + list(scope_params)
     if q:
-        query += " AND (차량번호 LIKE ? OR 차종명 LIKE ? OR 차량소속 LIKE ?)"
-        params += [f"%{q}%", f"%{q}%", f"%{q}%"]
-    query += " ORDER BY 차량번호"
-    vehicles = conn.execute(query, params).fetchall()
+        base_query += " AND 차량번호 LIKE ?"
+        base_params.append(f"%{q}%")
+    # 위쪽 "확인 필요" — 아직 관리자가 확인 처리하지 않은 훼손/경고등 건.
+    needs_check_rows = conn.execute(
+        base_query + " AND (damage_checked IS NULL OR damage_checked = 0) ORDER BY 세차완료일 DESC, id DESC LIMIT 200",
+        base_params
+    ).fetchall()
+    # 아래쪽 — 확인 여부와 상관없이 훼손/경고등 메모가 있었던 전체 세차완료 기록.
+    all_rows = conn.execute(
+        base_query + " ORDER BY 세차완료일 DESC, id DESC",
+        base_params
+    ).fetchall()
     conn.close()
-    # 차량번호별 훼손 제보 건수 (USER_DB) — 대시보드 목록에서 바로 보이게
-    uconn = get_user_db()
-    damage_counts = {
-        r["car_number"]: r["c"]
-        for r in uconn.execute("SELECT car_number, COUNT(*) AS c FROM damage_reports GROUP BY car_number").fetchall()
-    }
-    uconn.close()
-    page_rows, current_page, total_pages = paginate_list(vehicles, page, per_page=20)
+    page_rows, current_page, total_pages = paginate_list(all_rows, page, per_page=20)
     return render_template(
         "vehicle_damage_dashboard.html",
-        vehicles=page_rows, current_page=current_page, total_pages=total_pages,
-        total_count=len(vehicles), q=q, damage_counts=damage_counts,
+        needs_check_rows=needs_check_rows,
+        rows=page_rows, current_page=current_page, total_pages=total_pages,
+        total_count=len(all_rows), q=q,
+    )
+@app.route("/vehicle_damage_dashboard/mark_checked", methods=["POST"])
+@login_required
+def vehicle_damage_mark_checked():
+    if not _can_view_vehicle_management():
+        return "Forbidden", 403
+    history_id = request.form.get("history_id", type=int)
+    if not history_id:
+        flash("❌ 대상을 찾을 수 없습니다.")
+        return redirect(url_for("vehicle_damage_dashboard"))
+    conn = get_wash_db()
+    scope_sql, scope_params = scoped_condition("wash_history", current_user)
+    row = conn.execute(
+        "SELECT id FROM wash_history WHERE id=?" + scope_sql,
+        [history_id] + list(scope_params)
+    ).fetchone()
+    if not row:
+        conn.close()
+        flash("❌ 해당 기록을 찾을 수 없거나 확인 권한이 없습니다.")
+        return redirect(url_for("vehicle_damage_dashboard"))
+    conn.execute(
+        "UPDATE wash_history SET damage_checked=1, damage_checked_by=?, damage_checked_at=? WHERE id=?",
+        (current_user.username, now_kst().strftime("%Y-%m-%d %H:%M:%S"), history_id)
+    )
+    conn.commit()
+    conn.close()
+    flash("✔ 확인 처리되었습니다.")
+    return redirect(request.referrer or url_for("vehicle_damage_dashboard"))
+@app.route("/vehicle_damage_dashboard/export")
+@login_required
+def vehicle_damage_dashboard_export():
+    if not _can_view_vehicle_management():
+        flash("❌ 접근 권한이 없습니다.")
+        return redirect(url_for("dashboard"))
+    q = request.args.get("q", "").strip()
+    conn = get_wash_db()
+    scope_sql, scope_params = scoped_condition("wash_history", current_user)
+    issue_sql, issue_params = _wash_history_damage_where()
+    query = f"SELECT 차량번호, 훼손 AS 훼손부위, 경고등, 세차완료일 FROM wash_history WHERE {issue_sql}" + scope_sql
+    params = list(issue_params) + list(scope_params)
+    if q:
+        query += " AND 차량번호 LIKE ?"
+        params.append(f"%{q}%")
+    query += " ORDER BY 세차완료일 DESC, id DESC"
+    df = pd.read_sql_query(query, conn, params=params)
+    conn.close()
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="차량별 훼손관리")
+        worksheet = writer.sheets["차량별 훼손관리"]
+        for column_cells in worksheet.columns:
+            max_length = 10
+            column_letter = column_cells[0].column_letter
+            for cell in column_cells:
+                value = "" if cell.value is None else str(cell.value)
+                max_length = max(max_length, min(len(value) + 2, 40))
+            worksheet.column_dimensions[column_letter].width = max_length
+    output.seek(0)
+    filename = f"vehicle_damage_{today_kst()}.xlsx"
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name=filename,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 @app.route("/vehicle_damage_dashboard/<path:plate>")
 @login_required

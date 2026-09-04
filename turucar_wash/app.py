@@ -2782,7 +2782,7 @@ def wash_complete(id):
     photo_uploaded, photo_failed = 0, 0
     damage_report_created = False
     if is_photo_org:
-        # 슬롯별 사진 수집 (외부10+내부4+특이사항3+무인훼손제보5 = 22컷, 전부 선택사항, 1장씩).
+        # 슬롯별 사진 수집 (외부10+내부5+특이사항5+무인훼손제보5 = 25컷, 전부 선택사항, 1장씩).
         # 무인훼손 제보 슬롯(damage_1~5)도 이제 다른 슬롯과 동일하게 한 장씩 찍는 개별 슬롯이라
         # 같은 루프에서 함께 수집하고, 그중 damage_* 키에 해당하는 파일만 따로 모아
         # 기존 훼손제보(damage_reports)/슬랙 연동에 사용한다.
@@ -3443,6 +3443,10 @@ PHOTO_SLOT_GROUPS = [
             {"key": "int_2", "label": "운전석 2열",                    "icon_type": "emoji", "icon_src": "📷"},
             {"key": "int_3", "label": "조수석 2열",                    "icon_type": "emoji", "icon_src": "📷"},
             {"key": "int_4", "label": "조수석 1열 (도어·시트)",        "icon_type": "emoji", "icon_src": "📷"},
+            # 계기판(주행거리·경고등 표시부)이 잘 보이도록 별도 슬롯으로 추가 — 기존
+            # int_1이 운전석 1열 전체(핸들·시트 포함)를 넓게 찍는 샷이라 계기판 숫자가
+            # 잘 안 보인다는 피드백에 따라 계기판만 클로즈업하는 샷을 따로 둔다.
+            {"key": "int_5", "label": "계기판 (주행거리·경고등)",     "icon_type": "emoji", "icon_src": "📷"},
         ],
     },
     {
@@ -3451,6 +3455,8 @@ PHOTO_SLOT_GROUPS = [
             {"key": "etc_blackbox", "label": "블랙박스 작동화면",     "icon_type": "emoji", "icon_src": "📷"},
             {"key": "etc_center",   "label": "센터페시아 및 공조기", "icon_type": "emoji", "icon_src": "📷"},
             {"key": "etc_card",     "label": "카드 사진",             "icon_type": "emoji", "icon_src": "📷"},
+            {"key": "etc_trunk",    "label": "트렁크 내부",           "icon_type": "emoji", "icon_src": "📷"},
+            {"key": "etc_tire",     "label": "타이어 상태 (4륜)",     "icon_type": "emoji", "icon_src": "📷"},
         ],
     },
     {

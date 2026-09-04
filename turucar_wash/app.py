@@ -4123,14 +4123,32 @@ def _wash_history_damage_where():
         f"OR TRIM(COALESCE(경고등,'')) NOT IN ({placeholders}))",
         list(_NO_ISSUE_VALUES) + list(_NO_ISSUE_VALUES)
     )
+def _split_damage_tokens(text):
+    """훼손 텍스트를 개별 '부위' 단위로 쪼갠다.
+    세차완료 화면의 '부위 선택해서 입력하기' 피커는 선택한 부위들을 ", " 로 이어붙여
+    textarea에 채워넣는다 (예: "운)전범퍼, 조)전범퍼" — car_detail.html의
+    renderCarDamagePicker: `Array.from(selected).join(', ')`). 그래서 이번 세차에서
+    부위가 하나 줄었을 뿐인데(예: "조)전범퍼, 운)전범퍼" → "조)전범퍼", 운전석 쪽은 이미
+    수리돼서 이번엔 조수석 쪽만 다시 체크한 경우) 훼손 텍스트 전체를 통째로 비교하면
+    "이 문자열은 처음 본다"는 이유만으로 신규 훼손으로 잘못 표시된다. 쉼표 기준으로
+    나눠 부위 단위로 비교해야 이런 오탐을 막을 수 있다. 피커를 안 쓰고 자유 서술로 적은
+    경우(쉼표가 없는 한 문장)에도 그 문장 전체가 토큰 하나로 취급되어 동일한 방식으로
+    비교된다."""
+    if not text:
+        return []
+    return [t.strip() for t in text.split(",") if t.strip()]
 def _compute_new_damage_ids(conn, scope_sql, scope_params):
-    """차량별로 '가장 최근' 세차완료 기록의 훼손 텍스트가 그 이전 모든 기록에는 한 번도
-    등장한 적이 없으면, 그 최신 기록 하나만 wash_history.id로 반환한다(신규 훼손 강조 대상).
-    같은 차량의 더 오래된 기록들은 — 그 자체가 당시엔 새로 등장한 표현이었더라도 — 다시
-    강조하지 않는다. 지금 확인이 필요한 것은 "가장 최근 세차에서 새로 생긴 훼손이 있는가"이지,
-    과거 이력 전체를 훑어 처음 등장한 문구를 전부 표시하는 게 아니기 때문이다(그렇게 하면
-    오래된 차량일수록 이력 대부분이 붉게 표시되어 오히려 눈에 띄어야 할 것을 가려버린다).
-    텍스트 완전일치 기준 비교라 작업자가 표현을 다르게 적으면 놓칠 수 있는 v1 한계가 있다."""
+    """차량별로 '가장 최근' 세차완료 기록에만 신규 훼손 표시 여부를 판단한다(그 결과가 참이면
+    wash_history.id로 반환 — 신규 훼손 강조 대상). 같은 차량의 더 오래된 기록들은 — 그 자체가
+    당시엔 새로 등장한 표현이었더라도 — 다시 강조하지 않는다. 지금 확인이 필요한 것은
+    "가장 최근 세차에서 새로 생긴 훼손이 있는가"이지, 과거 이력 전체를 훑어 처음 등장한
+    문구를 전부 표시하는 게 아니기 때문이다(그렇게 하면 오래된 차량일수록 이력 대부분이
+    붉게 표시되어 오히려 눈에 띄어야 할 것을 가려버린다).
+    '새로 생겼다'의 판단은 훼손 텍스트를 _split_damage_tokens()로 부위 단위로 쪼갠 뒤,
+    최신 기록의 부위 중 그 차량의 이전 기록 어디에도 등장한 적 없는 부위가 하나라도 있는지로
+    본다(통째 문자열 완전일치가 아님 — 이유는 _split_damage_tokens 참고). 그래도 작업자가
+    같은 부위를 다른 표현으로 적으면(예: "조수석 앞범퍼" vs "조)전범퍼") 놓칠 수 있는 한계는
+    남아있다."""
     rows = conn.execute(
         "SELECT id, 차량번호, 훼손 FROM wash_history "
         "WHERE TRIM(COALESCE(훼손,'')) NOT IN ('', '없음')" + scope_sql +
@@ -4143,8 +4161,11 @@ def _compute_new_damage_ids(conn, scope_sql, scope_params):
     new_ids = set()
     for plate_rows in rows_by_plate.values():
         latest = plate_rows[-1]
-        prior_texts = {(r["훼손"] or "").strip() for r in plate_rows[:-1]}
-        if (latest["훼손"] or "").strip() not in prior_texts:
+        prior_tokens = set()
+        for r in plate_rows[:-1]:
+            prior_tokens.update(_split_damage_tokens(r["훼손"]))
+        latest_tokens = _split_damage_tokens(latest["훼손"])
+        if any(tok not in prior_tokens for tok in latest_tokens):
             new_ids.add(latest["id"])
     return new_ids
 @app.route("/vehicle_damage_dashboard")

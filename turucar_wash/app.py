@@ -4125,14 +4125,6 @@ def _can_view_vehicle_management():
 # 세차완료 시 작업자가 입력한 훼손/경고등 메모 중 "특이사항 없음"으로 볼 수 있는 값들.
 # 이 값이 아니면(즉 뭔가 적혀 있으면) 차량별 훼손관리 대시보드에서 훼손 관련 건으로 취급한다.
 _NO_ISSUE_VALUES = ("", "없음")
-def _wash_history_damage_where():
-    """훼손 또는 경고등에 뭔가 적힌(=특이사항 있는) wash_history 행만 골라내는 조건."""
-    placeholders = ",".join(["?"] * len(_NO_ISSUE_VALUES))
-    return (
-        f"(TRIM(COALESCE(훼손,'')) NOT IN ({placeholders}) "
-        f"OR TRIM(COALESCE(경고등,'')) NOT IN ({placeholders}))",
-        list(_NO_ISSUE_VALUES) + list(_NO_ISSUE_VALUES)
-    )
 # 훼손 부위를 항상 같은 순서(앞모습 → 뒷모습 → 운전석 쪽 → 조수석 쪽)로 보여주기 위한
 # 정렬 기준 — car_detail.html의 부위선택 피커(renderCarDamagePicker)가 제공하는 부위
 # 이름과 논리적 순서(앞→뒤)를 그대로 따른다. 화면에 찍히는 좌우 반전(조수석 쪽 사진은
@@ -4173,37 +4165,47 @@ def _split_damage_tokens(text):
     if not text or not isinstance(text, str):
         return []
     return [t.strip() for t in text.split(",") if t.strip()]
-def _compute_new_damage_ids(conn, scope_sql, scope_params):
-    """차량별로 '가장 최근' 세차완료 기록에만 신규 훼손 표시 여부를 판단한다(그 결과가 참이면
-    wash_history.id로 반환 — 신규 훼손 강조 대상). 같은 차량의 더 오래된 기록들은 — 그 자체가
-    당시엔 새로 등장한 표현이었더라도 — 다시 강조하지 않는다. 지금 확인이 필요한 것은
-    "가장 최근 세차에서 새로 생긴 훼손이 있는가"이지, 과거 이력 전체를 훑어 처음 등장한
-    문구를 전부 표시하는 게 아니기 때문이다(그렇게 하면 오래된 차량일수록 이력 대부분이
-    붉게 표시되어 오히려 눈에 띄어야 할 것을 가려버린다).
-    '새로 생겼다'의 판단은 훼손 텍스트를 _split_damage_tokens()로 부위 단위로 쪼갠 뒤,
-    최신 기록의 부위 중 그 차량의 이전 기록 어디에도 등장한 적 없는 부위가 하나라도 있는지로
-    본다(통째 문자열 완전일치가 아님 — 이유는 _split_damage_tokens 참고). 그래도 작업자가
-    같은 부위를 다른 표현으로 적으면(예: "조수석 앞범퍼" vs "조)전범퍼") 놓칠 수 있는 한계는
-    남아있다."""
+def _vehicle_damage_summary_rows(conn, scope_sql, scope_params):
+    """차량별 훼손관리 대시보드용 데이터를 한 번에 만든다.
+
+    (2026-09-04) 예전에는 wash_history에서 "훼손/경고등이 있는" 행을 그대로 다 나열해서,
+    한 차량이 세차완료를 여러 번 하며 훼손 메모를 남기면 그 차량이 목록에 여러 줄로
+    중복 표시됐다. 이 화면은 "지금 이 차량 상태가 어떤가"를 보는 화면이므로, 차량당
+    "가장 최근" 세차완료 기록 1건만 대표로 보여준다. 그 최신 기록에 훼손/경고등이 둘 다
+    없으면(=문제 없음) 그 차량은 목록에서 아예 빠진다.
+
+    "신규 훼손" 판단 기준도 함께 바뀐다 — 예전엔 그 차량의 과거 전체 이력에 한 번이라도
+    등장한 적 없는 부위면 신규로 봤지만, 이제는 "바로 직전" 세차완료 기록에 없던 부위만
+    신규로 본다(최신 vs 직전, 1:1 비교). 부위 비교는 여전히 _split_damage_tokens()로
+    쉼표 단위 토큰 집합 비교를 한다(문자열 전체 비교가 아님 — 이유는 그 함수 설명 참고).
+
+    반환값: (latest_rows: 훼손/경고등이 있는 차량들의 최신 wash_history Row 리스트,
+             new_damage_ids: 그 중 신규훼손으로 판단된 id 집합)"""
     rows = conn.execute(
-        "SELECT id, 차량번호, 훼손 FROM wash_history "
-        "WHERE TRIM(COALESCE(훼손,'')) NOT IN ('', '없음')" + scope_sql +
+        "SELECT * FROM wash_history WHERE 1=1" + scope_sql +
         " ORDER BY 차량번호, 세차완료일 ASC, id ASC",
         scope_params
     ).fetchall()
     rows_by_plate = {}
     for r in rows:
         rows_by_plate.setdefault(r["차량번호"], []).append(r)
-    new_ids = set()
+    latest_rows = []
+    new_damage_ids = set()
     for plate_rows in rows_by_plate.values():
         latest = plate_rows[-1]
-        prior_tokens = set()
-        for r in plate_rows[:-1]:
-            prior_tokens.update(_split_damage_tokens(r["훼손"]))
-        latest_tokens = _split_damage_tokens(latest["훼손"])
-        if any(tok not in prior_tokens for tok in latest_tokens):
-            new_ids.add(latest["id"])
-    return new_ids
+        damage = (latest["훼손"] or "").strip()
+        warn = (latest["경고등"] or "").strip()
+        if damage in _NO_ISSUE_VALUES and warn in _NO_ISSUE_VALUES:
+            continue
+        latest_rows.append(latest)
+        # 최신 기록 자체에 훼손이 없으면(경고등만 있는 경우) 비교할 신규 훼손이 없으므로 스킵.
+        if damage not in _NO_ISSUE_VALUES:
+            prev = plate_rows[-2] if len(plate_rows) >= 2 else None
+            prev_tokens = set(_split_damage_tokens(prev["훼손"])) if prev else set()
+            latest_tokens = _split_damage_tokens(latest["훼손"])
+            if any(tok not in prev_tokens for tok in latest_tokens):
+                new_damage_ids.add(latest["id"])
+    return latest_rows, new_damage_ids
 @app.route("/vehicle_damage_dashboard")
 @login_required
 def vehicle_damage_dashboard():
@@ -4219,21 +4221,13 @@ def vehicle_damage_dashboard():
     conn = get_wash_db()
     cur = conn.cursor()
     scope_sql, scope_params = scoped_condition("wash_history", current_user)
-    issue_sql, issue_params = _wash_history_damage_where()
-    base_query = f"SELECT * FROM wash_history WHERE {issue_sql}" + scope_sql
-    base_params = list(issue_params) + list(scope_params)
+    # 차량당 "가장 최근" 세차완료 기록 1건만 대표로 골라온다(중복 표시 방지).
+    latest_rows, new_damage_ids = _vehicle_damage_summary_rows(conn, scope_sql, scope_params)
     if org:
-        base_query += " AND 차량소속 = ?"
-        base_params.append(org)
+        latest_rows = [r for r in latest_rows if r["차량소속"] == org]
     if q:
-        base_query += " AND 차량번호 LIKE ?"
-        base_params.append(f"%{q}%")
-    all_rows = cur.execute(
-        base_query + " ORDER BY 세차완료일 DESC, id DESC",
-        base_params
-    ).fetchall()
-    # "신규 훼손" 강조 — 전체 스코프 기준으로 계산해야 하므로 검색/필터 조건과 무관하게 별도 조회한다.
-    new_damage_ids = _compute_new_damage_ids(conn, scope_sql, scope_params)
+        latest_rows = [r for r in latest_rows if q in (r["차량번호"] or "")]
+    all_rows = sorted(latest_rows, key=lambda r: (r["세차완료일"] or "", r["id"]), reverse=True)
     # 세차 오더(wash_list) 화면의 "전체 / 장기 미세차" 탭과 동일한 패턴 —
     # q/org 검색조건은 그대로 유지한 채, "신규 훼손"/"경고등" 탭을 고르면 그 조건을
     # 만족하는 행 중 각 조건에 해당하는 것만 다시 추려서 페이지네이션한다.
@@ -4267,25 +4261,23 @@ def vehicle_damage_dashboard_export():
         tab = "all"
     conn = get_wash_db()
     scope_sql, scope_params = scoped_condition("wash_history", current_user)
-    issue_sql, issue_params = _wash_history_damage_where()
-    query = f"SELECT id, 차량번호, 훼손 AS 훼손부위, 경고등, 세차완료일 FROM wash_history WHERE {issue_sql}" + scope_sql
-    params = list(issue_params) + list(scope_params)
+    latest_rows, new_damage_ids = _vehicle_damage_summary_rows(conn, scope_sql, scope_params)
     if org:
-        query += " AND 차량소속 = ?"
-        params.append(org)
+        latest_rows = [r for r in latest_rows if r["차량소속"] == org]
     if q:
-        query += " AND 차량번호 LIKE ?"
-        params.append(f"%{q}%")
-    query += " ORDER BY 세차완료일 DESC, id DESC"
-    df = pd.read_sql_query(query, conn, params=params)
+        latest_rows = [r for r in latest_rows if q in (r["차량번호"] or "")]
+    all_rows = sorted(latest_rows, key=lambda r: (r["세차완료일"] or "", r["id"]), reverse=True)
     if tab == "new":
-        new_damage_ids = _compute_new_damage_ids(conn, scope_sql, scope_params)
-        df = df[df["id"].isin(new_damage_ids)]
+        all_rows = [r for r in all_rows if r["id"] in new_damage_ids]
     elif tab == "warning":
-        df = df[~df["경고등"].fillna("").str.strip().isin(_NO_ISSUE_VALUES)]
-    df = df.drop(columns=["id"])
-    df["훼손부위"] = df["훼손부위"].apply(_format_damage_text)
+        all_rows = [r for r in all_rows if (r["경고등"] or "").strip() not in _NO_ISSUE_VALUES]
     conn.close()
+    df = pd.DataFrame({
+        "차량번호": [r["차량번호"] for r in all_rows],
+        "훼손부위": [_format_damage_text(r["훼손"]) for r in all_rows],
+        "경고등": [r["경고등"] for r in all_rows],
+        "세차완료일": [r["세차완료일"] for r in all_rows],
+    })
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, sheet_name="차량별 훼손관리")

@@ -4155,6 +4155,9 @@ def vehicle_damage_dashboard():
         return redirect(url_for("dashboard"))
     q = request.args.get("q", "").strip()
     org = request.args.get("org", "").strip()
+    tab = request.args.get("tab", "all").strip()
+    if tab not in ("all", "new"):
+        tab = "all"
     page = request.args.get("page", 1, type=int)
     conn = get_wash_db()
     cur = conn.cursor()
@@ -4174,13 +4177,19 @@ def vehicle_damage_dashboard():
     ).fetchall()
     # "신규 훼손" 강조 — 전체 스코프 기준으로 계산해야 하므로 검색/필터 조건과 무관하게 별도 조회한다.
     new_damage_ids = _compute_new_damage_ids(conn, scope_sql, scope_params)
+    # 세차 오더(wash_list) 화면의 "전체 / 장기 미세차" 탭과 동일한 패턴 —
+    # q/org 검색조건은 그대로 유지한 채, "신규 훼손" 탭을 고르면 그 조건을 만족하는
+    # 행 중 new_damage_ids에 속한 것만 다시 추려서 페이지네이션한다.
+    new_rows = [r for r in all_rows if r["id"] in new_damage_ids]
+    display_rows = new_rows if tab == "new" else all_rows
     org_list = filter_distinct_values(cur, "wash_history", "차량소속", scope_sql, scope_params)
     conn.close()
-    page_rows, current_page, total_pages = paginate_list(all_rows, page, per_page=20)
+    page_rows, current_page, total_pages = paginate_list(display_rows, page, per_page=20)
     return render_template(
         "vehicle_damage_dashboard.html",
         rows=page_rows, current_page=current_page, total_pages=total_pages,
-        total_count=len(all_rows), q=q, org=org, org_list=org_list,
+        total_count=len(display_rows), all_count=len(all_rows), new_count=len(new_rows),
+        q=q, org=org, org_list=org_list, tab=tab,
         new_damage_ids=new_damage_ids,
     )
 @app.route("/vehicle_damage_dashboard/export")
@@ -4191,10 +4200,13 @@ def vehicle_damage_dashboard_export():
         return redirect(url_for("dashboard"))
     q = request.args.get("q", "").strip()
     org = request.args.get("org", "").strip()
+    tab = request.args.get("tab", "all").strip()
+    if tab not in ("all", "new"):
+        tab = "all"
     conn = get_wash_db()
     scope_sql, scope_params = scoped_condition("wash_history", current_user)
     issue_sql, issue_params = _wash_history_damage_where()
-    query = f"SELECT 차량번호, 훼손 AS 훼손부위, 경고등, 세차완료일 FROM wash_history WHERE {issue_sql}" + scope_sql
+    query = f"SELECT id, 차량번호, 훼손 AS 훼손부위, 경고등, 세차완료일 FROM wash_history WHERE {issue_sql}" + scope_sql
     params = list(issue_params) + list(scope_params)
     if org:
         query += " AND 차량소속 = ?"
@@ -4204,6 +4216,10 @@ def vehicle_damage_dashboard_export():
         params.append(f"%{q}%")
     query += " ORDER BY 세차완료일 DESC, id DESC"
     df = pd.read_sql_query(query, conn, params=params)
+    if tab == "new":
+        new_damage_ids = _compute_new_damage_ids(conn, scope_sql, scope_params)
+        df = df[df["id"].isin(new_damage_ids)]
+    df = df.drop(columns=["id"])
     conn.close()
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:

@@ -2,46 +2,43 @@
 {% from "_pagination.html" import render_pagination %}
 {% block document_title %}Turu Wash · 차량별 훼손관리{% endblock %}
 {% block content %}
-<section class="turu-app-page-v24 vdd-page">
+<section class="turu-app-page-v24">
     <div class="turu-page-topbar-v42"><header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
     <div class="turu-page-head-v24 turu-page-head--single-v25"><div><h1>차량별 훼손관리</h1><p>세차완료 시 입력된 훼손·경고등 메모를 확인합니다.</p></div></div></div>
 
-    {% if needs_check_rows %}
-    <div class="vdd-section-label"><span class="vdd-dot"></span>확인 필요<em class="vdd-chip vdd-chip-urgent">{{ needs_check_rows|length }}건</em></div>
-    <div class="vdd-card">
-        {% for h in needs_check_rows %}
-        <div class="vdd-row">
-            <div class="vdd-row-main">
-                <a href="{{ url_for('vehicle_damage_detail', plate=h['차량번호']) }}" class="vdd-plate">{{ h['차량번호'] }}</a>
-                <span class="vdd-date">{{ h['세차완료일'] }}</span>
-            </div>
-            <div class="vdd-row-notes">
-                {% if h['훼손'] and h['훼손'] != '없음' %}<span class="vdd-note">훼손 · {{ h['훼손'] }}</span>{% endif %}
-                {% if h['경고등'] and h['경고등'] != '없음' %}<span class="vdd-note">경고등 · {{ h['경고등'] }}</span>{% endif %}
-            </div>
-            <form method="POST" action="{{ url_for('vehicle_damage_mark_checked') }}" class="vdd-check-form">
-                <input type="hidden" name="history_id" value="{{ h['id'] }}">
-                <button type="submit" class="vdd-check-btn">확인 완료</button>
-            </form>
+    <div class="turu-searchbar-v24">
+        <input id="quick_search_input" placeholder="차량번호 검색" value="{{ q }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">
+        <button type="button" onclick="document.getElementById('search_input').value=document.getElementById('quick_search_input').value;applyFilter();" aria-label="검색">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+        </button>
+        <button type="button" class="filter" onclick="openMobileFilter('vdd-filter-sheet')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg>필터
+        </button>
+    </div>
+    <div id="mobile-filter-backdrop" class="mobile-filter-backdrop" onclick="closeAnyMobileFilter()"></div>
+    <section id="vdd-filter-sheet" class="filter-card app-card search-panel mobile-filter-sheet turu-filter-sheet-v24">
+        <div class="mobile-filter-sheet-head">
+            <strong>차량별 훼손관리 필터</strong>
+            <button type="button" onclick="closeMobileFilter('vdd-filter-sheet')" aria-label="닫기">&#215;</button>
         </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <div class="vdd-search-row">
-        <form method="GET" class="vdd-search-box">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
-            <input type="text" name="q" value="{{ q }}" placeholder="차량번호 검색">
-        </form>
-        <a href="{{ url_for('vehicle_damage_dashboard_export', q=q) }}" class="vdd-export-btn"><i class="ti ti-download"></i>엑셀</a>
-    </div>
+        <div class="filter-head">
+            <div><strong>차량별 훼손관리 검색</strong><small>차량번호, 차량소속 기준으로 찾아보세요.</small></div>
+            <span>{{ total_count }}건</span>
+        </div>
+        <div class="filter-grid">
+            <select id="org" class="app-input"><option value="">전체 차량소속</option>{% for o in org_list %}<option value="{{ o }}" {% if org == o %}selected{% endif %}>{{ o }}</option>{% endfor %}</select>
+            <input id="search_input" class="app-input" placeholder="차량번호 검색" value="{{ q }}">
+            <button type="button" onclick="applyFilter()" class="primary-btn">검색</button>
+            <button type="button" onclick="downloadVddExcel()" class="blue-btn">엑셀 저장</button>
+        </div>
+    </section>
 
     <div class="vdd-section-label">전체 목록<em class="vdd-chip">{{ total_count }}건</em></div>
     <div class="vdd-card">
         {% for h in rows %}
-        <a href="{{ url_for('vehicle_damage_detail', plate=h['차량번호']) }}" class="vdd-row vdd-row-link">
+        <a href="{{ url_for('vehicle_damage_detail', plate=h['차량번호']) }}" class="vdd-row vdd-row-link {% if h['id'] in new_damage_ids %}vdd-row-new{% endif %}">
             <div class="vdd-row-main">
-                <span class="vdd-plate">{{ h['차량번호'] }}</span>
+                <span class="vdd-plate">{{ h['차량번호'] }}{% if h['id'] in new_damage_ids %}<em class="vdd-new-badge">신규 훼손</em>{% endif %}</span>
                 <span class="vdd-date">{{ h['세차완료일'] }}</span>
             </div>
             <div class="vdd-row-notes">
@@ -50,77 +47,81 @@
             </div>
         </a>
         {% else %}
-        <div class="vdd-empty">{% if q %}'{{ q }}'와(과) 일치하는 기록이 없습니다.{% else %}훼손·경고등 메모가 있는 세차완료 기록이 없습니다.{% endif %}</div>
+        <div class="vdd-empty">{% if q or org %}조건과 일치하는 기록이 없습니다.{% else %}훼손·경고등 메모가 있는 세차완료 기록이 없습니다.{% endif %}</div>
         {% endfor %}
     </div>
     {{ render_pagination(current_page, total_pages, 'page') }}
+
+    {# ── 데스크탑 전용 ── #}
+    <section class="desktop-table table-panel app-card turu-desktop-table-v24">
+        <div class="dt-toolbar">
+            <div class="dt-toolbar-left"><h2 style="margin:0;font-size:19px;font-weight:800;">차량별 훼손관리 · 전체 목록</h2></div>
+            <div class="dt-toolbar-right"><span class="d-badge-pill">{{ total_count }}건</span></div>
+        </div>
+        <div class="dt-filterbar">
+            <select id="dt_org" onchange="syncAndFilter('org','dt_org')"><option value="">전체 차량소속</option>{% for o in org_list %}<option value="{{ o }}" {% if org == o %}selected{% endif %}>{{ o }}</option>{% endfor %}</select>
+            <div class="dt-filter-divider"></div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-text-tertiary);flex-shrink:0"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+            <input id="dt_search" placeholder="차량번호 검색" value="{{ q }}" onkeydown="if(event.key==='Enter'){event.preventDefault();dtApplyFilter();}">
+            <button type="button" class="dt-btn dt-btn--primary" onclick="dtApplyFilter()">검색</button>
+            <button type="button" class="dt-btn" onclick="downloadVddExcel()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>엑셀
+            </button>
+        </div>
+        <div class="dt-table-scroll">
+            <table class="dt-table">
+                <thead><tr><th>차량번호</th><th>훼손부위</th><th>경고등</th><th>세차완료일</th></tr></thead>
+                <tbody>
+                {% for h in rows %}
+                <tr class="dt-row {% if h['id'] in new_damage_ids %}dt-row-new{% endif %}" style="cursor:pointer;" onclick="location.href='{{ url_for('vehicle_damage_detail', plate=h['차량번호']) }}'">
+                    <td style="font-weight:700;">{{ h['차량번호'] }}{% if h['id'] in new_damage_ids %}<span class="vdd-new-badge" style="margin-left:6px;">신규 훼손</span>{% endif %}</td>
+                    <td>{{ h['훼손'] or '-' }}</td>
+                    <td>{{ h['경고등'] or '-' }}</td>
+                    <td>{{ h['세차완료일'] }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="dt-empty">{% if q or org %}조건과 일치하는 기록이 없습니다.{% else %}훼손·경고등 메모가 있는 세차완료 기록이 없습니다.{% endif %}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {{ render_pagination(current_page, total_pages, 'page') }}
+        </div>
+    </section>
 </section>
 
 <style>
 .vdd-section-label{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;color:var(--color-text-secondary,#555);padding:14px 4px 8px;}
-.vdd-dot{width:8px;height:8px;border-radius:50%;background:#D85A30;flex-shrink:0;}
 .vdd-chip{margin-left:auto;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--color-background-secondary,#f0f0f0);color:var(--color-text-secondary,#888);}
-.vdd-chip-urgent{background:#FAECE7;color:#993C1D;}
 .vdd-card{background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;overflow:hidden;}
 .vdd-row{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-bottom:0.5px solid #f0f0f0;}
 .vdd-row:last-child{border-bottom:none;}
 .vdd-row-link{color:inherit;text-decoration:none;}
 .vdd-row-main{display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
-.vdd-plate{font-size:14px;font-weight:900;color:#111;}
+.vdd-plate{font-size:14px;font-weight:900;color:#111;display:flex;align-items:center;gap:6px;}
 .vdd-date{font-size:12px;color:#999;flex-shrink:0;}
 .vdd-row-notes{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:#666;}
-.vdd-check-form{margin-top:2px;}
-.vdd-check-btn{width:100%;padding:9px 0;border-radius:10px;border:none;background:#FF9900;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
 .vdd-empty{padding:32px 16px;text-align:center;color:#999;font-size:13px;}
-.vdd-search-row{display:flex;gap:8px;margin:4px 0 4px;}
-.vdd-search-box{flex:1;background:#fff;border:0.5px solid #e5e5e5;border-radius:14px;display:flex;align-items:center;padding:0 14px;height:44px;gap:8px;color:#aaa;}
-.vdd-search-box input{flex:1;border:none;outline:none;font-size:13px;font-family:inherit;background:transparent;color:#111;}
-.vdd-export-btn{flex-shrink:0;display:flex;align-items:center;gap:5px;padding:0 16px;height:44px;border-radius:14px;background:#fff;border:0.5px solid #e5e5e5;color:#555;font-size:13px;font-weight:700;text-decoration:none;}
+.vdd-row-new{background:#FDF1F0;}
+.vdd-row-new .vdd-row-notes{color:#9A3B2E;}
+.vdd-new-badge{background:#F6DAD5;color:#9A3B2E;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;font-style:normal;}
+.dt-row-new td{background:#FDF1F0 !important;}
+#desktop-mode .dt-row-new td{background:rgba(220,80,60,0.16) !important;}
+@media (min-width: 901px) {
+    .turu-app-page-v24 > .turu-page-topbar-v42,.turu-app-page-v24 > .turu-searchbar-v24,.turu-app-page-v24 > .vdd-section-label,.turu-app-page-v24 > .vdd-card,#vdd-filter-sheet,.mobile-filter-backdrop,.turu-app-page-v24 > .pg-pagination{display:none !important;}
+    .turu-desktop-table-v24{display:flex !important;}
+}
 </style>
 
-{# ── 데스크탑 전용 ── #}
-<div id="d-vdd" style="display:none">
-<div class="d-wrap">
-    {% if needs_check_rows %}
-    <div class="d-card">
-        <div class="d-card-head"><div><span class="d-eyebrow vdd-d-eyebrow"><span class="vdd-dot"></span>확인 필요</span><h2>세차완료 시 입력된 훼손·경고등 메모</h2></div><span class="d-badge-pill vdd-chip-urgent">{{ needs_check_rows|length }}건</span></div>
-        <div class="d-table-wrap">
-            <table class="d-table"><thead><tr><th>차량번호</th><th>훼손부위</th><th>경고등</th><th>세차완료일</th><th>처리</th></tr></thead>
-            <tbody>{% for h in needs_check_rows %}<tr>
-                <td style="font-weight:700;"><a href="{{ url_for('vehicle_damage_detail', plate=h['차량번호']) }}">{{ h['차량번호'] }}</a></td>
-                <td>{{ h['훼손'] or '-' }}</td>
-                <td>{{ h['경고등'] or '-' }}</td>
-                <td>{{ h['세차완료일'] }}</td>
-                <td><form method="POST" action="{{ url_for('vehicle_damage_mark_checked') }}" style="display:inline"><input type="hidden" name="history_id" value="{{ h['id'] }}"><button type="submit" class="vdd-d-check-btn">확인 완료</button></form></td>
-            </tr>{% endfor %}</tbody>
-            </table>
-        </div>
-    </div>
-    {% endif %}
-    <div class="d-card">
-        <div class="d-card-head"><div><span class="d-eyebrow">차량 관리</span><h2>차량별 훼손관리 · 전체 목록</h2></div><span class="d-badge-pill">{{ total_count }}건</span></div>
-        <div style="display:flex;align-items:center;gap:10px;margin:16px 20px 4px;">
-            <form method="GET" class="d-search-box" style="margin:0;flex:1;">
-                <i class="ti ti-search"></i>
-                <input type="text" name="q" value="{{ q }}" placeholder="차량번호 검색" autocomplete="off">
-            </form>
-            <a href="{{ url_for('vehicle_damage_dashboard_export', q=q) }}" class="vdd-d-export-btn"><i class="ti ti-download"></i>엑셀 다운로드</a>
-        </div>
-        <div class="d-table-wrap">
-            <table class="d-table"><thead><tr><th>차량번호</th><th>훼손부위</th><th>경고등</th><th>세차완료일</th></tr></thead>
-            <tbody>{% for h in rows %}<tr style="cursor:pointer;" onclick="location.href='{{ url_for('vehicle_damage_detail', plate=h['차량번호']) }}'"><td style="font-weight:700;">{{ h['차량번호'] }}</td><td>{{ h['훼손'] or '-' }}</td><td>{{ h['경고등'] or '-' }}</td><td>{{ h['세차완료일'] }}</td></tr>{% else %}<tr><td colspan="4" class="d-empty-cell">{% if q %}'{{ q }}'와(과) 일치하는 기록이 없습니다.{% else %}훼손·경고등 메모가 있는 세차완료 기록이 없습니다.{% endif %}</td></tr>{% endfor %}</tbody>
-            </table>
-            {{ render_pagination(current_page, total_pages, 'page') }}
-        </div>
-    </div>
-</div>
-</div>
-<style>
-#desktop-mode #d-vdd { display: block !important; }
-#desktop-mode .turu-app-page-v24 { display: none !important; }
-.vdd-d-eyebrow{display:flex;align-items:center;gap:6px;}
-.vdd-d-check-btn{padding:6px 14px;border-radius:8px;border:none;background:#FF9900;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
-.vdd-d-export-btn{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:0 16px;height:38px;border-radius:9px;background:transparent;border:1px solid var(--d-border,#d1d5db);color:var(--d-text,#374151);font-size:13px;font-weight:700;text-decoration:none;}
-.vdd-d-export-btn:hover{background:var(--d-bg,#f5f5f5);}
-</style>
+<script>
+function syncAndFilter(tid,sid){const el=document.getElementById(tid);if(el)el.value=document.getElementById(sid).value;}
+function getVal(mid,did){const d=document.getElementById(did),m=document.getElementById(mid);return(d&&d.offsetParent!==null)?d.value:(m?m.value:'');}
+function buildVddParams(){return new URLSearchParams({q:getVal('search_input','dt_search'),org:getVal('org','dt_org')});}
+function applyFilter(){window.location.href="{{ url_for('vehicle_damage_dashboard') }}?"+buildVddParams().toString();}
+function dtApplyFilter(){document.getElementById('search_input').value=document.getElementById('dt_search').value;document.getElementById('org').value=document.getElementById('dt_org').value;applyFilter();}
+function downloadVddExcel(){window.location.href="{{ url_for('vehicle_damage_dashboard_export') }}?"+buildVddParams().toString();}
+function openMobileFilter(id){const el=document.getElementById(id),bd=document.getElementById('mobile-filter-backdrop');if(el){el.classList.add('open');el.style.display='block';el.style.visibility='visible';el.style.opacity='1';}if(bd)bd.classList.add('open');document.body.classList.add('filter-sheet-open');}
+function closeMobileFilter(id){const el=document.getElementById(id),bd=document.getElementById('mobile-filter-backdrop');if(el){el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';}if(bd)bd.classList.remove('open');document.body.classList.remove('filter-sheet-open');}
+function closeAnyMobileFilter(){document.querySelectorAll('.mobile-filter-sheet.open').forEach(el=>{el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';});const bd=document.getElementById('mobile-filter-backdrop');if(bd)bd.classList.remove('open');document.body.classList.remove('filter-sheet-open');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAnyMobileFilter();});
+</script>
 {% endblock %}

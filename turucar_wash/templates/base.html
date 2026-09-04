@@ -90,11 +90,6 @@
             <a href="{{ url_for('vehicle_damage_dashboard') }}" class="side-link {% if request.endpoint in ['vehicle_damage_dashboard', 'vehicle_damage_detail'] %}active{% endif %}">
                 <i class="ti ti-car-garage"></i><b>차량별 훼손관리</b>
             </a>
-            {% if current_user.is_admin %}
-            <a href="{{ url_for('damage_ai_label') }}" class="side-link {% if request.endpoint == 'damage_ai_label' %}active{% endif %}">
-                <i class="ti ti-scan-eye"></i><b>AI 훼손 판독</b>
-            </a>
-            {% endif %}
             {% endif %}
 
             {% if current_user.is_master %}

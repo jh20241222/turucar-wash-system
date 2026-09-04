@@ -4133,6 +4133,32 @@ def _wash_history_damage_where():
         f"OR TRIM(COALESCE(경고등,'')) NOT IN ({placeholders}))",
         list(_NO_ISSUE_VALUES) + list(_NO_ISSUE_VALUES)
     )
+# 훼손 부위를 항상 같은 순서(앞모습 → 뒷모습 → 운전석 쪽 → 조수석 쪽)로 보여주기 위한
+# 정렬 기준 — car_detail.html의 부위선택 피커(renderCarDamagePicker)가 제공하는 부위
+# 이름과 논리적 순서(앞→뒤)를 그대로 따른다. 화면에 찍히는 좌우 반전(조수석 쪽 사진은
+# 거울상이라 클릭 순서가 뒤바뀔 수 있음)과는 무관하게, 텍스트로 보여줄 땐 항상 이 순서.
+_DAMAGE_PART_ORDER = [
+    "조)전범퍼", "운)전범퍼", "보닛(후드)", "전면유리",
+    "운)후범퍼", "조)후범퍼", "트렁크", "후면유리",
+    "운)전휀더", "운)전도어", "운)후도어", "운)후휀더", "운)스텝",
+    "조)전휀더", "조)전도어", "조)후도어", "조)후휀더", "조)스텝",
+]
+_DAMAGE_PART_RANK = {part: i for i, part in enumerate(_DAMAGE_PART_ORDER)}
+def _format_damage_text(text):
+    """훼손 텍스트(쉼표로 여러 부위를 나열한 문자열)를 화면에 보여줄 때만 항상 같은 순서로
+    재배열한다. 세차완료 화면의 부위선택 피커는 작업자가 부위를 클릭한 순서 그대로 저장하므로
+    (예: "운)후도어, 운)후휀더, 조)후도어, 조)전휀더"), 부위 조합이 똑같아도 클릭 순서에 따라
+    매번 다르게 보여서 이력을 눈으로 비교하기 어렵다는 피드백에 따라 추가함(2026-09-04).
+    DB에 저장된 원본 문자열은 건드리지 않는다 — 정렬은 오직 표시용이고, 신규훼손 판정
+    (_compute_new_damage_ids)이나 검색 등은 그대로 원본/토큰 집합 기준으로 동작한다.
+    피커의 부위 목록에 없는 자유 서술형 텍스트(쉼표로 안 쪼개지거나, 쪼개져도 목록에 없는
+    토큰)는 정해진 순서가 없으므로 원래 순서 그대로 맨 뒤에 붙는다."""
+    tokens = _split_damage_tokens(text)
+    if not tokens:
+        return text
+    unknown_rank = len(_DAMAGE_PART_ORDER)
+    return ", ".join(sorted(tokens, key=lambda t: _DAMAGE_PART_RANK.get(t, unknown_rank)))
+app.jinja_env.filters["damage_order"] = _format_damage_text
 def _split_damage_tokens(text):
     """훼손 텍스트를 개별 '부위' 단위로 쪼갠다.
     세차완료 화면의 '부위 선택해서 입력하기' 피커는 선택한 부위들을 ", " 로 이어붙여
@@ -4144,7 +4170,7 @@ def _split_damage_tokens(text):
     나눠 부위 단위로 비교해야 이런 오탐을 막을 수 있다. 피커를 안 쓰고 자유 서술로 적은
     경우(쉼표가 없는 한 문장)에도 그 문장 전체가 토큰 하나로 취급되어 동일한 방식으로
     비교된다."""
-    if not text:
+    if not text or not isinstance(text, str):
         return []
     return [t.strip() for t in text.split(",") if t.strip()]
 def _compute_new_damage_ids(conn, scope_sql, scope_params):
@@ -4251,6 +4277,7 @@ def vehicle_damage_dashboard_export():
         new_damage_ids = _compute_new_damage_ids(conn, scope_sql, scope_params)
         df = df[df["id"].isin(new_damage_ids)]
     df = df.drop(columns=["id"])
+    df["훼손부위"] = df["훼손부위"].apply(_format_damage_text)
     conn.close()
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:

@@ -33,7 +33,12 @@
         </div>
     </section>
 
-    <div class="vdd-section-label">전체 목록<em class="vdd-chip">{{ total_count }}건</em></div>
+    <input type="hidden" id="vdd_tab" value="{{ tab }}">
+    <div class="wash-type-filter-bar vdd-tab-bar">
+        <button type="button" class="wash-type-btn wash-type-btn--all {% if tab != 'new' %}active{% endif %}" onclick="setVddTab('all')">전체 <em class="vdd-tab-count">{{ all_count }}</em></button>
+        <button type="button" class="wash-type-btn wash-type-btn--newdamage {% if tab == 'new' %}active{% endif %}" onclick="setVddTab('new')">🔴 신규 훼손 <em class="vdd-tab-count">{{ new_count }}</em></button>
+    </div>
+    <div class="vdd-section-label">{{ '신규 훼손 목록' if tab == 'new' else '전체 목록' }}<em class="vdd-chip">{{ total_count }}건</em></div>
     <div class="vdd-card">
         {% for h in rows %}
         <a href="{{ url_for('vehicle_damage_detail', plate=h['차량번호']) }}" class="vdd-row vdd-row-link {% if h['id'] in new_damage_ids %}vdd-row-new{% endif %}">
@@ -47,7 +52,7 @@
             </div>
         </a>
         {% else %}
-        <div class="vdd-empty">{% if q or org %}조건과 일치하는 기록이 없습니다.{% else %}훼손·경고등 메모가 있는 세차완료 기록이 없습니다.{% endif %}</div>
+        <div class="vdd-empty">{% if tab == 'new' %}신규 훼손으로 표시된 기록이 없습니다.{% elif q or org %}조건과 일치하는 기록이 없습니다.{% else %}훼손·경고등 메모가 있는 세차완료 기록이 없습니다.{% endif %}</div>
         {% endfor %}
     </div>
     {{ render_pagination(current_page, total_pages, 'page') }}
@@ -55,7 +60,7 @@
     {# ── 데스크탑 전용 ── #}
     <section class="desktop-table table-panel app-card turu-desktop-table-v24">
         <div class="dt-toolbar">
-            <div class="dt-toolbar-left"><h2 style="margin:0;font-size:19px;font-weight:800;">차량별 훼손관리 · 전체 목록</h2></div>
+            <div class="dt-toolbar-left"><h2 style="margin:0;font-size:19px;font-weight:800;">차량별 훼손관리 · {{ '신규 훼손 목록' if tab == 'new' else '전체 목록' }}</h2></div>
             <div class="dt-toolbar-right"><span class="d-badge-pill">{{ total_count }}건</span></div>
         </div>
         <div class="dt-filterbar">
@@ -67,6 +72,10 @@
             <button type="button" class="dt-btn" onclick="downloadVddExcel()">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>엑셀
             </button>
+        </div>
+        <div class="dt-tab-bar">
+            <button type="button" class="dt-tab {% if tab != 'new' %}active{% endif %}" onclick="setVddTab('all')">전체 <span>{{ all_count }}</span></button>
+            <button type="button" class="dt-tab {% if tab == 'new' %}active{% endif %}" onclick="setVddTab('new')">신규 훼손 <span class="dt-tab-badge">{{ new_count }}</span></button>
         </div>
         <div class="dt-table-scroll">
             <table class="dt-table">
@@ -80,7 +89,7 @@
                     <td>{{ h['세차완료일'] }}</td>
                 </tr>
                 {% else %}
-                <tr><td colspan="4" class="dt-empty">{% if q or org %}조건과 일치하는 기록이 없습니다.{% else %}훼손·경고등 메모가 있는 세차완료 기록이 없습니다.{% endif %}</td></tr>
+                <tr><td colspan="4" class="dt-empty">{% if tab == 'new' %}신규 훼손으로 표시된 기록이 없습니다.{% elif q or org %}조건과 일치하는 기록이 없습니다.{% else %}훼손·경고등 메모가 있는 세차완료 기록이 없습니다.{% endif %}</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
@@ -106,8 +115,13 @@
 .vdd-new-badge{background:#F6DAD5;color:#9A3B2E;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;font-style:normal;}
 .dt-row-new td{background:#FDF1F0 !important;}
 #desktop-mode .dt-row-new td{background:rgba(220,80,60,0.16) !important;}
+.wash-type-filter-bar{display:flex;gap:8px;padding:4px 0 8px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.wash-type-btn{flex-shrink:0;font-size:13px;font-weight:500;padding:6px 14px;border-radius:20px;border:1.5px solid var(--color-border-tertiary);background:var(--color-background-primary);color:var(--color-text-secondary);cursor:pointer;display:inline-flex;align-items:center;gap:5px;}
+.wash-type-btn.active{color:var(--color-text-primary);border-color:var(--color-border-primary);background:var(--color-background-secondary);}
+.wash-type-btn--newdamage.active{background:#FDF1F0;border-color:#D85A30;color:#9A3B2E;}
+.vdd-tab-count{font-style:normal;font-size:11px;font-weight:800;opacity:.75;}
 @media (min-width: 901px) {
-    .turu-app-page-v24 > .turu-page-topbar-v42,.turu-app-page-v24 > .turu-searchbar-v24,.turu-app-page-v24 > .vdd-section-label,.turu-app-page-v24 > .vdd-card,#vdd-filter-sheet,.mobile-filter-backdrop,.turu-app-page-v24 > .pg-pagination{display:none !important;}
+    .turu-app-page-v24 > .turu-page-topbar-v42,.turu-app-page-v24 > .turu-searchbar-v24,.turu-app-page-v24 > .wash-type-filter-bar,.turu-app-page-v24 > .vdd-section-label,.turu-app-page-v24 > .vdd-card,#vdd-filter-sheet,.mobile-filter-backdrop,.turu-app-page-v24 > .pg-pagination{display:none !important;}
     .turu-desktop-table-v24{display:flex !important;}
 }
 </style>
@@ -115,9 +129,10 @@
 <script>
 function syncAndFilter(tid,sid){const el=document.getElementById(tid);if(el)el.value=document.getElementById(sid).value;}
 function getVal(mid,did){const d=document.getElementById(did),m=document.getElementById(mid);return(d&&d.offsetParent!==null)?d.value:(m?m.value:'');}
-function buildVddParams(){return new URLSearchParams({q:getVal('search_input','dt_search'),org:getVal('org','dt_org')});}
+function buildVddParams(){return new URLSearchParams({q:getVal('search_input','dt_search'),org:getVal('org','dt_org'),tab:document.getElementById('vdd_tab').value});}
 function applyFilter(){window.location.href="{{ url_for('vehicle_damage_dashboard') }}?"+buildVddParams().toString();}
 function dtApplyFilter(){document.getElementById('search_input').value=document.getElementById('dt_search').value;document.getElementById('org').value=document.getElementById('dt_org').value;applyFilter();}
+function setVddTab(type){document.getElementById('vdd_tab').value=type;applyFilter();}
 function downloadVddExcel(){window.location.href="{{ url_for('vehicle_damage_dashboard_export') }}?"+buildVddParams().toString();}
 function openMobileFilter(id){const el=document.getElementById(id),bd=document.getElementById('mobile-filter-backdrop');if(el){el.classList.add('open');el.style.display='block';el.style.visibility='visible';el.style.opacity='1';}if(bd)bd.classList.add('open');document.body.classList.add('filter-sheet-open');}
 function closeMobileFilter(id){const el=document.getElementById(id),bd=document.getElementById('mobile-filter-backdrop');if(el){el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';}if(bd)bd.classList.remove('open');document.body.classList.remove('filter-sheet-open');}

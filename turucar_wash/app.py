@@ -518,6 +518,19 @@ def ensure_user_schema():
     region_cols = [row[1] for row in cur.execute("PRAGMA table_info(account_region)").fetchall()]
     if "created_by" not in region_cols:
         cur.execute("ALTER TABLE account_region ADD COLUMN created_by TEXT")
+    # (2026-09-03) 차량소속(피플카/휴맥스 같은 차량 운영사) 담당자 계정용 — account_region과
+    # 같은 패턴이지만 시/도+구/군이 아니라 차량소속으로 범위를 지정한다. 이 계정은 업체(청소업체)
+    # 소속이 아닐 수도 있어서(차량 운영사 직원이지 청소업체 직원이 아님) accounts.vendor는
+    # NULL이어도 되고, scoped_condition()이 이 배정이 있으면 업체+지역 대신 차량소속으로 범위를
+    # 제한한다.
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS account_fleet (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            차량소속 TEXT NOT NULL,
+            created_by TEXT
+        )
+    """)
     cur.execute("UPDATE accounts SET role='master' WHERE username='jeongyeon.kim'")
     cur.execute("UPDATE accounts SET role='admin' WHERE username!='jeongyeon.kim' AND role='vendor'")
     cur.execute("UPDATE accounts SET parent_id=NULL WHERE role IN ('master', 'admin')")
@@ -583,6 +596,22 @@ def ensure_wash_schema():
         if "shot_label" not in _wp_cols:
             cur.execute("ALTER TABLE wash_photos ADD COLUMN shot_label TEXT")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_wash_photos_car_date ON wash_photos(차량번호, 세차일)")
+        # (2026-09-03) AI 훼손 판독 학습용 라벨링 데이터 — 관리자가 완료현황 사진을 보면서
+        # "정상"/"훼손의심"으로 태깅한 결과를 쌓아두는 테이블. 이걸로 나중에 가벼운 이미지
+        # 분류 모델을 학습시킨다(사진마다 API를 호출하는 대신, 학습된 모델을 서버에 올려
+        # 반복 비용 없이 자체 판독하는 게 목표). photo_id는 UNIQUE라 같은 사진을 다시
+        # 태깅하면 라벨만 갱신된다.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS damage_ai_labels (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                photo_id INTEGER UNIQUE NOT NULL,
+                차량번호 TEXT,
+                shot_label TEXT,
+                label TEXT NOT NULL,
+                labeled_by TEXT,
+                labeled_at TEXT NOT NULL
+            )
+        """)
         conn.commit()
         print("[TuruWash] ensure_wash_schema 완료")
     except Exception as e:
@@ -717,6 +746,13 @@ class User(UserMixin):
     @property
     def is_contact_center(self):
         return bool(self.username) and "컨택센터" in self.username
+    @property
+    def fleets(self):
+        """이 계정에 배정된 차량소속 목록(없으면 빈 리스트) — 사이드바 '차량 관리' 메뉴
+        노출 여부 및 템플릿에서의 표시에 쓴다. 요청당 한 번만 조회하도록 캐싱한다."""
+        if not hasattr(self, "_fleets_cache"):
+            self._fleets_cache = _user_fleets(self.username) if self.username else []
+        return self._fleets_cache
 @login_manager.user_loader
 def load_user(user_id):
     conn = get_user_db()
@@ -755,10 +791,27 @@ def inject_support_badge_count():
 # =========================================================
 # 공통 권한 함수
 # =========================================================
+def _user_fleets(username):
+    """이 계정에 배정된 차량소속(account_fleet) 목록. 비어있으면 차량소속 스코프 계정이 아님."""
+    conn = get_user_db()
+    rows = conn.execute(
+        "SELECT DISTINCT 차량소속 FROM account_fleet WHERE username=? ORDER BY 차량소속",
+        (username,)
+    ).fetchall()
+    conn.close()
+    return [r["차량소속"] for r in rows]
 def scoped_condition(table_name, user):
     if user.is_master or getattr(user, "is_contact_center", False):
         # 컨택센터 계정은 특정 업체/지역에 소속되지 않은 전역 조회 계정이므로 마스터처럼 범위 제한 없이 조회한다.
         return "", []
+    # (2026-09-03) 차량소속(피플카/휴맥스 같은 차량 운영사) 담당자 계정은 업체(청소업체)+지역이
+    # 아니라 차량소속 기준으로 범위를 제한한다 — 청소업체 직원이 아니라 차량 운영사 직원이라
+    # 업체/지역 개념 자체가 안 맞기 때문. account_fleet에 배정이 있으면 아래 업체/지역 로직은
+    # 타지 않고 차량소속으로만 필터링한다.
+    fleets = _user_fleets(user.username)
+    if fleets:
+        fleet_clause = " OR ".join([f"{table_name}.차량소속 = ?"] * len(fleets))
+        return f" AND ({fleet_clause})", list(fleets)
     clauses = [f"{table_name}.업체 = ?"]
     params = [user.vendor]
     if user.is_staff:
@@ -1544,19 +1597,29 @@ def account_manage():
                 flash("❌ 아이디와 비밀번호를 입력하세요.")
                 return redirect(url_for("account_manage"))
             vendor = request.form.get("vendor", "").strip() if current_user.is_master else current_user.vendor
-            if new_role != "master" and not vendor:
-                flash("❌ 업체 정보가 필요합니다.")
+            # (2026-09-03) 차량소속(피플카/휴맥스 같은 차량 운영사) 담당자는 청소업체 소속이
+            # 아니므로 업체 없이 계정을 만들 수 있어야 한다 — 대신 차량소속을 하나 이상 지정하면
+            # 업체 필수 조건을 대체한다. 차량소속 지정은 마스터만 할 수 있다(업체 지정과 동일한 제약).
+            fleet_values = request.form.getlist("fleet") if current_user.is_master else []
+            fleet_values = [f.strip() for f in fleet_values if f.strip()]
+            if new_role != "master" and not vendor and not fleet_values:
+                flash("❌ 업체 또는 차량소속 정보가 필요합니다.")
                 return redirect(url_for("account_manage"))
             parent_id = None if new_role == "admin" else current_user.id
             try:
                 cur.execute(
                     "INSERT INTO accounts (username, password, role, vendor, parent_id) VALUES (?, ?, ?, ?, ?)",
-                    (username, generate_password_hash(password), new_role, vendor, parent_id)
+                    (username, generate_password_hash(password), new_role, vendor or None, parent_id)
                 )
                 if new_role == "staff" and city and district:
                     cur.execute(
                         "INSERT INTO account_region (username, city, district, created_by) VALUES (?, ?, ?, ?)",
                         (username, city, district, current_user.username)
+                    )
+                for fleet in fleet_values:
+                    cur.execute(
+                        "INSERT INTO account_fleet (username, 차량소속, created_by) VALUES (?, ?, ?)",
+                        (username, fleet, current_user.username)
                     )
                 conn.commit()
                 flash("✔ 계정이 등록되었습니다.")
@@ -1588,6 +1651,44 @@ def account_manage():
                 conn.commit()
                 flash("✔ 지역이 등록되었습니다.")
             return redirect(url_for("account_manage"))
+        if action == "assign_fleet":
+            # 차량소속 배정/삭제는 업체 하위 구조와 무관한 별도 축이라, 지역과 달리
+            # can_manage_target(업체+parent_id 기준)을 그대로 쓸 수 없다 — 마스터만 배정한다.
+            if not current_user.is_master:
+                flash("❌ 차량소속 배정 권한이 없습니다.")
+                return redirect(url_for("account_manage"))
+            username = request.form.get("fleet_username", "").strip()
+            fleet = request.form.get("fleet_value", "").strip()
+            target = cur.execute("SELECT * FROM accounts WHERE username=?", (username,)).fetchone()
+            if not target:
+                flash("❌ 해당 계정을 찾을 수 없습니다.")
+                return redirect(url_for("account_manage"))
+            if not fleet:
+                flash("❌ 차량소속을 선택하세요.")
+                return redirect(url_for("account_manage"))
+            exists = cur.execute(
+                "SELECT 1 FROM account_fleet WHERE username=? AND 차량소속=?",
+                (username, fleet)
+            ).fetchone()
+            if exists:
+                flash("ℹ 이미 등록된 차량소속입니다.")
+            else:
+                cur.execute(
+                    "INSERT INTO account_fleet (username, 차량소속, created_by) VALUES (?, ?, ?)",
+                    (username, fleet, current_user.username)
+                )
+                conn.commit()
+                flash("✔ 차량소속이 등록되었습니다.")
+            return redirect(url_for("account_manage"))
+        if action == "delete_fleet":
+            if not current_user.is_master:
+                flash("❌ 차량소속 배정 권한이 없습니다.")
+                return redirect(url_for("account_manage"))
+            fleet_id = request.form.get("fleet_id", "").strip()
+            cur.execute("DELETE FROM account_fleet WHERE id=?", (fleet_id,))
+            conn.commit()
+            flash("✔ 차량소속이 삭제되었습니다.")
+            return redirect(url_for("account_manage"))
         if action == "delete_account":
             username = request.form.get("delete_username", "").strip()
             target = cur.execute("SELECT * FROM accounts WHERE username=?", (username,)).fetchone()
@@ -1610,8 +1711,10 @@ def account_manage():
             if child_usernames:
                 placeholders = ",".join(["?"] * len(child_usernames))
                 cur.execute(f"DELETE FROM account_region WHERE username IN ({placeholders})", child_usernames)
+                cur.execute(f"DELETE FROM account_fleet WHERE username IN ({placeholders})", child_usernames)
                 cur.execute(f"DELETE FROM accounts WHERE username IN ({placeholders})", child_usernames)
             cur.execute("DELETE FROM account_region WHERE username=?", (username,))
+            cur.execute("DELETE FROM account_fleet WHERE username=?", (username,))
             cur.execute("DELETE FROM accounts WHERE username=?", (username,))
             conn.commit()
             flash("✔ 계정이 삭제되었습니다.")
@@ -1669,11 +1772,36 @@ def account_manage():
         ),
         () if current_user.is_master else (current_user.id,)
     ).fetchall()
+    # 차량소속 배정 목록 (2026-09-03 추가) — 지역 권한과 같은 방식으로, 어느 계정이
+    # 어느 차량소속으로 스코프되어 있는지 보여주고 배정/해제할 수 있게 한다.
+    fleet_list = cur.execute(
+        """
+        SELECT af.id, af.username, af.차량소속, a.vendor, a.role, a.parent_id
+        FROM account_fleet af
+        JOIN accounts a ON a.username = af.username
+        {where_clause}
+        ORDER BY af.username, af.차량소속
+        """.format(
+            where_clause=""
+            if current_user.is_master
+            else "WHERE a.parent_id = ?"
+        ),
+        () if current_user.is_master else (current_user.id,)
+    ).fetchall()
     # 전국 고정 시/도 + 구/군 데이터 (세차 오더 업로드 없이도 지역 배정 가능)
     # KOREA_REGIONS는 모듈 상단에 정의된 공용 상수를 사용한다.
     city_options = list(KOREA_REGIONS.keys())
     region_map = KOREA_REGIONS
     conn.close()
+    # 차량소속 옵션은 차량마스터(WASH_DB)에 실제 등록된 값을 그대로 쓴다 — 임의 문자열을
+    # 입력받으면 오탈자로 필터링이 안 맞는 계정이 생길 수 있어서 드롭다운으로 강제한다.
+    wconn = get_wash_db()
+    fleet_options = [
+        r["차량소속"] for r in wconn.execute(
+            "SELECT DISTINCT 차량소속 FROM vehicle_master WHERE 차량소속 IS NOT NULL AND TRIM(차량소속) != '' ORDER BY 차량소속"
+        ).fetchall()
+    ]
+    wconn.close()
 
     # 계정/지역 검색 (2026-09-01 추가) — 계정이 60개+로 늘어나면서 페이지를 여러 장 넘겨야
     # 원하는 계정을 찾을 수 있었다. 계정명·업체명(계정 목록), 계정명·업체명·시/도·구/군
@@ -1681,8 +1809,9 @@ def account_manage():
     # 현재 페이지에 보이는 것만이 아니라 전체를 대상으로 동작한다.
     acct_q = request.args.get("acct_q", "").strip()
     region_q = request.args.get("region_q", "").strip()
+    fleet_q = request.args.get("fleet_q", "").strip()
     active_tab = request.args.get("tab", "acct")
-    if active_tab not in ("acct", "region"):
+    if active_tab not in ("acct", "region", "fleet"):
         active_tab = "acct"
 
     if acct_q:
@@ -1704,10 +1833,21 @@ def account_manage():
     else:
         region_list_filtered = region_list
 
+    if fleet_q:
+        _q = fleet_q.lower()
+        fleet_list_filtered = [
+            f for f in fleet_list
+            if _q in (f["username"] or "").lower() or _q in (f["차량소속"] or "").lower()
+        ]
+    else:
+        fleet_list_filtered = fleet_list
+
     acct_page = request.args.get("acct_page", 1, type=int)
     region_page = request.args.get("region_page", 1, type=int)
+    fleet_page = request.args.get("fleet_page", 1, type=int)
     accounts_page, acct_current_page, acct_total_pages = paginate_list(accounts_filtered, acct_page, per_page=10)
     region_list_page, region_current_page, region_total_pages = paginate_list(region_list_filtered, region_page, per_page=10)
+    fleet_list_page, fleet_current_page, fleet_total_pages = paginate_list(fleet_list_filtered, fleet_page, per_page=10)
     return render_template(
         "account_manage.html",
         accounts=accounts,
@@ -1720,12 +1860,19 @@ def account_manage():
         region_list_page=region_list_page,
         region_current_page=region_current_page,
         region_total_pages=region_total_pages,
+        fleet_list=fleet_list,
+        fleet_list_filtered=fleet_list_filtered,
+        fleet_list_page=fleet_list_page,
+        fleet_current_page=fleet_current_page,
+        fleet_total_pages=fleet_total_pages,
+        fleet_options=fleet_options,
         vendors=vendors,
         creatable_accounts=creatable_accounts,
         city_options=city_options,
         region_map=region_map,
         acct_q=acct_q,
         region_q=region_q,
+        fleet_q=fleet_q,
         active_tab=active_tab
     )
 # =========================================================
@@ -2830,7 +2977,11 @@ def wash_status():
     where_sql = " WHERE 1=1"
     params = []
     scope_sql, scope_params = scoped_condition("wash_history", current_user)
-    if current_user.is_staff:
+    # (2026-09-03) 차량소속(피플카/휴맥스 같은 차량 운영사) 담당자 계정은 role='staff'이지만
+    # 실제로 세차를 수행하는 작업자가 아니라 자기 차량소속 차량들의 완료 현황을 "보기만" 하는
+    # 계정이다 — 아래 작업자=로그인아이디 좁히기를 적용하면 자기가 세차한 적이 없으니 항상
+    # 0건이 되어버린다. 그래서 차량소속 스코프 계정은 이 좁히기 대상에서 제외한다.
+    if current_user.is_staff and not _user_fleets(current_user.username):
         # 완료 현황은 계정(작업자)별 실적 화면이어야 하는데, scoped_condition()은 업체+담당
         # 지역까지만 걸러줘서 같은 지역에 작업자 계정이 여러 개 등록돼 있으면(예: 경기도
         # 의정부시에 green63/green109 둘 다 배정) 서로의 완료 건이 섞여 보였다. 이 화면에
@@ -3928,6 +4079,153 @@ def damage_alerts_poll():
     rows = conn.execute("SELECT id FROM damage_reports WHERE status='접수' AND id > ? ORDER BY id DESC", (since_id,)).fetchall()
     conn.close()
     return jsonify({"count": len(rows), "new_ids": [r["id"] for r in rows]})
+# =========================================================
+# 차량 관리 — 차량별 훼손관리 대시보드 + AI 훼손 판독(라벨링)
+# (2026-09-03 추가) 차량소속(피플카/휴맥스 등 차량 운영사) 담당자가 자기 차량소속
+# 차량만 조회할 수 있게 하고, 세차 이력·사진·훼손 제보 이력을 한 화면에서 보여주는
+# '훼손제보 관리'와는 별도인 차량 중심 대시보드. AI 훼손 판독은 완료현황 사진마다
+# 매번 API를 호출하는 대신, 여기서 모은 라벨 데이터로 가벼운 이미지 분류 모델을
+# 자체 학습시켜(반복 호출 비용 없이) 서버에서 직접 판독하는 것이 목표다 — 그 첫
+# 단계인 라벨링 도구부터 제공한다.
+# =========================================================
+def _vehicle_scope_condition(user):
+    """vehicle_master 조회용 스코프 조건. vehicle_master는 담당업체 컬럼명이
+    scoped_condition()이 쓰는 업체와 달라서 별도로 둔다. 우선순위는 scoped_condition()과
+    동일하게 차량소속 배정 > 업체(vendor) 순."""
+    if user.is_master or getattr(user, "is_contact_center", False):
+        return "", []
+    fleets = user.fleets
+    if fleets:
+        clause = " OR ".join(["차량소속 = ?"] * len(fleets))
+        return f" AND ({clause})", list(fleets)
+    if user.vendor:
+        return " AND 담당업체 = ?", [user.vendor]
+    return " AND 1=0", []
+def _can_view_vehicle_management():
+    return current_user.is_admin or bool(current_user.fleets)
+@app.route("/vehicle_damage_dashboard")
+@login_required
+def vehicle_damage_dashboard():
+    if not _can_view_vehicle_management():
+        flash("❌ 접근 권한이 없습니다.")
+        return redirect(url_for("dashboard"))
+    q = request.args.get("q", "").strip()
+    page = request.args.get("page", 1, type=int)
+    conn = get_wash_db()
+    scope_sql, scope_params = _vehicle_scope_condition(current_user)
+    query = "SELECT * FROM vehicle_master WHERE 1=1" + scope_sql
+    params = list(scope_params)
+    if q:
+        query += " AND (차량번호 LIKE ? OR 차종명 LIKE ? OR 차량소속 LIKE ?)"
+        params += [f"%{q}%", f"%{q}%", f"%{q}%"]
+    query += " ORDER BY 차량번호"
+    vehicles = conn.execute(query, params).fetchall()
+    conn.close()
+    # 차량번호별 훼손 제보 건수 (USER_DB) — 대시보드 목록에서 바로 보이게
+    uconn = get_user_db()
+    damage_counts = {
+        r["car_number"]: r["c"]
+        for r in uconn.execute("SELECT car_number, COUNT(*) AS c FROM damage_reports GROUP BY car_number").fetchall()
+    }
+    uconn.close()
+    page_rows, current_page, total_pages = paginate_list(vehicles, page, per_page=20)
+    return render_template(
+        "vehicle_damage_dashboard.html",
+        vehicles=page_rows, current_page=current_page, total_pages=total_pages,
+        total_count=len(vehicles), q=q, damage_counts=damage_counts,
+    )
+@app.route("/vehicle_damage_dashboard/<path:plate>")
+@login_required
+def vehicle_damage_detail(plate):
+    if not _can_view_vehicle_management():
+        flash("❌ 접근 권한이 없습니다.")
+        return redirect(url_for("dashboard"))
+    conn = get_wash_db()
+    scope_sql, scope_params = _vehicle_scope_condition(current_user)
+    vehicle = conn.execute(
+        "SELECT * FROM vehicle_master WHERE 차량번호=?" + scope_sql,
+        [plate] + list(scope_params)
+    ).fetchone()
+    if not vehicle:
+        conn.close()
+        flash("❌ 해당 차량을 찾을 수 없거나 접근 권한이 없습니다.")
+        return redirect(url_for("vehicle_damage_dashboard"))
+    wash_history_rows = conn.execute(
+        "SELECT * FROM wash_history WHERE 차량번호=? ORDER BY 세차완료일 DESC, id DESC LIMIT 30",
+        (plate,)
+    ).fetchall()
+    photo_rows = conn.execute(
+        "SELECT * FROM wash_photos WHERE 차량번호=? ORDER BY uploaded_at DESC LIMIT 60",
+        (plate,)
+    ).fetchall()
+    conn.close()
+    uconn = get_user_db()
+    damage_rows = uconn.execute(
+        "SELECT * FROM damage_reports WHERE car_number=? ORDER BY id DESC",
+        (plate,)
+    ).fetchall()
+    uconn.close()
+    return render_template(
+        "vehicle_damage_detail.html",
+        vehicle=vehicle, wash_history_rows=wash_history_rows,
+        photo_rows=photo_rows, damage_rows=damage_rows, plate=plate,
+    )
+@app.route("/damage_ai_label", methods=["GET", "POST"])
+@login_required
+def damage_ai_label():
+    # 라벨링(학습 데이터 구축)은 실제로 모델을 만들고 운영하는 관리자 작업이라
+    # 차량소속 담당자가 아니라 admin/master만 접근할 수 있게 한다.
+    if not current_user.is_admin:
+        flash("❌ 접근 권한이 없습니다.")
+        return redirect(url_for("dashboard"))
+    conn = get_wash_db()
+    if request.method == "POST":
+        photo_id = request.form.get("photo_id", type=int)
+        label = request.form.get("label", "").strip()
+        if photo_id and label in ("normal", "suspect"):
+            photo = conn.execute("SELECT * FROM wash_photos WHERE id=?", (photo_id,)).fetchone()
+            if photo:
+                now_str = now_kst().strftime("%Y-%m-%d %H:%M:%S")
+                existing = conn.execute("SELECT id FROM damage_ai_labels WHERE photo_id=?", (photo_id,)).fetchone()
+                if existing:
+                    conn.execute(
+                        "UPDATE damage_ai_labels SET label=?, labeled_by=?, labeled_at=? WHERE photo_id=?",
+                        (label, current_user.username, now_str, photo_id)
+                    )
+                else:
+                    conn.execute(
+                        "INSERT INTO damage_ai_labels (photo_id, 차량번호, shot_label, label, labeled_by, labeled_at) "
+                        "VALUES (?, ?, ?, ?, ?, ?)",
+                        (photo_id, photo["차량번호"], photo["shot_label"], label, current_user.username, now_str)
+                    )
+                conn.commit()
+        conn.close()
+        return redirect(url_for("damage_ai_label"))
+    total_photos = conn.execute("SELECT COUNT(*) AS c FROM wash_photos").fetchone()["c"]
+    labeled_counts = conn.execute(
+        "SELECT label, COUNT(*) AS c FROM damage_ai_labels GROUP BY label"
+    ).fetchall()
+    label_summary = {"normal": 0, "suspect": 0}
+    for r in labeled_counts:
+        if r["label"] in label_summary:
+            label_summary[r["label"]] = r["c"]
+    labeled_total = sum(label_summary.values())
+    next_photo = conn.execute(
+        """
+        SELECT wp.* FROM wash_photos wp
+        LEFT JOIN damage_ai_labels dl ON dl.photo_id = wp.id
+        WHERE dl.id IS NULL
+        ORDER BY wp.id
+        LIMIT 1
+        """
+    ).fetchone()
+    conn.close()
+    return render_template(
+        "damage_ai_label.html",
+        next_photo=next_photo, total_photos=total_photos,
+        labeled_total=labeled_total, label_summary=label_summary,
+        remaining=max(total_photos - labeled_total, 0),
+    )
 # =========================================================
 # 차량청결 VOC (슬랙 연동) + 긴급세차 — 지역 담당자 전달 큐
 # =========================================================

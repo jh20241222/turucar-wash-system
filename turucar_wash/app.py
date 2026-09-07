@@ -572,7 +572,7 @@ def ensure_wash_schema():
             cur.execute("ALTER TABLE wash_history ADD COLUMN 세차일 TEXT")
             cur.execute("UPDATE wash_history SET 세차일 = 세차완료일 WHERE 세차일 IS NULL")
             print("[TuruWash] wash_history.세차일 컬럼 추가됨")
-        # (2026-09-04) 차량별 훼손관리 대시보드용 — 세차완료 시 작업자가 입력한 훼손/경고등
+        # (2026-09-04) 차량별 이력관리 대시보드용 — 세차완료 시 작업자가 입력한 훼손/경고등
         # 메모가 있는 건을 관리자가 "확인"했는지 추적한다. 체크 안 된 건은 대시보드 상단에
         # "확인 필요"로 노출되고, 관리자가 확인 처리하면 이 플래그가 세워져 더 이상 상단에
         # 뜨지 않는다.
@@ -4208,7 +4208,7 @@ def damage_alerts_poll():
     conn.close()
     return jsonify({"count": len(rows), "new_ids": [r["id"] for r in rows]})
 # =========================================================
-# 차량 관리 — 차량별 훼손관리 대시보드 + AI 훼손 판독(라벨링)
+# 차량 관리 — 차량별 이력관리 대시보드 + AI 훼손 판독(라벨링)
 # (2026-09-03 추가) 차량소속(피플카/휴맥스 등 차량 운영사) 담당자가 자기 차량소속
 # 차량만 조회할 수 있게 하고, 세차 이력·사진·훼손 제보 이력을 한 화면에서 보여주는
 # '훼손제보 관리'와는 별도인 차량 중심 대시보드. AI 훼손 판독은 완료현황 사진마다
@@ -4232,7 +4232,7 @@ def _vehicle_scope_condition(user):
 def _can_view_vehicle_management():
     return current_user.is_admin or bool(current_user.fleets)
 # 세차완료 시 작업자가 입력한 훼손/경고등 메모 중 "특이사항 없음"으로 볼 수 있는 값들.
-# 이 값이 아니면(즉 뭔가 적혀 있으면) 차량별 훼손관리 대시보드에서 훼손 관련 건으로 취급한다.
+# 이 값이 아니면(즉 뭔가 적혀 있으면) 차량별 이력관리 대시보드에서 훼손 관련 건으로 취급한다.
 _NO_ISSUE_VALUES = ("", "없음")
 # 훼손 부위를 항상 같은 순서(앞모습 → 뒷모습 → 운전석 쪽 → 조수석 쪽)로 보여주기 위한
 # 정렬 기준 — car_detail.html의 부위선택 피커(renderCarDamagePicker)가 제공하는 부위
@@ -4278,7 +4278,7 @@ def _chunked(seq, size):
     for i in range(0, len(seq), size):
         yield seq[i:i + size]
 def _vehicle_damage_summary_rows(conn, veh_scope_sql, veh_scope_params):
-    """차량별 훼손관리 대시보드용 데이터를 한 번에 만든다.
+    """차량별 이력관리 대시보드용 데이터를 한 번에 만든다.
 
     (2026-09-04) "전체" 탭은 차량소속에 배정된 vehicle_master의 차량을 전부 보여줘야
     한다 — 세차 이력이 아예 없거나, 있어도 최신 기록에 훼손/경고등이 없는 차량도
@@ -4378,6 +4378,7 @@ def vehicle_damage_dashboard():
         warning_count=len(warning_rows),
         q=q, org=org, org_list=org_list, tab=tab,
         new_damage_ids=new_damage_ids,
+        row_offset=(current_page - 1) * 20,  # (2026-09-07) 순번 컬럼 — 페이지가 넘어가도 이어지는 번호
     )
 @app.route("/vehicle_damage_dashboard/export")
 @login_required
@@ -4404,15 +4405,17 @@ def vehicle_damage_dashboard_export():
         all_rows = [r for r in all_rows if (r["경고등"] or "").strip() not in _NO_ISSUE_VALUES]
     conn.close()
     df = pd.DataFrame({
+        "순번": list(range(1, len(all_rows) + 1)),
         "차량번호": [r["차량번호"] for r in all_rows],
+        "차량소속": [r["차량소속"] for r in all_rows],
         "훼손부위": [_format_damage_text(r["훼손"]) for r in all_rows],
         "경고등": [r["경고등"] for r in all_rows],
-        "세차완료일": [r["세차완료일"] for r in all_rows],
+        "최근세차일": [r["세차완료일"] for r in all_rows],
     })
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name="차량별 훼손관리")
-        worksheet = writer.sheets["차량별 훼손관리"]
+        df.to_excel(writer, index=False, sheet_name="차량별 이력관리")
+        worksheet = writer.sheets["차량별 이력관리"]
         for column_cells in worksheet.columns:
             max_length = 10
             column_letter = column_cells[0].column_letter
@@ -4467,7 +4470,7 @@ def vehicle_damage_detail(plate):
 @app.route("/wash_history_photos/<int:id>")
 @login_required
 def wash_history_photos(id):
-    """차량별 훼손관리 상세(vehicle_damage_detail)에서 세차 이력 행을 눌렀을 때, 다른
+    """차량별 이력관리 상세(vehicle_damage_detail)에서 세차 이력 행을 눌렀을 때, 다른
     화면(wash_record)으로 이동하지 않고 그 자리에서 완료 사진을 펼쳐 보여주기 위한
     API(2026-09-07). wash_record가 사진을 조회하는 로직(세차일 기준 조회 + 촬영 슬롯
     순서 정렬)을 그대로 재사용한다."""
@@ -4478,7 +4481,7 @@ def wash_history_photos(id):
     conn.close()
     if not row:
         return jsonify({"ok": False, "message": "세차 내역을 찾을 수 없습니다."}), 404
-    # 이 차량(row의 차량번호)이 로그인한 사용자의 차량별 훼손관리 스코프 안에 있는지
+    # 이 차량(row의 차량번호)이 로그인한 사용자의 차량별 이력관리 스코프 안에 있는지
     # vehicle_master 기준으로 재확인한다 — vehicle_damage_detail 페이지 자체의 접근
     # 제어와 동일한 기준(_vehicle_scope_condition)을 그대로 따른다.
     scope_sql, scope_params = _vehicle_scope_condition(current_user)

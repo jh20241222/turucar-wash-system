@@ -11,7 +11,7 @@
         <div class="form-grid two"><div><span class="field-label">지역</span><div>{{ vehicle['지역시도'] or '-' }} {{ vehicle['지역구군'] or '-' }}</div></div><div><span class="field-label">최근세차일</span><div>{{ vehicle['최근세차일'] or '-' }}</div></div></div>
     </section>
 
-    <section class="app-section table-panel app-card"><div class="table-title-row"><h2>세차 이력</h2><span>{{ wash_history_rows|length }}건</span></div><div class="table-wrap"><table><thead><tr><th>완료일</th><th>주행거리</th><th>훼손</th><th>경고등</th><th>작업자</th></tr></thead><tbody>{% for h in wash_history_rows %}<tr style="cursor:pointer;" onclick="location.href='{{ url_for('wash_record', id=h['id']) }}'"><td>{{ h['세차완료일'] }}</td><td>{{ h['주행거리'] or '-' }}</td><td>{{ (h['훼손']|damage_order) or '-' }}</td><td>{{ h['경고등'] or '-' }}</td><td>{{ h['작업자'] or '-' }}</td></tr>{% else %}<tr><td colspan="5" class="empty-cell">세차 이력이 없습니다.</td></tr>{% endfor %}</tbody></table></div><p style="padding:4px 14px 0;font-size:12px;color:var(--color-text-tertiary,#999);">행을 누르면 완료현황의 실제 완료내역(사진 포함)으로 이동합니다.</p></section>
+    <section class="app-section table-panel app-card"><div class="table-title-row"><h2>세차 이력</h2><span>{{ wash_history_rows|length }}건</span></div><div class="table-wrap"><table><thead><tr><th>완료일</th><th>주행거리</th><th>훼손</th><th>경고등</th><th>작업자</th></tr></thead><tbody>{% for h in wash_history_rows %}<tr class="vdd-hist-row" style="cursor:pointer;" onclick="vddToggle('m', {{ h['id'] }})"><td>{{ h['세차완료일'] }}</td><td>{{ h['주행거리'] or '-' }}</td><td>{{ (h['훼손']|damage_order) or '-' }}</td><td>{{ h['경고등'] or '-' }}</td><td>{{ h['작업자'] or '-' }}</td></tr><tr id="m-detail-{{ h['id'] }}" class="vdd-photo-row" style="display:none;"><td colspan="5"><div id="m-photos-{{ h['id'] }}" class="vdd-photo-panel"><span class="vdd-photo-loading">불러오는 중…</span></div></td></tr>{% else %}<tr><td colspan="5" class="empty-cell">세차 이력이 없습니다.</td></tr>{% endfor %}</tbody></table></div><p style="padding:4px 14px 0;font-size:12px;color:var(--color-text-tertiary,#999);">행을 누르면 그 자리에서 완료 사진을 부위별로 볼 수 있습니다.</p></section>
 
     <section class="app-section table-panel app-card"><div class="table-title-row"><h2>훼손 제보</h2><span>{{ damage_rows|length }}건</span></div><div class="table-wrap"><table><thead><tr><th>제보일</th><th>부위</th><th>상태</th><th>내용</th></tr></thead><tbody>{% for d in damage_rows %}<tr><td>{{ d['created_at'] }}</td><td>{{ d['damage_location'] }}</td><td><span class="badge">{{ d['status'] }}</span></td><td>{{ d['description'] or '-' }}</td></tr>{% else %}<tr><td colspan="4" class="empty-cell">훼손 제보 이력이 없습니다.</td></tr>{% endfor %}</tbody></table></div></section>
 </section>
@@ -31,8 +31,8 @@
     <div class="d-card">
         <div class="d-card-head"><div><span class="d-eyebrow">이력</span><h2>세차 이력</h2></div><span class="d-badge-pill">{{ wash_history_rows|length }}건</span></div>
         <div class="d-table-wrap"><table class="d-table"><thead><tr><th>완료일</th><th>주행거리</th><th>훼손</th><th>경고등</th><th>작업자</th></tr></thead>
-        <tbody>{% for h in wash_history_rows %}<tr style="cursor:pointer;" onclick="location.href='{{ url_for('wash_record', id=h['id']) }}'"><td>{{ h['세차완료일'] }}</td><td>{{ h['주행거리'] or '-' }}</td><td>{{ (h['훼손']|damage_order) or '-' }}</td><td>{{ h['경고등'] or '-' }}</td><td>{{ h['작업자'] or '-' }}</td></tr>{% else %}<tr><td colspan="5" class="d-empty-cell">세차 이력이 없습니다.</td></tr>{% endfor %}</tbody></table></div>
-        <p style="padding:0 20px 16px;font-size:12px;color:var(--d-muted);">행을 누르면 완료현황의 실제 완료내역(사진 포함)으로 이동합니다.</p>
+        <tbody>{% for h in wash_history_rows %}<tr class="vdd-hist-row" style="cursor:pointer;" onclick="vddToggle('d', {{ h['id'] }})"><td>{{ h['세차완료일'] }}</td><td>{{ h['주행거리'] or '-' }}</td><td>{{ (h['훼손']|damage_order) or '-' }}</td><td>{{ h['경고등'] or '-' }}</td><td>{{ h['작업자'] or '-' }}</td></tr><tr id="d-detail-{{ h['id'] }}" class="vdd-photo-row" style="display:none;"><td colspan="5"><div id="d-photos-{{ h['id'] }}" class="vdd-photo-panel"><span class="vdd-photo-loading">불러오는 중…</span></div></td></tr>{% else %}<tr><td colspan="5" class="d-empty-cell">세차 이력이 없습니다.</td></tr>{% endfor %}</tbody></table></div>
+        <p style="padding:0 20px 16px;font-size:12px;color:var(--d-muted);">행을 누르면 그 자리에서 완료 사진을 부위별로 볼 수 있습니다.</p>
     </div>
     <div class="d-card">
         <div class="d-card-head"><div><span class="d-eyebrow">제보</span><h2>훼손 제보</h2></div><span class="d-badge-pill">{{ damage_rows|length }}건</span></div>
@@ -44,5 +44,62 @@
 <style>
 #desktop-mode #d-vdd-detail { display: block !important; }
 #desktop-mode .turu-app-page-v24 { display: none !important; }
+
+/* (2026-09-07) 세차 이력 행을 눌렀을 때 그 자리에서 펼쳐지는 완료 사진 패널 */
+.vdd-photo-row td { background: #FAFBFC; padding: 10px !important; }
+.vdd-photo-panel { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; padding: 4px; }
+.vdd-photo-item { cursor: pointer; text-align: center; }
+.vdd-photo-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; border: 1px solid #e5e5e5; display: block; background: #eee; }
+.vdd-photo-cap { display: block; font-size: 10.5px; color: #888; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vdd-photo-loading, .vdd-photo-empty { font-size: 12.5px; color: #999; padding: 10px 4px; }
 </style>
+
+<div id="vdd-lightbox" onclick="vddCloseLightbox()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:24px;">
+    <img id="vdd-lightbox-img" style="max-width:100%;max-height:78vh;border-radius:10px;">
+    <div id="vdd-lightbox-cap" style="color:#fff;margin-top:12px;font-size:14px;font-weight:600;"></div>
+</div>
+
+<script>
+// (2026-09-07) 세차 이력 행 클릭 → 완료 사진을 그 자리에서 펼쳐 보여준다(페이지 이동 없음).
+// 모바일(m-)/데스크탑(d-) 두 테이블이 같은 wash_history id를 각자 따로 렌더링하므로
+// prefix로 구분해서 각자 독립적으로 펼치고/불러온다.
+const vddLoaded = new Set();
+const vddPhotosByKey = {};
+function vddToggle(prefix, id){
+    const row = document.getElementById(prefix + '-detail-' + id);
+    if(!row) return;
+    const showing = row.style.display !== 'none';
+    if(showing){ row.style.display = 'none'; return; }
+    row.style.display = '';
+    const key = prefix + '-' + id;
+    if(vddLoaded.has(key)) return;
+    vddLoaded.add(key);
+    const panel = document.getElementById(prefix + '-photos-' + id);
+    fetch(`/wash_history_photos/${id}`)
+        .then(r => r.json())
+        .then(data => {
+            if(!data || !data.ok){ panel.innerHTML = '<span class="vdd-photo-empty">사진을 불러오지 못했습니다.</span>'; return; }
+            if(!data.photos || !data.photos.length){ panel.innerHTML = '<span class="vdd-photo-empty">등록된 사진이 없습니다.</span>'; return; }
+            vddPhotosByKey[key] = data.photos;
+            panel.innerHTML = data.photos.map((p, i) => `
+                <div class="vdd-photo-item" onclick="vddOpenPhoto('${prefix}', ${id}, ${i})">
+                    <img src="${p.url}" loading="lazy">
+                    <span class="vdd-photo-cap">${p.label}</span>
+                </div>
+            `).join('');
+        })
+        .catch(() => {
+            vddLoaded.delete(key); // 실패 시 다음 클릭에서 다시 시도할 수 있게
+            panel.innerHTML = '<span class="vdd-photo-empty">사진을 불러오지 못했습니다.</span>';
+        });
+}
+function vddOpenPhoto(prefix, id, i){
+    const photos = vddPhotosByKey[prefix + '-' + id];
+    if(!photos || !photos[i]) return;
+    document.getElementById('vdd-lightbox-img').src = photos[i].url;
+    document.getElementById('vdd-lightbox-cap').textContent = photos[i].label;
+    document.getElementById('vdd-lightbox').style.display = 'flex';
+}
+function vddCloseLightbox(){ document.getElementById('vdd-lightbox').style.display = 'none'; }
+</script>
 {% endblock %}

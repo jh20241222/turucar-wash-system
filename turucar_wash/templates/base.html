@@ -90,7 +90,7 @@
             <!-- 차량 관리 (2026-09-03 추가) -->
             <p class="side-nav-group" style="margin-top:4px;">차량 관리</p>
             <a href="{{ url_for('vehicle_damage_dashboard') }}" class="side-link {% if request.endpoint in ['vehicle_damage_dashboard', 'vehicle_damage_detail'] %}active{% endif %}">
-                <i class="ti ti-car-garage"></i><b>차량별 훼손관리</b>
+                <i class="ti ti-car-garage"></i><b>차량별 이력관리</b>
             </a>
             {% endif %}
 
@@ -212,7 +212,7 @@
                     {% elif request.endpoint == 'damage_manage' %}훼손 제보 관리
                     {% elif request.endpoint == 'damage_submit' %}차량 훼손 제보
                     {% elif request.endpoint == 'urgent_wash' %}긴급세차
-                    {% elif request.endpoint == 'vehicle_damage_dashboard' %}차량별 훼손관리
+                    {% elif request.endpoint == 'vehicle_damage_dashboard' %}차량별 이력관리
                     {% elif request.endpoint == 'vehicle_damage_detail' %}{{ plate }} 상세
                     {% elif request.endpoint == 'damage_ai_label' %}AI 훼손 판독
                     {% elif request.endpoint == 'voc_manage' %}VOC 관리

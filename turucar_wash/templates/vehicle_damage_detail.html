@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block document_title %}Turu Wash · {{ plate }} 훼손관리{% endblock %}
+{% block document_title %}Turu Wash · {{ plate }} 이력관리{% endblock %}
 {% block content %}
 <section class="turu-app-page-v24">
     <div class="turu-page-topbar-v42"><header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
     <div class="turu-page-head-v24 turu-page-head--single-v25"><div><h1>{{ plate }}</h1><p>{{ vehicle['차종명'] or '-' }} · {{ vehicle['차량소속'] or '-' }}</p></div></div></div>
-    <p style="padding:0 16px;"><a href="{{ url_for('vehicle_damage_dashboard') }}">‹ 차량별 훼손관리 목록으로</a></p>
+    <p style="padding:0 16px;"><a href="{{ url_for('vehicle_damage_dashboard') }}">‹ 차량별 이력관리 목록으로</a></p>
 
     <section class="app-section app-card" style="padding:14px;margin-bottom:12px;">
         <div class="form-grid two"><div><span class="field-label">담당업체</span><div>{{ vehicle['담당업체'] or '-' }}</div></div><div><span class="field-label">스팟</span><div>{{ vehicle['스팟'] or '-' }}</div></div></div>
@@ -19,7 +19,7 @@
 {# ── 데스크탑 전용 ── #}
 <div id="d-vdd-detail" style="display:none">
 <div class="d-wrap">
-    <p style="margin:0 0 12px;"><a href="{{ url_for('vehicle_damage_dashboard') }}">‹ 차량별 훼손관리 목록으로</a></p>
+    <p style="margin:0 0 12px;"><a href="{{ url_for('vehicle_damage_dashboard') }}">‹ 차량별 이력관리 목록으로</a></p>
     <div class="d-card">
         <div class="d-card-head"><div><span class="d-eyebrow">차량 정보</span><h2>{{ plate }}</h2></div></div>
         <div class="d-card-body">

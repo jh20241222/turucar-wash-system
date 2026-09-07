@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% from "_pagination.html" import render_pagination %}
-{% block document_title %}Turu Wash · 차량별 훼손관리{% endblock %}
+{% block document_title %}Turu Wash · 차량별 이력관리{% endblock %}
 {% block content %}
 <section class="turu-app-page-v24">
     <div class="turu-page-topbar-v42"><header class="turu-page-brand-v24 turu-page-brand-v26"><img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR"></header>
-    <div class="turu-page-head-v24 turu-page-head--single-v25"><div><h1>차량별 훼손관리</h1><p>세차완료 시 입력된 훼손·경고등 메모를 확인합니다.</p></div></div></div>
+    <div class="turu-page-head-v24 turu-page-head--single-v25"><div><h1>차량별 이력관리</h1><p>세차완료 시 입력된 훼손·경고등 메모를 확인합니다.</p></div></div></div>
 
     <div class="turu-searchbar-v24">
         <input id="quick_search_input" placeholder="차량번호 검색" value="{{ q }}" onkeydown="if(event.key==='Enter'){document.getElementById('search_input').value=this.value;applyFilter();}">
@@ -18,11 +18,11 @@
     <div id="mobile-filter-backdrop" class="mobile-filter-backdrop" onclick="closeAnyMobileFilter()"></div>
     <section id="vdd-filter-sheet" class="filter-card app-card search-panel mobile-filter-sheet turu-filter-sheet-v24">
         <div class="mobile-filter-sheet-head">
-            <strong>차량별 훼손관리 필터</strong>
+            <strong>차량별 이력관리 필터</strong>
             <button type="button" onclick="closeMobileFilter('vdd-filter-sheet')" aria-label="닫기">&#215;</button>
         </div>
         <div class="filter-head">
-            <div><strong>차량별 훼손관리 검색</strong><small>차량번호, 차량소속 기준으로 찾아보세요.</small></div>
+            <div><strong>차량별 이력관리 검색</strong><small>차량번호, 차량소속 기준으로 찾아보세요.</small></div>
             <span>{{ total_count }}건</span>
         </div>
         <div class="filter-grid">
@@ -46,10 +46,11 @@
         {% for h in rows %}
         <a href="{{ url_for('vehicle_damage_detail', plate=h['차량번호']) }}" class="vdd-row vdd-row-link {% if h['id'] in new_damage_ids %}vdd-row-new{% endif %}">
             <div class="vdd-row-main">
-                <span class="vdd-plate">{{ h['차량번호'] }}{% if h['id'] in new_damage_ids %}<em class="vdd-new-badge">신규 훼손</em>{% endif %}</span>
+                <span class="vdd-plate"><span class="vdd-idx">{{ row_offset + loop.index }}</span>{{ h['차량번호'] }}{% if h['id'] in new_damage_ids %}<em class="vdd-new-badge">신규 훼손</em>{% endif %}</span>
                 <span class="vdd-date">{{ h['세차완료일'] or '세차 이력 없음' }}</span>
             </div>
             <div class="vdd-row-notes">
+                <span class="vdd-note">차량소속 · {{ h['차량소속'] or '-' }}</span>
                 <span class="vdd-note">훼손 · {{ (h['훼손']|damage_order) or '-' }}</span>
                 <span class="vdd-note">경고등 · {{ h['경고등'] or '-' }}</span>
             </div>
@@ -63,7 +64,7 @@
     {# ── 데스크탑 전용 ── #}
     <section class="desktop-table table-panel app-card turu-desktop-table-v24">
         <div class="dt-toolbar">
-            <div class="dt-toolbar-left"><h2 style="margin:0;font-size:19px;font-weight:800;">차량별 훼손관리 · {{ section_label }}</h2></div>
+            <div class="dt-toolbar-left"><h2 style="margin:0;font-size:19px;font-weight:800;">차량별 이력관리 · {{ section_label }}</h2></div>
             <div class="dt-toolbar-right"><span class="d-badge-pill">{{ total_count }}건</span></div>
         </div>
         <div class="dt-filterbar">
@@ -83,17 +84,19 @@
         </div>
         <div class="dt-table-scroll">
             <table class="dt-table">
-                <thead><tr><th>차량번호</th><th>훼손부위</th><th>경고등</th><th>세차완료일</th></tr></thead>
+                <thead><tr><th>순번</th><th>차량번호</th><th>차량소속</th><th>훼손부위</th><th>경고등</th><th>최근세차일</th></tr></thead>
                 <tbody>
                 {% for h in rows %}
                 <tr class="dt-row {% if h['id'] in new_damage_ids %}dt-row-new{% endif %}" style="cursor:pointer;" onclick="location.href='{{ url_for('vehicle_damage_detail', plate=h['차량번호']) }}'">
+                    <td>{{ row_offset + loop.index }}</td>
                     <td style="font-weight:700;">{{ h['차량번호'] }}{% if h['id'] in new_damage_ids %}<span class="vdd-new-badge" style="margin-left:6px;">신규 훼손</span>{% endif %}</td>
+                    <td>{{ h['차량소속'] or '-' }}</td>
                     <td>{{ (h['훼손']|damage_order) or '-' }}</td>
                     <td>{{ h['경고등'] or '-' }}</td>
                     <td>{{ h['세차완료일'] or '세차 이력 없음' }}</td>
                 </tr>
                 {% else %}
-                <tr><td colspan="4" class="dt-empty">{{ empty_msg }}</td></tr>
+                <tr><td colspan="6" class="dt-empty">{{ empty_msg }}</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
@@ -111,6 +114,7 @@
 .vdd-row-link{color:inherit;text-decoration:none;}
 .vdd-row-main{display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
 .vdd-plate{font-size:14px;font-weight:900;color:#111;display:flex;align-items:center;gap:6px;}
+.vdd-idx{font-size:11px;font-weight:700;color:#aaa;min-width:18px;}
 .vdd-date{font-size:12px;color:#999;flex-shrink:0;}
 .vdd-row-notes{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:#666;}
 .vdd-empty{padding:32px 16px;text-align:center;color:#999;font-size:13px;}

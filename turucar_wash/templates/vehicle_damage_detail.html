@@ -52,11 +52,44 @@
 .vdd-photo-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; border: 1px solid #e5e5e5; display: block; background: #eee; }
 .vdd-photo-cap { display: block; font-size: 10.5px; color: #888; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .vdd-photo-loading, .vdd-photo-empty { font-size: 12.5px; color: #999; padding: 10px 4px; }
+
+/* ── 사진 크게 보기(라이트박스) — wash_record.html의 뷰어와 동일(좌우 넘기기 + 핀치/더블탭
+   확대·드래그팬)을 그대로 재사용한다. 차이는 사진 목록을 서버 렌더 시점에 고정하지 않고,
+   행을 펼칠 때 fetch로 받아온 배열을 그때그때 넣어준다는 것뿐(turuOpenPhotoViewer(photos, idx)). */
+.turu-photo-viewer{position:fixed;inset:0;height:100dvh;z-index:9500;background:#08080a;display:none;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;}
+.tpv-stage{position:relative;flex:1 1 auto;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;touch-action:none;overflow:hidden;}
+.tpv-stage img{max-width:92vw;max-height:100%;object-fit:contain;display:block;touch-action:none;user-select:none;-webkit-user-drag:none;will-change:transform;cursor:zoom-in;}
+.tpv-stage img.tpv-zoomed{cursor:grab;}
+.tpv-stage img.tpv-dragging{cursor:grabbing;}
+.tpv-close{position:absolute;top:14px;right:16px;background:none;border:none;color:#fff;font-size:20px;font-weight:700;cursor:pointer;padding:8px;z-index:2;line-height:1;}
+.tpv-counter{position:absolute;top:18px;left:18px;color:#c8ccd4;font-size:13px;font-weight:700;z-index:2;}
+.tpv-caption{flex:0 0 auto;color:#fff;font-size:14px;font-weight:700;padding:10px 16px calc(18px + env(safe-area-inset-bottom));text-align:center;}
+.tpv-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.14);border:none;color:#fff;font-size:28px;font-weight:900;width:44px;height:64px;border-radius:10px;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center;}
+.tpv-nav:hover{background:rgba(255,255,255,.22);}
+.tpv-nav:disabled{opacity:.25;cursor:default;}
+.tpv-prev{left:8px;}
+.tpv-next{right:8px;}
+.tpv-zoom-ctrl{position:absolute;right:12px;bottom:12px;z-index:2;display:flex;flex-direction:column;background:rgba(255,255,255,.14);border-radius:10px;overflow:hidden;}
+.tpv-zoom-btn{background:none;border:none;color:#fff;font-size:20px;font-weight:900;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;}
+.tpv-zoom-btn:hover{background:rgba(255,255,255,.16);}
+.tpv-zoom-btn:disabled{opacity:.3;cursor:default;}
+.tpv-zoom-btn+.tpv-zoom-btn{border-top:1px solid rgba(255,255,255,.18);}
 </style>
 
-<div id="vdd-lightbox" onclick="vddCloseLightbox()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:24px;">
-    <img id="vdd-lightbox-img" style="max-width:100%;max-height:78vh;border-radius:10px;">
-    <div id="vdd-lightbox-cap" style="color:#fff;margin-top:12px;font-size:14px;font-weight:600;"></div>
+{# ── 사진 크게 보기 모달: 모바일/데스크탑, 세차 이력의 모든 행이 공유한다 ── #}
+<div id="turu-photo-viewer" class="turu-photo-viewer" role="dialog" aria-modal="true" aria-label="사진 크게 보기">
+    <span class="tpv-counter" id="tpv-counter"></span>
+    <button type="button" class="tpv-close" id="tpv-close-btn" aria-label="닫기">&#10005; 닫기</button>
+    <div class="tpv-stage">
+        <button type="button" class="tpv-nav tpv-prev" id="tpv-prev-btn" aria-label="이전 사진">&#8249;</button>
+        <img id="tpv-img" src="" alt="">
+        <button type="button" class="tpv-nav tpv-next" id="tpv-next-btn" aria-label="다음 사진">&#8250;</button>
+        <div class="tpv-zoom-ctrl">
+            <button type="button" class="tpv-zoom-btn" id="tpv-zoom-in-btn" aria-label="확대">&#43;</button>
+            <button type="button" class="tpv-zoom-btn" id="tpv-zoom-out-btn" aria-label="축소">&#8722;</button>
+        </div>
+    </div>
+    <div class="tpv-caption" id="tpv-caption"></div>
 </div>
 
 <script>
@@ -96,10 +129,197 @@ function vddToggle(prefix, id){
 function vddOpenPhoto(prefix, id, i){
     const photos = vddPhotosByKey[prefix + '-' + id];
     if(!photos || !photos[i]) return;
-    document.getElementById('vdd-lightbox-img').src = photos[i].url;
-    document.getElementById('vdd-lightbox-cap').textContent = photos[i].label;
-    document.getElementById('vdd-lightbox').style.display = 'flex';
+    window.turuOpenPhotoViewer(photos, i);
 }
-function vddCloseLightbox(){ document.getElementById('vdd-lightbox').style.display = 'none'; }
+
+// ── wash_record.html의 사진 뷰어(turu-photo-viewer)를 그대로 재사용 ──
+// 다른 점: 그쪽은 사진 목록이 페이지 로드 시점에 서버에서 고정 배열로 내려오지만, 여기는
+// 행마다 사진이 다르고 펼칠 때 fetch로 받아오므로 turuOpenPhotoViewer(photos, idx)처럼
+// 열 때마다 그 행의 사진 배열을 함께 넘겨받는다.
+(function(){
+    var TURU_PHOTOS = [];
+    var viewer = document.getElementById('turu-photo-viewer');
+    var imgEl = document.getElementById('tpv-img');
+    var capEl = document.getElementById('tpv-caption');
+    var counterEl = document.getElementById('tpv-counter');
+    var prevBtn = document.getElementById('tpv-prev-btn');
+    var nextBtn = document.getElementById('tpv-next-btn');
+    var closeBtn = document.getElementById('tpv-close-btn');
+    var zoomInBtn = document.getElementById('tpv-zoom-in-btn');
+    var zoomOutBtn = document.getElementById('tpv-zoom-out-btn');
+    var curIdx = 0;
+
+    // ── 확대(핀치줌)/이동(드래그팬) ──
+    var zoomState = { scale: 1, tx: 0, ty: 0 };
+    var MIN_SCALE = 1, MAX_SCALE = 4, TAP_ZOOM_SCALE = 2.5, ZOOM_STEP = 1.5;
+    var activePointers = new Map();
+    var dragStart = null;
+    var pinchStartDist = 0, pinchStartScale = 1, pinchStartTx = 0, pinchStartTy = 0, pinchAnchor = null;
+    var tapStart = null, tapMoved = false, lastTapEnd = null;
+    var TAP_MOVE_TOLERANCE = 10;
+
+    function applyZoomTransform(animate){
+        imgEl.style.transition = animate ? 'transform .18s ease-out' : 'none';
+        imgEl.style.transform = 'translate(' + zoomState.tx + 'px,' + zoomState.ty + 'px) scale(' + zoomState.scale + ')';
+        imgEl.classList.toggle('tpv-zoomed', zoomState.scale > 1.01);
+        if(zoomInBtn) zoomInBtn.disabled = zoomState.scale >= MAX_SCALE - 0.01;
+        if(zoomOutBtn) zoomOutBtn.disabled = zoomState.scale <= MIN_SCALE + 0.01;
+    }
+    function zoomByStep(factor){
+        var stageRect = imgEl.parentElement.getBoundingClientRect();
+        var targetScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, zoomState.scale * factor));
+        if(Math.abs(targetScale - zoomState.scale) < 0.001) return;
+        zoomAtPoint(stageRect.left + stageRect.width / 2, stageRect.top + stageRect.height / 2, targetScale);
+    }
+    function clampPan(){
+        if(zoomState.scale <= 1){ zoomState.tx = 0; zoomState.ty = 0; return; }
+        var w = imgEl.offsetWidth, h = imgEl.offsetHeight;
+        var maxX = Math.max(0, (w * zoomState.scale - w) / 2);
+        var maxY = Math.max(0, (h * zoomState.scale - h) / 2);
+        zoomState.tx = Math.max(-maxX, Math.min(maxX, zoomState.tx));
+        zoomState.ty = Math.max(-maxY, Math.min(maxY, zoomState.ty));
+    }
+    function resetZoom(){
+        zoomState.scale = 1; zoomState.tx = 0; zoomState.ty = 0;
+        applyZoomTransform(false);
+    }
+    function ptDist(a, b){ return Math.hypot(a.x - b.x, a.y - b.y); }
+    function ptMid(a, b){ return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
+    function zoomAtPoint(px, py, targetScale){
+        var stageRect = imgEl.parentElement.getBoundingClientRect();
+        var cx = stageRect.left + stageRect.width / 2;
+        var cy = stageRect.top + stageRect.height / 2;
+        var d = (px - cx - zoomState.tx) * (1 - targetScale / zoomState.scale);
+        var dy = (py - cy - zoomState.ty) * (1 - targetScale / zoomState.scale);
+        zoomState.tx += d;
+        zoomState.ty += dy;
+        zoomState.scale = targetScale;
+        clampPan();
+        applyZoomTransform(true);
+    }
+
+    imgEl.style.touchAction = 'none';
+    imgEl.draggable = false;
+
+    imgEl.addEventListener('pointerdown', function(e){
+        try { imgEl.setPointerCapture(e.pointerId); } catch (err) { /* 일부 브라우저/합성 이벤트에서 실패할 수 있음 — 무시하고 진행 */ }
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if(activePointers.size === 1){
+            tapStart = { x: e.clientX, y: e.clientY, time: Date.now() };
+            tapMoved = false;
+            dragStart = { x: e.clientX, y: e.clientY, tx: zoomState.tx, ty: zoomState.ty };
+        } else if(activePointers.size === 2){
+            tapStart = null;
+            dragStart = null;
+            var pts = Array.from(activePointers.values());
+            pinchStartDist = ptDist(pts[0], pts[1]);
+            pinchStartScale = zoomState.scale;
+            pinchStartTx = zoomState.tx; pinchStartTy = zoomState.ty;
+            pinchAnchor = ptMid(pts[0], pts[1]);
+        } else {
+            tapStart = null;
+        }
+    });
+
+    imgEl.addEventListener('pointermove', function(e){
+        if(!activePointers.has(e.pointerId)) return;
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if(activePointers.size === 2 && pinchStartDist > 0){
+            var pts = Array.from(activePointers.values());
+            var newDist = ptDist(pts[0], pts[1]);
+            var targetScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchStartScale * (newDist / pinchStartDist)));
+            var stageRect = imgEl.parentElement.getBoundingClientRect();
+            var cx = stageRect.left + stageRect.width / 2;
+            var cy = stageRect.top + stageRect.height / 2;
+            var factor = targetScale / pinchStartScale;
+            zoomState.scale = targetScale;
+            zoomState.tx = pinchStartTx + (pinchAnchor.x - cx - pinchStartTx) * (1 - factor);
+            zoomState.ty = pinchStartTy + (pinchAnchor.y - cy - pinchStartTy) * (1 - factor);
+            clampPan();
+            applyZoomTransform(false);
+        } else if(activePointers.size === 1){
+            if(tapStart && ptDist(tapStart, { x: e.clientX, y: e.clientY }) > TAP_MOVE_TOLERANCE){
+                tapMoved = true;
+                tapStart = null;
+            }
+            if(dragStart && zoomState.scale > 1.01){
+                imgEl.classList.add('tpv-dragging');
+                zoomState.tx = dragStart.tx + (e.clientX - dragStart.x);
+                zoomState.ty = dragStart.ty + (e.clientY - dragStart.y);
+                clampPan();
+                applyZoomTransform(false);
+            }
+        }
+    });
+
+    function endPointer(e){
+        activePointers.delete(e.pointerId);
+        imgEl.classList.remove('tpv-dragging');
+        if(activePointers.size < 2){ pinchStartDist = 0; pinchAnchor = null; }
+        if(activePointers.size === 0){
+            dragStart = null;
+            var wasCleanTap = !!tapStart && !tapMoved;
+            tapStart = null; tapMoved = false;
+            if(wasCleanTap){
+                var tapEnd = { x: e.clientX, y: e.clientY, time: Date.now() };
+                if(lastTapEnd && (tapEnd.time - lastTapEnd.time) < 300 && ptDist(lastTapEnd, tapEnd) < 24){
+                    if(zoomState.scale > 1.01){ resetZoom(); }
+                    else { zoomAtPoint(tapEnd.x, tapEnd.y, TAP_ZOOM_SCALE); }
+                    lastTapEnd = null;
+                    return;
+                }
+                lastTapEnd = tapEnd;
+            } else {
+                lastTapEnd = null;
+            }
+            if(zoomState.scale <= 1.01){ resetZoom(); }
+            else { clampPan(); applyZoomTransform(true); }
+        }
+    }
+    imgEl.addEventListener('pointerup', endPointer);
+    imgEl.addEventListener('pointercancel', endPointer);
+    imgEl.addEventListener('pointerleave', function(e){ if(activePointers.has(e.pointerId)) endPointer(e); });
+    if(zoomInBtn) zoomInBtn.addEventListener('click', function(){ zoomByStep(ZOOM_STEP); });
+    if(zoomOutBtn) zoomOutBtn.addEventListener('click', function(){ zoomByStep(1 / ZOOM_STEP); });
+
+    function renderPhoto(){
+        var p = TURU_PHOTOS[curIdx];
+        if(!p) return;
+        resetZoom();
+        imgEl.src = p.url;
+        imgEl.alt = p.label || '';
+        capEl.textContent = p.label || '';
+        counterEl.textContent = (curIdx + 1) + ' / ' + TURU_PHOTOS.length;
+        prevBtn.disabled = curIdx <= 0;
+        nextBtn.disabled = curIdx >= TURU_PHOTOS.length - 1;
+    }
+    function openViewer(photos, idx){
+        TURU_PHOTOS = photos || [];
+        if(!TURU_PHOTOS.length) return;
+        curIdx = idx || 0;
+        renderPhoto();
+        viewer.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    function closeViewer(){
+        viewer.style.display = 'none';
+        document.body.style.overflow = '';
+        resetZoom();
+    }
+    function goPrev(){ if(curIdx > 0){ curIdx--; renderPhoto(); } }
+    function goNext(){ if(curIdx < TURU_PHOTOS.length - 1){ curIdx++; renderPhoto(); } }
+
+    window.turuOpenPhotoViewer = openViewer;
+    closeBtn.addEventListener('click', closeViewer);
+    prevBtn.addEventListener('click', goPrev);
+    nextBtn.addEventListener('click', goNext);
+    viewer.addEventListener('click', function(e){ if(e.target === viewer){ closeViewer(); } });
+    document.addEventListener('keydown', function(e){
+        if(viewer.style.display !== 'flex') return;
+        if(e.key === 'Escape'){ closeViewer(); }
+        else if(e.key === 'ArrowLeft'){ goPrev(); }
+        else if(e.key === 'ArrowRight'){ goNext(); }
+    });
+})();
 </script>
 {% endblock %}

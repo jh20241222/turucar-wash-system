@@ -3101,6 +3101,88 @@ def wash_status():
         total_pages=total_pages,
         per_page=per_page
     )
+@app.route("/wash_status_excel")
+@login_required
+def wash_status_excel():
+    """완료 현황(wash_status)의 '엑셀 저장' 버튼이 호출하는 라우트(2026-09-07 추가).
+    화면의 엑셀 저장 버튼은 예전부터 /wash_status_excel을 호출하고 있었는데 정작 이
+    라우트가 없어서(app.py에 정의된 적이 없음) 눌러도 404만 나던 것 — 지금까지는
+    아무도 눈치채지 못했을 뿐 원래부터 동작한 적이 없던 기능으로 보인다.
+    wash_status()와 완전히 동일한 필터/스코프 로직을 그대로 따르되, 화면처럼 페이지네이션
+    (page/per_page)으로 잘라 보여주지 않고 조건에 맞는 전체 행을 한 번에 내려받는다."""
+    s = request.args.get("s", "")
+    r1 = request.args.get("r1", "")
+    r2 = request.args.get("r2", "")
+    org = request.args.get("org", "")
+    sp = request.args.get("spot", "")
+    vendor = request.args.get("vendor", "")
+    start = request.args.get("start", "")
+    end = request.args.get("end", "")
+    conn = get_wash_db()
+    cur = conn.cursor()
+    where_sql = " WHERE 1=1"
+    params = []
+    scope_sql, scope_params = scoped_condition("wash_history", current_user)
+    if current_user.is_staff and not _user_fleets(current_user.username):
+        scope_sql += " AND 작업자 = ?"
+        scope_params = scope_params + [current_user.username]
+    where_sql += scope_sql
+    params += scope_params
+    if s:
+        where_sql += " AND (차량번호 LIKE ? OR 스팟 LIKE ?)"
+        params += [f"%{s}%", f"%{s}%"]
+    if r1:
+        where_sql += " AND 지역시도=?"
+        params.append(r1)
+    if r2:
+        where_sql += " AND 지역구군=?"
+        params.append(r2)
+    if org:
+        where_sql += " AND 차량소속=?"
+        params.append(org)
+    if sp:
+        where_sql += " AND 스팟=?"
+        params.append(sp)
+    if vendor and current_user.is_master:
+        where_sql += " AND 업체=?"
+        params.append(vendor)
+    if start and end:
+        where_sql += " AND 세차완료일 BETWEEN ? AND ?"
+        params += [start, end]
+    rows = cur.execute(
+        "SELECT * FROM wash_history" + where_sql + " ORDER BY id DESC", params
+    ).fetchall()
+    conn.close()
+    df = pd.DataFrame({
+        "완료일": [r["세차완료일"] for r in rows],
+        "차량번호": [r["차량번호"] for r in rows],
+        "차종": [r["차종명"] for r in rows],
+        "차량소속": [r["차량소속"] for r in rows],
+        "스팟": [r["스팟"] for r in rows],
+        "지역시도": [r["지역시도"] for r in rows],
+        "지역구군": [r["지역구군"] for r in rows],
+        "작업자": [r["작업자"] for r in rows],
+        "업체": [r["업체"] for r in rows],
+    })
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="완료 현황")
+        worksheet = writer.sheets["완료 현황"]
+        for column_cells in worksheet.columns:
+            max_length = 10
+            column_letter = column_cells[0].column_letter
+            for cell in column_cells:
+                value = "" if cell.value is None else str(cell.value)
+                max_length = max(max_length, min(len(value) + 2, 40))
+            worksheet.column_dimensions[column_letter].width = max_length
+    output.seek(0)
+    filename = f"wash_status_{today_kst()}.xlsx"
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name=filename,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 # =============================================
 # =========================================================
 # 누락 라우트 스텁 / 기능 추가

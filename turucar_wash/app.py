@@ -2198,14 +2198,15 @@ def wash_schedule_delete():
 # =========================================================
 def _mixed_car_scope_check(vm_row, user):
     """혼용 차량 등록 시 vehicle_master 행이 로그인한 사용자 범위에 속하는지 확인한다.
-    scoped_condition()과 동일한 규칙 — 마스터/컨택센터는 무제한, 업체 관리자는 업체 일치,
-    개별 작업자는 업체+담당 지역까지 일치해야 한다. 범위를 벗어나면 사용자에게 보여줄
-    오류 메시지를 반환하고, 문제 없으면 빈 문자열("")을 반환한다. /mixed_car_register(등록
-    실행)와 /mixed_car_search(검색 목록) 양쪽에서 같은 기준을 쓰도록 공통 함수로 뺐다."""
+    (2026-09-07) 혼용 차량은 스팟이 수시로 바뀌어 담당업체가 고정되어 있지 않으므로,
+    담당업체 일치 여부는 더 이상 확인하지 않는다 — 어느 업체(또는 차량소속) 계정이든
+    모든 혼용 차량을 보고 등록할 수 있다. 마스터/컨택센터는 기존처럼 무제한이고,
+    개별 작업자(staff) 계정만 담당 지역 밖의 차량은 등록할 수 없도록 지역 제한을 유지한다.
+    범위를 벗어나면 사용자에게 보여줄 오류 메시지를 반환하고, 문제 없으면 빈 문자열("")을
+    반환한다. /mixed_car_register(등록 실행)와 /mixed_car_search(검색 목록) 양쪽에서 같은
+    기준을 쓰도록 공통 함수로 뺐다."""
     if user.is_master or getattr(user, "is_contact_center", False):
         return ""
-    if (vm_row["담당업체"] or "") != (user.vendor or ""):
-        return "❌ 담당 업체가 달라 등록할 수 없는 차량입니다."
     if user.is_staff:
         regions = _account_regions(user.username)
         if (vm_row["지역시도"], vm_row["지역구군"]) not in regions:
@@ -2268,12 +2269,19 @@ def mixed_car_register():
         conn.close()
         flash("ℹ 오늘 이미 등록된 오더가 있어 해당 화면으로 이동합니다.")
         return redirect(url_for("car_detail", id=existing["id"]))
+    # (2026-09-07) 업체(오더 소유 업체) 컬럼은 vehicle_master의 담당업체를 그대로 베끼지 않고
+    # 지금 등록하는 사용자 자신의 vendor를 우선 쓴다 — 혼용 차량은 이제 담당업체가 달라도
+    # 누구나 등록할 수 있게 됐는데, 여기서 계속 vm_row["담당업체"]를 넣으면 등록 직후
+    # scoped_condition()의 "업체 일치" 조건 때문에 정작 등록한 사람이 car_detail에서
+    # "정보를 찾을 수 없습니다"를 보게 되는 문제가 생긴다. 마스터/컨택센터/차량소속(fleet)
+    # 담당 계정처럼 vendor가 없는 경우엔 예전처럼 vm_row 값을 그대로 쓴다.
+    owner_vendor = current_user.vendor or vm_row["담당업체"]
     cur.execute(
         """INSERT INTO wash_list
         (차량번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 세차일, 업체, 밴드링크, 작업자, 완료, 등록일, 이월횟수, 세차경과일)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,0,?,0,0)""",
         (vm_row["차량번호"], vm_row["차종명"], vm_row["차량소속"], vm_row["스팟"], vm_row["주소"],
-         vm_row["지역시도"], vm_row["지역구군"], today_str, vm_row["담당업체"], "",
+         vm_row["지역시도"], vm_row["지역구군"], today_str, owner_vendor, "",
          current_user.username, today_str)
     )
     new_id = cur.lastrowid

@@ -2197,20 +2197,14 @@ def wash_schedule_delete():
 # 혼용 차량 바로 등록 (오더 없이 완료처리)
 # =========================================================
 def _mixed_car_scope_check(vm_row, user):
-    """혼용 차량 등록 시 vehicle_master 행이 로그인한 사용자 범위에 속하는지 확인한다.
-    (2026-09-07) 혼용 차량은 스팟이 수시로 바뀌어 담당업체가 고정되어 있지 않으므로,
-    담당업체 일치 여부는 더 이상 확인하지 않는다 — 어느 업체(또는 차량소속) 계정이든
-    모든 혼용 차량을 보고 등록할 수 있다. 마스터/컨택센터는 기존처럼 무제한이고,
-    개별 작업자(staff) 계정만 담당 지역 밖의 차량은 등록할 수 없도록 지역 제한을 유지한다.
-    범위를 벗어나면 사용자에게 보여줄 오류 메시지를 반환하고, 문제 없으면 빈 문자열("")을
-    반환한다. /mixed_car_register(등록 실행)와 /mixed_car_search(검색 목록) 양쪽에서 같은
-    기준을 쓰도록 공통 함수로 뺐다."""
-    if user.is_master or getattr(user, "is_contact_center", False):
-        return ""
-    if user.is_staff:
-        regions = _account_regions(user.username)
-        if (vm_row["지역시도"], vm_row["지역구군"]) not in regions:
-            return "❌ 담당 지역이 아니어서 등록할 수 없는 차량입니다."
+    """혼용 차량(BM구분='혼용')은 스팟이 수시로 바뀌어 담당업체·담당지역이 사실상 고정돼
+    있지 않다. (2026-09-07) 처음엔 담당업체만 풀고 개별 작업자(staff)의 담당 지역 제한은
+    남겨뒀었는데, 그것도 빼고 로그인한 계정이면 누구든(마스터/컨택센터/업체 관리자/작업자/
+    차량소속 담당 모두) 지역·업체 구분 없이 모든 혼용 차량을 보고 등록할 수 있게 한다 —
+    지금은 항상 빈 문자열("")을 돌려주는 무제한 함수지만, 나중에 다시 범위 제한이
+    필요해지는 경우를 대비해 함수 형태(및 호출부)는 그대로 남겨둔다. /mixed_car_register
+    (등록 실행)와 /mixed_car_search(검색 목록) 양쪽에서 같은 기준을 쓰도록 공통 함수로
+    뺀 것도 유지."""
     return ""
 @app.route("/mixed_car_search")
 @login_required
@@ -2276,12 +2270,24 @@ def mixed_car_register():
     # "정보를 찾을 수 없습니다"를 보게 되는 문제가 생긴다. 마스터/컨택센터/차량소속(fleet)
     # 담당 계정처럼 vendor가 없는 경우엔 예전처럼 vm_row 값을 그대로 쓴다.
     owner_vendor = current_user.vendor or vm_row["담당업체"]
+    # 지역도 마찬가지 이유로 손봐야 한다 — 개별 작업자(staff) 계정은 scoped_condition()이
+    # "업체 일치"뿐 아니라 "담당 지역 일치"까지 같이 요구하기 때문에, 혼용 차량의 실제
+    # 등록 지역이 이 작업자의 담당 지역이 아니면 업체를 맞춰줘도 여전히 못 찾는 문제가
+    # 남는다. 담당 지역 중 하나로 바꿔 저장해서 등록한 사람이 곧바로 자기 오더를 볼 수
+    # 있게 한다 (스팟/주소 같은 실제 위치 정보는 vm_row 값 그대로 유지 — 스코프용 대분류
+    # 지역만 바꾼다). 마스터/컨택센터/fleet 계정, 그리고 담당 지역이 원래 일치하는
+    # 경우는 건드리지 않는다.
+    order_region = (vm_row["지역시도"], vm_row["지역구군"])
+    if current_user.is_staff:
+        my_regions = _account_regions(current_user.username)
+        if my_regions and order_region not in my_regions:
+            order_region = my_regions[0]
     cur.execute(
         """INSERT INTO wash_list
         (차량번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 세차일, 업체, 밴드링크, 작업자, 완료, 등록일, 이월횟수, 세차경과일)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,0,?,0,0)""",
         (vm_row["차량번호"], vm_row["차종명"], vm_row["차량소속"], vm_row["스팟"], vm_row["주소"],
-         vm_row["지역시도"], vm_row["지역구군"], today_str, owner_vendor, "",
+         order_region[0], order_region[1], today_str, owner_vendor, "",
          current_user.username, today_str)
     )
     new_id = cur.lastrowid

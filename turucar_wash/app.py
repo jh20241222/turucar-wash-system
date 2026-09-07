@@ -68,6 +68,33 @@ def _configure_secret_key():
           "서버 재시작 시 기존 로그인 세션은 모두 만료됩니다. 운영 환경에서는 SECRET_KEY를 반드시 설정하세요.")
     return secrets.token_hex(32)
 app.secret_key = _configure_secret_key()
+# =========================================================
+# 클라이언트 연결 끊김(업로드 중단) 전역 처리 (2026-09-08)
+# =========================================================
+# 현장에서 사진(특히 세차 슬롯 사진, 훼손 제보 사진)을 올리는 도중 LTE/와이파이 신호가
+# 약해지거나 앱이 백그라운드로 넘어가면, 클라이언트가 업로드 중간에 연결을 끊어버리는
+# 일이 흔하다. Flask/Werkzeug가 request.form/request.files에 처음 접근하는 순간(=폼
+# 데이터를 실제로 읽는 순간) 소켓에서 ConnectionResetError/BrokenPipeError가 그대로
+# 올라오는데, 이 예외를 처리하는 핸들러가 없으면 요청마다 500 에러 + 서버 로그에 긴
+# 트레이스백이 남고(운영 로그를 보면 마치 서버가 잘못된 것처럼 보인다), AJAX가 아닌
+# 일반 폼 제출(예: 세차 완료처리)에서는 사용자에게 아무 안내 없이 "Internal Server
+# Error" 페이지만 보인다. 실제로는 서버 버그가 아니라 클라이언트 쪽 네트워크가 끊긴
+# 것이므로, 여기서 깔끔하게 잡아서 (1) AJAX/JSON 업로드 API에는 재시도를 유도하는
+# JSON을, (2) 그 외 일반 폼 제출에는 이전 화면으로 돌려보내며 안내 메시지를 준다.
+# (세차 완료처리의 슬롯 사진은 애초에 "즉시 업로드가 실패하면 파일을 input에 그대로
+# 남겨서 완료처리 제출에 다시 실어 보낸다"는 안전장치가 있어 사진 자체가 유실되지는
+# 않는다 — car_detail.html의 uploadSlotPhotoInBackground 주석 참고.)
+_CLIENT_DISCONNECT_JSON_PREFIXES = (
+    "/car_slot_photo_upload/", "/car_slot_photo_clear/", "/wash_history_photos/",
+)
+@app.errorhandler(ConnectionResetError)
+@app.errorhandler(BrokenPipeError)
+def _handle_client_disconnected(e):
+    print(f"[네트워크] 업로드 도중 연결이 끊겨 요청을 처리하지 못함: {request.method} {request.path} - {e!r}")
+    if request.path.startswith(_CLIENT_DISCONNECT_JSON_PREFIXES):
+        return jsonify({"ok": False, "message": "네트워크가 불안정해서 업로드가 끊겼습니다. 잠시 후 다시 시도해주세요."}), 499
+    flash("❌ 네트워크가 불안정해서 요청이 끊겼습니다. 잠시 후 다시 시도해주세요.")
+    return redirect(request.referrer or url_for("wash_list"))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 def _truthy(value):
     return str(value or "").strip().lower() in ("1", "true", "yes", "y", "on")

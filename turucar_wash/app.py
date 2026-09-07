@@ -4374,12 +4374,52 @@ def vehicle_damage_detail(plate):
     ).fetchall()
     uconn.close()
     # (2026-09-04) 세차 이력의 사진은 이 페이지에서 별도로 모아 보여주지 않고, 각 행을
-    # 눌러서 완료현황의 실제 완료내역(wash_record)으로 이동해 그 안에서 확인하도록 변경.
+    # 눌러서 완료현황의 실제 완료내역(wash_record)으로 이동해 그 안에서 확인하도록 했었는데,
+    # (2026-09-07) 페이지 이동 없이 행 아래에서 바로 펼쳐볼 수 있게 다시 변경 —
+    # /wash_history_photos/<id> API를 새로 만들어 클릭 시 그 자리에서 불러온다.
     return render_template(
         "vehicle_damage_detail.html",
         vehicle=vehicle, wash_history_rows=wash_history_rows,
         damage_rows=damage_rows, plate=plate,
     )
+@app.route("/wash_history_photos/<int:id>")
+@login_required
+def wash_history_photos(id):
+    """차량별 훼손관리 상세(vehicle_damage_detail)에서 세차 이력 행을 눌렀을 때, 다른
+    화면(wash_record)으로 이동하지 않고 그 자리에서 완료 사진을 펼쳐 보여주기 위한
+    API(2026-09-07). wash_record가 사진을 조회하는 로직(세차일 기준 조회 + 촬영 슬롯
+    순서 정렬)을 그대로 재사용한다."""
+    if not _can_view_vehicle_management():
+        return jsonify({"ok": False, "message": "❌ 접근 권한이 없습니다."}), 403
+    conn = get_wash_db()
+    row = conn.execute("SELECT * FROM wash_history WHERE id=?", (id,)).fetchone()
+    conn.close()
+    if not row:
+        return jsonify({"ok": False, "message": "세차 내역을 찾을 수 없습니다."}), 404
+    # 이 차량(row의 차량번호)이 로그인한 사용자의 차량별 훼손관리 스코프 안에 있는지
+    # vehicle_master 기준으로 재확인한다 — vehicle_damage_detail 페이지 자체의 접근
+    # 제어와 동일한 기준(_vehicle_scope_condition)을 그대로 따른다.
+    scope_sql, scope_params = _vehicle_scope_condition(current_user)
+    vconn = get_wash_db()
+    in_scope = vconn.execute(
+        "SELECT 1 FROM vehicle_master WHERE 차량번호=?" + scope_sql,
+        [row["차량번호"]] + list(scope_params)
+    ).fetchone()
+    vconn.close()
+    if not in_scope:
+        return jsonify({"ok": False, "message": "❌ 접근 권한이 없습니다."}), 403
+    show_photo_section = (row["차량소속"] or "").strip() in PHOTO_UPLOAD_ORGS
+    if not show_photo_section:
+        return jsonify({"ok": True, "photos": []})
+    photo_lookup_date = row["세차일"] if "세차일" in row.keys() and row["세차일"] else row["세차완료일"]
+    photos = _sort_photos_by_slot_order(_get_wash_photos(row["차량번호"], photo_lookup_date))
+    return jsonify({
+        "ok": True,
+        "photos": [
+            {"id": p["id"], "url": url_for("car_photo_view", photo_id=p["id"]), "label": p.get("shot_label") or "사진"}
+            for p in photos
+        ],
+    })
 @app.route("/damage_ai_label", methods=["GET", "POST"])
 @login_required
 def damage_ai_label():

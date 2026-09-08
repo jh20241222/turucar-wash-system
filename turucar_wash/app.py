@@ -867,6 +867,34 @@ def scoped_condition(table_name, user):
         for region in regions:
             params.extend([region["city"], region["district"]])
     return " AND " + " AND ".join(clauses), params
+def scoped_condition_mixed_exempt(table_name, user):
+    """scoped_condition()과 같지만, 혼용(vehicle_master.BM구분='혼용') 차량의 오더는
+    담당업체/담당지역 조건과 무관하게 항상 통과시킨다. (2026-09-08) 혼용 차량은 스팟이
+    수시로 바뀌어 담당업체·담당지역이라는 개념 자체가 없다고 봐야 한다 — 등록한 사람
+    기준으로 업체/지역을 끼워맞추는 식으로는 "다른 사람이 나중에 이어서 처리하려 하면
+    또 안 보인다"는 문제가 되풀이될 뿐이다. car_detail/wash_complete/완료현황처럼 "이
+    오더가 혼용 차량 것이면 누가 봐도/처리해도 된다"가 맞는 화면에서 scoped_condition()
+    대신 이 함수를 쓴다. 이미 무제한(마스터/컨택센터)이면 그대로 돌려준다."""
+    scope_sql, scope_params = scoped_condition(table_name, user)
+    if not scope_sql:
+        return scope_sql, scope_params
+    base = scope_sql[len(" AND "):]
+    mixed_sql = (
+        f" AND (({base}) OR {table_name}.차량번호 IN "
+        f"(SELECT 차량번호 FROM vehicle_master WHERE TRIM(BM구분)='혼용'))"
+    )
+    return mixed_sql, scope_params
+def _is_mixed_vehicle(차량번호, conn=None):
+    """이 차량번호가 혼용(BM구분='혼용')으로 등록돼 있는지 확인한다."""
+    own_conn = conn is None
+    if own_conn:
+        conn = get_wash_db()
+    row = conn.execute(
+        "SELECT 1 FROM vehicle_master WHERE 차량번호=? AND TRIM(BM구분)='혼용'", (차량번호,)
+    ).fetchone()
+    if own_conn:
+        conn.close()
+    return bool(row)
 def filter_distinct_values(cur, table_name, column_name, base_query, base_params):
     query = f"SELECT DISTINCT {column_name} AS value FROM {table_name} WHERE 1=1{base_query} ORDER BY {column_name}"
     rows = cur.execute(query, base_params).fetchall()
@@ -2281,7 +2309,18 @@ def mixed_car_register():
         flash(scope_err)
         return redirect(url_for("wash_list"))
     today_str = today_kst()
-    # 오늘 이미 등록된(미완료) 오더가 있으면 중복 생성하지 않고 그 화면으로 이동
+    # (2026-09-08) 혼용 차량은 담당업체/담당지역이라는 개념 자체가 없다고 본다(스팟이
+    # 수시로 바뀌기 때문) — 그래서 wash_list에 저장하는 업체/지역시도/지역구군 값은
+    # vehicle_master의 원본 값을 그대로 쓰고(등록자 기준으로 끼워맞추지 않는다), 대신
+    # 이 값에 기대는 scoped_condition() 대신 scoped_condition_mixed_exempt()를 car_detail/
+    # wash_complete/완료현황(wash_status)에서 써서 "혼용 차량 오더는 담당업체/지역과
+    # 무관하게 항상 보이고 누구나 처리할 수 있다"를 보장한다. (예전엔 등록자/방문자 기준
+    # 으로 업체·지역을 계속 덮어써서 "누가 마지막에 봤는지"에 따라 다른 사람 눈에는 다시
+    # 안 보이는 문제가 되풀이됐다.)
+    #
+    # 오늘 이미 등록된(미완료) 오더가 있으면 중복 생성하지 않고 그 화면으로 이동한다.
+    # 이 조회에도 scoped_condition을 걸지 않는다 — 혼용 차량은 "오늘 이미 등록됐는지"를
+    # 전체 범위에서 확인해야 중복 생성을 막을 수 있다.
     existing = cur.execute(
         "SELECT id FROM wash_list WHERE 차량번호=? AND 완료=0 AND 세차일=?",
         (vm_row["차량번호"], today_str)
@@ -2290,31 +2329,12 @@ def mixed_car_register():
         conn.close()
         flash("ℹ 오늘 이미 등록된 오더가 있어 해당 화면으로 이동합니다.")
         return redirect(url_for("car_detail", id=existing["id"]))
-    # (2026-09-07) 업체(오더 소유 업체) 컬럼은 vehicle_master의 담당업체를 그대로 베끼지 않고
-    # 지금 등록하는 사용자 자신의 vendor를 우선 쓴다 — 혼용 차량은 이제 담당업체가 달라도
-    # 누구나 등록할 수 있게 됐는데, 여기서 계속 vm_row["담당업체"]를 넣으면 등록 직후
-    # scoped_condition()의 "업체 일치" 조건 때문에 정작 등록한 사람이 car_detail에서
-    # "정보를 찾을 수 없습니다"를 보게 되는 문제가 생긴다. 마스터/컨택센터/차량소속(fleet)
-    # 담당 계정처럼 vendor가 없는 경우엔 예전처럼 vm_row 값을 그대로 쓴다.
-    owner_vendor = current_user.vendor or vm_row["담당업체"]
-    # 지역도 마찬가지 이유로 손봐야 한다 — 개별 작업자(staff) 계정은 scoped_condition()이
-    # "업체 일치"뿐 아니라 "담당 지역 일치"까지 같이 요구하기 때문에, 혼용 차량의 실제
-    # 등록 지역이 이 작업자의 담당 지역이 아니면 업체를 맞춰줘도 여전히 못 찾는 문제가
-    # 남는다. 담당 지역 중 하나로 바꿔 저장해서 등록한 사람이 곧바로 자기 오더를 볼 수
-    # 있게 한다 (스팟/주소 같은 실제 위치 정보는 vm_row 값 그대로 유지 — 스코프용 대분류
-    # 지역만 바꾼다). 마스터/컨택센터/fleet 계정, 그리고 담당 지역이 원래 일치하는
-    # 경우는 건드리지 않는다.
-    order_region = (vm_row["지역시도"], vm_row["지역구군"])
-    if current_user.is_staff:
-        my_regions = _account_regions(current_user.username)
-        if my_regions and order_region not in my_regions:
-            order_region = my_regions[0]
     cur.execute(
         """INSERT INTO wash_list
         (차량번호, 차종명, 차량소속, 스팟, 주소, 지역시도, 지역구군, 세차일, 업체, 밴드링크, 작업자, 완료, 등록일, 이월횟수, 세차경과일)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,0,?,0,0)""",
         (vm_row["차량번호"], vm_row["차종명"], vm_row["차량소속"], vm_row["스팟"], vm_row["주소"],
-         order_region[0], order_region[1], today_str, owner_vendor, "",
+         vm_row["지역시도"], vm_row["지역구군"], today_str, vm_row["담당업체"], "",
          current_user.username, today_str)
     )
     new_id = cur.lastrowid
@@ -2489,7 +2509,9 @@ def car_detail(id):
     cur = conn.cursor()
     query = "SELECT * FROM wash_list WHERE id=?"
     params = [id]
-    scope_sql, scope_params = scoped_condition("wash_list", current_user)
+    # (2026-09-08) 혼용 차량 오더는 담당업체/담당지역과 무관하게 누구나 봐야 하므로
+    # scoped_condition() 대신 scoped_condition_mixed_exempt()를 쓴다.
+    scope_sql, scope_params = scoped_condition_mixed_exempt("wash_list", current_user)
     query += scope_sql
     params += scope_params
     car = cur.execute(query, params).fetchone()
@@ -2500,7 +2522,7 @@ def car_detail(id):
         # 뜨면, 실제로는 정상 처리된 건지 진짜 유실된 건지 알 수가 없어서 혼란스러웠다.
         # wash_history.원본ID로 이미 완료된 기록이 있는지 확인해서, 있으면 그 결과 화면
         # 링크를 바로 보여준다.
-        hist_scope_sql, hist_scope_params = scoped_condition("wash_history", current_user)
+        hist_scope_sql, hist_scope_params = scoped_condition_mixed_exempt("wash_history", current_user)
         completed = cur.execute(
             "SELECT id FROM wash_history WHERE 원본ID=?" + hist_scope_sql + " ORDER BY id DESC LIMIT 1",
             [id] + hist_scope_params
@@ -2835,7 +2857,9 @@ def wash_complete(id):
     cur = conn.cursor()
     query = "SELECT * FROM wash_list WHERE id=? AND 완료=0"
     params = [id]
-    scope_sql, scope_params = scoped_condition("wash_list", current_user)
+    # (2026-09-08) 혼용 차량 오더는 담당업체/담당지역과 무관하게 어느 작업자든 완료 처리할
+    # 수 있어야 하므로 scoped_condition() 대신 scoped_condition_mixed_exempt()를 쓴다.
+    scope_sql, scope_params = scoped_condition_mixed_exempt("wash_list", current_user)
     query += scope_sql
     params += scope_params
     row = cur.execute(query, params).fetchone()
@@ -3053,7 +3077,10 @@ def wash_status():
     cur = conn.cursor()
     where_sql = " WHERE 1=1"
     params = []
-    scope_sql, scope_params = scoped_condition("wash_history", current_user)
+    # (2026-09-08) 혼용 차량 오더는 담당업체/담당지역과 무관하게 완료현황에서도 보여야
+    # 하므로 scoped_condition() 대신 scoped_condition_mixed_exempt()를 쓴다. (개별 작업자
+    # 계정에 대한 "내가 완료한 것만" 좁히기는 아래에서 별도로 그대로 적용된다.)
+    scope_sql, scope_params = scoped_condition_mixed_exempt("wash_history", current_user)
     # (2026-09-03) 차량소속(피플카/휴맥스 같은 차량 운영사) 담당자 계정은 role='staff'이지만
     # 실제로 세차를 수행하는 작업자가 아니라 자기 차량소속 차량들의 완료 현황을 "보기만" 하는
     # 계정이다 — 아래 작업자=로그인아이디 좁히기를 적용하면 자기가 세차한 적이 없으니 항상
@@ -3121,11 +3148,30 @@ def wash_status():
             ).fetchone()["c"]
         photo_counts[r["id"]] = _photo_count_cache[pair]
 
-    region1 = filter_distinct_values(cur, "wash_history", "지역시도", scope_sql, scope_params)
-    region2 = filter_distinct_values(cur, "wash_history", "지역구군", scope_sql, scope_params)
+    # (2026-09-08) 혼용(BM구분='혼용') 차량 오더는 스팟/지역/업체 개념이 없다고 보므로,
+    # 완료현황 화면에서 해당 정보를 보여주지 않고 차량번호/차종/소속(+완료일/작업자)만
+    # 노출한다. 이 페이지에 나온 차량번호들만 모아 한 번에 조회한다.
+    page_plates = list({r["차량번호"] for r in rows})
+    mixed_plates = set()
+    if page_plates:
+        placeholders = ",".join("?" * len(page_plates))
+        mixed_plates = {
+            p["차량번호"] for p in cur.execute(
+                f"SELECT 차량번호 FROM vehicle_master WHERE TRIM(BM구분)='혼용' AND 차량번호 IN ({placeholders})",
+                page_plates
+            ).fetchall()
+        }
+    is_mixed = {r["id"]: (r["차량번호"] in mixed_plates) for r in rows}
+
+    # 혼용 차량은 스팟/지역/업체 개념이 없으므로, 이 값들의 검색 필터 드롭다운에도
+    # 혼용 차량의 (의미 없는) 값이 섞여 나오지 않도록 별도로 제외한다. 차량소속은
+    # 혼용 차량에도 유효한 정보라 제외하지 않는다.
+    non_mixed_scope_sql = scope_sql + " AND wash_history.차량번호 NOT IN (SELECT 차량번호 FROM vehicle_master WHERE TRIM(BM구분)='혼용')"
+    region1 = filter_distinct_values(cur, "wash_history", "지역시도", non_mixed_scope_sql, scope_params)
+    region2 = filter_distinct_values(cur, "wash_history", "지역구군", non_mixed_scope_sql, scope_params)
     car_org_list = filter_distinct_values(cur, "wash_history", "차량소속", scope_sql, scope_params)
-    spot_list = filter_distinct_values(cur, "wash_history", "스팟", scope_sql, scope_params)
-    vendor_list = filter_distinct_values(cur, "wash_history", "업체", scope_sql, scope_params)
+    spot_list = filter_distinct_values(cur, "wash_history", "스팟", non_mixed_scope_sql, scope_params)
+    vendor_list = filter_distinct_values(cur, "wash_history", "업체", non_mixed_scope_sql, scope_params)
     today_completed_count = cur.execute(
         "SELECT COUNT(*) AS c FROM wash_history WHERE 세차완료일 = ?" + scope_sql,
         [today_str] + scope_params
@@ -3139,6 +3185,7 @@ def wash_status():
         "wash_status.html",
         rows=rows,
         photo_counts=photo_counts,
+        is_mixed=is_mixed,
         region1=region1,
         region2=region2,
         car_org_list=car_org_list,
@@ -3835,7 +3882,9 @@ def _lookup_wash_car_for_photo(id, user):
     오더는 조회되지 않게 막는다 (다른 업체 오더에 사진을 붙이는 것 방지).
     반환: {'차량번호':.., '세차일':.., '차량소속':.., '완료':bool} 또는 None."""
     conn = get_wash_db()
-    scope_sql, scope_params = scoped_condition("wash_list", user)
+    # (2026-09-08) 혼용 차량 오더는 담당업체/담당지역과 무관하게 어느 작업자든 사진을 붙일
+    # 수 있어야 하므로 scoped_condition() 대신 scoped_condition_mixed_exempt()를 쓴다.
+    scope_sql, scope_params = scoped_condition_mixed_exempt("wash_list", user)
     row = conn.execute(
         f"SELECT 차량번호, 세차일, 차량소속 FROM wash_list WHERE id=?{scope_sql}",
         [id] + scope_params
@@ -3843,7 +3892,7 @@ def _lookup_wash_car_for_photo(id, user):
     if row:
         conn.close()
         return {"차량번호": row["차량번호"], "세차일": row["세차일"], "차량소속": row["차량소속"], "완료": False}
-    scope_sql, scope_params = scoped_condition("wash_history", user)
+    scope_sql, scope_params = scoped_condition_mixed_exempt("wash_history", user)
     row = conn.execute(
         f"SELECT 차량번호, 세차완료일, 차량소속 FROM wash_history WHERE 원본ID=?{scope_sql} ORDER BY id DESC LIMIT 1",
         [id] + scope_params

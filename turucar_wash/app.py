@@ -3942,6 +3942,22 @@ def _lookup_car_org(car_number):
     except Exception as e:
         print(f"[Damage] 차량소속 조회 오류: {e}")
         return ""
+# (2026-09-08) "세차웹에서는 사진이 보이는데 슬랙에는 깨진 이미지로 뜬다" 제보 원인 진단용 힌트.
+# Bot Token 경로(chat.postMessage + files 직접 업로드)가 실패하면 webhook으로 fallback하는데,
+# webhook은 사진을 직접 첨부할 수 없고 외부에서 접근 가능한 image_url만 참조할 수 있다.
+# 이 URL은 이 서버(Railway) 로컬 디스크에 저장된 파일을 가리키므로, 슬랙이 그 순간 이 URL을
+# 못 가져오면(워커가 다른 느린 업로드로 막혀 있거나, 재배포로 파일이 사라졌거나 등) 영구히
+# 깨진 이미지로 남는다. 반면 Bot Token 경로는 사진을 슬랙에 직접 업로드하므로 이런 문제가 없다
+# — 즉 근본 해결책은 아래 not_in_channel 힌트대로 봇을 채널에 초대해 Bot Token 경로가 항상
+# 성공하게 만드는 것이다.
+_DAMAGE_SLACK_ERROR_HINTS = {
+    "not_in_channel": "봇이 SLACK_CHANNEL_ID로 지정된 채널에 초대되어 있지 않습니다. 슬랙에서 해당 채널에 봇을 /invite 해주세요. (초대 전까지는 사진이 직접 첨부되지 못하고 webhook의 이미지 링크 방식으로만 전송되어, 타이밍에 따라 슬랙에서 사진이 깨져 보일 수 있습니다.)",
+    "channel_not_found": "채널 ID(SLACK_CHANNEL_ID)가 올바르지 않습니다.",
+    "missing_scope": "봇 토큰에 필요한 권한(chat:write, files:write 등)이 없습니다. OAuth 스코프 추가 후 워크스페이스에 재설치해주세요.",
+    "invalid_auth": "SLACK_BOT_TOKEN이 유효하지 않습니다. 토큰을 다시 확인해주세요.",
+    "account_inactive": "슬랙 앱/토큰이 비활성화된 상태입니다.",
+    "token_revoked": "슬랙 봇 토큰이 폐기(재발급)되었습니다.",
+}
 def _send_damage_slack(report, base_url):
     """슬랙으로 훼손 제보 알림 전송. Bot Token 사용 시 ts 반환 (삭제용)."""
     blocks = [
@@ -3971,7 +3987,9 @@ def _send_damage_slack(report, base_url):
             )
             data = resp.json()
             if not data.get("ok"):
-                print(f"[Slack Bot] 메시지 오류: {data.get('error')} needed={data.get('needed')} provided={data.get('provided')} — webhook으로 fallback")
+                err = data.get("error")
+                hint = _DAMAGE_SLACK_ERROR_HINTS.get(err, "")
+                print(f"[Slack Bot] 메시지 오류: {err} needed={data.get('needed')} provided={data.get('provided')} — webhook으로 fallback" + (f" | 조치: {hint}" if hint else ""))
                 raise RuntimeError("bot_failed")
             slack_ts = data.get("ts")
             print(f"[Slack Bot] 메시지 전송 성공 ts={slack_ts}")
@@ -4042,6 +4060,12 @@ def _send_damage_slack(report, base_url):
             "photo_damage5": "훼손 사진 5",
         }
         for field, fname, _fpath in photos:
+            # webhook 경로는 사진을 직접 첨부하지 못하고 이 URL을 슬랙이 스스로 가져가야
+            # 렌더링되는데, 파일이 없으면 100% 깨진 이미지로 뜨는 게 확정이므로 애초에
+            # 블록에 넣지 않고 로그로 남긴다(원인 추적용).
+            if not (_fpath and os.path.exists(_fpath)):
+                print(f"[Slack Webhook] 사진 파일이 없어 이미지 블록을 건너뜀: {fname}")
+                continue
             photo_url = f"{base_url.rstrip('/')}/damage_photo/{fname}"
             label = label_map.get(field, "사진")
             blocks.append({

@@ -6,6 +6,36 @@
         <img src="{{ url_for('static', filename='img/turucar_logo_brand.png') }}" alt="TURU CAR" class="home-brand-logo-v12">
     </header>
 
+    <!-- (2026-09-08) "사진 찍는 중에 대시보드로 튕긴다"는 제보 대응 배너. 저사양/폴더블
+    기기에서 기본 카메라 앱을 반복해서 열면, 안드로이드가 메모리 확보를 위해 이 앱을
+    통째로 종료시키는 경우가 있다(우리 JS로는 막을 수 없는 OS 동작). 이 앱은 설치형
+    PWA라 그렇게 다시 켜지면 항상 이 홈 화면(manifest start_url)부터 시작하는데, 방금
+    작업 중이던 주문으로 돌아가려면 오더 목록에서 다시 찾아 들어가야 해서 불편하고
+    당황스러웠다. car_detail.html이 남겨둔 표시(로컬 저장, 완료 시 자동 삭제)가 있으면
+    바로 이어갈 수 있는 배너를 보여준다. -->
+    <section class="home-resume-card-v12" id="homeResumeCard" hidden>
+        <span class="home-resume-icon-v12" aria-hidden="true">↩️</span>
+        <div class="home-resume-copy-v12">
+            <strong>방금 작업 중이던 <span id="homeResumePlate"></span> 오더가 있어요</strong>
+            <small>화면이 갑자기 넘어왔다면, 눌러서 이어서 진행하세요.</small>
+        </div>
+        <a href="#" id="homeResumeLink" class="home-resume-btn-v12">이어하기</a>
+    </section>
+    <style>
+    /* (2026-09-08) [hidden]과 클래스 선택자는 CSS 명세상 우선순위(specificity)가 같아서,
+       뒤에 오는(author stylesheet) .home-resume-card-v12{display:flex}가 브라우저 기본
+       [hidden]{display:none}보다 이겨버려 hidden 속성이 있어도 계속 보이는 버그가 있었다
+       (Playwright 테스트로 확인). :not([hidden])로 한정해서 hidden이 실제로 숨김으로
+       동작하게 한다. */
+    .home-resume-card-v12{display:none;align-items:center;gap:12px;background:#FAECE7;border:1px solid #F0C7B5;border-radius:16px;padding:14px 16px;margin:0 0 14px;}
+    .home-resume-card-v12:not([hidden]){display:flex;}
+    .home-resume-icon-v12{font-size:22px;flex-shrink:0;}
+    .home-resume-copy-v12{flex:1;min-width:0;}
+    .home-resume-copy-v12 strong{display:block;font-size:14px;color:#212121;font-weight:800;}
+    .home-resume-copy-v12 small{display:block;font-size:12px;color:#8a6a58;margin-top:2px;line-height:1.4;}
+    .home-resume-btn-v12{flex-shrink:0;background:#D85A30;color:#fff;font-size:13px;font-weight:800;padding:9px 14px;border-radius:10px;text-decoration:none;white-space:nowrap;}
+    </style>
+
     <section class="home-notice-card-v12" aria-labelledby="homeNoticeTitle">
         <div class="notice-head-v12">
             <h2 id="homeNoticeTitle"><a href="{{ url_for('notices') }}" class="notice-heading-link-v12">공지사항</a></h2>
@@ -178,6 +208,28 @@ function showHomeNoticeSlide(index){
   slides.forEach(function(el,i){ el.classList.toggle('active', i===index); });
   dots.forEach(function(el,i){ el.classList.toggle('active', i===index); });
 }
+(function(){
+    // (2026-09-08) 위 homeResumeCard 배너 참고. 너무 오래된 표시(예: 다른 날 작업하다가
+    // 지우는 걸 깜빡한 경우)까지 계속 뜨면 오히려 혼란스러우므로, 일정 시간(2시간)
+    // 지나면 표시하지 않는다.
+    const RESUME_MAX_AGE_MS = 2 * 60 * 60 * 1000;
+    try{
+        const raw = localStorage.getItem('turu_last_active_order');
+        if(!raw) return;
+        const info = JSON.parse(raw);
+        if(!info || !info.id || !info.ts || (Date.now() - info.ts) > RESUME_MAX_AGE_MS){
+            localStorage.removeItem('turu_last_active_order');
+            return;
+        }
+        const card = document.getElementById('homeResumeCard');
+        const plateEl = document.getElementById('homeResumePlate');
+        const link = document.getElementById('homeResumeLink');
+        if(!card || !link) return;
+        plateEl.textContent = info.plate || '';
+        link.href = '/car_detail/' + encodeURIComponent(info.id);
+        card.hidden = false;
+    }catch(e){}
+})();
 let homeDevToastTimer=null;
 function showHomeDevToast(){
   const toast=document.getElementById('home-dev-toast-v12');

@@ -67,10 +67,12 @@
             <p class="slot-group-label">{{ group.group }} ({{ group['items']|length }}){% if group.hint %}<br><small style="color:#8a8f99;font-weight:400;">{{ group.hint }}</small>{% endif %}</p>
             <div class="photo-slot-grid">
                 {% for item in group['items'] %}
-                <div class="photo-slot" data-slot-key="{{ item.key }}" data-multi="0">
+                {% set already_uploaded = item.label in uploaded_slot_labels %}
+                <div class="photo-slot{{ ' filled' if already_uploaded else '' }}" data-slot-key="{{ item.key }}" data-multi="0" data-uploaded="{{ '1' if already_uploaded else '0' }}">
                     <input type="file" id="slot-input-{{ item.key }}" name="slot_{{ item.key }}" accept="image/*" capture="environment" style="display:none;">
-                    <button type="button" class="photo-slot-clear" id="slot-clear-{{ item.key }}" style="display:none;">✕</button>
+                    <button type="button" class="photo-slot-clear" id="slot-clear-{{ item.key }}" style="display:{{ 'flex' if already_uploaded else 'none' }};">✕</button>
                     <div class="photo-slot-thumb" id="slot-thumb-{{ item.key }}">{% if item.icon_type == 'photo' %}<img class="photo-slot-icon-img" src="{{ url_for('static', filename='img/' + item.icon_src) }}" alt="">{% elif item.icon_type == 'svg' %}<span class="photo-slot-icon-svg">{{ item.icon_src | safe }}</span>{% else %}<span class="photo-slot-icon">{{ item.icon_src }}</span>{% endif %}</div>
+                    <div class="photo-slot-uploaded-badge" id="slot-uploaded-badge-{{ item.key }}"{% if not already_uploaded %} style="display:none;"{% endif %}>✓ 저장됨</div>
                     <div class="photo-slot-label">{{ item.label }}</div>
                 </div>
                 {% endfor %}
@@ -247,6 +249,23 @@ async function turuConfirmIfBlurry(file){
     const slots = document.querySelectorAll('.photo-slot');
     if(!slots.length) return; // 사진 업로드 대상 소속이 아니면 아무것도 하지 않음
 
+    // (2026-09-08) "사진 찍는 중에 화면이 대시보드로 튕긴다" 제보 대응 — 폴더블 등
+    // 저사양 기기에서 기본 카메라 앱을 반복해서 열면, 안드로이드가 메모리 확보를 위해
+    // 이 앱(웹앱)을 통째로 백그라운드에서 종료시키는 경우가 있다. 카메라가 사진을
+    // 돌려주려 할 때 이 앱이 이미 죽어있으면, 안드로이드/크롬은 이 화면(주문 상세)이
+    // 아니라 앱을 처음부터(manifest의 start_url=대시보드) 다시 띄운다 — 우리 JS로는
+    // 막을 수 없는 OS 동작이다. 대신 "지금 이 주문 작업 중"이라는 사실을 로컬에
+    // 남겨둬서, 대시보드가 뜨면 곧바로 이 주문으로 돌아갈 수 있는 버튼을 보여준다
+    // (dashboard.html 참고). 완료처리가 정상적으로 끝나면 아래 turuHandleWashSubmit에서
+    // 이 표시를 지운다.
+    try{
+        // 아래쪽에서 선언되는 CAR_ORDER_ID(const, 아직 초기화 전이라 TDZ 오류 위험)에
+        // 기대지 않고, 서버 값을 이 자리에서 바로 다시 꺼내 쓴다.
+        localStorage.setItem('turu_last_active_order', JSON.stringify({
+            id: {{ car['id'] | tojson }}, plate: (typeof carInfo !== 'undefined' && carInfo.number) || '', ts: Date.now()
+        }));
+    }catch(e){}
+
     // 슬롯별 기본 안내 이미지(서버에서 렌더된 참고 아이콘/사진) 원본 마크업을 저장해뒀다가
     // 사진을 지웠을 때 그대로 복원한다.
     const slotDefaultIcon = new Map();
@@ -407,6 +426,10 @@ async function turuConfirmIfBlurry(file){
         const key = slotEl.dataset.slotKey;
         slotEl.dataset.uploaded = '0';
         slotEl.classList.add('slot-uploading');
+        // (2026-09-08) "이미 저장됨" 배지는 재촬영 중에는 사실과 다르므로 일단 숨기고,
+        // 이번 업로드가 실제로 성공하면 다시 보여준다.
+        const badge = document.getElementById('slot-uploaded-badge-' + key);
+        if(badge) badge.style.display = 'none';
         const fd = new FormData();
         fd.append('slot_key', key);
         fd.append('photo', file, file.name || 'photo.jpg');
@@ -417,6 +440,7 @@ async function turuConfirmIfBlurry(file){
                 slotEl.classList.remove('slot-uploading');
                 if(data && data.ok){
                     slotEl.dataset.uploaded = '1';
+                    if(badge) badge.style.display = '';
                     // 서버에 안전하게 저장됐으니 새로고침 복구용 로컬 캐시는 더 이상 필요 없다.
                     if(window.TuruSlotPhotoCache) window.TuruSlotPhotoCache.remove(CAR_ORDER_ID, key);
                 }
@@ -521,6 +545,8 @@ async function turuConfirmIfBlurry(file){
                 if(slotEl.dataset.uploaded === '1') clearSlotPhotoOnServer(key);
                 if(window.TuruSlotPhotoCache) window.TuruSlotPhotoCache.remove(CAR_ORDER_ID, key);
                 slotEl.dataset.uploaded = '0';
+                const badge = document.getElementById('slot-uploaded-badge-' + key);
+                if(badge) badge.style.display = 'none';
                 input.value = '';
                 renderSlotThumb(slotEl);
             });
@@ -634,10 +660,12 @@ async function turuConfirmIfBlurry(file){
         <p class="slot-group-label">{{ group.group }} ({{ group['items']|length }}){% if group.hint %}<br><small style="color:#8a8f99;font-weight:400;">{{ group.hint }}</small>{% endif %}</p>
         <div class="photo-slot-grid photo-slot-grid--desktop">
             {% for item in group['items'] %}
-            <div class="d-photo-slot" data-slot-key="{{ item.key }}" data-multi="0">
+            {% set d_already_uploaded = item.label in uploaded_slot_labels %}
+            <div class="d-photo-slot{{ ' filled' if d_already_uploaded else '' }}" data-slot-key="{{ item.key }}" data-multi="0" data-uploaded="{{ '1' if d_already_uploaded else '0' }}">
                 <input type="file" id="d-slot-input-{{ item.key }}" name="slot_{{ item.key }}" accept="image/*" style="display:none;">
-                <button type="button" class="photo-slot-clear" id="d-slot-clear-{{ item.key }}" style="display:none;">✕</button>
+                <button type="button" class="photo-slot-clear" id="d-slot-clear-{{ item.key }}" style="display:{{ 'flex' if d_already_uploaded else 'none' }};">✕</button>
                 <div class="photo-slot-thumb" id="d-slot-thumb-{{ item.key }}">{% if item.icon_type == 'photo' %}<img class="photo-slot-icon-img" src="{{ url_for('static', filename='img/' + item.icon_src) }}" alt="">{% elif item.icon_type == 'svg' %}<span class="photo-slot-icon-svg">{{ item.icon_src | safe }}</span>{% else %}<span class="photo-slot-icon">{{ item.icon_src }}</span>{% endif %}</div>
+                <div class="photo-slot-uploaded-badge" id="d-slot-uploaded-badge-{{ item.key }}"{% if not d_already_uploaded %} style="display:none;"{% endif %}>✓ 저장됨</div>
                 <div class="photo-slot-label">{{ item.label }}</div>
             </div>
             {% endfor %}
@@ -716,7 +744,13 @@ function dCopyInfo(){
             renderDSlotThumb(slotEl);
         });
         if(clearBtn){
-            clearBtn.addEventListener('click', (e) => { e.stopPropagation(); input.value = ''; renderDSlotThumb(slotEl); });
+            clearBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                input.value = '';
+                const badge = document.getElementById('d-slot-uploaded-badge-' + key);
+                if(badge) badge.style.display = 'none';
+                renderDSlotThumb(slotEl);
+            });
         }
     });
 })();
@@ -774,6 +808,7 @@ function dCopyInfo(){
 .photo-slot-multi-thumbs img{width:100%;height:100%;object-fit:cover;display:block;}
 .photo-slot-count{position:absolute;right:2px;bottom:2px;background:rgba(0,0,0,.6);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:100px;}
 .photo-slot-clear{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#3d4451;color:#fff;border:2px solid #fff;font-size:11px;line-height:1;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center;padding:0;}
+.photo-slot-uploaded-badge{position:absolute;top:-6px;left:-6px;background:#3B6D11;color:#fff;font-size:9px;font-weight:800;padding:3px 7px;border-radius:100px;z-index:2;box-shadow:0 1px 4px rgba(0,0,0,.18);white-space:nowrap;}
 
 .photo-upload-form{margin-bottom:14px;}
 .photo-file-input{width:100%;font-size:13px;}
@@ -961,6 +996,7 @@ renderCarDamagePicker('cdp-root-d', 'd-damage');
                 // 서버에 어떻게든 도달했으니(성공이든 서버가 돌려준 다른 안내든) 이 차량
                 // 주문의 슬롯 사진 로컬 캐시(새로고침 복구용)는 이제 필요 없다.
                 if(window.TuruSlotPhotoCache) window.TuruSlotPhotoCache.clearForCar(CAR_ID);
+                try{ localStorage.removeItem('turu_last_active_order'); }catch(e){}
                 window.location.href = resp.url || formEl.action;
             }catch(networkErr){
                 var queued = false;
@@ -971,6 +1007,7 @@ renderCarDamagePicker('cdp-root-d', 'd-damage');
                         // 오프라인 큐가 폼 전체(입력값+사진)를 통째로 안전하게 보관하니,
                         // 슬롯 단위 로컬 캐시는 더 이상 따로 들고 있을 필요가 없다.
                         if(window.TuruSlotPhotoCache) window.TuruSlotPhotoCache.clearForCar(CAR_ID);
+                        try{ localStorage.removeItem('turu_last_active_order'); }catch(e){}
                     }catch(queueErr){
                         console.error('[오프라인 큐] 저장 실패', queueErr);
                     }

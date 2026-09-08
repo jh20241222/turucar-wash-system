@@ -84,7 +84,7 @@
         {% set elapsed = item.elapsed %}
         <div class="turu-delete-item-v24">
             {% if current_user.is_master %}<label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>{% endif %}
-            <a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-order-card-v24 turu-order-card--urgent">
+            <a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-order-card-v24 turu-order-card--urgent" data-order-id="{{ r['id'] }}">
                 <div class="turu-card-copy-v24">
                     <div class="turu-card-title-v24">
                         <strong>{{ r['차량번호'] }}</strong>
@@ -113,7 +113,7 @@
         {% set elapsed = item.elapsed %}
         <div class="turu-delete-item-v24">
             {% if current_user.is_master %}<label class="mobile-delete-check"><input type="checkbox" name="ids" value="{{ r['id'] }}"><span></span></label>{% endif %}
-            <a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-order-card-v24 turu-order-card--regular">
+            <a href="{{ url_for('car_detail', id=r['id']) }}" class="turu-order-card-v24 turu-order-card--regular" data-order-id="{{ r['id'] }}">
                 <div class="turu-card-copy-v24">
                     <div class="turu-card-title-v24">
                         <strong>{{ r['차량번호'] }}</strong>
@@ -208,9 +208,9 @@
                 {% for item in long_wash_rows + regular_rows %}
                 {% set r = item.row %}
                 {% set elapsed = item.elapsed %}
-                <tr class="dt-row {% if elapsed >= 14 %}dt-row--urgent{% endif %}" data-type="{% if elapsed >= 14 %}urgent{% else %}regular{% endif %}">
+                <tr class="dt-row {% if elapsed >= 14 %}dt-row--urgent{% endif %}" data-type="{% if elapsed >= 14 %}urgent{% else %}regular{% endif %}" data-order-id="{{ r['id'] }}">
                     {% if current_user.is_master %}<td class="dt-check-col"><input type="checkbox" name="ids" value="{{ r['id'] }}"></td>{% endif %}
-                    <td style="font-weight:800;">{{ r['차량번호'] }}</td>
+                    <td class="dt-plate-cell" style="font-weight:800;">{{ r['차량번호'] }}</td>
                     <td>{{ r['차종명'] or '-' }}</td>
                     <td>{{ r['차량소속'] or '-' }}</td>
                     <td>{{ r['스팟'] or '-' }}</td>
@@ -366,4 +366,41 @@ function closeMixedCarModal(){const bd=document.getElementById('mixed-car-backdr
         </form>
     </div>
 </div>
+
+{# (2026-09-08) 지하주차장처럼 신호가 안 잡혀서 세차 완료처리가 이 기기의 오프라인 큐에
+   담겨있는 오더는, 서버 입장에선 아직 완료 처리 전(=이 목록에 그대로 남아있음)이라
+   작업자가 "어? 아직 안 됐네" 하고 헷갈려 다시 완료처리를 하려 들 수 있다. 그런 오더는
+   차량번호 옆에 "동기화 대기중" 표시를 붙여서, 이미 처리했고 신호 잡히면 자동으로
+   전송된다는 걸 알려준다. (static/js/turu_offline_queue.js가 기기별로 들고 있는 큐를
+   조회하는 것이라 다른 사람 화면에는 안 보일 수 있음 — 큐를 담은 바로 그 기기에서만
+   보이는 게 정상.) #}
+<script>
+(function(){
+    function markQueuedRows(){
+        if(!window.TuruOfflineQueue || typeof window.TuruOfflineQueue.getQueuedCarIds !== 'function') return;
+        window.TuruOfflineQueue.getQueuedCarIds().then(function(ids){
+            var idSet = new Set(ids.map(String));
+            document.querySelectorAll('[data-order-id]').forEach(function(el){
+                var target = el.tagName === 'TR' ? el.querySelector('.dt-plate-cell') : (el.querySelector('.turu-card-title-v24') || el);
+                if(!target) return;
+                var already = target.querySelector('.turu-sync-pending-badge');
+                if(idSet.has(String(el.dataset.orderId))){
+                    if(!already){
+                        var badge = document.createElement('span');
+                        badge.className = 'turu-sync-pending-badge';
+                        badge.textContent = '🔄 동기화 대기중';
+                        badge.style.cssText = 'display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:#FFF2E9;color:#FF5F00;font-size:11px;font-weight:800;vertical-align:middle;';
+                        target.appendChild(badge);
+                    }
+                }else if(already){
+                    already.remove();
+                }
+            });
+        });
+    }
+    document.addEventListener('DOMContentLoaded', markQueuedRows);
+    // 백그라운드 동기화가 끝나면(큐가 비면) 표시도 같이 사라지도록 주기적으로 재확인.
+    setInterval(markQueuedRows, 5000);
+})();
+</script>
 {% endblock %}

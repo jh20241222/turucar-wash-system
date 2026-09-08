@@ -3104,6 +3104,23 @@ def wash_status():
         params + [per_page, offset]
     ).fetchall()
 
+    # (2026-09-08) 완료 현황 목록에 "사진 업로드 여부(Y/N) + 장수"를 함께 보여주기 위해
+    # 현재 페이지에 나온 행들만(최대 per_page건) 차량번호+세차일 기준으로 wash_photos
+    # 개수를 조회한다. 사진은 세차완료일이 아니라 세차일 기준으로 저장되므로
+    # (wash_complete()에서 _store_wash_photos(..., row["세차일"], ...)로 기록) 여기서도
+    # 반드시 세차일로 조인해야 한다. 같은 차량번호+세차일 조합이 이 페이지 안에서
+    # 반복될 수 있어 조합별로 한 번만 조회해 캐시한다.
+    photo_counts = {}
+    _photo_count_cache = {}
+    for r in rows:
+        pair = (r["차량번호"], r["세차일"])
+        if pair not in _photo_count_cache:
+            _photo_count_cache[pair] = cur.execute(
+                "SELECT COUNT(*) AS c FROM wash_photos WHERE 차량번호=? AND 세차일=?",
+                pair
+            ).fetchone()["c"]
+        photo_counts[r["id"]] = _photo_count_cache[pair]
+
     region1 = filter_distinct_values(cur, "wash_history", "지역시도", scope_sql, scope_params)
     region2 = filter_distinct_values(cur, "wash_history", "지역구군", scope_sql, scope_params)
     car_org_list = filter_distinct_values(cur, "wash_history", "차량소속", scope_sql, scope_params)
@@ -3121,6 +3138,7 @@ def wash_status():
     return render_template(
         "wash_status.html",
         rows=rows,
+        photo_counts=photo_counts,
         region1=region1,
         region2=region2,
         car_org_list=car_org_list,

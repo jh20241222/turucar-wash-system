@@ -123,9 +123,27 @@ function turuMeasureBlurVariance(ctx, w, h){
 }
 function turuCheckFileSharpness(file){
     return new Promise(resolve => {
+        // (2026-09-08) 갤럭시 Z플립5처럼 카메라 원본 해상도가 큰 기기에서, img.onload가
+        // 디코딩에 오래 걸리거나(저사양/폴더블 기기의 열제한 등) 드물게 아예 안 뜨는
+        // 경우가 실사용 중 보고됐다("사진을 찍으면 미리보기가 안 뜬다"). 여기서 멈추면
+        // 흔들림 판정 자체가 영원히 안 끝나서 뒤따르는 렌더링도 전부 막혀버리므로, 일정
+        // 시간 안에 끝나지 않으면 "판정 보류(=흔들리지 않은 것으로 취급)"로 안전하게
+        // 빠져나온다. 사진을 조용히 잃어버리는 것보다는 흔들림 검사를 건너뛰는 쪽이 훨씬 낫다.
+        let settled = false;
+        const finish = (value) => {
+            if(settled) return;
+            settled = true;
+            clearTimeout(timeoutId);
+            cleanup();
+            resolve(value);
+        };
         const img = new Image();
         const url = URL.createObjectURL(file);
         const cleanup = () => URL.revokeObjectURL(url);
+        const timeoutId = setTimeout(() => {
+            console.warn('[흔들림검사] 이미지 디코딩이 너무 오래 걸려 판정을 건너뜁니다.');
+            finish(null);
+        }, 8000);
         img.onload = () => {
             try{
                 const w = 96, h = 54;
@@ -133,11 +151,10 @@ function turuCheckFileSharpness(file){
                 c.width = w; c.height = h;
                 const ctx = c.getContext('2d', {willReadFrequently:true});
                 ctx.drawImage(img, 0, 0, w, h);
-                resolve(turuMeasureBlurVariance(ctx, w, h));
-            }catch(e){ resolve(null); } // 측정 실패 시 판정 보류(막지 않음)
-            finally{ cleanup(); }
+                finish(turuMeasureBlurVariance(ctx, w, h));
+            }catch(e){ finish(null); } // 측정 실패 시 판정 보류(막지 않음)
         };
-        img.onerror = () => { cleanup(); resolve(null); };
+        img.onerror = () => { finish(null); };
         img.src = url;
     });
 }
@@ -169,7 +186,18 @@ function turuShowBlurConfirm(){
         modal.style.display = 'flex';
         const retakeBtn = document.getElementById('turu-blur-retake');
         const useBtn = document.getElementById('turu-blur-use');
+        // (2026-09-08) 이 모달이 화면 크기/비율이 특이한 기기(예: 폴더블)에서 렌더링이
+        // 깨지거나 뒤에 다른 오버레이에 가려지는 등, 어떤 이유로든 사용자가 두 버튼 중
+        // 하나를 누르지 못하는 상황이 생기면 이 Promise가 영원히 안 끝나서 사진이 화면에
+        // 절대 안 나타나는 것처럼 보인다("미리보기가 안 뜬다"). 사용자가 일정 시간 동안
+        // 아무 반응이 없으면 "다시 찍기"가 아니라 "이대로 사용"으로 안전하게 넘어간다 —
+        // 흔들린 사진을 그대로 쓰게 되는 게, 사진 자체가 조용히 사라지는 것보다 훨씬 낫다.
+        const timeoutId = setTimeout(() => {
+            console.warn('[흔들림확인] 사용자 응답 없이 시간 초과 — 안전하게 "이대로 사용"으로 처리합니다.');
+            cleanup(true);
+        }, 20000);
         function cleanup(result){
+            clearTimeout(timeoutId);
             modal.style.display = 'none';
             retakeBtn.removeEventListener('click', onRetake);
             useBtn.removeEventListener('click', onUse);
@@ -413,18 +441,33 @@ async function turuConfirmIfBlurry(file){
         input.addEventListener('change', async () => {
             const file = input.files && input.files[0];
             if(!file){ renderSlotThumb(slotEl); return; }
-            if(!(await turuConfirmIfBlurry(file))){
-                input.value = '';
+            // (2026-09-08) 촬영 직후 흔들림 판정(이미지 디코딩) + 워터마크 합성은 사진이
+            // 크면(요즘 카메라는 기종에 따라 12MP~100MP+) 몇 초 걸릴 수 있는데, 그동안
+            // 화면에 아무 변화가 없어서 "사진을 찍었는데 화면이 멈췄다/미리보기가 안
+            // 뜬다"는 걸로 오해하기 쉽다(Z플립5 등에서 실사용 중 보고됨). 그래서 처리를
+            // 시작하는 즉시 슬롯에 "처리중" 표시부터 띄운다 — 실제로 몇 초 걸리더라도
+            // 최소한 "지금 뭔가 진행 중"이라는 걸 바로 보여준다.
+            slotEl.classList.add('slot-processing');
+            try{
+                if(!(await turuConfirmIfBlurry(file))){
+                    input.value = '';
+                    return;
+                }
+                const watermarked = await applyWatermarkToFile(file);
+                if(watermarked){
+                    const dt = new DataTransfer();
+                    dt.items.add(watermarked);
+                    input.files = dt.files;
+                }
+            }catch(e){
+                // 처리 도중 예기치 못한 오류가 나도(예: 이 기기에서 canvas 처리 자체가
+                // 실패) 원본 파일은 그대로 두고 최소한 미리보기는 뜨게 한다 — 사진을
+                // 조용히 잃어버리는 것보다 워터마크 없이라도 올라가는 게 낫다.
+                console.warn('[사진처리] 예기치 못한 오류(원본으로 계속 진행):', e);
+            }finally{
+                slotEl.classList.remove('slot-processing');
                 renderSlotThumb(slotEl);
-                return;
             }
-            const watermarked = await applyWatermarkToFile(file);
-            if(watermarked){
-                const dt = new DataTransfer();
-                dt.items.add(watermarked);
-                input.files = dt.files;
-            }
-            renderSlotThumb(slotEl);
             const finalFile = input.files && input.files[0];
             if(finalFile){
                 // (2026-09-08) 백그라운드 업로드를 시도하기 "전에" 먼저 로컬(IndexedDB)에도
@@ -677,6 +720,10 @@ function dCopyInfo(){
 /* 찍은 사진이 백그라운드로 서버에 올라가는 동안(완료처리 전) 살짝 어둡게 표시 */
 .photo-slot.slot-uploading .photo-slot-thumb{opacity:.55;}
 .photo-slot.slot-uploading .photo-slot-thumb::after{content:'업로드중…';position:absolute;inset:auto 0 0 0;background:rgba(0,0,0,.6);color:#fff;font-size:9px;font-weight:700;padding:3px 0;}
+/* (2026-09-08) 촬영 직후 흔들림 판정/워터마크 처리 중임을 바로 보여주는 상태 —
+   사진이 크면 몇 초 걸릴 수 있는데, 이게 없으면 그동안 화면이 멈춘 것처럼 보인다. */
+.photo-slot.slot-processing .photo-slot-thumb{opacity:.55;}
+.photo-slot.slot-processing .photo-slot-thumb::after{content:'처리중…';position:absolute;inset:auto 0 0 0;background:rgba(0,0,0,.6);color:#fff;font-size:9px;font-weight:700;padding:3px 0;}
 .photo-slot-thumb{position:relative;width:100%;aspect-ratio:1/1;border-radius:8px;overflow:hidden;background:#f0f0f0;display:flex;align-items:center;justify-content:center;}
 .photo-slot-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .photo-slot-icon{font-size:20px;opacity:.55;}

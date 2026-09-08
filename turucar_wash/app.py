@@ -2541,6 +2541,11 @@ def car_detail(id):
     <a href="{{ url_for('wash_record', id=completed_id) }}" style="display:inline-block;background:#212121;color:#fff;font-weight:700;padding:12px 22px;border-radius:10px;text-decoration:none;margin-bottom:10px;">완료된 내역 보기</a><br>
     <a href="{{ url_for('wash_list') }}" style="display:inline-block;color:#6b7280;font-size:13px;text-decoration:underline;margin-top:6px;">세차 오더 목록으로</a>
 </div>
+<script>
+// (2026-09-08) 이 오더는 이미 정상 완료 처리됐으니, 대시보드의 "작업 이어하기" 배너가
+// 더 이상 이 오더를 가리키며 뜨지 않게 정리한다.
+try{ localStorage.removeItem('turu_last_active_order'); }catch(e){}
+</script>
 {% endblock %}
 """, completed_id=completed["id"])
         return render_template_string("""
@@ -2569,9 +2574,18 @@ def car_detail(id):
     # 업로드/관리 섹션을 노출한다.
     show_photo_section = (car["차량소속"] or "").strip() in PHOTO_UPLOAD_ORGS
     car_photos = _get_wash_photos(car["차량번호"], car["세차일"]) if show_photo_section else []
+    # (2026-09-08) "사진 찍다가 화면이 튕기고 다시 들어가면 사진이 다 없어져있다"는 제보
+    # 대응 — 슬롯 사진은 찍는 즉시 백그라운드로 R2에 이미 올라가 있는데, 화면(이 템플릿)은
+    # 그 사실을 전혀 보여주지 않고 항상 빈 슬롯으로 다시 시작했다. 그래서 어떤 이유로든
+    # 화면이 새로고침/재진입되면 "이미 안전하게 저장된" 사진까지 전부 사라진 것처럼 보였다.
+    # wash_photos에 이미 올라간 슬롯 라벨을 템플릿에 넘겨서, 재진입 시 "이미 저장됨"으로
+    # 표시되게 한다(실제 크래시/튕김의 원인 자체를 고치는 건 아니지만, 적어도 이미 올라간
+    # 사진을 잃어버린 것으로 오인해 불필요하게 다시 찍는 일은 막아준다).
+    uploaded_slot_labels = {p["shot_label"] for p in car_photos if p.get("shot_label")}
     return render_template(
         "car_detail.html", car=car, elapsed=elapsed, is_long_wash=is_long_wash,
         show_photo_section=show_photo_section, car_photos=car_photos,
+        uploaded_slot_labels=uploaded_slot_labels,
         r2_configured=bool(_get_r2_client()),
         photo_slot_groups=PHOTO_SLOT_GROUPS
     )

@@ -8,7 +8,7 @@
     <div style="padding:10px 16px 0;">
         <div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:16px;display:flex;align-items:center;padding:0 14px;height:44px;gap:8px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
-            <input id="mcs-search" placeholder="차량번호, 스팟, 차량소속 검색" oninput="mcsRender()" autofocus style="flex:1;border:none;outline:none;font-size:13px;font-family:'Pretendard',sans-serif;background:transparent;color:#111;">
+            <input id="mcs-search" placeholder="차량번호, 차량소속 검색" oninput="mcsRender()" autofocus style="flex:1;border:none;outline:none;font-size:13px;font-family:'Pretendard',sans-serif;background:transparent;color:#111;">
         </div>
     </div>
 
@@ -42,7 +42,6 @@ function mcsRender(){
     const empty = document.getElementById('mcs-empty');
     const filtered = _mixedVehicles.filter(v => !q ||
         (v['차량번호']||'').toLowerCase().includes(q) ||
-        (v['스팟']||'').toLowerCase().includes(q) ||
         (v['차량소속']||'').toLowerCase().includes(q));
     if (filtered.length === 0) { list.innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
@@ -50,7 +49,7 @@ function mcsRender(){
         <div class="mcs-row" onclick="mcsRegister('${(v['차량번호']||'').replace(/'/g, "\\'")}')">
             <div class="mcs-row-info">
                 <div class="mcs-row-top"><span class="mcs-plate">${v['차량번호']||'-'}</span><span class="mcs-org">${v['차량소속']||''}</span></div>
-                <div class="mcs-sub">${v['스팟']||'스팟 미지정'} · ${v['차종명']||'-'}</div>
+                <div class="mcs-sub">${v['차종명']||'-'}</div>
             </div>
             <span class="mcs-arrow">›</span>
         </div>
@@ -73,11 +72,11 @@ document.addEventListener('DOMContentLoaded', mcsRender);
     </div>
     <div class="dt-filterbar">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-text-tertiary);flex-shrink:0"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
-        <input id="dt_mcs_search" placeholder="차량번호, 스팟, 차량소속 검색" oninput="dtMcsRender()">
+        <input id="dt_mcs_search" placeholder="차량번호, 차량소속 검색" oninput="dtMcsRender()">
     </div>
     <div class="dt-table-scroll">
         <table class="dt-table">
-            <thead><tr><th>차량번호</th><th>차종</th><th>차량소속</th><th>스팟</th></tr></thead>
+            <thead><tr><th>차량번호</th><th>차종</th><th>차량소속</th></tr></thead>
             <tbody id="dt-mcs-tbody"></tbody>
         </table>
         <p id="dt-mcs-empty" style="display:none;text-align:center;color:var(--color-text-tertiary);font-size:13px;padding:24px 16px;">일치하는 혼용 차량이 없습니다.</p>
@@ -96,7 +95,6 @@ function dtMcsRender(){
     const empty = document.getElementById('dt-mcs-empty');
     const filtered = _mixedVehicles.filter(v => !q ||
         (v['차량번호']||'').toLowerCase().includes(q) ||
-        (v['스팟']||'').toLowerCase().includes(q) ||
         (v['차량소속']||'').toLowerCase().includes(q));
     if (filtered.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
@@ -105,7 +103,6 @@ function dtMcsRender(){
             <td style="font-weight:700;">${v['차량번호']||'-'}</td>
             <td>${v['차종명']||'-'}</td>
             <td>${v['차량소속']||'-'}</td>
-            <td>${v['스팟']||'-'}</td>
         </tr>
     `).join('');
 }

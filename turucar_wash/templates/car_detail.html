@@ -368,6 +368,8 @@ async function turuConfirmIfBlurry(file){
                 slotEl.classList.remove('slot-uploading');
                 if(data && data.ok){
                     slotEl.dataset.uploaded = '1';
+                    // 서버에 안전하게 저장됐으니 새로고침 복구용 로컬 캐시는 더 이상 필요 없다.
+                    if(window.TuruSlotPhotoCache) window.TuruSlotPhotoCache.remove(CAR_ORDER_ID, key);
                 }
                 return data;
             });
@@ -424,18 +426,69 @@ async function turuConfirmIfBlurry(file){
             }
             renderSlotThumb(slotEl);
             const finalFile = input.files && input.files[0];
-            if(finalFile) uploadSlotPhotoInBackground(slotEl, finalFile);
+            if(finalFile){
+                // (2026-09-08) 백그라운드 업로드를 시도하기 "전에" 먼저 로컬(IndexedDB)에도
+                // 원본을 복사해둔다 — 업로드가 신호 문제로 멈춰있는 동안 화면이 새로고침되거나
+                // 꺼져도 이 사진은 남아있어서, 다시 들어왔을 때 자동으로 복구/재시도된다.
+                if(window.TuruSlotPhotoCache) window.TuruSlotPhotoCache.save(CAR_ORDER_ID, key, finalFile);
+                uploadSlotPhotoInBackground(slotEl, finalFile);
+            }
         });
         if(clearBtn){
             clearBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if(slotEl.dataset.uploaded === '1') clearSlotPhotoOnServer(key);
+                if(window.TuruSlotPhotoCache) window.TuruSlotPhotoCache.remove(CAR_ORDER_ID, key);
                 slotEl.dataset.uploaded = '0';
                 input.value = '';
                 renderSlotThumb(slotEl);
             });
         }
     });
+
+    // (2026-09-08) 새로고침/앱 재시작 복구: 백그라운드 업로드가 아직 안 끝난 상태에서
+    // 화면이 새로고침되거나 꺼졌다면, IndexedDB에 남아있는 사진을 찾아 슬롯에 다시 채워
+    // 넣고 업로드를 재시도한다. 작업자가 사진을 다시 찍을 필요가 없다.
+    // window.TuruSlotPhotoCache는 base.html 하단(이 스크립트보다 뒤)에서 로드되는
+    // 별도 모듈이라, 지금 이 지점에서는 아직 정의돼 있지 않을 수 있다 — 그래서
+    // 문서의 모든 스크립트가 다 실행된 뒤 발생하는 window의 'load' 이벤트까지 기다렸다가
+    // 실행한다(그때는 항상 로드가 끝나 있음).
+    function turuRestoreSlotPhotosFromCache(){
+        if(!window.TuruSlotPhotoCache) return;
+        window.TuruSlotPhotoCache.getAllForCar(CAR_ORDER_ID).then(records => {
+            if(!records || !records.length) return;
+            let restoredCount = 0;
+            records.forEach(rec => {
+                const slotEl = document.querySelector(`.photo-slot[data-slot-key="${rec.slotKey}"]`);
+                const input = slotEl && document.getElementById('slot-input-' + rec.slotKey);
+                if(!slotEl || !input) return;
+                if(input.files && input.files.length) return; // 이미 이번 화면에서 다시 찍은 슬롯은 그대로 둠
+                try{
+                    const restoredFile = new File([rec.blob], rec.fileName, {type: rec.fileType});
+                    const dt = new DataTransfer();
+                    dt.items.add(restoredFile);
+                    input.files = dt.files;
+                    renderSlotThumb(slotEl);
+                    uploadSlotPhotoInBackground(slotEl, restoredFile);
+                    restoredCount++;
+                }catch(e){ console.warn('[슬롯사진캐시] 복구 실패:', e); }
+            });
+            if(restoredCount){
+                const grid = document.querySelector('.photo-slot-grid');
+                if(grid && grid.parentNode){
+                    const note = document.createElement('div');
+                    note.textContent = `🔄 이전에 찍어둔 사진 ${restoredCount}장을 복구해서 다시 업로드 중입니다.`;
+                    note.style.cssText = 'font-size:12px;font-weight:700;color:#D85A30;background:#FAECE7;padding:8px 10px;border-radius:8px;margin:0 0 8px;';
+                    grid.parentNode.insertBefore(note, grid);
+                }
+            }
+        });
+    }
+    if(document.readyState === 'complete'){
+        turuRestoreSlotPhotosFromCache();
+    }else{
+        window.addEventListener('load', turuRestoreSlotPhotosFromCache);
+    }
 
 })();
 </script>
@@ -820,6 +873,9 @@ renderCarDamagePicker('cdp-root-d', 'd-damage');
             var fd = new FormData(formEl);
             try{
                 var resp = await fetch(formEl.action, {method: 'POST', body: fd, credentials: 'same-origin'});
+                // 서버에 어떻게든 도달했으니(성공이든 서버가 돌려준 다른 안내든) 이 차량
+                // 주문의 슬롯 사진 로컬 캐시(새로고침 복구용)는 이제 필요 없다.
+                if(window.TuruSlotPhotoCache) window.TuruSlotPhotoCache.clearForCar(CAR_ID);
                 window.location.href = resp.url || formEl.action;
             }catch(networkErr){
                 var queued = false;
@@ -827,6 +883,9 @@ renderCarDamagePicker('cdp-root-d', 'd-damage');
                     try{
                         await window.TuruOfflineQueue.add(formEl.action, CAR_ID, formEl);
                         queued = true;
+                        // 오프라인 큐가 폼 전체(입력값+사진)를 통째로 안전하게 보관하니,
+                        // 슬롯 단위 로컬 캐시는 더 이상 따로 들고 있을 필요가 없다.
+                        if(window.TuruSlotPhotoCache) window.TuruSlotPhotoCache.clearForCar(CAR_ID);
                     }catch(queueErr){
                         console.error('[오프라인 큐] 저장 실패', queueErr);
                     }

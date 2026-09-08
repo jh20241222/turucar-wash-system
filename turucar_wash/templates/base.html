@@ -280,6 +280,7 @@
     {% if current_user.is_authenticated %}
     <script src="{{ url_for('static', filename='js/push.js') }}?v=1"></script>
     <script src="{{ url_for('static', filename='js/turu_offline_queue.js') }}?v=1"></script>
+    <script src="{{ url_for('static', filename='js/turu_slot_photo_cache.js') }}?v=1"></script>
     {% endif %}
     <script>
     (function(){

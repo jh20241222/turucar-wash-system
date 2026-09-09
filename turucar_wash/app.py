@@ -632,6 +632,39 @@ def ensure_wash_schema():
         if "shot_label" not in _wp_cols:
             cur.execute("ALTER TABLE wash_photos ADD COLUMN shot_label TEXT")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_wash_photos_car_date ON wash_photos(차량번호, 세차일)")
+        # (2026-09-09) "요즘 화면 로딩이 많이 돈다"는 제보 대응 — wash_history는 완료된
+        # 세차 건이 하루도 빠짐없이 계속 쌓이기만 하는(지우는 일이 없는) 테이블인데,
+        # 지금까지 인덱스가 하나도 없었다. 그래서 완료현황(wash_status) 화면처럼 업체/
+        # 지역/차량소속/작업자/세차완료일/차량번호로 필터링하는 모든 쿼리가 매번 테이블
+        # 전체를 처음부터 끝까지 훑고 있었다 — 데이터가 적을 땐 안 느껴지다가, 운영
+        # 기간이 길어져 완료 건수가 쌓일수록 점점 눈에 띄게 느려지는 전형적인 패턴이다.
+        # scoped_condition()/scoped_condition_mixed_exempt()와 완료현황 필터가 실제로
+        # WHERE에 쓰는 컬럼들에 인덱스를 달아준다. CREATE INDEX는 이미 있으면 즉시
+        # 끝나므로(IF NOT EXISTS) 서버 재시작 때마다 실행해도 안전하다.
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_wash_history_vendor ON wash_history(업체)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_wash_history_region ON wash_history(지역시도, 지역구군)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_wash_history_fleet ON wash_history(차량소속)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_wash_history_worker ON wash_history(작업자)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_wash_history_date ON wash_history(세차완료일)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_wash_history_car ON wash_history(차량번호)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_wash_history_wonbon ON wash_history(원본ID)")
+        # wash_list는 완료되면 wash_history로 옮겨지고 여기서는 지워져서 테이블 자체는
+        # 작게 유지되지만, car_detail/car_slot_photo_upload처럼 사용자 조작마다 매번
+        # 조회하는 화면이라 여기도 같이 인덱스를 달아 둔다.
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_wash_list_vendor ON wash_list(업체)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_wash_list_region ON wash_list(지역시도, 지역구군)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_wash_list_fleet ON wash_list(차량소속)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_wash_list_car ON wash_list(차량번호)")
+        # 혼용 차량 판정은 항상 TRIM(BM구분)='혼용' 형태(공백 섞인 원본 데이터 방어용)로
+        # 조회하는데, 일반 컬럼 인덱스는 TRIM()을 씌우는 순간 못 써서 그냥은 의미가 없다.
+        # SQLite가 지원하는 "식(expression) 인덱스"로 TRIM(BM구분) 자체를 인덱싱한다.
+        try:
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_vehicle_master_bm_trim ON vehicle_master(TRIM(BM구분))")
+        except Exception as e:
+            # 아주 오래된 SQLite(식 인덱스 미지원, 3.9 미만)일 경우를 대비한 폴백 — 이땐
+            # 인덱스 없이도 기존처럼 동작은 하되 최적화만 안 될 뿐이다.
+            print(f"[TuruWash] vehicle_master 식 인덱스 생성 실패(구버전 SQLite로 추정, 기능엔 영향 없음): {e}")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_vehicle_master_bm ON vehicle_master(BM구분)")
         # (2026-09-03) AI 훼손 판독 학습용 라벨링 데이터 — 관리자가 완료현황 사진을 보면서
         # "정상"/"훼손의심"으로 태깅한 결과를 쌓아두는 테이블. 이걸로 나중에 가벼운 이미지
         # 분류 모델을 학습시킨다(사진마다 API를 호출하는 대신, 학습된 모델을 서버에 올려
@@ -3151,16 +3184,24 @@ def wash_status():
     # (wash_complete()에서 _store_wash_photos(..., row["세차일"], ...)로 기록) 여기서도
     # 반드시 세차일로 조인해야 한다. 같은 차량번호+세차일 조합이 이 페이지 안에서
     # 반복될 수 있어 조합별로 한 번만 조회해 캐시한다.
+    # (2026-09-09) 예전엔 이 페이지에 나온 (차량번호, 세차일) 조합 수만큼(최대 per_page,
+    # 즉 한 페이지에 최대 100번까지도) 매번 따로 SELECT COUNT(*)를 날렸다. wash_photos에
+    # 이미 (차량번호, 세차일) 인덱스가 있어 개별 쿼리 자체는 빨라도, 그 왕복 횟수 자체가
+    # "사진이 많아질수록(=완료 건이 쌓일수록) 화면이 느려진다"는 체감으로 이어질 수 있어서
+    # GROUP BY로 한 번에 모아 가져오도록 바꿨다.
     photo_counts = {}
-    _photo_count_cache = {}
+    unique_pairs = list({(r["차량번호"], r["세차일"]) for r in rows})
+    pair_counts = {}
+    if unique_pairs:
+        or_clauses = " OR ".join(["(차량번호=? AND 세차일=?)"] * len(unique_pairs))
+        count_params = [v for pair in unique_pairs for v in pair]
+        for pc_row in cur.execute(
+            f"SELECT 차량번호, 세차일, COUNT(*) AS c FROM wash_photos WHERE {or_clauses} GROUP BY 차량번호, 세차일",
+            count_params
+        ).fetchall():
+            pair_counts[(pc_row["차량번호"], pc_row["세차일"])] = pc_row["c"]
     for r in rows:
-        pair = (r["차량번호"], r["세차일"])
-        if pair not in _photo_count_cache:
-            _photo_count_cache[pair] = cur.execute(
-                "SELECT COUNT(*) AS c FROM wash_photos WHERE 차량번호=? AND 세차일=?",
-                pair
-            ).fetchone()["c"]
-        photo_counts[r["id"]] = _photo_count_cache[pair]
+        photo_counts[r["id"]] = pair_counts.get((r["차량번호"], r["세차일"]), 0)
 
     # (2026-09-08) 혼용(BM구분='혼용') 차량 오더는 스팟/지역/업체 개념이 없다고 보므로,
     # 완료현황 화면에서 해당 정보를 보여주지 않고 차량번호/차종/소속(+완료일/작업자)만

@@ -1,5 +1,6 @@
 import fcntl
 import json
+import mimetypes
 import os
 import re
 import shutil
@@ -3570,14 +3571,23 @@ _PHOTO_MAX_PX = 3840   # 최대 해상도 (px) — 카메라 촬영 요청 해�
 _PHOTO_QUALITY = 95    # JPEG 압축 품질 (%) — 화질 불만 접수 후 92 → 95로 재상향 (2026-09-01)
 
 def _save_damage_photo(file_obj):
-    """사진 저장 — Pillow 사용 시 리사이즈+압축 후 저장 (용량 절감)."""
+    """훼손 제보 사진 저장 — Pillow 사용 시 리사이즈+압축 후 저장 (용량 절감).
+    (2026-09-09) 예전엔 여기서 압축한 사진을 전부 로컬 디스크(DAMAGE_UPLOAD_DIR,
+    Railway 영구 볼륨)에 저장했다. 그런데 이 사진들은 관리자가 /damage_manage에서
+    직접 지우기 전까지 영구 보관되는 구조라 삭제 로직이 사실상 없었고, 사진 업로드
+    대상 소속(카일이삼제스퍼/SK렌터카 등)이 하나둘 늘어나면서 볼륨 사용량이 가파르게
+    올라 용량 부족 위험이 생겼다(무인훼손 제보 슬롯도 다른 슬롯들처럼 완료처리마다
+    같이 찍히는 구조라 소속이 늘수록 사진 수가 그대로 비례해서 늘어남). 세차 사진
+    (wash_photos)과 동일하게 R2로 옮겨서 Railway 볼륨을 아예 쓰지 않게 한다. R2가
+    설정돼 있지 않은 환경(로컬 개발 등)을 위해 로컬 저장 폴백은 남겨둔다."""
     if not file_obj or not file_obj.filename:
         return None
     ext = os.path.splitext(secure_filename(file_obj.filename))[1].lower()
     if ext not in ALLOWED_IMAGE_EXTS:
         return None
-    os.makedirs(DAMAGE_UPLOAD_DIR, exist_ok=True)
 
+    fname = None
+    img_bytes = None
     if _PIL_AVAILABLE:
         try:
             img = _PILImage.open(file_obj.stream)
@@ -3612,16 +3622,95 @@ def _save_damage_photo(file_obj):
             save_kwargs = {"format": "JPEG", "quality": _PHOTO_QUALITY, "optimize": True}
             if icc_profile:
                 save_kwargs["icc_profile"] = icc_profile
-            img.save(os.path.join(DAMAGE_UPLOAD_DIR, fname), **save_kwargs)
-            return fname
+            buf = io.BytesIO()
+            img.save(buf, **save_kwargs)
+            img_bytes = buf.getvalue()
         except Exception as e:
             print(f"[Photo] Pillow 압축 실패, 원본 저장: {e}")
-            file_obj.stream.seek(0)
+            try:
+                file_obj.stream.seek(0)
+            except Exception:
+                pass
+            fname, img_bytes = None, None
 
-    # Pillow 없거나 실패 시 원본 그대로 저장
-    fname = f"{uuid.uuid4().hex}{ext}"
-    file_obj.save(os.path.join(DAMAGE_UPLOAD_DIR, fname))
+    if img_bytes is None:
+        # Pillow 없거나 실패 시 원본 바이트 그대로 사용
+        try:
+            file_obj.stream.seek(0)
+        except Exception:
+            pass
+        img_bytes = file_obj.read()
+        fname = f"{uuid.uuid4().hex}{ext}"
+
+    if not img_bytes:
+        return None
+
+    client = _get_r2_client()
+    if client:
+        content_type = mimetypes.guess_type(fname)[0] or "application/octet-stream"
+        try:
+            client.put_object(Bucket=R2_BUCKET_NAME, Key=f"damage_photos/{fname}",
+                               Body=img_bytes, ContentType=content_type)
+            return fname
+        except Exception as e:
+            print(f"[R2] 훼손제보 사진 업로드 실패, 로컬 저장으로 대체: {e}")
+
+    # R2 미설정이거나 업로드 실패 시에만 로컬 디스크에 저장 (예전 동작으로 폴백)
+    os.makedirs(DAMAGE_UPLOAD_DIR, exist_ok=True)
+    with open(os.path.join(DAMAGE_UPLOAD_DIR, fname), "wb") as f:
+        f.write(img_bytes)
     return fname
+
+
+def _damage_photo_bytes(fname, fpath=None):
+    """훼손 제보 사진의 바이트를 가져온다 — 로컬 디스크(레거시, R2 전환 이전에 저장된
+    사진)에 있으면 거기서, 없으면 R2(damage_photos/<fname>)에서 읽는다. 슬랙 Bot
+    직접업로드(파일 바이트가 필요)에서 사용. 둘 다 없으면 None."""
+    if fpath and os.path.exists(fpath):
+        try:
+            with open(fpath, "rb") as f:
+                return f.read()
+        except Exception as e:
+            print(f"[Photo] 로컬 사진 읽기 실패: {e}")
+    client = _get_r2_client()
+    if client:
+        try:
+            obj = client.get_object(Bucket=R2_BUCKET_NAME, Key=f"damage_photos/{fname}")
+            return obj["Body"].read()
+        except Exception as e:
+            print(f"[R2] 훼손제보 사진 조회 실패: {e}")
+    return None
+
+
+def _damage_photo_exists(fname, fpath=None):
+    """훼손 제보 사진이 로컬(레거시) 또는 R2(신규) 어딘가에 있는지 가볍게 확인한다.
+    R2 쪽은 매번 존재 여부를 조회하는 대신 — 다른 R2 저장 사진(wash_photos)들과
+    동일하게 — DB(또는 이번 요청)에 파일명이 있다는 것 자체가 업로드 성공을 의미한다고
+    보고, R2 클라이언트가 설정돼 있으면 존재한다고 간주한다."""
+    if fpath and os.path.exists(fpath):
+        return True
+    return bool(_get_r2_client())
+
+
+def _delete_damage_photo_file(fname):
+    """훼손 제보 삭제/일괄삭제 시 사진 파일도 함께 지운다 — 로컬(레거시)에 있으면
+    로컬에서, R2(신규)에 있으면 R2에서 지운다. 관리자가 지웠는데도 R2에 계속
+    남아있으면 볼륨 문제를 R2 쪽으로 그대로 옮기는 셈이라 반드시 함께 정리한다."""
+    if not fname:
+        return
+    local_path = os.path.join(DAMAGE_UPLOAD_DIR, fname)
+    if os.path.exists(local_path):
+        try:
+            os.remove(local_path)
+        except OSError as e:
+            print(f"[Photo] 훼손제보 사진 로컬 삭제 실패: {e}")
+        return
+    client = _get_r2_client()
+    if client:
+        try:
+            client.delete_object(Bucket=R2_BUCKET_NAME, Key=f"damage_photos/{fname}")
+        except Exception as e:
+            print(f"[R2] 훼손제보 사진 삭제 실패: {e}")
 # =========================================================
 # 세차 현장 사진 (Cloudflare R2 저장) — 지정 차량소속 전용
 # =========================================================
@@ -4119,10 +4208,13 @@ def _send_damage_slack(report, base_url):
             }
             file_ids = []
             for field, fname, fpath in photos:
-                if not os.path.exists(fpath):
+                # (2026-09-09) fpath는 로컬 디스크에 있던 시절의 경로다 — R2로 옮긴 뒤로는
+                # 이 경로에 파일이 없는 게 정상이므로, 로컬(레거시)에 없으면 R2에서 읽어온다.
+                photo_bytes = _damage_photo_bytes(fname, fpath)
+                if not photo_bytes:
                     continue
                 label = label_map.get(field, "사진")
-                file_size = os.path.getsize(fpath)
+                file_size = len(photo_bytes)
                 # Step A: 업로드 URL 요청
                 url_resp = _requests.post(
                     "https://slack.com/api/files.getUploadURLExternal",
@@ -4137,8 +4229,7 @@ def _send_damage_slack(report, base_url):
                 upload_url = url_data["upload_url"]
                 file_id   = url_data["file_id"]
                 # Step B: 파일 업로드
-                with open(fpath, "rb") as f:
-                    put_resp = _requests.post(upload_url, data=f, timeout=30)
+                put_resp = _requests.post(upload_url, data=photo_bytes, timeout=30)
                 if put_resp.status_code != 200:
                     print(f"[Slack Bot] 파일 업로드 실패: {fname}")
                     continue
@@ -4177,8 +4268,9 @@ def _send_damage_slack(report, base_url):
         for field, fname, _fpath in photos:
             # webhook 경로는 사진을 직접 첨부하지 못하고 이 URL을 슬랙이 스스로 가져가야
             # 렌더링되는데, 파일이 없으면 100% 깨진 이미지로 뜨는 게 확정이므로 애초에
-            # 블록에 넣지 않고 로그로 남긴다(원인 추적용).
-            if not (_fpath and os.path.exists(_fpath)):
+            # 블록에 넣지 않고 로그로 남긴다(원인 추적용). (2026-09-09) R2 전환 후에는
+            # 로컬에 없는 게 정상이므로 _damage_photo_exists로 로컬/R2 둘 다 확인한다.
+            if not _damage_photo_exists(fname, _fpath):
                 print(f"[Slack Webhook] 사진 파일이 없어 이미지 블록을 건너뜀: {fname}")
                 continue
             photo_url = f"{base_url.rstrip('/')}/damage_photo/{fname}"
@@ -4212,11 +4304,28 @@ def inject_damage_badge_count():
         return {"damage_badge_count": 0}
 @app.route("/damage_photo/<filename>")
 def serve_damage_photo(filename):
+    """훼손 제보 사진을 서빙한다. 로그인 없이도 접근 가능해야 한다 — 슬랙 웹훅이
+    이미지 블록의 image_url을 슬랙 서버가 직접 가져갈 때 세션 쿠키가 없기 때문
+    (기존 동작 유지).
+    (2026-09-09) 새로 저장되는 사진은 로컬 디스크가 아니라 R2에 올라가므로, 로컬에
+    없으면 R2 presigned URL로 리다이렉트한다. R2 전환 이전에 이미 로컬에 저장된
+    사진(레거시)은 그대로 로컬에서 서빙한다."""
     safe = secure_filename(filename)
     photo_path = os.path.join(DAMAGE_UPLOAD_DIR, safe)
-    if not os.path.exists(photo_path):
-        return "Not found", 404
-    return send_from_directory(DAMAGE_UPLOAD_DIR, safe)
+    if os.path.exists(photo_path):
+        return send_from_directory(DAMAGE_UPLOAD_DIR, safe)
+    client = _get_r2_client()
+    if client:
+        try:
+            url = client.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": R2_BUCKET_NAME, "Key": f"damage_photos/{safe}"},
+                ExpiresIn=3600,
+            )
+            return redirect(url)
+        except Exception as e:
+            print(f"[R2] 훼손제보 사진 presign 실패: {e}")
+    return "Not found", 404
 @app.route("/support_submit", methods=["GET", "POST"])
 @login_required
 def support_submit():
@@ -4366,12 +4475,7 @@ def damage_delete(report_id):
             except Exception:
                 pass
         for field in ("photo_front", "photo_damage1", "photo_damage2", "photo_damage3", "photo_damage4", "photo_damage5"):
-            fname = row[field]
-            if fname:
-                try:
-                    os.remove(os.path.join(DAMAGE_UPLOAD_DIR, fname))
-                except OSError:
-                    pass
+            _delete_damage_photo_file(row[field])
         conn.execute("DELETE FROM damage_reports WHERE id=?", (report_id,))
         conn.commit()
     conn.close()
@@ -4412,11 +4516,7 @@ def damage_bulk_delete():
                     fname = row[field]
                 except (IndexError, KeyError):
                     fname = None
-                if fname:
-                    try:
-                        os.remove(os.path.join(DAMAGE_UPLOAD_DIR, fname))
-                    except OSError:
-                        pass
+                _delete_damage_photo_file(fname)
             conn.execute("DELETE FROM damage_reports WHERE id=?", (rid,))
             deleted += 1
     conn.commit()

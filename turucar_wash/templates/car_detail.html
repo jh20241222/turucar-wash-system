@@ -61,19 +61,22 @@
             {% if not r2_configured %}
             <p class="photo-warn">사진 저장소가 아직 설정되지 않았습니다. 관리자에게 문의해주세요.</p>
             {% endif %}
-            <p class="photo-hint">항목을 눌러서 한 장씩 촬영해주세요. 전부 선택사항이에요.</p>
+            <p class="photo-hint">항목을 눌러서 한 장씩 촬영해주세요. <strong style="color:#D85A30;">빨간색 · 필수 표시된 항목은 꼭 찍어주세요.</strong></p>
 
             {% for group in photo_slot_groups %}
-            <p class="slot-group-label">{{ group.group }} ({{ group['items']|length }}){% if group.hint %}<br><small style="color:#8a8f99;font-weight:400;">{{ group.hint }}</small>{% endif %}</p>
+            {% set ns = namespace(req=0) %}
+            {% for it in group['items'] %}{% if it.get('required', group.get('required', True)) %}{% set ns.req = ns.req + 1 %}{% endif %}{% endfor %}
+            <p class="slot-group-label">{{ group.group }} ({{ group['items']|length }})<span style="font-weight:700;{% if ns.req == 0 %}color:#8a8f99;{% else %}color:#D85A30;{% endif %}"> · {% if ns.req == 0 %}선택{% elif ns.req == group['items']|length %}필수{% else %}{{ ns.req }}장 필수{% endif %}</span>{% if group.hint %}<br><small style="color:#8a8f99;font-weight:400;">{{ group.hint }}</small>{% endif %}</p>
             <div class="photo-slot-grid">
                 {% for item in group['items'] %}
                 {% set already_uploaded = item.label in uploaded_slot_labels %}
-                <div class="photo-slot{{ ' filled' if already_uploaded else '' }}" data-slot-key="{{ item.key }}" data-multi="0" data-uploaded="{{ '1' if already_uploaded else '0' }}">
+                {% set item_required = item.get('required', group.get('required', True)) %}
+                <div class="photo-slot{{ ' filled' if already_uploaded else '' }}" data-slot-key="{{ item.key }}" data-multi="0" data-uploaded="{{ '1' if already_uploaded else '0' }}" data-required="{{ '1' if item_required else '0' }}">
                     <input type="file" id="slot-input-{{ item.key }}" name="slot_{{ item.key }}" accept="image/*" capture="environment" style="display:none;">
                     <button type="button" class="photo-slot-clear" id="slot-clear-{{ item.key }}" style="display:{{ 'flex' if already_uploaded else 'none' }};">✕</button>
                     <div class="photo-slot-thumb" id="slot-thumb-{{ item.key }}">{% if item.icon_type == 'photo' %}<img class="photo-slot-icon-img" src="{{ url_for('static', filename='img/' + item.icon_src) }}" alt="">{% elif item.icon_type == 'svg' %}<span class="photo-slot-icon-svg">{{ item.icon_src | safe }}</span>{% else %}<span class="photo-slot-icon">{{ item.icon_src }}</span>{% endif %}</div>
                     <div class="photo-slot-uploaded-badge" id="slot-uploaded-badge-{{ item.key }}"{% if not already_uploaded %} style="display:none;"{% endif %}>✓ 저장됨</div>
-                    <div class="photo-slot-label">{{ item.label }}</div>
+                    <div class="photo-slot-label">{{ item.label }}{% if not item_required %} <span style="color:#8a8f99;font-weight:400;">(선택)</span>{% endif %}</div>
                 </div>
                 {% endfor %}
             </div>
@@ -655,18 +658,21 @@ async function turuConfirmIfBlurry(file){
         {% if not r2_configured %}
         <p class="photo-warn">사진 저장소가 아직 설정되지 않았습니다. 관리자에게 문의해주세요.</p>
         {% endif %}
-        <p class="photo-hint">항목을 눌러서 한 장씩 업로드해주세요. 전부 선택사항이에요.</p>
+        <p class="photo-hint">항목을 눌러서 한 장씩 업로드해주세요. <strong style="color:#D85A30;">빨간색 · 필수 표시된 항목은 꼭 찍어주세요.</strong></p>
         {% for group in photo_slot_groups %}
-        <p class="slot-group-label">{{ group.group }} ({{ group['items']|length }}){% if group.hint %}<br><small style="color:#8a8f99;font-weight:400;">{{ group.hint }}</small>{% endif %}</p>
+        {% set ns = namespace(req=0) %}
+        {% for it in group['items'] %}{% if it.get('required', group.get('required', True)) %}{% set ns.req = ns.req + 1 %}{% endif %}{% endfor %}
+        <p class="slot-group-label">{{ group.group }} ({{ group['items']|length }})<span style="font-weight:700;{% if ns.req == 0 %}color:#8a8f99;{% else %}color:#D85A30;{% endif %}"> · {% if ns.req == 0 %}선택{% elif ns.req == group['items']|length %}필수{% else %}{{ ns.req }}장 필수{% endif %}</span>{% if group.hint %}<br><small style="color:#8a8f99;font-weight:400;">{{ group.hint }}</small>{% endif %}</p>
         <div class="photo-slot-grid photo-slot-grid--desktop">
             {% for item in group['items'] %}
             {% set d_already_uploaded = item.label in uploaded_slot_labels %}
-            <div class="d-photo-slot{{ ' filled' if d_already_uploaded else '' }}" data-slot-key="{{ item.key }}" data-multi="0" data-uploaded="{{ '1' if d_already_uploaded else '0' }}">
+            {% set item_required = item.get('required', group.get('required', True)) %}
+            <div class="d-photo-slot{{ ' filled' if d_already_uploaded else '' }}" data-slot-key="{{ item.key }}" data-multi="0" data-uploaded="{{ '1' if d_already_uploaded else '0' }}" data-required="{{ '1' if item_required else '0' }}">
                 <input type="file" id="d-slot-input-{{ item.key }}" name="slot_{{ item.key }}" accept="image/*" style="display:none;">
                 <button type="button" class="photo-slot-clear" id="d-slot-clear-{{ item.key }}" style="display:{{ 'flex' if d_already_uploaded else 'none' }};">✕</button>
                 <div class="photo-slot-thumb" id="d-slot-thumb-{{ item.key }}">{% if item.icon_type == 'photo' %}<img class="photo-slot-icon-img" src="{{ url_for('static', filename='img/' + item.icon_src) }}" alt="">{% elif item.icon_type == 'svg' %}<span class="photo-slot-icon-svg">{{ item.icon_src | safe }}</span>{% else %}<span class="photo-slot-icon">{{ item.icon_src }}</span>{% endif %}</div>
                 <div class="photo-slot-uploaded-badge" id="d-slot-uploaded-badge-{{ item.key }}"{% if not d_already_uploaded %} style="display:none;"{% endif %}>✓ 저장됨</div>
-                <div class="photo-slot-label">{{ item.label }}</div>
+                <div class="photo-slot-label">{{ item.label }}{% if not item_required %} <span style="color:#8a8f99;font-weight:400;">(선택)</span>{% endif %}</div>
             </div>
             {% endfor %}
         </div>
@@ -809,6 +815,10 @@ function dCopyInfo(){
 .photo-slot-count{position:absolute;right:2px;bottom:2px;background:rgba(0,0,0,.6);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:100px;}
 .photo-slot-clear{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#3d4451;color:#fff;border:2px solid #fff;font-size:11px;line-height:1;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center;padding:0;}
 .photo-slot-uploaded-badge{position:absolute;top:-6px;left:-6px;background:#3B6D11;color:#fff;font-size:9px;font-weight:800;padding:3px 7px;border-radius:100px;z-index:2;box-shadow:0 1px 4px rgba(0,0,0,.18);white-space:nowrap;}
+/* (2026-09-09) 완료처리 시 필수 슬롯이 비어있으면 진동과 함께 이 표시로 어디가
+   빠졌는지 바로 눈에 띄게 한다 — 잠깐 흔들리는 빨간 테두리 효과. */
+@keyframes turu-slot-missing-shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-4px);}40%{transform:translateX(4px);}60%{transform:translateX(-3px);}80%{transform:translateX(3px);}}
+.photo-slot-missing-flash{border-color:#e0393e !important;border-style:solid !important;box-shadow:0 0 0 3px rgba(224,57,62,0.18);animation:turu-slot-missing-shake .4s ease-in-out 2;}
 
 .photo-upload-form{margin-bottom:14px;}
 .photo-file-input{width:100%;font-size:13px;}
@@ -948,11 +958,49 @@ renderCarDamagePicker('cdp-root-d', 'd-damage');
     var TURU_SHOW_PHOTO_SECTION = {{ 'true' if show_photo_section else 'false' }};
     var CAR_ID = {{ car['id'] | tojson }};
     var submitted = false;
+
+    // (2026-09-09) "사진을 다 찍었는데 안 올라오는 경우가 있다"는 제보의 상당수는
+    // 실은 업로드 실패가 아니라 애초에 일부 슬롯을 안 찍고 완료 버튼을 누른 경우로
+    // 추정된다(27컷이 전부 선택사항이라 서버는 "안 찍음"과 "올리다 실패함"을 구분할
+    // 수 없었음). 무인훼손 제보(선택)를 제외한 필수 슬롯(data-required="1")이 하나라도
+    // 비어있으면 — 이미 서버에 저장됐거나(data-uploaded="1") 최소한 파일이 input에
+    // 담겨 이번 제출에 실릴 예정이면 "비어있지 않음"으로 본다 — 제출 자체를 막고
+    // 진동+시각적 표시로 어느 슬롯이 빠졌는지 바로 알려준다.
+    function turuFindMissingRequiredSlots(formEl){
+        var missing = [];
+        formEl.querySelectorAll('[data-slot-key][data-required="1"]').forEach(function(slotEl){
+            if(slotEl.dataset.uploaded === '1') return; // 이미 서버에 안전하게 저장됨
+            var key = slotEl.dataset.slotKey;
+            var isDesktop = slotEl.classList.contains('d-photo-slot');
+            var input = document.getElementById((isDesktop ? 'd-slot-input-' : 'slot-input-') + key);
+            if(input && input.files && input.files.length) return; // 아직 서버 확인 전이지만 이번 제출에 함께 실림
+            missing.push(slotEl);
+        });
+        return missing;
+    }
+
     window.turuHandleWashSubmit = function(ev, formEl){
         if(submitted){
             // 이미 제출 처리 중인데 어떤 경로로든 또 submit이 발생하면 완전히 막는다
             // (이중 탭/이중 submit으로 같은 오더가 두 번 처리되는 것 방지).
             return false;
+        }
+        if(TURU_SHOW_PHOTO_SECTION){
+            var missingSlots = turuFindMissingRequiredSlots(formEl);
+            if(missingSlots.length){
+                if(navigator.vibrate) navigator.vibrate(200);
+                missingSlots.forEach(function(el){ el.classList.add('photo-slot-missing-flash'); });
+                missingSlots[0].scrollIntoView({behavior: 'smooth', block: 'center'});
+                var shownNames = missingSlots.slice(0, 3).map(function(el){
+                    var lbl = el.querySelector('.photo-slot-label');
+                    return lbl ? lbl.textContent : el.dataset.slotKey;
+                }).join(', ');
+                alert('필수 사진 ' + missingSlots.length + '장이 비어있어요 (' + shownNames + (missingSlots.length > 3 ? ' 등' : '') + ').\n전부 찍은 뒤 다시 눌러주세요.');
+                setTimeout(function(){
+                    missingSlots.forEach(function(el){ el.classList.remove('photo-slot-missing-flash'); });
+                }, 2600);
+                return false;
+            }
         }
         if(TURU_SHOW_PHOTO_SECTION && !confirm('입력한 내용으로 세차 내역을 업로드할까요?')){
             return false;

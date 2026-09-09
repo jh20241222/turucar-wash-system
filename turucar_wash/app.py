@@ -3739,9 +3739,23 @@ DAMAGE_SLOT_LABEL = "무인훼손 제보"
 DAMAGE_SLOT_MAX = 5  # damage_reports 테이블의 photo_damage1~5 컬럼 수에 맞춤
 DAMAGE_SLOT_ICON = "📷"
 
+# (2026-09-09) 27컷이 전부 선택사항이다 보니, 작업자가 일부만 찍고 완료 처리를
+# 눌러도 서버 쪽에서는 "안 찍고 넘어간 것"과 "찍었는데 업로드가 실패한 것"을 구분할
+# 방법이 없었다("사진 다 찍었는데 안 올라오는 것 같다" 제보의 상당수 원인으로 추정).
+# 무인훼손 제보(damage_*)를 제외한 외부/내부/특이사항 그룹은 "필수"로 지정해서,
+# 완료 처리 시 클라이언트에서 빠진 슬롯이 있으면 진동+안내로 막고 그 슬롯으로
+# 스크롤해 다시 찍게 유도한다(turuHandleWashSubmit/turuFindMissingRequiredSlot,
+# car_detail.html). 무인훼손 제보는 실제로 훼손이 없으면 안 찍는 게 정상이므로
+# 계속 선택사항으로 둔다. "required"는 그룹에 기본값을 두고(외부/내부는 전부 필수),
+# 개별 항목에 "required" 키를 따로 주면 그룹 기본값을 덮어쓴다 — 특이사항 그룹처럼
+# "정해진 부위(블랙박스/센터페시아/카드)는 필수, 정해지지 않은 여분 슬롯(추가 사진)은
+# 선택"으로 그룹 안에서도 항목별로 갈릴 때 쓴다.
+# (2026-09-09) 트렁크 내부는 원래 특이사항 그룹에 있었는데, 내부 촬영 흐름(운전석
+# 1열→2열→...) 안에서 자연스럽게 이어 찍도록 내부 그룹으로 옮겼다(내부 5장→6장).
 PHOTO_SLOT_GROUPS = [
     {
         "group": "외부",
+        "required": True,
         "items": [
             {"key": "ext_1",  "label": "전범퍼 정면",          "icon_type": "photo", "icon_src": "wash_slot_ref/slot_ext_1.png"},
             {"key": "ext_2",  "label": "전범퍼 (운전석 45˚)", "icon_type": "photo", "icon_src": "wash_slot_ref/slot_ext_2.png"},
@@ -3757,6 +3771,7 @@ PHOTO_SLOT_GROUPS = [
     },
     {
         "group": "내부",
+        "required": True,
         "items": [
             {"key": "int_1", "label": "운전석 1열 (계기판·핸들·시트)", "icon_type": "emoji", "icon_src": "📷"},
             {"key": "int_2", "label": "운전석 2열",                    "icon_type": "emoji", "icon_src": "📷"},
@@ -3766,26 +3781,33 @@ PHOTO_SLOT_GROUPS = [
             # int_1이 운전석 1열 전체(핸들·시트 포함)를 넓게 찍는 샷이라 계기판 숫자가
             # 잘 안 보인다는 피드백에 따라 계기판만 클로즈업하는 샷을 따로 둔다.
             {"key": "int_5", "label": "계기판 (주행거리·경고등)",     "icon_type": "emoji", "icon_src": "📷"},
+            # (2026-09-09) 특이사항 그룹에서 옮겨옴 — 내부 촬영 순서(1열→2열→...) 안에서
+            # 자연스럽게 이어 찍도록. key는 기존 그대로(etc_trunk) 둔다 — 이미 촬영된
+            # 사진은 key가 아니라 shot_label("트렁크 내부")로 조회되므로 그룹만 옮겨도
+            # 기존 사진 인식에는 영향이 없다.
+            {"key": "etc_trunk", "label": "트렁크 내부", "icon_type": "emoji", "icon_src": "📷"},
         ],
     },
     {
         "group": "특이사항",
+        "required": True,
         "items": [
             {"key": "etc_blackbox", "label": "블랙박스 작동화면",     "icon_type": "emoji", "icon_src": "📷"},
             {"key": "etc_center",   "label": "센터페시아 및 공조기", "icon_type": "emoji", "icon_src": "📷"},
             {"key": "etc_card",     "label": "카드 사진",             "icon_type": "emoji", "icon_src": "📷"},
-            {"key": "etc_trunk",    "label": "트렁크 내부",           "icon_type": "emoji", "icon_src": "📷"},
             # 특정 부위를 정해두지 않은 여분의 슬롯 — 위 항목들에 안 맞는 특이사항이나
-            # 애매한 부위를 자유롭게 찍어 남길 수 있게 한다.
-            {"key": "etc_extra_1",  "label": "추가 사진 1",           "icon_type": "emoji", "icon_src": "📷"},
-            {"key": "etc_extra_2",  "label": "추가 사진 2",           "icon_type": "emoji", "icon_src": "📷"},
-            {"key": "etc_extra_3",  "label": "추가 사진 3",           "icon_type": "emoji", "icon_src": "📷"},
+            # 애매한 부위를 자유롭게 찍어 남길 수 있게 한다. (2026-09-09) 정해진 부위가
+            # 없는 여분 슬롯이라 필수에서 제외 — 그룹 기본값(필수)을 항목별로 덮어쓴다.
+            {"key": "etc_extra_1",  "label": "추가 사진 1", "icon_type": "emoji", "icon_src": "📷", "required": False},
+            {"key": "etc_extra_2",  "label": "추가 사진 2", "icon_type": "emoji", "icon_src": "📷", "required": False},
+            {"key": "etc_extra_3",  "label": "추가 사진 3", "icon_type": "emoji", "icon_src": "📷", "required": False},
         ],
     },
     {
         # 무인훼손 제보: 기존엔 슬롯 1개에 여러 장을 올리고 '완료' 버튼을 눌러야 했는데,
         # 외부/내부 슬롯처럼 한 장씩 바로 찍히는 슬롯 5개로 대체 (완료 버튼 불필요).
         "group": DAMAGE_SLOT_LABEL,
+        "required": False,  # 실제로 훼손이 없으면 안 찍는 게 정상이므로 필수 아님
         "hint": "촬영하면 자동으로 훼손 제보가 접수돼요",
         "items": [
             {"key": f"damage_{n}", "label": f"{DAMAGE_SLOT_LABEL} {n}", "icon_type": "emoji", "icon_src": DAMAGE_SLOT_ICON}

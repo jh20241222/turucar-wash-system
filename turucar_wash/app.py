@@ -3775,17 +3775,18 @@ PHOTO_SLOT_GROUPS = [
         "items": [
             {"key": "int_1", "label": "운전석 1열 (계기판·핸들·시트)", "icon_type": "emoji", "icon_src": "📷"},
             {"key": "int_2", "label": "운전석 2열",                    "icon_type": "emoji", "icon_src": "📷"},
+            # (2026-09-09) 특이사항 그룹에서 옮겨옴 — 운전석 1열→2열을 찍은 바로 다음
+            # 동선에 트렁크가 있는 경우가 많아 이 순서로 이어 찍도록 배치했다. key는
+            # 기존 그대로(etc_trunk) 둔다 — 이미 촬영된 사진은 key가 아니라
+            # shot_label("트렁크 내부")로 조회되므로 순서만 옮겨도 기존 사진 인식에는
+            # 영향이 없다.
+            {"key": "etc_trunk", "label": "트렁크 내부", "icon_type": "emoji", "icon_src": "📷"},
             {"key": "int_3", "label": "조수석 2열",                    "icon_type": "emoji", "icon_src": "📷"},
             {"key": "int_4", "label": "조수석 1열 (도어·시트)",        "icon_type": "emoji", "icon_src": "📷"},
             # 계기판(주행거리·경고등 표시부)이 잘 보이도록 별도 슬롯으로 추가 — 기존
             # int_1이 운전석 1열 전체(핸들·시트 포함)를 넓게 찍는 샷이라 계기판 숫자가
             # 잘 안 보인다는 피드백에 따라 계기판만 클로즈업하는 샷을 따로 둔다.
             {"key": "int_5", "label": "계기판 (주행거리·경고등)",     "icon_type": "emoji", "icon_src": "📷"},
-            # (2026-09-09) 특이사항 그룹에서 옮겨옴 — 내부 촬영 순서(1열→2열→...) 안에서
-            # 자연스럽게 이어 찍도록. key는 기존 그대로(etc_trunk) 둔다 — 이미 촬영된
-            # 사진은 key가 아니라 shot_label("트렁크 내부")로 조회되므로 그룹만 옮겨도
-            # 기존 사진 인식에는 영향이 없다.
-            {"key": "etc_trunk", "label": "트렁크 내부", "icon_type": "emoji", "icon_src": "📷"},
         ],
     },
     {

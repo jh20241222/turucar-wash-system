@@ -2759,10 +2759,30 @@ def car_photo_view(photo_id):
     """R2에 저장된 사진을 짧은 유효기간(1시간)의 서명된 URL로 리다이렉트한다.
     R2 자격증명을 브라우저에 노출하지 않기 위한 방식."""
     conn = get_wash_db()
-    row = conn.execute("SELECT r2_key FROM wash_photos WHERE id=?", (photo_id,)).fetchone()
-    conn.close()
+    row = conn.execute("SELECT r2_key, 차량번호, 세차일 FROM wash_photos WHERE id=?", (photo_id,)).fetchone()
     if not row:
+        conn.close()
         return "Not found", 404
+    # (2026-09-09) photo_id는 그냥 자동증가 번호라, 스코프 체크가 없으면 로그인만
+    # 한 계정이면 번호를 바꿔가며 다른 업체/지역 차량의 사진까지 열람할 수 있었다
+    # (업로드/삭제/슬롯클리어는 전부 scoped_condition으로 막혀 있는데 조회만 예외였음
+    # — 2026-09-09 코드 점검 중 발견). 사진을 올린 차량+세차일이 진행중(wash_list)
+    # 이든 이미 완료(wash_history)든, 현재 로그인 계정의 담당 범위(또는 혼용 차량
+    # 예외) 안에 있을 때만 열람을 허용한다.
+    scope_sql, scope_params = scoped_condition_mixed_exempt("wash_list", current_user)
+    scoped = conn.execute(
+        f"SELECT 1 FROM wash_list WHERE 차량번호=? AND 세차일=?{scope_sql}",
+        [row["차량번호"], row["세차일"]] + scope_params
+    ).fetchone()
+    if not scoped:
+        scope_sql, scope_params = scoped_condition_mixed_exempt("wash_history", current_user)
+        scoped = conn.execute(
+            f"SELECT 1 FROM wash_history WHERE 차량번호=? AND 세차일=?{scope_sql}",
+            [row["차량번호"], row["세차일"]] + scope_params
+        ).fetchone()
+    conn.close()
+    if not scoped:
+        return "Forbidden", 403
     client = _get_r2_client()
     if not client:
         return "사진 저장소가 설정되지 않았습니다.", 500
@@ -2810,9 +2830,14 @@ def car_history():
     if not car_num:
         return jsonify({"rows": []})
     conn = get_wash_db()
+    # (2026-09-09) 담당 업체/지역 범위 체크가 빠져 있어서, 로그인만 한 계정이면
+    # car_num을 아무거나 넣어 다른 업체 차량의 세차 이력(훼손/경고등/특이사항 포함)을
+    # 조회할 수 있었다 — wash_record 등 같은 테이블을 쓰는 다른 화면들과 동일하게
+    # scoped_condition_mixed_exempt로 범위를 맞춘다.
+    scope_sql, scope_params = scoped_condition_mixed_exempt("wash_history", current_user)
     rows = conn.execute(
-        "SELECT 세차완료일, 주행거리, 훼손, 경고등, 특이사항, 작업자 FROM wash_history WHERE 차량번호=? ORDER BY 세차완료일 DESC LIMIT 50",
-        (car_num,)
+        f"SELECT 세차완료일, 주행거리, 훼손, 경고등, 특이사항, 작업자 FROM wash_history WHERE 차량번호=?{scope_sql} ORDER BY 세차완료일 DESC LIMIT 50",
+        [car_num] + scope_params
     ).fetchall()
     conn.close()
     return jsonify({"rows": [dict(r) for r in rows]})

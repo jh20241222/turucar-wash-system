@@ -2987,6 +2987,18 @@ def wash_complete(id):
                 conn, client, all_files, row["차량번호"], row["세차일"], current_user.username,
                 labels=all_labels
             )
+            # (2026-09-09) 사진이 실제로 R2에 올라가고 wash_photos에 INSERT까지 끝났으면
+            # 그 즉시 커밋한다 — 예전엔 이 커밋이 없어서, 뒤이어 실행되는 무인훼손
+            # 제보/슬랙 연동이나 맨 아래 wash_history 이관 중 하나라도 실패해 그쪽에서
+            # conn.rollback()이 호출되면 이미 R2에 안전하게 올라간 사진의 DB 기록까지
+            # 함께 통째로 사라져버렸다(사진은 R2에 고아로 남고 wash_photos에는 흔적이
+            # 없어 "사진을 분명히 찍었는데 안 올라와 있다"는 증상으로 이어짐). 특히
+            # 슬롯 즉시업로드(/car_slot_photo_upload)가 네트워크 문제로 실패해 원본
+            # 파일이 그대로 남아 있다가 이 완료처리 요청에 함께 실려 재시도되는
+            # 경우가 바로 이 취약한 경로였다. car_slot_photo_upload()가 사진마다 바로
+            # commit()하는 것과 동일하게, 여기서도 사진 저장은 완료 처리 성패와
+            # 무관하게 독립적으로 확정시킨다.
+            conn.commit()
         photo_uploaded += len(staged_labels)  # 이미 올라가 있던 사진들도 등록 수량에 포함
 
         # 이미 업로드돼 있던 무인훼손 슬롯은 damage_reports/슬랙 연동을 위해 R2에서

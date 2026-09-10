@@ -2955,6 +2955,23 @@ def wash_complete(id):
         conn.close()
         flash("❌ 이미 완료 처리됐거나 존재하지 않는 오더입니다.")
         return redirect(url_for("wash_list"))
+    # (2026-09-10) 주행거리/훼손부위 미기재 건이 완료 내역에 계속 섞여 들어온다는
+    # 지적에 따라 둘 다 필수 입력으로 바꾼다. 사진 처리를 시작하기 전에 먼저 확인해서,
+    # 어차피 막힐 요청 때문에 불필요하게 R2 업로드를 시도하지 않게 한다(사진을 이미
+    # 슬롯별로 미리 올려둔 경우엔 이 화면에 남는 파일이 없으니 영향 없음). 사진업로드
+    # 대상 소속이든 아니든 두 필드는 모든 차량에 공통으로 존재하는 입력이라 여기서
+    # 한 번만 검사한다. 훼손부위는 "정말 훼손이 없다"도 유효한 답이므로 완전히 공란인
+    # 경우만 막는다 — car_detail.html의 훼손부위 체크에 추가한 '훼손없음' 항목을
+    # 고르면 "없음"이 자동으로 채워지므로, 실제 훼손이 없는 차량도 정상적으로 완료
+    # 처리할 수 있다.
+    if not (request.form.get("distance") or "").strip():
+        conn.close()
+        flash("❌ 주행거리를 입력해주세요.")
+        return redirect(url_for("car_detail", id=id))
+    if not (request.form.get("damage") or "").strip():
+        conn.close()
+        flash("❌ 훼손부위를 확인해주세요. 훼손이 없으면 '훼손없음'을 선택해주세요.")
+        return redirect(url_for("car_detail", id=id))
     # 차량소속이 사진 업로드 대상(현재 '카일이삼제스퍼')이면, 이 화면엔 별도의
     # 세차 기록 입력 폼/사진 업로드 버튼 없이 "내역업로드" 버튼 하나만 있다.
     # 선택된 사진을 R2에 올리는 것과 완료 처리(wash_history 이관)를 한 번에 처리한다.
@@ -3007,22 +3024,17 @@ def wash_complete(id):
                 flash("❌ 사진 저장소가 아직 설정되지 않았습니다. 관리자에게 R2 환경변수 설정을 요청하세요.")
                 return redirect(url_for("car_detail", id=id))
         # 이번 요청에서 원본 파일로 새로 처리하는 슬롯 중, 이미 스테이징된 사진이 있던
-        # 라벨은 재촬영으로 보고 기존 걸 먼저 정리한다 (그대로 두면 같은 슬롯 사진이
-        # 두 장 남는다).
+        # 라벨은 재촬영으로 본다.
+        # (2026-09-10) 예전엔 여기서 "새 사진을 올리기도 전에" 기존 사진부터 먼저
+        # 지웠다. 그런데 완료 처리 요청 자체가(네트워크 문제로) 이 시점 이후 새 사진
+        # 업로드에서 실패하면, 방금 지운 멀쩡한 기존 사진은 되살릴 방법이 없고 그
+        # 슬롯은 완전히 빈 채로 남았다 — 아래 필수 사진 최종 확인 잠금 덕분에 "완료"
+        # 자체는 막히지만, 다시 찍을 필요가 없었던 사진까지 잃어버리는 건 마찬가지로
+        # 불필요한 손실이다. 그래서 순서를 뒤집어서 "새 사진을 먼저 올려서 실제로
+        # 저장에 성공했는지 확인한 뒤에만" 기존 사진을 지운다 — 새 사진이 실패하면
+        # 기존에 잘 저장돼 있던 사진은 그대로 남는다(같은 슬롯 즉시업로드
+        # /car_slot_photo_upload에 적용한 것과 동일한 원칙).
         labels_to_replace = [l for l in slot_labels if l in existing_key_by_label]
-        if labels_to_replace:
-            for label in labels_to_replace:
-                conn.execute(
-                    "DELETE FROM wash_photos WHERE 차량번호=? AND 세차일=? AND shot_label=?",
-                    (row["차량번호"], row["세차일"], label)
-                )
-            conn.commit()
-            if client:
-                for label in labels_to_replace:
-                    try:
-                        client.delete_object(Bucket=R2_BUCKET_NAME, Key=existing_key_by_label[label])
-                    except Exception as e:
-                        print(f"[R2] 재촬영 교체 삭제 실패: {e}")
         if all_files:
             photo_uploaded, photo_failed = _store_wash_photos(
                 conn, client, all_files, row["차량번호"], row["세차일"], current_user.username,
@@ -3040,6 +3052,36 @@ def wash_complete(id):
             # commit()하는 것과 동일하게, 여기서도 사진 저장은 완료 처리 성패와
             # 무관하게 독립적으로 확정시킨다.
             conn.commit()
+        if labels_to_replace:
+            # 방금 커밋된 결과를 "지금 시점" 기준으로 다시 조회해서, 옛 r2_key와 다른
+            # (=새 업로드가 실제로 성공해 새로 들어온) 행이 있는 라벨만 옛 것을 지운다.
+            # 새 업로드가 실패했다면(위 _store_wash_photos에서 failed로 집계됨) 이
+            # 조건에 걸리는 새 행이 없으므로 기존 사진은 그대로 보존된다.
+            stale_r2_keys = []
+            for label in labels_to_replace:
+                old_key = existing_key_by_label[label]
+                newer_rows = conn.execute(
+                    "SELECT id FROM wash_photos WHERE 차량번호=? AND 세차일=? AND shot_label=? AND r2_key != ?",
+                    (row["차량번호"], row["세차일"], label, old_key)
+                ).fetchall()
+                if not newer_rows:
+                    continue  # 새 사진 저장에 실패함 — 기존 사진을 지우지 않고 보존
+                # 새 사진이 여러 장 겹쳐 들어왔을 가능성까지 감안해 가장 최근 것만 남긴다.
+                newest_id = max(r_["id"] for r_ in newer_rows)
+                stale_rows = conn.execute(
+                    "SELECT id, r2_key FROM wash_photos WHERE 차량번호=? AND 세차일=? AND shot_label=? AND id != ?",
+                    (row["차량번호"], row["세차일"], label, newest_id)
+                ).fetchall()
+                for s in stale_rows:
+                    conn.execute("DELETE FROM wash_photos WHERE id=?", (s["id"],))
+                    stale_r2_keys.append(s["r2_key"])
+            conn.commit()
+            if client:
+                for k in stale_r2_keys:
+                    try:
+                        client.delete_object(Bucket=R2_BUCKET_NAME, Key=k)
+                    except Exception as e:
+                        print(f"[R2] 재촬영 교체 삭제 실패: {e}")
         photo_uploaded += len(staged_labels)  # 이미 올라가 있던 사진들도 등록 수량에 포함
 
         # (2026-09-10) 브라우저의 필수 사진 잠금(turuFindMissingRequiredSlots)은 "제출

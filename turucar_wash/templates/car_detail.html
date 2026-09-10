@@ -42,14 +42,14 @@
 
     <form id="wash-form" class="work-form app-card work-form-clean" action="{{ url_for('wash_complete', id=car['id']) }}" method="POST" {% if show_photo_section %}enctype="multipart/form-data"{% endif %} onsubmit="return turuHandleWashSubmit(event, this);">
         <div class="step-title clean-step-title"><span>01</span><strong>세차 기록 입력</strong></div>
-        <label class="field-label" for="distance">주행거리</label>
+        <label class="field-label" for="distance">주행거리 <span style="color:#e5484d;">*필수</span></label>
         <input id="distance" class="app-input" name="distance" inputmode="numeric" placeholder="예: 12530km">
-        <label class="field-label" for="damage">차량 훼손 부위</label>
+        <label class="field-label" for="damage">차량 훼손 부위 <span style="color:#e5484d;">*필수</span></label>
         <div id="cdp-wrap-m">
             <button type="button" class="cdp-toggle" onclick="cdpToggle(this,'cdp-wrap-m')"><span>부위 선택해서 입력하기</span><span class="cdp-arrow">▾</span></button>
             <div class="cdp-panel" id="cdp-root-m" style="display:none;"></div>
         </div>
-        <textarea id="damage" class="app-input" name="damage" placeholder="없으면 비워두거나 '없음' 입력"></textarea>
+        <textarea id="damage" class="app-input" name="damage" placeholder="훼손 부위를 선택하거나, 없으면 '훼손없음'을 선택해주세요"></textarea>
         <label class="field-label" for="warning">경고등</label>
         <textarea id="warning" class="app-input" name="warning" placeholder="경고등 내용 입력"></textarea>
         <label class="field-label" for="etc">기타 특이사항</label>
@@ -676,13 +676,13 @@ async function turuConfirmIfBlurry(file){
     <div class="d-card">
         <div class="d-card-head"><div><span class="d-eyebrow">세차 기록 입력</span><h2>기록 작성</h2></div></div>
         <div class="d-card-body" id="d-record-fields">
-            <div class="d-fg"><label class="d-label" for="d-distance">주행거리</label><input id="d-distance" name="distance" class="d-input" inputmode="numeric" placeholder="예: 12530km" style="height:44px;font-size:14px;"></div>
-            <div class="d-fg"><label class="d-label" for="d-damage">차량 훼손 부위</label>
+            <div class="d-fg"><label class="d-label" for="d-distance">주행거리 <span style="color:#e5484d;">*필수</span></label><input id="d-distance" name="distance" class="d-input" inputmode="numeric" placeholder="예: 12530km" style="height:44px;font-size:14px;"></div>
+            <div class="d-fg"><label class="d-label" for="d-damage">차량 훼손 부위 <span style="color:#e5484d;">*필수</span></label>
     <div id="cdp-wrap-d">
         <button type="button" class="cdp-toggle" onclick="cdpToggle(this,'cdp-wrap-d')"><span>부위 선택해서 입력하기</span><span class="cdp-arrow">▾</span></button>
         <div class="cdp-panel" id="cdp-root-d" style="display:none;"></div>
     </div>
-    <textarea id="d-damage" name="damage" class="d-input" style="resize:vertical;min-height:80px;font-size:14px;" placeholder="없으면 비워두거나 '없음' 입력"></textarea>
+    <textarea id="d-damage" name="damage" class="d-input" style="resize:vertical;min-height:80px;font-size:14px;" placeholder="훼손 부위를 선택하거나, 없으면 '훼손없음'을 선택해주세요"></textarea>
 </div>
             <div class="d-fg"><label class="d-label" for="d-warning">경고등</label><textarea id="d-warning" name="warning" class="d-input" style="resize:vertical;min-height:80px;font-size:14px;" placeholder="경고등 내용 입력"></textarea></div>
             <div class="d-fg"><label class="d-label" for="d-etc">기타 특이사항</label><textarea id="d-etc" name="etc" class="d-input" style="resize:vertical;min-height:80px;font-size:14px;" placeholder="추가로 공유할 내용 입력"></textarea></div>
@@ -823,6 +823,10 @@ function dCopyInfo(){
 .cdp-tag.is-on{border-color:#D85A30;}
 .cdp-tag .cdp-lbl{font-size:8px;font-weight:700;color:#333;white-space:nowrap;line-height:1;}
 .cdp-tag input[type=checkbox]{width:13px;height:13px;margin:0;accent-color:#D85A30;}
+.cdp-no-damage-row{margin-top:4px;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:12px;display:flex;align-items:center;gap:10px;cursor:pointer;background:#fff;}
+.cdp-no-damage-row.is-on{border-color:#D85A30;background:#FFF6F2;}
+.cdp-no-damage-row input[type=checkbox]{width:18px;height:18px;margin:0;accent-color:#D85A30;cursor:pointer;}
+.cdp-no-damage-row label{font-size:14px;font-weight:700;color:#111;cursor:pointer;}
 
 .photo-card-clean{margin-top:14px;}
 .photo-warn{font-size:13px;color:#993C1D;background:#FAECE7;border-radius:8px;padding:8px 12px;margin:0 0 10px;}
@@ -933,13 +937,24 @@ function renderCarDamagePicker(rootId, textareaId){
     + '<div class="cdp-dir-row"><span>◀ 앞쪽</span><p class="cdp-view-label">운전석 쪽</p><span>뒤쪽 ▶</span></div>'
     + '<div class="cdp-frame" style="aspect-ratio:704/264;">' + photo('cdp_driver.png','운전석 쪽') + cdpSideSVG('운','운전석 쪽') + cdpTagsHTML(cdpSideTags('운')) + '</div>'
     + '<div class="cdp-dir-row"><span>◀ 뒤쪽</span><p class="cdp-view-label">조수석 쪽</p><span>앞쪽 ▶</span></div>'
-    + '<div class="cdp-frame" style="aspect-ratio:704/264;">' + photo('cdp_passenger.png','조수석 쪽') + cdpSideSVG('조','조수석 쪽') + cdpTagsHTML(cdpSideTags('조')) + '</div>';
+    + '<div class="cdp-frame" style="aspect-ratio:704/264;">' + photo('cdp_passenger.png','조수석 쪽') + cdpSideSVG('조','조수석 쪽') + cdpTagsHTML(cdpSideTags('조')) + '</div>'
+    // (2026-09-10) 주행거리/훼손부위를 필수 입력으로 바꾸면서, "정말 훼손이 없는" 차량도
+    // 뭔가는 골라야 완료 제출이 되게 맨 마지막에 '훼손없음' 항목을 추가한다. 부위 목록
+    // 중 하나라도 고르면 이 항목은 자동으로 풀리고, 반대로 이 항목을 고르면 골라뒀던
+    // 부위가 전부 풀린다(둘 중 하나만 참이어야 하는 상태이므로).
+    + '<div class="cdp-no-damage-row" id="' + rootId + '-no-damage">'
+    +   '<input type="checkbox" id="' + rootId + '-no-damage-cb">'
+    +   '<label for="' + rootId + '-no-damage-cb">훼손없음</label>'
+    + '</div>';
 
   const selected = new Set();
   let lastAuto = '';
   const zoneEls = root.querySelectorAll('.cdp-zone');
   const checkboxes = root.querySelectorAll('.cdp-tag input[type=checkbox]');
   const tagEls = root.querySelectorAll('.cdp-tag');
+  const noDamageRow = document.getElementById(rootId + '-no-damage');
+  const noDamageCb = document.getElementById(rootId + '-no-damage-cb');
+  const NO_DAMAGE_TEXT = '없음'; // app.py의 _NO_ISSUE_VALUES와 동일한 표기를 맞춘다.
   // 부위를 클릭한 순서(Set 삽입 순서) 그대로 저장하면, 같은 부위 조합이라도 작업자가
   // 클릭한 순서에 따라 매번 다르게 저장돼서(예: "운)후도어, 운)후휀더, 조)후도어, 조)전휀더")
   // 세차 이력을 눈으로 비교하기 어렵다는 피드백에 따라, 항상 정해진 순서(앞모습 → 뒷모습
@@ -952,12 +967,25 @@ function renderCarDamagePicker(rootId, textareaId){
   );
   function toggle(part){
     if (selected.has(part)) selected.delete(part); else selected.add(part);
+    // 특정 부위를 골랐다는 건 "훼손이 있다"는 뜻이므로, 켜져 있던 '훼손없음'은 끈다.
+    if (selected.size && noDamageCb && noDamageCb.checked) noDamageCb.checked = false;
+    render();
+  }
+  function setNoDamage(checked){
+    if (checked) selected.clear(); // '훼손없음'을 고르면 골라뒀던 부위는 전부 취소
     render();
   }
   function render(){
     zoneEls.forEach(function(z){ z.classList.toggle('is-on', selected.has(z.dataset.part)); });
     checkboxes.forEach(function(cb){ cb.checked = selected.has(cb.dataset.part); });
     tagEls.forEach(function(t){ t.classList.toggle('is-on', selected.has(t.dataset.part)); });
+    const noDamageOn = !!(noDamageCb && noDamageCb.checked);
+    if (noDamageRow) noDamageRow.classList.toggle('is-on', noDamageOn);
+    if (noDamageOn) {
+      lastAuto = NO_DAMAGE_TEXT;
+      textarea.value = NO_DAMAGE_TEXT;
+      return;
+    }
     const auto = CANONICAL_PART_ORDER.filter(function(p){ return selected.has(p); }).join(', ');
     let extra = textarea.value.startsWith(lastAuto) ? textarea.value.slice(lastAuto.length) : textarea.value;
     lastAuto = auto;
@@ -966,6 +994,20 @@ function renderCarDamagePicker(rootId, textareaId){
   }
   zoneEls.forEach(function(z){ z.addEventListener('click', function(){ toggle(z.dataset.part); }); });
   checkboxes.forEach(function(cb){ cb.addEventListener('change', function(){ toggle(cb.dataset.part); }); });
+  if (noDamageCb) noDamageCb.addEventListener('change', function(){ setNoDamage(noDamageCb.checked); });
+  if (noDamageRow) noDamageRow.addEventListener('click', function(e){
+    if (e.target === noDamageCb) return; // 체크박스 자체 클릭은 위 change 리스너가 이미 처리함
+    noDamageCb.checked = !noDamageCb.checked;
+    setNoDamage(noDamageCb.checked);
+  });
+  // 작업자가 픽커를 안 쓰고 textarea에 직접 텍스트를 입력하면(자유 서술), 이미 켜져
+  // 있던 '훼손없음' 체크와 내용이 어긋날 수 있으니 값이 '없음'이 아니게 바뀌면 체크를 푼다.
+  textarea.addEventListener('input', function(){
+    if (noDamageCb && noDamageCb.checked && textarea.value !== NO_DAMAGE_TEXT) {
+      noDamageCb.checked = false;
+      if (noDamageRow) noDamageRow.classList.remove('is-on');
+    }
+  });
 }
 function cdpToggle(btn, rootWrapId){
   const wrap = document.getElementById(rootWrapId);
@@ -1099,10 +1141,44 @@ renderCarDamagePicker('cdp-root-d', 'd-damage');
         return missing;
     }
 
+    // (2026-09-10) 주행거리/훼손부위 미기재 건이 완료 내역에 계속 섞여 들어온다는
+    // 지적에 따라 둘 다 필수 입력으로 바꾼다. 사진업로드 대상 소속 여부와 무관하게
+    // 모든 오더 완료 화면에 공통으로 있는 입력이라, 위 필수 사진 체크와 별개로 항상
+    // 검사한다(서버(app.py wash_complete)에도 동일한 최종 확인을 추가해뒀다 — 이건
+    // 어디까지나 빠른 안내용이고, 실제 최종 방어선은 서버 쪽 확인이다).
+    function turuFindMissingCoreFields(formEl){
+        var missing = [];
+        var distanceEl = formEl.querySelector('[name="distance"]');
+        if(!distanceEl || !(distanceEl.value || '').trim()){
+            missing.push({label: '주행거리', el: distanceEl});
+        }
+        var damageEl = formEl.querySelector('[name="damage"]');
+        if(!damageEl || !(damageEl.value || '').trim()){
+            missing.push({label: "훼손부위(없으면 '훼손없음' 선택)", el: damageEl});
+        }
+        return missing;
+    }
+
     window.turuHandleWashSubmit = function(ev, formEl){
         if(submitted){
             // 이미 제출 처리 중인데 어떤 경로로든 또 submit이 발생하면 완전히 막는다
             // (이중 탭/이중 submit으로 같은 오더가 두 번 처리되는 것 방지).
+            return false;
+        }
+        var missingCore = turuFindMissingCoreFields(formEl);
+        if(missingCore.length){
+            if(navigator.vibrate) navigator.vibrate(200);
+            missingCore.forEach(function(m){
+                if(m.el){ m.el.style.borderColor = '#e5484d'; m.el.style.boxShadow = '0 0 0 2px rgba(229,72,77,0.2)'; }
+            });
+            var firstEl = missingCore[0].el;
+            if(firstEl) firstEl.scrollIntoView({behavior: 'smooth', block: 'center'});
+            alert(missingCore.map(function(m){ return m.label; }).join(', ') + '을(를) 입력해주세요.');
+            setTimeout(function(){
+                missingCore.forEach(function(m){
+                    if(m.el){ m.el.style.borderColor = ''; m.el.style.boxShadow = ''; }
+                });
+            }, 2600);
             return false;
         }
         if(TURU_SHOW_PHOTO_SECTION){

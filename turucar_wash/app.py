@@ -3028,6 +3028,32 @@ def wash_complete(id):
             conn.commit()
         photo_uploaded += len(staged_labels)  # 이미 올라가 있던 사진들도 등록 수량에 포함
 
+        # (2026-09-10) 브라우저의 필수 사진 잠금(turuFindMissingRequiredSlots)은 "제출
+        # 순간 파일이 담겨 있었는지"만 보고, 그 파일이 실제로 R2/DB에 안전하게 저장됐는지는
+        # 보장하지 못한다(위 REQUIRED_SLOT_LABELS 주석 참고). 그래서 여기서 실제로
+        # wash_photos에 확정된 라벨을 기준으로 다시 한번 최종 확인한다 — 필수 슬롯이
+        # 하나라도 비어 있으면 완료 처리(wash_list 삭제·wash_history 이관)를 진행하지
+        # 않고 이 화면으로 돌려보낸다. 이번 요청에서 성공적으로 올라간 사진은 이미
+        # commit()됐으니 그대로 남아있고, 작업자는 모자란 사진만 마저 찍어서 다시 완료
+        # 버튼을 누르면 된다(처음부터 다시 찍을 필요 없음).
+        if REQUIRED_SLOT_LABELS:
+            final_labels = {
+                r["shot_label"] for r in conn.execute(
+                    "SELECT DISTINCT shot_label FROM wash_photos WHERE 차량번호=? AND 세차일=?",
+                    (row["차량번호"], row["세차일"])
+                ).fetchall() if r["shot_label"]
+            }
+            missing_required = sorted(
+                REQUIRED_SLOT_LABELS - final_labels,
+                key=lambda l: _PHOTO_LABEL_ORDER.get(l, len(_PHOTO_LABEL_ORDER))
+            )
+            if missing_required:
+                conn.close()
+                shown = ", ".join(missing_required[:3])
+                more = f" 등 {len(missing_required)}장" if len(missing_required) > 3 else ""
+                flash(f"❌ 필수 사진이 아직 부족합니다 ({shown}{more}). 전부 찍은 뒤 다시 완료 처리해주세요.")
+                return redirect(url_for("car_detail", id=id))
+
         # 이미 업로드돼 있던 무인훼손 슬롯은 damage_reports/슬랙 연동을 위해 R2에서
         # 바이트를 다시 받아와 기존 로직(FileStorage 기반 _save_damage_photo)에 그대로
         # 넘길 수 있도록 감싼다.
@@ -4053,6 +4079,26 @@ DAMAGE_SLOT_KEYS = {item["key"] for item in PHOTO_SLOT_GROUPS[-1]["items"]}
 # 슬롯 key -> 라벨 조회용 (즉시업로드 API에서 클라이언트가 보낸 slot_key를 서버가 신뢰할
 # 수 있는 라벨로 변환할 때 사용 — 라벨 자체를 클라이언트 입력값으로 받지 않는다).
 _SLOT_LABEL_BY_KEY = {item["key"]: item["label"] for group in PHOTO_SLOT_GROUPS for item in group["items"]}
+# (2026-09-10) "필수 사진을 다 찍어야 완료 버튼이 눌린다"는 잠금(turuFindMissingRequiredSlots,
+# car_detail.html)은 어디까지나 브라우저 쪽 체크일 뿐이다 — 예를 들어 (1) 완료처리 요청을
+# 보내는 그 순간엔 필수 슬롯 파일이 다 담겨 있었지만 서버에서 R2 업로드 자체가 실패한 경우
+# (_store_wash_photos가 photo_failed로 집계는 하지만, "사진 몇 장 실패했다고 이미 완료된
+# 세차 기록 전체를 날릴 수는 없다"는 이유로 완료 처리 자체는 그대로 진행되도록 만들어져
+# 있었다 — 위 _store_wash_photos 주석 참고), (2) 사진 용량이 크고 신호가 약해 "찍는 즉시
+# 백그라운드 업로드"가 5초 안에 안 끝나는 경우 등, 브라우저 체크를 통과하고도 실제로는
+# 필수 사진 중 일부가 서버에 저장되지 못한 채로 "완료" 처리될 수 있는 경로가 있었다.
+# 그러면 그 오더는 wash_list에서 이미 삭제돼 있어 다시 사진을 채워 넣을 방법이 없다
+# ("필수로 막아놨는데 사진이 다 안 올라왔다"는 제보의 원인으로 추정). 그래서 여기서
+# 한 번 더, 이번엔 서버가 실제로 wash_photos에 확정 저장한 내역을 기준으로 필수 슬롯이
+# 전부 채워졌는지 최종 확인한다(wash_complete()에서 사용) — 브라우저 체크는 "빠뜨리고
+# 넘어가는 것"을 막는 1차 방어선, 이건 "다 찍었다고 착각했지만 실제로는 저장 안 된 것"까지
+# 잡아내는 최종 방어선이다.
+REQUIRED_SLOT_LABELS = {
+    item["label"]
+    for group in PHOTO_SLOT_GROUPS
+    for item in group["items"]
+    if item.get("required", group.get("required", True))
+}
 
 # 세차 내역 조회(wash_record)에서 사진을 촬영 순서(정면 → 45˚ → 측면 → ... → 무인훼손)
 # 그대로 보여주기 위한 라벨 → 순번 매핑. DB 저장 순서(id)에 의존하지 않고 항상 이

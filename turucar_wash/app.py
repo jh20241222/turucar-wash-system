@@ -3247,9 +3247,10 @@ def wash_status():
     end = request.args.get("end", "")
     today_str = today_kst()
     page = request.args.get("page", 1, type=int) or 1
-    per_page = request.args.get("per_page", 10, type=int) or 10
+    # (2026-09-10) 완료현황 기본 보기 개수를 10개 -> 50개로 변경
+    per_page = request.args.get("per_page", 50, type=int) or 50
     if per_page not in (10, 50, 100):
-        per_page = 10
+        per_page = 50
     if page < 1:
         page = 1
     conn = get_wash_db()

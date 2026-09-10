@@ -3102,6 +3102,17 @@ def wash_complete(id):
             except Exception as e:
                 print(f"[훼손제보 연동] 오류: {e}")
     done_date = today_kst()
+    # (2026-09-09) 혼용(BM구분='혼용') 차량은 mixed_car_register()에서 업체를 일부러
+    # 비워둔 채로 등록한다 (등록자 업체로 채워버리면 나중에 다른 업체 작업자가 이어서
+    # 처리하려 할 때 자기 스코프에 안 걸려서 안 보이는 문제가 있었음 — 2026-09-08에
+    # scoped_condition_mixed_exempt()로 별도 해결됨. 즉 업체 값은 더 이상 "누가 볼 수
+    # 있는지"에 영향을 주지 않고 완료내역 화면/엑셀의 표시·집계 용도로만 쓰인다).
+    # 그 결과 완료내역(wash_status)/엑셀에 업체가 공란으로 남아 "이 완료 건이 어느
+    # 업체 실적인지" 알 수 없다는 제보가 있었다 — 완료 시점에는 실제로 세차를 처리한
+    # 작업자 계정이 확정되어 있으므로, 원본 업체가 비어있으면 완료 처리자(작업자) 계정의
+    # 업체로 채운다. 등록 시점(mixed_car_register)이 아니라 여기(완료 시점)에서만
+    # 채우므로 위에서 언급한 "다른 사람이 이어받으면 안 보임" 문제는 재발하지 않는다.
+    history_org = row["업체"] or (getattr(current_user, "vendor", "") or "")
     try:
         cur.execute(
             """
@@ -3113,7 +3124,7 @@ def wash_complete(id):
             """,
             (
                 row["차량번호"], row["차종명"], row["차량소속"], row["스팟"], row["주소"],
-                row["지역시도"], row["지역구군"], row["업체"], done_date, row["세차일"],
+                row["지역시도"], row["지역구군"], history_org, done_date, row["세차일"],
                 request.form.get("distance"), request.form.get("damage"),
                 request.form.get("warning"), request.form.get("etc"),
                 current_user.username, id
@@ -3321,7 +3332,12 @@ def wash_status_excel():
     cur = conn.cursor()
     where_sql = " WHERE 1=1"
     params = []
-    scope_sql, scope_params = scoped_condition("wash_history", current_user)
+    # (2026-09-09) wash_status() 화면은 혼용 차량이 담당업체/지역과 무관하게 보이도록
+    # scoped_condition_mixed_exempt()를 쓰는데, 이 엑셀 다운로드는 원래 scoped_condition()
+    # (비예외)을 그대로 쓰고 있었다 — 그래서 화면에는 뜨는 혼용 차량 완료 건이 정작
+    # 엑셀에는 통째로 빠지는 불일치가 있었다("완료 현황에서 혼용 차량이 확인이 안 된다"
+    # 제보와 일치). 화면과 동일한 스코프로 맞춘다.
+    scope_sql, scope_params = scoped_condition_mixed_exempt("wash_history", current_user)
     if current_user.is_staff and not _user_fleets(current_user.username):
         scope_sql += " AND 작업자 = ?"
         scope_params = scope_params + [current_user.username]
@@ -3519,7 +3535,13 @@ def wash_record(id):
     cur = conn.cursor()
     query = "SELECT * FROM wash_history WHERE id=?"
     params = [id]
-    scope_sql, scope_params = scoped_condition("wash_history", current_user)
+    # (2026-09-09) wash_status()(완료 현황 목록)는 scoped_condition_mixed_exempt()를 써서
+    # 혼용 차량 완료 건을 담당업체/지역과 무관하게 목록에 보여주는데, 정작 그 행을 클릭해서
+    # 들어오는 이 상세 화면은 strict scoped_condition()을 쓰고 있었다 — 그래서 작업자가
+    # 목록에서는 자기가 완료한 혼용 차량 건을 보고도, 클릭해서 확인하려 하면 스코프에 안 걸려
+    # "세차 내역을 찾을 수 없습니다"(404)만 뜨는 불일치가 있었다("혼용 차량은 완료 현황에서
+    # 확인이 안 된다"는 작업자 제보와 일치). 목록과 동일한 스코프로 맞춘다.
+    scope_sql, scope_params = scoped_condition_mixed_exempt("wash_history", current_user)
     query += scope_sql
     params += scope_params
     car = cur.execute(query, params).fetchone()

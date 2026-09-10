@@ -343,10 +343,16 @@
             dragStart = null;
             var wasCleanTap = !!tapStart && !tapMoved;
             tapStart = null; tapMoved = false;
-            if(wasCleanTap){
+            if(wasCleanTap && e.pointerType === 'touch'){
+                // (2026-09-10) 모바일 더블탭 확대는 없앤다 — 확대된 뒤에는 더블탭으로도
+                // 잘 안 풀려서 "확대되면 뭘 해도 안 돌아온다"는 문제가 있었다. 모바일은
+                // 두 손가락 핀치줌과 +/- 버튼으로만 확대/축소한다(둘 다 그대로 남아있음).
+                // 데스크탑 더블클릭 확대(아래 else 분기, pointerType이 'mouse')는 그대로 둔다.
+                lastTapEnd = null;
+            } else if(wasCleanTap){
                 var tapEnd = { x: e.clientX, y: e.clientY, time: Date.now() };
                 if(lastTapEnd && (tapEnd.time - lastTapEnd.time) < 300 && ptDist(lastTapEnd, tapEnd) < 24){
-                    // 더블탭 완성: 두 번째 탭이 끝난 시점에 판정
+                    // 더블클릭 완성: 두 번째 클릭이 끝난 시점에 판정
                     if(zoomState.scale > 1.01){ resetZoom(); }
                     else { zoomAtPoint(tapEnd.x, tapEnd.y, TAP_ZOOM_SCALE); }
                     lastTapEnd = null;
@@ -354,7 +360,7 @@
                 }
                 lastTapEnd = tapEnd;
             } else {
-                lastTapEnd = null; // 핀치나 드래그로 끝난 제스처는 더블탭 연쇄를 깬다
+                lastTapEnd = null; // 핀치나 드래그로 끝난 제스처는 더블클릭 연쇄를 깬다
             }
             if(swiping){
                 swiping = false;
@@ -378,7 +384,8 @@
     imgEl.addEventListener('pointerup', endPointer);
     imgEl.addEventListener('pointercancel', endPointer);
     imgEl.addEventListener('pointerleave', function(e){ if(activePointers.has(e.pointerId)) endPointer(e); });
-    // 더블클릭/더블탭 확대는 위 pointerup의 "깨끗한 탭 두 번" 판정에서 이미 처리한다.
+    // 데스크탑 더블클릭 확대는 위 pointerup의 "깨끗한 클릭 두 번" 판정에서 처리한다
+    // (모바일 더블탭 확대는 위에서 pointerType==='touch'일 때 걸러내서 없앴다).
     // 예전엔 여기에 브라우저 네이티브 dblclick 리스너가 따로 하나 더 있었는데, 데스크탑에서
     // 더블클릭하면 그 판정이 확대를 먼저 적용한 직후 이 dblclick이 곧바로 또 실행되면서
     // (scale>1이니 resetZoom) 확대했다가 바로 원복돼버려 "데스크탑은 확대가 안 된다"는

@@ -53,7 +53,7 @@
         });
     }
 
-    function save(carId, slotKey, file) {
+    function save(carId, slotKey, file, capturedAt) {
         return withStore('readwrite', function (store) {
             store.put({
                 key: makeKey(carId, slotKey),
@@ -62,7 +62,10 @@
                 fileName: file.name || 'photo.jpg',
                 fileType: file.type || 'image/jpeg',
                 blob: file,
-                savedAt: Date.now()
+                // (2026-09-10) 이 값은 "이 사진이 몇 번째로 최신 촬영본인지" 구분하는
+                // 용도로도 쓰인다(removeIfMatches 참고) — 호출한 쪽이 캡처 시각을
+                // 명시적으로 넘기면 그대로 쓰고, 안 넘기면 지금 시각으로 대체한다.
+                savedAt: (typeof capturedAt === 'number') ? capturedAt : Date.now()
             });
         }).catch(function (e) {
             // 캐시 저장 실패(예: 저장공간 부족)는 조용히 무시한다 — 이건 어디까지나
@@ -77,6 +80,34 @@
             store.delete(makeKey(carId, slotKey));
         }).catch(function (e) {
             console.warn('[슬롯사진캐시] 삭제 실패:', e);
+        });
+    }
+
+    // (2026-09-10) "두 번째 사진을 찍었더니 사진이 없어졌다" 버그의 원인 중 하나 —
+    // 오래된(이미 재촬영으로 대체된) 업로드 시도가 뒤늦게 성공 응답을 받고서 무조건
+    // 캐시를 지워버리면, 그 사이 새로 찍혀서 캐시에 들어간 "더 최신" 사진의 유일한
+    // 안전장치까지 함께 사라진다. 그래서 삭제 직전에 "지금 캐시에 있는 게 정말 내가
+    // 방금 올린 그 사진이 맞는지"(savedAt 일치 여부)를 한 트랜잭션 안에서 확인하고,
+    // 일치할 때만 지운다 — 이미 더 최신 사진으로 덮어써졌다면 그 사진은 그대로 둔다.
+    function removeIfMatches(carId, slotKey, expectedSavedAt) {
+        return withStore('readwrite', function (store) {
+            return new Promise(function (resolve, reject) {
+                var key = makeKey(carId, slotKey);
+                var getReq = store.get(key);
+                getReq.onsuccess = function () {
+                    var rec = getReq.result;
+                    if (!rec || rec.savedAt !== expectedSavedAt) {
+                        resolve();
+                        return;
+                    }
+                    var delReq = store.delete(key);
+                    delReq.onsuccess = function () { resolve(); };
+                    delReq.onerror = function () { reject(delReq.error); };
+                };
+                getReq.onerror = function () { reject(getReq.error); };
+            });
+        }).catch(function (e) {
+            console.warn('[슬롯사진캐시] 조건부 삭제 실패:', e);
         });
     }
 
@@ -115,6 +146,7 @@
     window.TuruSlotPhotoCache = {
         save: save,
         remove: remove,
+        removeIfMatches: removeIfMatches,
         getAllForCar: getAllForCar,
         clearForCar: clearForCar
     };

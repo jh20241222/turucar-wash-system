@@ -2702,18 +2702,32 @@ def car_slot_photo_upload(id):
         print(f"[R2] 슬롯 즉시업로드 실패: {e}")
         return jsonify({"ok": False, "message": "업로드에 실패했습니다."}), 502
     conn = get_wash_db()
-    # 같은 슬롯(차량번호+세차일+shot_label)에 이미 올라간 사진이 있으면 재촬영으로 보고 교체
-    old_rows = conn.execute(
-        "SELECT id, r2_key FROM wash_photos WHERE 차량번호=? AND 세차일=? AND shot_label=?",
-        (차량번호, 세차일, label)
-    ).fetchall()
     uploaded_at = now_kst().strftime("%Y-%m-%d %H:%M:%S")
+    # (2026-09-10) "두 번째 사진을 찍었더니 첫 번째 사진까지 없어졌다" 제보의 실제 원인 —
+    # 예전에는 INSERT하기 "전에" 미리 old_rows를 조회해두고, 나중에 그 스냅샷 그대로
+    # 지웠다. 그런데 같은 슬롯(차량번호+세차일+shot_label)에 대해 두 개의 업로드
+    # 요청이 겹치면(예: 새로고침 복구 재업로드가 아직 끝나지 않았는데 작업자가 그
+    # 사이 같은 슬롯을 직접 재촬영한 경우) — 늦게 시작한 요청이 먼저 끝나서 새 사진을
+    # 저장한 뒤, 먼저 시작했지만 느린 네트워크 때문에 늦게 끝난 요청(주로 원래
+    # 실패했다가 재시도 중이던 "오래된" 사진 쪽)이 자기가 조회해뒀던 옛 스냅샷 기준으로
+    # DELETE를 실행하면서 그 사이 다른 요청이 새로 넣은 "더 최신" 행까지 지워버릴 수
+    # 있었다. 그래서 이제는 먼저 INSERT부터 하고, 그 직후 "지금 이 순간" 기준으로
+    # 다시 조회해서 방금 내가 넣은 행(new_id)만 제외한 나머지를 지운다 — 어느 요청이
+    # 먼저/나중에 끝나든, 그 요청이 마지막에 실행될 때 실제로 남아있는 다른 행만
+    # 지우게 되므로 동시에 끼어든 다른 요청의 결과를 잘못 지우는 일이 없고, 완료 직후
+    # 항상 최소 1개(자기 자신)의 행은 반드시 남는다(사진이 통째로 사라지는 경우 자체가
+    # 없어짐). 클라이언트 쪽에도 같은 슬롯에 대한 이전 업로드 시도를 새 시도 시작 전에
+    # 취소하는 안전장치를 함께 추가했다(car_detail.html의 uploadSlotPhotoInBackground).
     cur = conn.execute(
         """INSERT INTO wash_photos (차량번호, 세차일, r2_key, original_name, shot_label, uploaded_by, uploaded_at)
            VALUES (?, ?, ?, ?, ?, ?, ?)""",
         (차량번호, 세차일, key, secure_filename(f.filename), label, current_user.username, uploaded_at)
     )
     new_id = cur.lastrowid
+    old_rows = conn.execute(
+        "SELECT id, r2_key FROM wash_photos WHERE 차량번호=? AND 세차일=? AND shot_label=? AND id != ?",
+        (차량번호, 세차일, label, new_id)
+    ).fetchall()
     for old in old_rows:
         conn.execute("DELETE FROM wash_photos WHERE id=?", (old["id"],))
     conn.commit()

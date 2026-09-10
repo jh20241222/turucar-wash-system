@@ -219,6 +219,10 @@
     var pinchStartDist = 0, pinchStartScale = 1, pinchStartTx = 0, pinchStartTy = 0, pinchAnchor = null;
     var tapStart = null, tapMoved = false, lastTapEnd = null;
     var TAP_MOVE_TOLERANCE = 10;
+    // (2026-09-10) 확대 안 한 상태에서 좌우로 스와이프하면 다음/이전 사진으로 넘어가게
+    // 한다 — 지금까지는 화살표 버튼으로만 넘길 수 있었다.
+    var swiping = false;
+    var SWIPE_MIN_DISTANCE = 60;
 
     function applyZoomTransform(animate){
         imgEl.style.transition = animate ? 'transform .18s ease-out' : 'none';
@@ -271,6 +275,7 @@
             // 이상 움직이면(드래그) 아래에서 무효화된다. 더블탭은 down이 아니라 up에서 판정한다.
             tapStart = { x: e.clientX, y: e.clientY, time: Date.now() };
             tapMoved = false;
+            swiping = false;
             dragStart = { x: e.clientX, y: e.clientY, tx: zoomState.tx, ty: zoomState.ty };
         } else if(activePointers.size === 2){
             tapStart = null;
@@ -312,6 +317,20 @@
                 zoomState.ty = dragStart.ty + (e.clientY - dragStart.y);
                 clampPan();
                 applyZoomTransform(false);
+            } else if(dragStart && zoomState.scale <= 1.01){
+                // 확대 안 한 상태 — 가로로 뚜렷하게 밀 때만 스와이프로 보고, 사진이
+                // 손가락을 따라 슬쩍 밀리는 걸 보여준다(세로로 밀면 아무 동작 안 함,
+                // 다른 제스처와 헷갈리지 않게). 맨 처음/마지막 사진에서 더 밀면
+                // 고무줄처럼 저항을 줘서 "더 없다"는 걸 알려준다.
+                var swipeDx = e.clientX - dragStart.x;
+                var swipeDy = e.clientY - dragStart.y;
+                if(Math.abs(swipeDx) > Math.abs(swipeDy)){
+                    swiping = true;
+                    var atEdge = (swipeDx > 0 && curIdx === 0) || (swipeDx < 0 && curIdx === TURU_PHOTOS.length - 1);
+                    zoomState.tx = atEdge ? swipeDx * 0.35 : swipeDx;
+                    zoomState.ty = 0;
+                    applyZoomTransform(false);
+                }
             }
         }
     });
@@ -336,6 +355,21 @@
                 lastTapEnd = tapEnd;
             } else {
                 lastTapEnd = null; // 핀치나 드래그로 끝난 제스처는 더블탭 연쇄를 깬다
+            }
+            if(swiping){
+                swiping = false;
+                var swipeTx = zoomState.tx;
+                if(swipeTx <= -SWIPE_MIN_DISTANCE && curIdx < TURU_PHOTOS.length - 1){
+                    goNext();
+                } else if(swipeTx >= SWIPE_MIN_DISTANCE && curIdx > 0){
+                    goPrev();
+                } else {
+                    // 다음/이전으로 넘어갈 만큼 밀지 않았으면(또는 이미 처음/마지막 사진)
+                    // 제자리로 스르륵 돌아온다.
+                    zoomState.tx = 0; zoomState.ty = 0;
+                    applyZoomTransform(true);
+                }
+                return;
             }
             if(zoomState.scale <= 1.01){ resetZoom(); }
             else { clampPan(); applyZoomTransform(true); }

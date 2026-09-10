@@ -424,9 +424,28 @@ async function turuConfirmIfBlurry(file){
     // 사라지지 않도록 하는 안전장치.
     const CAR_ORDER_ID = {{ car['id'] | tojson }};
     const pendingSlotUploads = new Map(); // slotKey -> in-flight Promise
+    const pendingSlotAbortControllers = new Map(); // slotKey -> AbortController (같은 슬롯 최신 시도만 살려두기 위함
 
-    async function uploadSlotPhotoInBackground(slotEl, file){
+    // (2026-09-10) "두 번째 사진을 찍었더니 첫 번째 사진까지 없어졌다"는 제보의 실제
+    // 원인 — 새로고침 복구가 어떤 사진을 "다시" 백그라운드 업로드하는 도중(느린 LTE라
+    // 아직 서버 응답을 못 받은 상태), 작업자가 같은 슬롯을 직접 재촬영하면 그 슬롯에
+    // 대해 두 개의 업로드 요청이 동시에 서버로 날아간다. 이 둘 중 "나중에" 서버에
+    // 도착해 끝나는 쪽이 최종 승자가 되는데, 느린 네트워크 때문에 원래 실패했던(그래서
+    // 복구가 재시도 중이던) 오래된 사진 쪽이 오히려 방금 새로 찍은 사진보다 늦게
+    // 도착해서 이겨버리는 경우가 있었다 — 결과적으로 방금 찍은 새 사진이 오래된
+    // 사진으로 조용히 덮어써지거나, 두 요청이 뒤엉키면서 로컬 복구 캐시(IndexedDB)까지
+    // 조기에 지워져 다음 새로고침에서 복구할 방법조차 없어졌다. 그래서 같은 슬롯에
+    // 대한 이전 시도가 아직 진행 중이면 새 시도를 시작하기 "전에" 반드시 취소한다 —
+    // 한 슬롯에는 항상 최대 1개의 업로드 요청만 살아있게 해서, 오래된 시도가 뒤늦게
+    // 도착해 최신 사진을 덮어쓸 가능성 자체를 없앤다.
+    async function uploadSlotPhotoInBackground(slotEl, file, capturedAt){
         const key = slotEl.dataset.slotKey;
+        const myCapturedAt = (typeof capturedAt === 'number') ? capturedAt : Date.now();
+        const prevController = pendingSlotAbortControllers.get(key);
+        if(prevController) prevController.abort();
+        const controller = new AbortController();
+        pendingSlotAbortControllers.set(key, controller);
+
         slotEl.dataset.uploaded = '0';
         slotEl.classList.add('slot-uploading');
         // (2026-09-08) "이미 저장됨" 배지는 재촬영 중에는 사실과 다르므로 일단 숨기고,
@@ -436,22 +455,34 @@ async function turuConfirmIfBlurry(file){
         const fd = new FormData();
         fd.append('slot_key', key);
         fd.append('photo', file, file.name || 'photo.jpg');
-        const task = fetch(`/car_slot_photo_upload/${CAR_ORDER_ID}`, {method: 'POST', body: fd})
+        const task = fetch(`/car_slot_photo_upload/${CAR_ORDER_ID}`, {method: 'POST', body: fd, signal: controller.signal})
             .then(r => r.ok ? r.json() : {ok: false})
             .catch(() => ({ok: false}))
             .then(data => {
-                slotEl.classList.remove('slot-uploading');
+                if(pendingSlotAbortControllers.get(key) === controller) slotEl.classList.remove('slot-uploading');
                 if(data && data.ok){
-                    slotEl.dataset.uploaded = '1';
-                    if(badge) badge.style.display = '';
-                    // 서버에 안전하게 저장됐으니 새로고침 복구용 로컬 캐시는 더 이상 필요 없다.
-                    if(window.TuruSlotPhotoCache) window.TuruSlotPhotoCache.remove(CAR_ORDER_ID, key);
+                    // (2026-09-10) 이 사이 같은 슬롯이 또 재촬영됐을 수도 있으니, "지금 이
+                    // 화면이 보여줘야 할 상태"는 이 업로드가 여전히 그 슬롯의 최신 시도일
+                    // 때만 갱신한다 — 그렇지 않으면 방금 화면에 떠 있는 최신 촬영 결과를
+                    // 뒤늦게 도착한 이전 업로드 응답이 되돌려버릴 수 있다.
+                    if(pendingSlotAbortControllers.get(key) === controller){
+                        slotEl.dataset.uploaded = '1';
+                        if(badge) badge.style.display = '';
+                    }
+                    // 서버에 안전하게 저장됐으니 로컬 복구 캐시를 지운다 — 단, 그 사이 같은
+                    // 슬롯에 "더 최신" 사진이 다시 캐시됐다면(=이 업로드가 이미 낡은 시도가
+                    // 됐다면) 건드리지 않는다. 그 최신 사진의 유일한 안전장치를 실수로
+                    // 지워버리면 안 되기 때문 — 바로 이 지점이 실제 사진 유실의 원인이었다.
+                    if(window.TuruSlotPhotoCache && window.TuruSlotPhotoCache.removeIfMatches){
+                        window.TuruSlotPhotoCache.removeIfMatches(CAR_ORDER_ID, key, myCapturedAt);
+                    }
                 }
                 return data;
             });
         pendingSlotUploads.set(key, task);
         task.finally(() => {
             if(pendingSlotUploads.get(key) === task) pendingSlotUploads.delete(key);
+            if(pendingSlotAbortControllers.get(key) === controller) pendingSlotAbortControllers.delete(key);
         });
         return task;
     }
@@ -538,8 +569,12 @@ async function turuConfirmIfBlurry(file){
                 // (2026-09-08) 백그라운드 업로드를 시도하기 "전에" 먼저 로컬(IndexedDB)에도
                 // 원본을 복사해둔다 — 업로드가 신호 문제로 멈춰있는 동안 화면이 새로고침되거나
                 // 꺼져도 이 사진은 남아있어서, 다시 들어왔을 때 자동으로 복구/재시도된다.
-                if(window.TuruSlotPhotoCache) window.TuruSlotPhotoCache.save(CAR_ORDER_ID, key, finalFile);
-                uploadSlotPhotoInBackground(slotEl, finalFile);
+                // (2026-09-10) 이번에 "새로 찍은 이 사진"임을 구분할 수 있게 캡처 시각을
+                // 하나 만들어서 캐시 저장과 업로드 양쪽에 동일하게 사용한다 — 나중에
+                // "이 업로드가 여전히 최신 시도인지"를 판단하는 기준이 된다.
+                const capturedAt = Date.now();
+                if(window.TuruSlotPhotoCache) window.TuruSlotPhotoCache.save(CAR_ORDER_ID, key, finalFile, capturedAt);
+                uploadSlotPhotoInBackground(slotEl, finalFile, capturedAt);
             }
         });
         if(clearBtn){
@@ -579,7 +614,11 @@ async function turuConfirmIfBlurry(file){
                     dt.items.add(restoredFile);
                     input.files = dt.files;
                     renderSlotThumb(slotEl);
-                    uploadSlotPhotoInBackground(slotEl, restoredFile);
+                    // (2026-09-10) 이 사진의 "캡처 시각"은 지금(복구 시점)이 아니라 원래
+                    // 캐시에 저장됐던 시각(rec.savedAt) 그대로 써야 한다 — 그래야 이후에
+                    // 작업자가 이 슬롯을 실제로 다시 찍으면, 그 새 캡처가 이 복구-재업로드보다
+                    // "더 최신"으로 정확히 판정돼서 안전하게 우선권을 가진다.
+                    uploadSlotPhotoInBackground(slotEl, restoredFile, rec.savedAt);
                     restoredCount++;
                 }catch(e){ console.warn('[슬롯사진캐시] 복구 실패:', e); }
             });

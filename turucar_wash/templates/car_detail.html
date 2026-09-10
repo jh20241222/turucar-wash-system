@@ -636,7 +636,7 @@ async function turuConfirmIfBlurry(file){
 
     <div class="d-card">
         <div class="d-card-head"><div><span class="d-eyebrow">세차 기록 입력</span><h2>기록 작성</h2></div></div>
-        <div class="d-card-body">
+        <div class="d-card-body" id="d-record-fields">
             <div class="d-fg"><label class="d-label" for="d-distance">주행거리</label><input id="d-distance" name="distance" class="d-input" inputmode="numeric" placeholder="예: 12530km" style="height:44px;font-size:14px;"></div>
             <div class="d-fg"><label class="d-label" for="d-damage">차량 훼손 부위</label>
     <div id="cdp-wrap-d">
@@ -959,6 +959,87 @@ renderCarDamagePicker('cdp-root-d', 'd-damage');
     var CAR_ID = {{ car['id'] | tojson }};
     var submitted = false;
 
+    // (2026-09-10) "주행거리/훼손 부위를 분명히 입력(체크)했는데 완료 내역에는 안 올라와
+    // 있다"는 제보 대응. 사진은 찍는 즉시 IndexedDB에도 복사해둬서(turu_slot_photo_cache.js)
+    // 화면이 새로고침되거나 웹뷰가 강제 종료됐다 재시작돼도(사진을 여러 장 연속 찍는 동안
+    // 메모리 부족으로 OS가 웹뷰를 죽이는 사고가 실사용 중 확인된 바 있음 — 위 흔들림검사
+    // 관련 주석 참고) 자동으로 복구되고 그 사실을 화면에 안내까지 해준다. 그런데 정작
+    // 주행거리/차량 훼손 부위/경고등/기타 특이사항 같은 텍스트 입력값은 그런 보호 장치가
+    // 전혀 없어서 화면이 리셋되면 조용히 빈 칸으로 돌아갔다. 그 결과: (1) 사진을 찍는
+    // 도중 화면이 죽었다 다시 열리면 → 사진은 "복구됐습니다" 안내와 함께 자동으로 채워져
+    // 정상으로 보이는데 → (2) 그 전에 이미 입력해뒀던 주행거리/훼손 텍스트는 빈 칸으로
+    // 리셋된 걸 알아챌 방법이 없어 그대로 완료 버튼을 누르게 됐던 것으로 추정된다. 사진과
+    // 동일한 원리(로컬에 임시 저장 → 화면 재진입 시 자동 복구 + 눈에 띄는 안내)로 텍스트
+    // 입력값도 보호한다. 사진처럼 용량이 큰 파일이 아니라 짧은 문자열 몇 개뿐이라
+    // IndexedDB 대신 더 가벼운 localStorage를 쓴다.
+    var TEXT_CACHE_KEY = 'turu_text_cache_' + CAR_ID;
+    // [모바일 입력 id, 데스크탑 입력 id] — 같은 주문이면 모바일/데스크탑 둘 중 어느 화면
+    // 크기로 들어오든 같은 내용을 보고 이어서 쓸 수 있어야 하므로 항상 둘 다 채운다.
+    var TEXT_FIELD_PAIRS = [
+        ['distance', 'd-distance'],
+        ['damage', 'd-damage'],
+        ['warning', 'd-warning'],
+        ['etc', 'd-etc']
+    ];
+    function turuSaveTextCache(){
+        try{
+            var fields = {};
+            TEXT_FIELD_PAIRS.forEach(function(pair){
+                var mEl = document.getElementById(pair[0]);
+                var dEl = document.getElementById(pair[1]);
+                var v = (mEl && mEl.value) || (dEl && dEl.value) || '';
+                if(v) fields[pair[0]] = v;
+            });
+            if(Object.keys(fields).length){
+                localStorage.setItem(TEXT_CACHE_KEY, JSON.stringify({fields: fields, savedAt: Date.now()}));
+            }else{
+                localStorage.removeItem(TEXT_CACHE_KEY);
+            }
+        }catch(e){
+            // 저장 실패(시크릿 모드 등)는 조용히 무시 — 사진 캐시와 동일한 정책. 이 캐시는
+            // 어디까지나 "한 겹 더" 안전장치일 뿐, 실패해도 기존 흐름(입력값은 화면에 그대로
+            // 남아있다가 제출 시 함께 전송됨)은 정상 동작한다.
+        }
+    }
+    window.turuClearTextCache = function(){
+        try{ localStorage.removeItem(TEXT_CACHE_KEY); }catch(e){}
+    };
+    function turuRestoreTextCacheIfAny(){
+        var raw;
+        try{ raw = localStorage.getItem(TEXT_CACHE_KEY); }catch(e){ return; }
+        if(!raw) return;
+        var parsed;
+        try{ parsed = JSON.parse(raw); }catch(e){ return; }
+        var fields = parsed && parsed.fields;
+        if(!fields) return;
+        var restoredAny = false;
+        TEXT_FIELD_PAIRS.forEach(function(pair){
+            var v = fields[pair[0]];
+            if(!v) return;
+            var mEl = document.getElementById(pair[0]);
+            var dEl = document.getElementById(pair[1]);
+            if(mEl && !mEl.value){ mEl.value = v; restoredAny = true; }
+            if(dEl && !dEl.value){ dEl.value = v; restoredAny = true; }
+        });
+        if(restoredAny){
+            [['wash-form', null], ['d-record-fields', 'prepend']].forEach(function(target){
+                var el = document.getElementById(target[0]);
+                if(!el) return;
+                var note = document.createElement('div');
+                note.textContent = '🔄 이전에 입력하던 주행거리/훼손 부위 등의 내용을 복구했습니다. 내용을 확인한 뒤 완료 처리해주세요.';
+                note.style.cssText = 'font-size:12px;font-weight:700;color:#D85A30;background:#FAECE7;padding:8px 10px;border-radius:8px;margin:0 0 10px;';
+                el.insertBefore(note, el.firstChild);
+            });
+        }
+    }
+    turuRestoreTextCacheIfAny();
+    TEXT_FIELD_PAIRS.forEach(function(pair){
+        pair.forEach(function(id){
+            var el = document.getElementById(id);
+            if(el) el.addEventListener('input', turuSaveTextCache);
+        });
+    });
+
     // (2026-09-09) "사진을 다 찍었는데 안 올라오는 경우가 있다"는 제보의 상당수는
     // 실은 업로드 실패가 아니라 애초에 일부 슬롯을 안 찍고 완료 버튼을 누른 경우로
     // 추정된다(27컷이 전부 선택사항이라 서버는 "안 찍음"과 "올리다 실패함"을 구분할
@@ -1044,6 +1125,7 @@ renderCarDamagePicker('cdp-root-d', 'd-damage');
                 // 서버에 어떻게든 도달했으니(성공이든 서버가 돌려준 다른 안내든) 이 차량
                 // 주문의 슬롯 사진 로컬 캐시(새로고침 복구용)는 이제 필요 없다.
                 if(window.TuruSlotPhotoCache) window.TuruSlotPhotoCache.clearForCar(CAR_ID);
+                if(typeof window.turuClearTextCache === 'function') window.turuClearTextCache();
                 try{ localStorage.removeItem('turu_last_active_order'); }catch(e){}
                 window.location.href = resp.url || formEl.action;
             }catch(networkErr){
@@ -1055,6 +1137,7 @@ renderCarDamagePicker('cdp-root-d', 'd-damage');
                         // 오프라인 큐가 폼 전체(입력값+사진)를 통째로 안전하게 보관하니,
                         // 슬롯 단위 로컬 캐시는 더 이상 따로 들고 있을 필요가 없다.
                         if(window.TuruSlotPhotoCache) window.TuruSlotPhotoCache.clearForCar(CAR_ID);
+                        if(typeof window.turuClearTextCache === 'function') window.turuClearTextCache();
                         try{ localStorage.removeItem('turu_last_active_order'); }catch(e){}
                     }catch(queueErr){
                         console.error('[오프라인 큐] 저장 실패', queueErr);

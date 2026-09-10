@@ -6,6 +6,7 @@ import re
 import shutil
 import sqlite3
 import uuid
+import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlencode
 from datetime import datetime, timedelta
@@ -3397,6 +3398,97 @@ def wash_status_excel():
         as_attachment=True,
         download_name=filename,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+_ZIP_UNSAFE_CHARS = re.compile(r'[\\/:*?"<>|\x00-\x1f]')
+
+def _safe_zip_name_part(s):
+    """압축파일 안 사진 파일명에 쓸 조각을 정리한다. secure_filename()은 한글을
+    통째로 지워버려서(예: '전범퍼 정면' → '') 차량번호/촬영부위 라벨에는 쓸 수 없다 —
+    한글은 그대로 두고, 실제로 파일명에 못 쓰는 문자(경로 구분자 등)만 제거한다."""
+    s = _ZIP_UNSAFE_CHARS.sub("", (s or "")).strip()
+    return s or "-"
+
+@app.route("/wash_status_photos_zip")
+@login_required
+def wash_status_photos_zip():
+    """완료 현황(wash_status) 데스크탑 화면에서 체크한 완료 건들의 사진을 한 번에
+    압축파일(zip)로 내려받는다. 사진마다 '완료일자_차량번호_부위.jpg'로 이름을 붙인다.
+    (2026-09-10) 사진 하나하나 눌러서 저장하기 번거롭다는 요청으로 추가."""
+    raw_ids = (request.args.get("ids") or "").strip()
+    if not raw_ids:
+        flash("❌ 다운로드할 완료 건을 선택해주세요.")
+        return redirect(url_for("wash_status"))
+    try:
+        ids = sorted({int(x) for x in raw_ids.split(",") if x.strip().isdigit()})
+    except ValueError:
+        ids = []
+    if not ids:
+        flash("❌ 다운로드할 완료 건을 선택해주세요.")
+        return redirect(url_for("wash_status"))
+    # 한 번에 너무 많은 건을 선택해 서버가 오래 잠기거나 메모리를 과하게 쓰지 않도록 상한을 둔다.
+    MAX_ZIP_ROWS = 200
+    if len(ids) > MAX_ZIP_ROWS:
+        flash(f"❌ 한 번에 최대 {MAX_ZIP_ROWS}건까지만 다운로드할 수 있습니다. 선택 개수를 줄여주세요.")
+        return redirect(url_for("wash_status"))
+    client = _get_r2_client()
+    if not client:
+        flash("❌ 사진 저장소가 설정되지 않았습니다.")
+        return redirect(url_for("wash_status"))
+    conn = get_wash_db()
+    cur = conn.cursor()
+    # (2026-09-10) 요청받은 id를 그대로 믿지 않는다 — wash_status()/wash_status_excel()과
+    # 동일한 스코프(scoped_condition_mixed_exempt + 작업자 자기 실적 좁히기)를 그대로
+    # 적용해서, 화면에서 애초에 볼 수 없는 완료 건의 사진을 id만 바꿔서 내려받는 걸 막는다.
+    scope_sql, scope_params = scoped_condition_mixed_exempt("wash_history", current_user)
+    if current_user.is_staff and not _user_fleets(current_user.username):
+        scope_sql += " AND 작업자 = ?"
+        scope_params = scope_params + [current_user.username]
+    placeholders = ",".join("?" * len(ids))
+    rows = cur.execute(
+        f"SELECT * FROM wash_history WHERE id IN ({placeholders})" + scope_sql,
+        ids + scope_params
+    ).fetchall()
+    conn.close()
+    if not rows:
+        flash("❌ 선택한 완료 건을 찾을 수 없습니다.")
+        return redirect(url_for("wash_status"))
+
+    zip_buffer = io.BytesIO()
+    used_names = set()
+    photo_count = 0
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        for row in rows:
+            photo_lookup_date = row["세차일"] if "세차일" in row.keys() and row["세차일"] else row["세차완료일"]
+            photos = _sort_photos_by_slot_order(_get_wash_photos(row["차량번호"], photo_lookup_date))
+            for p in photos:
+                try:
+                    body = client.get_object(Bucket=R2_BUCKET_NAME, Key=p["r2_key"])["Body"].read()
+                except Exception as e:
+                    print(f"[사진 일괄 다운로드] 사진 조회 실패 (r2_key={p.get('r2_key')}): {e}")
+                    continue
+                완료일자 = _safe_zip_name_part(row["세차완료일"])
+                차량번호 = _safe_zip_name_part(row["차량번호"])
+                부위 = _safe_zip_name_part(p.get("shot_label") or "사진")
+                base_name = f"{완료일자}_{차량번호}_{부위}"
+                name = f"{base_name}.jpg"
+                dup = 2
+                while name in used_names:
+                    name = f"{base_name}_{dup}.jpg"
+                    dup += 1
+                used_names.add(name)
+                zf.writestr(name, body)
+                photo_count += 1
+    if photo_count == 0:
+        flash("❌ 선택한 완료 건에 사진이 없습니다.")
+        return redirect(url_for("wash_status"))
+    zip_buffer.seek(0)
+    filename = f"wash_photos_{today_kst()}.zip"
+    return send_file(
+        zip_buffer,
+        as_attachment=True,
+        download_name=filename,
+        mimetype="application/zip"
     )
 # =============================================
 # =========================================================

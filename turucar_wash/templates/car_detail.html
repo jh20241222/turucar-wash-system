@@ -1187,11 +1187,15 @@ renderCarDamagePicker('cdp-root-d', 'd-damage');
                 if(navigator.vibrate) navigator.vibrate(200);
                 missingSlots.forEach(function(el){ el.classList.add('photo-slot-missing-flash'); });
                 missingSlots[0].scrollIntoView({behavior: 'smooth', block: 'center'});
-                var shownNames = missingSlots.slice(0, 3).map(function(el){
+                // (2026-09-10) 예전엔 "전범퍼(운전석 45˚), 운전석 전측면, 후범퍼(조수석 45˚) 등"처럼
+                // 앞의 3개만 보여주고 나머지는 "등"으로 뭉뚱그려서, 작업자가 정확히 어떤 사진이
+                // 빠졌는지 몰라 헷갈린다는 지적이 있었다. 빠진 사진이 몇 장이든 전부(최대 19장) 한
+                // 줄씩 나열해서, 안내만 보고도 정확히 무엇을 다시 찍어야 하는지 알 수 있게 한다.
+                var missingNames = missingSlots.map(function(el){
                     var lbl = el.querySelector('.photo-slot-label');
-                    return lbl ? lbl.textContent : el.dataset.slotKey;
-                }).join(', ');
-                alert('필수 사진 ' + missingSlots.length + '장이 비어있어요 (' + shownNames + (missingSlots.length > 3 ? ' 등' : '') + ').\n전부 찍은 뒤 다시 눌러주세요.');
+                    return '· ' + (lbl ? lbl.textContent : el.dataset.slotKey);
+                }).join('\n');
+                alert('필수 사진 ' + missingSlots.length + '장이 비어있어요:\n' + missingNames + '\n\n위 사진을 전부 찍은 뒤 다시 눌러주세요.');
                 setTimeout(function(){
                     missingSlots.forEach(function(el){ el.classList.remove('photo-slot-missing-flash'); });
                 }, 2600);

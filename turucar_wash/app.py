@@ -3400,6 +3400,8 @@ def wash_status_excel():
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
+_PHOTO_ZIP_MAX_WORKERS = 8  # 압축파일 다운로드 시 R2에서 사진을 몇 장까지 동시에 받아올지
+
 _ZIP_UNSAFE_CHARS = re.compile(r'[\\/:*?"<>|\x00-\x1f]')
 
 def _safe_zip_name_part(s):
@@ -3454,31 +3456,59 @@ def wash_status_photos_zip():
         flash("❌ 선택한 완료 건을 찾을 수 없습니다.")
         return redirect(url_for("wash_status"))
 
+    # 내려받을 사진 목록을 (완료일자, 차량번호, 부위, r2_key) 순서로 먼저 다 모아둔다 —
+    # 아래에서 여러 스레드로 동시에 가져올 수 있게 하기 위함(파일명 충돌 처리는 이
+    # 순서 그대로 순차적으로 해서 매번 결과가 같게 유지한다).
+    tasks = []
+    for row in rows:
+        photo_lookup_date = row["세차일"] if "세차일" in row.keys() and row["세차일"] else row["세차완료일"]
+        photos = _sort_photos_by_slot_order(_get_wash_photos(row["차량번호"], photo_lookup_date))
+        for p in photos:
+            tasks.append((row["세차완료일"], row["차량번호"], p.get("shot_label") or "사진", p["r2_key"]))
+    if not tasks:
+        flash("❌ 선택한 완료 건에 사진이 없습니다.")
+        return redirect(url_for("wash_status"))
+
+    # (2026-09-10) "다운로드가 너무 느리다"는 제보 — 예전엔 사진을 R2에서 한 장씩
+    # 순서대로 받아왔다. 선택한 완료 건 수 x 건당 사진 장수만큼 R2 왕복(네트워크 지연)이
+    # 그대로 쌓이는 구조라, 몇 건만 선택해도(예: 20건 x 20장 = 400번) 눈에 띄게
+    # 느려졌다. 사진 업로드 때(_store_wash_photos)와 동일하게 ThreadPoolExecutor로
+    # 여러 장을 동시에 가져오도록 바꿨다 — 왕복 횟수는 그대로지만 순차 대기가 아니라
+    # 동시에 기다리므로 전체 시간이 동시 처리 개수(worker 수)만큼 줄어든다.
+    def _fetch_photo_bytes(task):
+        _, _, _, r2_key = task
+        try:
+            return client.get_object(Bucket=R2_BUCKET_NAME, Key=r2_key)["Body"].read()
+        except Exception as e:
+            print(f"[사진 일괄 다운로드] 사진 조회 실패 (r2_key={r2_key}): {e}")
+            return None
+
+    max_workers = min(_PHOTO_ZIP_MAX_WORKERS, len(tasks))
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        bodies = list(pool.map(_fetch_photo_bytes, tasks))
+
     zip_buffer = io.BytesIO()
     used_names = set()
     photo_count = 0
-    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-        for row in rows:
-            photo_lookup_date = row["세차일"] if "세차일" in row.keys() and row["세차일"] else row["세차완료일"]
-            photos = _sort_photos_by_slot_order(_get_wash_photos(row["차량번호"], photo_lookup_date))
-            for p in photos:
-                try:
-                    body = client.get_object(Bucket=R2_BUCKET_NAME, Key=p["r2_key"])["Body"].read()
-                except Exception as e:
-                    print(f"[사진 일괄 다운로드] 사진 조회 실패 (r2_key={p.get('r2_key')}): {e}")
-                    continue
-                완료일자 = _safe_zip_name_part(row["세차완료일"])
-                차량번호 = _safe_zip_name_part(row["차량번호"])
-                부위 = _safe_zip_name_part(p.get("shot_label") or "사진")
-                base_name = f"{완료일자}_{차량번호}_{부위}"
-                name = f"{base_name}.jpg"
-                dup = 2
-                while name in used_names:
-                    name = f"{base_name}_{dup}.jpg"
-                    dup += 1
-                used_names.add(name)
-                zf.writestr(name, body)
-                photo_count += 1
+    # 사진은 이미 JPEG로 압축돼 저장돼 있어서(ALLOWED_IMAGE_EXTS 업로드 시 항상 JPEG로
+    # 재인코딩됨) zip 안에서 또 압축(ZIP_DEFLATED)해봐야 용량은 거의 안 줄고 서버가
+    # 압축 계산만 더 하느라 시간이 늘어난다 — 압축 없이 그대로 담는다(ZIP_STORED).
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_STORED) as zf:
+        for (완료일자_raw, 차량번호_raw, 부위_raw, _r2_key), body in zip(tasks, bodies):
+            if not body:
+                continue
+            완료일자 = _safe_zip_name_part(완료일자_raw)
+            차량번호 = _safe_zip_name_part(차량번호_raw)
+            부위 = _safe_zip_name_part(부위_raw)
+            base_name = f"{완료일자}_{차량번호}_{부위}"
+            name = f"{base_name}.jpg"
+            dup = 2
+            while name in used_names:
+                name = f"{base_name}_{dup}.jpg"
+                dup += 1
+            used_names.add(name)
+            zf.writestr(name, body)
+            photo_count += 1
     if photo_count == 0:
         flash("❌ 선택한 완료 건에 사진이 없습니다.")
         return redirect(url_for("wash_status"))

@@ -1160,6 +1160,76 @@ def storage_status():
         },
     }
     return jsonify(payload)
+@app.route("/wash_photos_dupes")
+@login_required
+def wash_photos_dupes():
+    """(2026-09-10) 슬롯 사진 즉시업로드 레이스(재촬영/복구 업로드가 겹치는 경우) 버그가
+    수정되기 전에 완료된 오더들 중, 같은 (차량번호, 세차일, 촬영 슬롯)에 사진이 2장 이상
+    중복 저장된 채로 남아있는 게 있는지 찾아 보여준다. R2 저장공간/API 호출량 낭비의
+    직접적인 원인이라 완료 현황에서 중복 사진을 육안으로 발견하면 여기서 먼저 규모를
+    확인한다. '무인훼손 제보'(번호 없는 레거시 라벨)는 예전 방식(슬롯 1개에 여러 장
+    업로드)의 정상적인 다중 사진이므로 중복 판정에서 제외한다."""
+    if not current_user.is_master:
+        flash("❌ 마스터 계정만 확인할 수 있습니다.")
+        return redirect(url_for("dashboard"))
+    conn = get_wash_db()
+    groups = conn.execute(
+        """SELECT 차량번호, 세차일, shot_label, COUNT(*) AS cnt
+           FROM wash_photos
+           WHERE shot_label IS NOT NULL AND shot_label != ?
+           GROUP BY 차량번호, 세차일, shot_label
+           HAVING COUNT(*) > 1
+           ORDER BY cnt DESC, 세차일 DESC""",
+        (DAMAGE_SLOT_LABEL,)
+    ).fetchall()
+    conn.close()
+    total_extra = sum(g["cnt"] - 1 for g in groups)
+    return jsonify({
+        "duplicate_groups": len(groups),
+        "extra_rows": total_extra,
+        "note": "extra_rows = 정리하면 없어질 여분 사진 수 (그룹마다 최신 1장만 남기고 나머지)",
+        "samples": [dict(g) for g in groups[:50]],
+    })
+@app.route("/wash_photos_dupes/cleanup", methods=["POST"])
+@login_required
+def wash_photos_dupes_cleanup():
+    """wash_photos_dupes()가 찾아낸 중복 그룹을 실제로 정리한다 — 그룹마다 id가 가장
+    큰(가장 최근에 저장된) 사진 한 장만 남기고 나머지는 DB 행과 R2 오브젝트를 함께
+    지운다. '무인훼손 제보'(레거시 다중 사진) 라벨은 조회와 동일하게 대상에서 뺀다."""
+    if not current_user.is_master:
+        return jsonify({"ok": False, "message": "마스터 계정만 실행할 수 있습니다."}), 403
+    conn = get_wash_db()
+    groups = conn.execute(
+        """SELECT 차량번호, 세차일, shot_label
+           FROM wash_photos
+           WHERE shot_label IS NOT NULL AND shot_label != ?
+           GROUP BY 차량번호, 세차일, shot_label
+           HAVING COUNT(*) > 1""",
+        (DAMAGE_SLOT_LABEL,)
+    ).fetchall()
+    client = _get_r2_client()
+    removed = 0
+    for g in groups:
+        rows = conn.execute(
+            "SELECT id, r2_key FROM wash_photos WHERE 차량번호=? AND 세차일=? AND shot_label=? ORDER BY id",
+            (g["차량번호"], g["세차일"], g["shot_label"])
+        ).fetchall()
+        if len(rows) <= 1:
+            continue  # 조회 이후 이미 다른 요청이 정리했을 수 있음 — 안전하게 재확인
+        keep_id = max(r["id"] for r in rows)
+        for r in rows:
+            if r["id"] == keep_id:
+                continue
+            conn.execute("DELETE FROM wash_photos WHERE id=?", (r["id"],))
+            removed += 1
+            if client:
+                try:
+                    client.delete_object(Bucket=R2_BUCKET_NAME, Key=r["r2_key"])
+                except Exception as e:
+                    print(f"[R2] 중복 사진 정리 삭제 실패: {e}")
+        conn.commit()
+    conn.close()
+    return jsonify({"ok": True, "groups_cleaned": len(groups), "removed_rows": removed})
 @app.route("/profile")
 @login_required
 def profile():
@@ -4935,13 +5005,55 @@ def _vehicle_damage_summary_rows(conn, veh_scope_sql, veh_scope_params):
         damage = (latest["훼손"] or "").strip()
         # 최신 기록 자체에 훼손이 없으면(경고등만 있거나 아예 특이사항 없는 경우)
         # 비교할 신규 훼손이 없으므로 스킵.
-        if damage not in _NO_ISSUE_VALUES:
+        # (2026-09-11) "신규 훼손으로 뜬 걸 확인했으면 없어지게 해달라"는 요청에 따라,
+        # 이미 담당자가 확인 처리한(damage_checked=1) 기록은 훼손 부위가 바뀌지 않은 이상
+        # 다시 신규로 잡히지 않는다 — wash_history.damage_checked는 이 목적으로 이미
+        # 만들어져 있었지만(2026-09-04) 그동안 실제로 읽는 곳이 없었다.
+        if damage not in _NO_ISSUE_VALUES and not latest["damage_checked"]:
             prev = plate_hist[-2] if len(plate_hist) >= 2 else None
             prev_tokens = set(_split_damage_tokens(prev["훼손"])) if prev else set()
             latest_tokens = _split_damage_tokens(latest["훼손"])
             if any(tok not in prev_tokens for tok in latest_tokens):
                 new_damage_ids.add(latest["id"])
     return all_rows, new_damage_ids
+def _vehicle_damage_check_scope(history_id, user):
+    """/vehicle_damage_dashboard/check/<id>가 접근 범위를 검증하는 데 쓴다. wash_history
+    행 자체는 차량소속 스코프 정보가 없으므로, 그 차량번호가 vehicle_master에서 이
+    사용자의 차량별 이력관리 스코프(_vehicle_scope_condition) 안에 있는지로 판단한다.
+    반환값: (wash_history Row 또는 None, 스코프 안이면 True)."""
+    conn = get_wash_db()
+    row = conn.execute("SELECT * FROM wash_history WHERE id=?", (history_id,)).fetchone()
+    if not row:
+        conn.close()
+        return None, False
+    scope_sql, scope_params = _vehicle_scope_condition(user)
+    in_scope = conn.execute(
+        "SELECT 1 FROM vehicle_master WHERE 차량번호=?" + scope_sql,
+        [row["차량번호"]] + list(scope_params)
+    ).fetchone()
+    conn.close()
+    return row, bool(in_scope)
+@app.route("/vehicle_damage_dashboard/check/<int:history_id>", methods=["POST"])
+@login_required
+def vehicle_damage_check(history_id):
+    """차량별 이력관리에서 '신규 훼손'으로 뜬 세차 이력 행을 담당자가 확인 처리한다 —
+    확인하면 damage_checked=1로 저장되고, 이후 목록/상세 화면 양쪽에서 이 행은 더 이상
+    '신규 훼손'으로 표시되지 않는다(_vehicle_damage_summary_rows에서 걸러짐)."""
+    if not _can_view_vehicle_management():
+        return jsonify({"ok": False, "message": "❌ 접근 권한이 없습니다."}), 403
+    row, in_scope = _vehicle_damage_check_scope(history_id, current_user)
+    if not row:
+        return jsonify({"ok": False, "message": "세차 내역을 찾을 수 없습니다."}), 404
+    if not in_scope:
+        return jsonify({"ok": False, "message": "❌ 접근 권한이 없습니다."}), 403
+    conn = get_wash_db()
+    conn.execute(
+        "UPDATE wash_history SET damage_checked=1, damage_checked_by=?, damage_checked_at=? WHERE id=?",
+        (current_user.username, now_kst().strftime("%Y-%m-%d %H:%M:%S"), history_id)
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
 @app.route("/vehicle_damage_dashboard")
 @login_required
 def vehicle_damage_dashboard():
@@ -5057,6 +5169,16 @@ def vehicle_damage_detail(plate):
         "SELECT * FROM wash_history WHERE 차량번호=? ORDER BY 세차완료일 DESC, id DESC LIMIT 30",
         (plate,)
     ).fetchall()
+    # (2026-09-11) 목록(vehicle_damage_dashboard)에서 "신규 훼손"으로 표시된 차량의
+    # 상세로 들어와도 어떤 이력 행이 그 신규 훼손인지 알 수 없었다는 지적에 따라, 목록과
+    # 완전히 동일한 판정 함수(_vehicle_damage_summary_rows)를 이 차량 하나로 스코프를
+    # 좁혀서 재사용한다 — 정의가 어긋날 일이 없다(예: damage_checked 처리 로직이 하나만
+    # 바뀌고 다른 쪽은 안 바뀌는 사고 방지). 이 함수는 차량마다 최대 1건(가장 최근 이력)만
+    # 신규로 표시하므로, wash_history_rows[0]이 그 대상이면 여기서도 정확히 그 id 하나만
+    # 담겨 돌아온다.
+    _, plate_new_damage_ids = _vehicle_damage_summary_rows(
+        conn, scope_sql + " AND 차량번호=?", list(scope_params) + [plate]
+    )
     conn.close()
     uconn = get_user_db()
     damage_rows = uconn.execute(
@@ -5072,6 +5194,7 @@ def vehicle_damage_detail(plate):
         "vehicle_damage_detail.html",
         vehicle=vehicle, wash_history_rows=wash_history_rows,
         damage_rows=damage_rows, plate=plate,
+        new_damage_ids=plate_new_damage_ids,
     )
 @app.route("/wash_history_photos/<int:id>")
 @login_required

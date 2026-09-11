@@ -54,6 +54,11 @@
                 <span class="vdd-note">훼손 · {{ (h['훼손']|damage_order) or '-' }}</span>
                 <span class="vdd-note">경고등 · {{ h['경고등'] or '-' }}</span>
             </div>
+            {% if h['id'] in new_damage_ids %}
+            <div class="vdd-row-actions">
+                <button type="button" class="vdd-check-btn" onclick="event.preventDefault(); event.stopPropagation(); vddCheckDamage(this, {{ h['id'] }});">✓ 확인</button>
+            </div>
+            {% endif %}
         </a>
         {% else %}
         <div class="vdd-empty">{{ empty_msg }}</div>
@@ -84,7 +89,7 @@
         </div>
         <div class="dt-table-scroll">
             <table class="dt-table">
-                <thead><tr><th>순번</th><th>차량번호</th><th>차량소속</th><th>훼손부위</th><th>경고등</th><th>최근세차일</th></tr></thead>
+                <thead><tr><th>순번</th><th>차량번호</th><th>차량소속</th><th>훼손부위</th><th>경고등</th><th>최근세차일</th><th>확인</th></tr></thead>
                 <tbody>
                 {% for h in rows %}
                 <tr class="dt-row {% if h['id'] in new_damage_ids %}dt-row-new{% endif %}" style="cursor:pointer;" onclick="location.href='{{ url_for('vehicle_damage_detail', plate=h['차량번호']) }}'">
@@ -94,9 +99,14 @@
                     <td>{{ (h['훼손']|damage_order) or '-' }}</td>
                     <td>{{ h['경고등'] or '-' }}</td>
                     <td>{{ h['세차완료일'] or '세차 이력 없음' }}</td>
+                    <td onclick="event.stopPropagation();">
+                        {% if h['id'] in new_damage_ids %}
+                        <button type="button" class="dt-btn dt-btn--check" onclick="vddCheckDamage(this, {{ h['id'] }});">✓ 확인</button>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="6" class="dt-empty">{{ empty_msg }}</td></tr>
+                <tr><td colspan="7" class="dt-empty">{{ empty_msg }}</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
@@ -123,6 +133,13 @@
 .vdd-new-badge{background:#F6DAD5;color:#9A3B2E;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;font-style:normal;}
 .dt-row-new td{background:#FDF1F0 !important;}
 #desktop-mode .dt-row-new td{background:rgba(220,80,60,0.16) !important;}
+/* (2026-09-11) "신규 훼손"을 확인 처리하는 버튼 — 목록(모바일 카드/데스크탑 테이블)
+   양쪽에서 신규 훼손으로 표시된 행에만 뜬다. 클릭해도 행 전체(링크/이동)로 이벤트가
+   전파되지 않도록 각 템플릿에서 stopPropagation/preventDefault를 함께 건다. */
+.vdd-row-actions{display:flex;justify-content:flex-end;margin-top:2px;}
+.vdd-check-btn,.dt-btn--check{background:#fff;border:1.5px solid #D85A30;color:#9A3B2E;font-size:12px;font-weight:800;padding:5px 12px;border-radius:20px;cursor:pointer;}
+.vdd-check-btn:hover,.dt-btn--check:hover{background:#FDF1F0;}
+.vdd-check-btn:disabled,.dt-btn--check:disabled{opacity:.55;cursor:default;}
 .wash-type-filter-bar{display:flex;gap:8px;padding:4px 0 8px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .wash-type-btn{flex-shrink:0;font-size:13px;font-weight:500;padding:6px 14px;border-radius:20px;border:1.5px solid var(--color-border-tertiary);background:var(--color-background-primary);color:var(--color-text-secondary);cursor:pointer;display:inline-flex;align-items:center;gap:5px;}
 .wash-type-btn.active{color:var(--color-text-primary);border-color:var(--color-border-primary);background:var(--color-background-secondary);}
@@ -147,5 +164,38 @@ function openMobileFilter(id){const el=document.getElementById(id),bd=document.g
 function closeMobileFilter(id){const el=document.getElementById(id),bd=document.getElementById('mobile-filter-backdrop');if(el){el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';}if(bd)bd.classList.remove('open');document.body.classList.remove('filter-sheet-open');}
 function closeAnyMobileFilter(){document.querySelectorAll('.mobile-filter-sheet.open').forEach(el=>{el.classList.remove('open');el.style.display='';el.style.visibility='';el.style.opacity='';});const bd=document.getElementById('mobile-filter-backdrop');if(bd)bd.classList.remove('open');document.body.classList.remove('filter-sheet-open');}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAnyMobileFilter();});
+
+// (2026-09-11) "신규 훼손" 확인 처리 — 클릭하면 서버에 damage_checked=1로 저장하고,
+// 성공하면 새로고침 없이 그 자리에서 배지/음영/버튼을 지운다(개수 배지는 다음 새로고침에
+// 반영됨). 모바일 카드(.vdd-row)든 데스크탑 테이블 행(.dt-row)이든 동일하게 동작한다.
+function vddCheckDamage(btnEl, id){
+    if(btnEl.disabled) return;
+    if(!confirm('이 신규 훼손을 확인 완료로 처리할까요?\n확인하면 목록/상세에서 "신규 훼손" 표시가 사라집니다.')) return;
+    btnEl.disabled = true;
+    var originalText = btnEl.textContent;
+    btnEl.textContent = '처리 중…';
+    fetch(`/vehicle_damage_dashboard/check/${id}`, {method: 'POST'})
+        .then(r => r.json())
+        .then(data => {
+            if(!data || !data.ok){
+                alert((data && data.message) || '처리에 실패했습니다.');
+                btnEl.disabled = false;
+                btnEl.textContent = originalText;
+                return;
+            }
+            var row = btnEl.closest('.vdd-row') || btnEl.closest('.dt-row');
+            if(row){
+                row.classList.remove('vdd-row-new', 'dt-row-new');
+                row.querySelectorAll('.vdd-new-badge').forEach(function(b){ b.remove(); });
+            }
+            var actions = btnEl.closest('.vdd-row-actions');
+            if(actions) actions.remove(); else btnEl.remove();
+        })
+        .catch(function(){
+            alert('네트워크 오류로 처리하지 못했습니다. 다시 시도해주세요.');
+            btnEl.disabled = false;
+            btnEl.textContent = originalText;
+        });
+}
 </script>
 {% endblock %}

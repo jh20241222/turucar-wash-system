@@ -11,7 +11,7 @@
         <div class="form-grid two"><div><span class="field-label">지역</span><div>{{ vehicle['지역시도'] or '-' }} {{ vehicle['지역구군'] or '-' }}</div></div><div><span class="field-label">최근세차일</span><div>{{ vehicle['최근세차일'] or '-' }}</div></div></div>
     </section>
 
-    <section class="app-section table-panel app-card"><div class="table-title-row"><h2>세차 이력</h2><span>{{ wash_history_rows|length }}건</span></div><div class="table-wrap"><table><thead><tr><th>완료일</th><th>주행거리</th><th>훼손</th><th>경고등</th><th>작업자</th></tr></thead><tbody>{% for h in wash_history_rows %}<tr class="vdd-hist-row" style="cursor:pointer;" onclick="vddToggle('m', {{ h['id'] }})"><td>{{ h['세차완료일'] }}</td><td>{{ h['주행거리'] or '-' }}</td><td>{{ (h['훼손']|damage_order) or '-' }}</td><td>{{ h['경고등'] or '-' }}</td><td>{{ h['작업자'] or '-' }}</td></tr><tr id="m-detail-{{ h['id'] }}" class="vdd-photo-row" style="display:none;"><td colspan="5"><div id="m-photos-{{ h['id'] }}" class="vdd-photo-panel"><span class="vdd-photo-loading">불러오는 중…</span></div></td></tr>{% else %}<tr><td colspan="5" class="empty-cell">세차 이력이 없습니다.</td></tr>{% endfor %}</tbody></table></div><p style="padding:4px 14px 0;font-size:12px;color:var(--color-text-tertiary,#999);">행을 누르면 그 자리에서 완료 사진을 부위별로 볼 수 있습니다.</p></section>
+    <section class="app-section table-panel app-card"><div class="table-title-row"><h2>세차 이력</h2><span>{{ wash_history_rows|length }}건</span></div><div class="table-wrap"><table><thead><tr><th>완료일</th><th>주행거리</th><th>훼손</th><th>경고등</th><th>작업자</th><th>확인</th></tr></thead><tbody>{% for h in wash_history_rows %}<tr class="vdd-hist-row {% if h['id'] in new_damage_ids %}vdd-hist-row-new{% endif %}" style="cursor:pointer;" onclick="vddToggle('m', {{ h['id'] }})"><td>{{ h['세차완료일'] }}</td><td>{{ h['주행거리'] or '-' }}</td><td>{{ (h['훼손']|damage_order) or '-' }}{% if h['id'] in new_damage_ids %}<em class="vdd-new-badge" style="margin-left:6px;">신규 훼손</em>{% endif %}</td><td>{{ h['경고등'] or '-' }}</td><td>{{ h['작업자'] or '-' }}</td><td onclick="event.stopPropagation();">{% if h['id'] in new_damage_ids %}<button type="button" class="vdd-check-btn" onclick="vddCheckDamage(this, {{ h['id'] }});">✓ 확인</button>{% elif h['damage_checked'] %}<span class="vdd-checked-tag">확인됨</span>{% endif %}</td></tr><tr id="m-detail-{{ h['id'] }}" class="vdd-photo-row" style="display:none;"><td colspan="6"><div id="m-photos-{{ h['id'] }}" class="vdd-photo-panel"><span class="vdd-photo-loading">불러오는 중…</span></div></td></tr>{% else %}<tr><td colspan="6" class="empty-cell">세차 이력이 없습니다.</td></tr>{% endfor %}</tbody></table></div><p style="padding:4px 14px 0;font-size:12px;color:var(--color-text-tertiary,#999);">행을 누르면 그 자리에서 완료 사진을 부위별로 볼 수 있습니다. 신규 훼손 행은 오른쪽 '확인' 버튼을 누르면 확인 처리됩니다.</p></section>
 
     <section class="app-section table-panel app-card"><div class="table-title-row"><h2>훼손 제보</h2><span>{{ damage_rows|length }}건</span></div><div class="table-wrap"><table><thead><tr><th>제보일</th><th>부위</th><th>상태</th><th>내용</th></tr></thead><tbody>{% for d in damage_rows %}<tr><td>{{ d['created_at'] }}</td><td>{{ d['damage_location'] }}</td><td><span class="badge">{{ d['status'] }}</span></td><td>{{ d['description'] or '-' }}</td></tr>{% else %}<tr><td colspan="4" class="empty-cell">훼손 제보 이력이 없습니다.</td></tr>{% endfor %}</tbody></table></div></section>
 </section>
@@ -30,8 +30,8 @@
     </div>
     <div class="d-card">
         <div class="d-card-head"><div><span class="d-eyebrow">이력</span><h2>세차 이력</h2></div><span class="d-badge-pill">{{ wash_history_rows|length }}건</span></div>
-        <div class="d-table-wrap"><table class="d-table"><thead><tr><th>완료일</th><th>주행거리</th><th>훼손</th><th>경고등</th><th>작업자</th></tr></thead>
-        <tbody>{% for h in wash_history_rows %}<tr class="vdd-hist-row" style="cursor:pointer;" onclick="vddToggle('d', {{ h['id'] }})"><td>{{ h['세차완료일'] }}</td><td>{{ h['주행거리'] or '-' }}</td><td>{{ (h['훼손']|damage_order) or '-' }}</td><td>{{ h['경고등'] or '-' }}</td><td>{{ h['작업자'] or '-' }}</td></tr><tr id="d-detail-{{ h['id'] }}" class="vdd-photo-row" style="display:none;"><td colspan="5"><div id="d-photos-{{ h['id'] }}" class="vdd-photo-panel"><span class="vdd-photo-loading">불러오는 중…</span></div></td></tr>{% else %}<tr><td colspan="5" class="d-empty-cell">세차 이력이 없습니다.</td></tr>{% endfor %}</tbody></table></div>
+        <div class="d-table-wrap"><table class="d-table"><thead><tr><th>완료일</th><th>주행거리</th><th>훼손</th><th>경고등</th><th>작업자</th><th>확인</th></tr></thead>
+        <tbody>{% for h in wash_history_rows %}<tr class="vdd-hist-row {% if h['id'] in new_damage_ids %}vdd-hist-row-new{% endif %}" style="cursor:pointer;" onclick="vddToggle('d', {{ h['id'] }})"><td>{{ h['세차완료일'] }}</td><td>{{ h['주행거리'] or '-' }}</td><td>{{ (h['훼손']|damage_order) or '-' }}{% if h['id'] in new_damage_ids %}<em class="vdd-new-badge" style="margin-left:6px;">신규 훼손</em>{% endif %}</td><td>{{ h['경고등'] or '-' }}</td><td>{{ h['작업자'] or '-' }}</td><td onclick="event.stopPropagation();">{% if h['id'] in new_damage_ids %}<button type="button" class="vdd-check-btn" onclick="vddCheckDamage(this, {{ h['id'] }});">✓ 확인</button>{% elif h['damage_checked'] %}<span class="vdd-checked-tag">확인됨</span>{% endif %}</td></tr><tr id="d-detail-{{ h['id'] }}" class="vdd-photo-row" style="display:none;"><td colspan="6"><div id="d-photos-{{ h['id'] }}" class="vdd-photo-panel"><span class="vdd-photo-loading">불러오는 중…</span></div></td></tr>{% else %}<tr><td colspan="6" class="d-empty-cell">세차 이력이 없습니다.</td></tr>{% endfor %}</tbody></table></div>
         <p style="padding:0 20px 16px;font-size:12px;color:var(--d-muted);">행을 누르면 그 자리에서 완료 사진을 부위별로 볼 수 있습니다.</p>
     </div>
     <div class="d-card">
@@ -44,6 +44,16 @@
 <style>
 #desktop-mode #d-vdd-detail { display: block !important; }
 #desktop-mode .turu-app-page-v24 { display: none !important; }
+
+/* (2026-09-11) 목록(vehicle_damage_dashboard)과 동일한 "신규 훼손" 표시를 상세 화면의
+   세차 이력 행에도 적용 — 어느 이력이 신규 훼손을 유발했는지 여기서도 바로 보이게 한다. */
+.vdd-hist-row-new td { background: #FDF1F0 !important; }
+#desktop-mode .vdd-hist-row-new td { background: rgba(220,80,60,0.16) !important; }
+.vdd-new-badge{background:#F6DAD5;color:#9A3B2E;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;font-style:normal;}
+.vdd-check-btn{background:#fff;border:1.5px solid #D85A30;color:#9A3B2E;font-size:12px;font-weight:800;padding:5px 12px;border-radius:20px;cursor:pointer;}
+.vdd-check-btn:hover{background:#FDF1F0;}
+.vdd-check-btn:disabled{opacity:.55;cursor:default;}
+.vdd-checked-tag{font-size:11px;font-weight:700;color:#8a9a8a;}
 
 /* (2026-09-07) 세차 이력 행을 눌렀을 때 그 자리에서 펼쳐지는 완료 사진 패널 */
 .vdd-photo-row td { background: #FAFBFC; padding: 10px !important; }
@@ -130,6 +140,39 @@ function vddOpenPhoto(prefix, id, i){
     const photos = vddPhotosByKey[prefix + '-' + id];
     if(!photos || !photos[i]) return;
     window.turuOpenPhotoViewer(photos, i);
+}
+
+// (2026-09-11) "신규 훼손" 확인 처리 — vehicle_damage_dashboard.html의 동작과 동일하다.
+// 성공하면 새로고침 없이 그 자리에서 배지/음영/버튼을 지운다.
+function vddCheckDamage(btnEl, id){
+    if(btnEl.disabled) return;
+    if(!confirm('이 신규 훼손을 확인 완료로 처리할까요?\n확인하면 목록/상세에서 "신규 훼손" 표시가 사라집니다.')) return;
+    btnEl.disabled = true;
+    btnEl.textContent = '처리 중…';
+    fetch(`/vehicle_damage_dashboard/check/${id}`, {method: 'POST'})
+        .then(r => r.json())
+        .then(data => {
+            if(!data || !data.ok){
+                alert((data && data.message) || '처리에 실패했습니다.');
+                btnEl.disabled = false;
+                btnEl.textContent = '✓ 확인';
+                return;
+            }
+            const row = btnEl.closest('.vdd-hist-row');
+            if(row){
+                row.classList.remove('vdd-hist-row-new');
+                row.querySelectorAll('.vdd-new-badge').forEach(function(b){ b.remove(); });
+            }
+            const td = btnEl.closest('td');
+            if(td){
+                td.innerHTML = '<span class="vdd-checked-tag">확인됨</span>';
+            }
+        })
+        .catch(function(){
+            alert('네트워크 오류로 처리하지 못했습니다. 다시 시도해주세요.');
+            btnEl.disabled = false;
+            btnEl.textContent = '✓ 확인';
+        });
 }
 
 // ── wash_record.html의 사진 뷰어(turu-photo-viewer)를 그대로 재사용 ──
